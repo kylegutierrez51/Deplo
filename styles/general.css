@@ -1,0 +1,37 @@
+body {
+  background: var(--background-clr)
+
+}
+
+:root {
+  --background-clr: #191919;
+  --header-clr: #163452;
+  --text-white-clr: #dcdcdc;
+  --text-blue-clr: #50a5ff;
+  --dark-clr-1: #00000026;
+  --dark-clr-2: #1e1e1e;
+  --border-clr: #ffffff14;
+}
+
+
+
+#div1 {
+  background-color: var(--header-clr);
+  color: var(--text-white-clr);
+}
+
+#div2 {
+  background-color: var(--dark-clr-1);
+  color: var(--text-blue-clr);
+}
+
+#div3 {
+  background-color: var(--dark-clr-2);
+  color: var(--text-white-clr);
+}
+
+#div4 {
+  background-color: var(--background-clr);
+  border: 1px solid var(--border-clr);
+  color: var(--text-white-clr);
+}
