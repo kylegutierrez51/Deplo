@@ -1,0 +1,55 @@
+.subheader {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding-left: 150px;
+    padding-right: 150px;
+}
+
+.subheader-flex {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+}
+
+.subheader .title-group {
+    display: flex;
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+    margin-right: 15px;
+    margin-left: 15px;
+}
+
+.subheader .add-div {
+    display: flex;
+    justify-content: end;
+    align-items: center
+}
+
+.subheader .add-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background-color: var(--button-clr);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.subheader ion-icon {
+    margin-right: 5px;
+    font-size: 20px;
+}
+
+.subheader .add-btn div {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.subheader button:hover {
+    background-color: var(--button-clr-hover);
+    cursor: pointer;
+}

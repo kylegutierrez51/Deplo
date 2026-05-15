@@ -1,0 +1,101 @@
+/*
+========================================
+Table
+========================================
+*/
+
+.table-wrapper {
+  padding: 0px 150px 0px 150px;
+}
+
+.table-border {
+  border-left: 1px solid #474747;
+  border-right: 1px solid #474747;
+  border-bottom: 1px solid #474747;
+  border-radius: 5px 5px 5px 5px;
+  overflow: hidden;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+
+
+table thead tr {
+  background-color: var(--header-clr);
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
+table th,
+table td {
+  padding: 12px 15px;
+}
+
+table tbody tr {
+  border-bottom: 1px solid #474747;
+}
+
+table tbody tr:first-of-type {
+  border-top: 1px solid #474747;
+}
+
+table tbody tr:last-of-type {
+  border-bottom: none;
+}
+
+table tbody tr:hover {
+  background-color: rgb(27, 54, 90);
+  cursor: pointer;
+}
+
+
+/*
+========================================
+Pagination
+========================================
+*/
+
+.page-view {
+  padding: 75px 150px 75px 150px;
+}
+
+.page-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-flex div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid gray;
+  padding: 12px 35px;
+}
+
+.page-flex .page-number {
+  border: none;
+}
+
+.page-flex div:hover {
+  background-color: rgb(27, 54, 90);
+  cursor: pointer;
+}
+
+.page-flex .page-number:hover {
+  background-color: transparent;
+  cursor: auto;
+}
+
+
+
+
+
+
+
