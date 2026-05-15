@@ -1,0 +1,88 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  width: 300px;
+  background-color: var(--dark-clr-1);
+  padding: 40px 40px;
+  border: 1px solid var(--border-clr);
+  overflow: auto; /* adds scrollbar when content goes off screen */
+  /* transform: translateX(-100%); -- for animation later */
+  transition: transform 0.3s ease;
+}
+
+
+/*
+========================================
+Sidebar Header
+========================================
+*/
+.sidebar-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* border-bottom: 2px solid var(--border-clr); */
+}
+
+.sidebar-flex .title {
+  font-size: 20px;
+}
+
+.chevron-container {
+  display: flex;
+  align-items: center;
+  padding: 5px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chevron-container:hover {
+  background-color: var(--border-clr);
+}
+
+ion-icon[name="chevron-back-outline"] {
+  font-size: 20px;
+}
+
+
+/*
+========================================
+Sidebar Content
+========================================
+*/
+.sidebar-content {
+  padding-top: 50px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid var(--border-clr);
+}
+
+.subtitle {
+  margin-left: 15px;
+  font-family: "JetBrains Mono";
+  font-size: 14px;
+  padding-bottom: 20px;
+}
+
+.sidebar-content li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 15px;
+  border-radius: 7px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.sidebar-content li:hover {
+  background-color: var(--border-clr);
+}
+
+.sidebar-content li .title {
+  font-size: 18px;
+}
+
+ion-icon {
+  font-size: 25px;
+}
