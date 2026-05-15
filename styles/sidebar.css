@@ -1,0 +1,192 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  width: 300px;
+  background-color: var(--dark-clr-1);
+  padding: 40px 30px;
+  border: 1px solid var(--border-clr);
+  overflow: auto; /* adds scrollbar when content goes off screen */
+  /* transform: translateX(-100%); -- for animation later */
+  transition: transform 0.3s ease;
+}
+
+
+/*
+========================================
+Sidebar Header
+========================================
+*/
+.sidebar-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* border-bottom: 2px solid var(--border-clr); */
+}
+
+.sidebar-flex .title {
+  font-size: 20px;
+}
+
+.chevron-container {
+  display: flex;
+  align-items: center;
+  padding: 5px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chevron-container:hover {
+  background-color: var(--border-clr);
+}
+
+ion-icon[name="chevron-back-outline"] {
+  font-size: 20px;
+}
+
+
+/*
+========================================
+Sidebar Content
+========================================
+*/
+.sidebar-content {
+  padding-top: 50px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid var(--border-clr);
+}
+
+.subtitle {
+  margin-left: 15px;
+  font-family: "JetBrains Mono";
+  font-size: 14px;
+  padding-bottom: 20px;
+}
+
+.sidebar-content li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 15px;
+  border-radius: 7px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.sidebar-content li:hover {
+  background-color: var(--border-clr);
+}
+
+.sidebar-content li .title {
+  font-size: 18px;
+}
+
+ion-icon {
+  font-size: 25px;
+}
+
+
+/*
+========================================
+Profile
+========================================
+*/
+.profile {
+  position: absolute;
+  bottom: 20px;
+  /* left and right are set to match the sidebar's horizontal padding (30px each) */
+  left: 30px;
+  right: 30px;
+  
+
+  padding: 10px 10px;
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--border-clr);
+  border-radius: 10px;
+}
+
+.profile:hover {
+  background-color: var(--border-clr);
+}
+
+.profile-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.profile-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.profile-pic {
+  background-color: blue;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile .name {
+  font-weight: 600;
+}
+
+.profile .role {
+  font-family: "JetBrains Mono";
+  font-size: 15px;
+}
+
+ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
+  font-size: 20px;
+  margin-right: 5px;
+}
+
+.profile-view-container {
+  position: absolute;
+  bottom: 100px;
+  /* left and right are set to match the sidebar's horizontal padding (30px each) */
+  left: 30px;
+  right: 30px;
+  padding: 10px 10px;
+  background-color: var(--border-clr);
+  border: 1px solid var(--border-clr);
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none; /* when invisible, this div can't be clicked */
+  transition: opacity 0.2s ease;
+}
+
+.profile-view-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.profile-view-flex {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-view-flex div {
+  font-weight: bold;
+  padding: 10px 10px;
+  border-radius: 7px;
+}
+
+.profile-view-flex div:hover {
+  background-color: var(--border-clr);
+}
+
+.profile-view-flex .sign-out {
+  color: rgb(255, 57, 57);
+
+}

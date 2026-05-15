@@ -13,6 +13,10 @@ body {
   background: var(--background-clr)
 }
 
+ul {
+  list-style: none;
+}
+
 :root {
   --background-clr: #191919;
   --header-clr: #163452;
