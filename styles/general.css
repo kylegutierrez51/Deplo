@@ -1,6 +1,16 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  color: var(--text-white-clr);
+}
+
 body {
   background: var(--background-clr)
-
 }
 
 :root {
@@ -15,23 +25,3 @@ body {
 
 
 
-#div1 {
-  background-color: var(--header-clr);
-  color: var(--text-white-clr);
-}
-
-#div2 {
-  background-color: var(--dark-clr-1);
-  color: var(--text-blue-clr);
-}
-
-#div3 {
-  background-color: var(--dark-clr-2);
-  color: var(--text-white-clr);
-}
-
-#div4 {
-  background-color: var(--background-clr);
-  border: 1px solid var(--border-clr);
-  color: var(--text-white-clr);
-}
