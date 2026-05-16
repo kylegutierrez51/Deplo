@@ -6,12 +6,68 @@
   width: 300px;
   background-color: var(--dark-clr-1);
   padding: 40px 30px;
+  padding-top: 30px;
   border: 1px solid var(--border-clr);
-  overflow: auto; /* adds scrollbar when content goes off screen */
-  /* transform: translateX(-100%); -- for animation later */
+  overflow: auto;
   transition: transform 0.3s ease;
+  z-index: 100;
 }
 
+.sidebar.closed {
+  transform: translateX(-300px);
+}
+
+
+/*
+========================================
+Page Content (layout when sidebar present)
+========================================
+*/
+.page-content {
+  margin-left: 300px;
+  transition: margin-left 0.3s ease;
+}
+
+
+
+
+
+.sidebar.closed ~ .page-content {
+  margin-left: 0;
+}
+
+
+/*
+========================================
+Sidebar Toggle Button
+========================================
+*/
+.sidebar-toggle {
+  position: fixed;
+  top: 20px;
+  left: 310px;
+  z-index: 200;
+  background: transparent;
+  border: 1px solid var(--border-clr);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  transition: left 0.3s ease, background-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--border-clr);
+}
+
+.sidebar-toggle ion-icon {
+  font-size: 20px;
+}
+
+.sidebar.closed ~ .sidebar-toggle {
+  left: 15px;
+}
 
 /*
 ========================================
@@ -188,5 +244,4 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 
 .profile-view-flex .sign-out {
   color: rgb(255, 57, 57);
-
 }
