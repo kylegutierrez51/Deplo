@@ -68,30 +68,37 @@ Pagination
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 30px;
 }
 
-.page-flex div {
+.view-option {
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
-  border: 1px solid gray;
-  padding: 12px 35px;
-}
-
-.page-flex .page-number {
-  border: none;
-}
-
-.page-flex div:hover {
-  background-color: rgb(27, 54, 90);
+  gap: 10px;
+  border: 1px solid #474747;
+  padding: 12px 15px;
   cursor: pointer;
 }
 
-.page-flex .page-number:hover {
-  background-color: transparent;
-  cursor: auto;
+.view-option:hover {
+  background-color: var(--header-clr);
 }
+
+.page-numbers {
+  display: flex;
+  gap: 12px;
+}
+
+.page-number span {
+  position: relative;  /* needed so that the underline is positioned relative to parent */
+  width: max-content;
+  background-color: var(--header-clr);
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+
 
 
 
