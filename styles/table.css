@@ -1,0 +1,108 @@
+/*
+========================================
+Table
+========================================
+*/
+
+.table-wrapper {
+  padding: 0px 150px 0px 150px;
+}
+
+.table-border {
+  border-left: 1px solid #474747;
+  border-right: 1px solid #474747;
+  border-bottom: 1px solid #474747;
+  border-radius: 5px 5px 5px 5px;
+  overflow: hidden;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+
+
+table thead tr {
+  background-color: var(--header-clr);
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
+table th,
+table td {
+  padding: 12px 15px;
+}
+
+table tbody tr {
+  border-bottom: 1px solid #474747;
+}
+
+table tbody tr:first-of-type {
+  border-top: 1px solid #474747;
+}
+
+table tbody tr:last-of-type {
+  border-bottom: none;
+}
+
+table tbody tr:hover {
+  background-color: rgb(27, 54, 90);
+  cursor: pointer;
+}
+
+
+/*
+========================================
+Pagination
+========================================
+*/
+
+.page-view {
+  padding: 75px 150px 75px 150px;
+}
+
+.page-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.view-option {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #474747;
+  padding: 12px 15px;
+  cursor: pointer;
+}
+
+.view-option:hover {
+  background-color: var(--header-clr);
+}
+
+.page-numbers {
+  display: flex;
+  gap: 12px;
+}
+
+.page-number span {
+  position: relative;  /* needed so that the underline is positioned relative to parent */
+  width: max-content;
+  background-color: var(--header-clr);
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+
+
+
+
+
+
+
+
