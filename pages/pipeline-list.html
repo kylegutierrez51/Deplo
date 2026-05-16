@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../styles/table.css">
   <link rel="stylesheet" href="../styles/page-view.css">
   <link rel="stylesheet" href="../styles/subheader.css">
+  <link rel="stylesheet" href="../styles/pipeline-list-filters.css">
 </head>
 
 <body>
@@ -27,6 +28,34 @@
           <ion-icon name="add-outline"></ion-icon>
           <div>New Pipeline</div>
         </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="filters">
+    <div class="filters-flex">
+      <div class="input-group">
+        <ion-icon name="search-outline"></ion-icon>
+        <input type="text" placeholder="Search pipelines..."/>
+      </div>
+      <div class="select-group">
+        <select id="environment" name="environment">
+          <option value="all">All environments</option>
+          <option value="production">Production</option>
+          <option value="staging">Staging</option>
+          <option value="development">Development</option>
+          <option value="preview">Preview</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <select id="status" name="status">
+          <option value="all">All statuses</option>
+          <option value="succeeded">Succeeded</option>
+          <option value="failed">Failed</option>
+          <option value="running">Running</option>
+          <option value="queued">Queued</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
       </div>
     </div>
   </section>

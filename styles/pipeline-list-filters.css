@@ -1,0 +1,93 @@
+.filters {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding-left: 150px;
+    padding-right: 150px;
+}
+
+.filters-flex {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  margin-left: 15px;
+  gap: 10px;
+}
+
+.input-group {
+  position: relative;
+  width: 25%;
+}
+
+.input-group ion-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--icon-clr);
+  pointer-events: none; /* clicks go through the search icon */
+  font-size: 16px;
+}
+
+input {
+  width: 100%;
+  height: 38px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--light-border-clr);
+  background-color: var(--dark-clr-2);
+  color: var(--text-white-clr);
+  padding-left: 34px;
+  padding-right: 12px;
+}
+
+input::placeholder {
+  color: var(--input-clr);
+}
+
+.select-group {
+  position: relative;
+}
+
+/* custom chevron arrow */
+.select-group::after {
+  content: '';
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--icon-clr);
+  pointer-events: none;
+}
+
+select {
+  height: 38px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--light-border-clr);
+  background-color: var(--dark-clr-2);
+  color: var(--text-white-clr);
+  padding: 0 34px 0 12px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select option {
+  background-color: var(--dark-clr-2);
+  color: var(--text-white-clr);
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--text-blue-clr);
+  box-shadow: 0 0 0 3px rgba(80, 165, 255, 0.18);
+}
+
+select:hover, input:hover {
+  border-color: var(--input-clr);
+}
