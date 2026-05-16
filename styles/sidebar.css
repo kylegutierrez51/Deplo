@@ -6,6 +6,7 @@
   width: 300px;
   background-color: var(--dark-clr-1);
   padding: 40px 30px;
+  padding-top: 30px;
   border: 1px solid var(--border-clr);
   overflow: auto;
   transition: transform 0.3s ease;
@@ -27,15 +28,12 @@ Page Content (layout when sidebar present)
   transition: margin-left 0.3s ease;
 }
 
+
+
+
+
 .sidebar.closed ~ .page-content {
   margin-left: 0;
-}
-
-.page-content .subheader,
-.page-content .filters,
-.page-content .table-wrapper,
-.page-content .page-view {
-  padding-left: 40px;
 }
 
 
@@ -246,5 +244,4 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 
 .profile-view-flex .sign-out {
   color: rgb(255, 57, 57);
-
 }
