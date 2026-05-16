@@ -48,11 +48,6 @@ table tbody tr:last-of-type {
   border-bottom: none;
 }
 
-table tbody tr:hover {
-  background-color: rgb(27, 54, 90);
-  cursor: pointer;
-}
-
 
 /*
 ========================================
