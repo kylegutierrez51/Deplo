@@ -27,7 +27,9 @@ ul {
   --border-clr: #ffffff14;
   --light-border-clr: #474747;
   --button-clr: #163452;
-  --button-clr-hover: #11283f
+  --button-clr-hover: #11283f;
+  --icon-clr: #888;
+  --input-clr: #666;
 }
 
 
