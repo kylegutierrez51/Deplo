@@ -52,14 +52,25 @@ Pagination
 */
 
 .page-view {
-  padding: 75px 150px 75px 150px;
+  padding: 75px 150px 75px 0;
+  position: relative;
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  /* since .pages is position: absolute, it isn't moved to to the center. It does gain the benefits of align-items though */
 }
 
-.page-flex {
+.page-view .pages {
+  position: absolute;
+  left: 0;
+}
+
+.pagination-flex {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 30px;
+  padding-left: 150px; /* centers the pagination with the table */
 }
 
 .view-option {
