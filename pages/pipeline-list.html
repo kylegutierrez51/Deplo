@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="../styles/general.css">
   <link rel="stylesheet" href="../styles/sidebar.css">
   <link rel="stylesheet" href="../styles/table.css">
-  <link rel="stylesheet" href="../styles/page-view.css">
   <link rel="stylesheet" href="../styles/subheader.css">
   <link rel="stylesheet" href="../styles/pipeline-list-filters.css">
 </head>
@@ -209,10 +208,6 @@
   const sidebar = document.querySelector('.sidebar');
 
   document.getElementById('sidebarToggle').addEventListener('click', function () {
-    sidebar.classList.toggle('closed');
-  });
-
-  document.getElementById('sidebarClose').addEventListener('click', function () {
     sidebar.classList.toggle('closed');
   });
 
