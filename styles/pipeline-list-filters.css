@@ -33,7 +33,6 @@ input {
   background-color: var(--dark-clr-2);
   color: var(--text-white-clr);
   padding-left: 34px;
-  padding-right: 12px;
 }
 
 input::placeholder {

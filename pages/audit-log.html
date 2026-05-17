@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deplo | Pipelines</title>
+  <title>Deplo | Audit Log</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
@@ -110,25 +110,27 @@
       <div class="filters-flex">
         <div class="input-group">
           <ion-icon name="search-outline"></ion-icon>
-          <input type="text" placeholder="Search pipelines..."/>
+          <input type="text" placeholder="Search events, users, resources..."/>
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All environments</option>
-            <option value="production">Production</option>
-            <option value="staging">Staging</option>
-            <option value="development">Development</option>
-            <option value="preview">Preview</option>
+            <option value="all">All actions</option>
+            <option value="production">Pipeline</option>
+            <option value="staging">Runs</option>
+            <option value="development">Approvals</option>
+            <option value="preview">Secrets</option>
+            <option value="preview">Webhooks</option>
+            <option value="preview">Team</option>
+            <option value="preview">Settings</option>
           </select>
         </div>
         <div class="select-group">
           <select id="status" name="status">
-            <option value="all">All statuses</option>
-            <option value="succeeded">Succeeded</option>
-            <option value="failed">Failed</option>
-            <option value="running">Running</option>
-            <option value="queued">Queued</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">All time</option>
+            <option value="succeeded">Today</option>
+            <option value="failed">Last 7 days</option>
+            <option value="running">Last 30 days</option>
+            <option value="queued">Last 90 days</option>
           </select>
         </div>
       </div>
@@ -139,34 +141,30 @@
         <table>
           <thead>
             <tr>
-              <th>Pipeline</th>
-              <th>Repository</th>
-              <th>Last Run</th>
-              <th>Status</th>
-              <th>Environment</th>
+              <th>Action</th>
+              <th>Resource</th>
+              <th>Actor</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>build-frontend<br>79 runs </td>
-              <td>abcd/web-client<br>f4e5d6c feat: add retry logic to webhook...</td>
-              <td>1h ago <br>2m 14s</td>
-              <td>Running</td>
-              <td>staging</td>
+              <td>Run Completed</td>
+              <td>deploy-api #482 (PipelineRun)</td>
+              <td>system</td>
+              <td>10d ago</td>
             </tr>
             <tr>
-              <td>deploy-api<br>182 runs</td>
-              <td>abcd/api-server<br>a1b2c3d fix: resolve connection pool exh...</td>
-              <td>1h ago <br>7m 7s</td>
-              <td>Succeeded</td>
-              <td>production</td>
+              <td>Pipeline Triggered</td>
+              <td>deploy-api #482 (Pipeline)</td>
+              <td>sarah.chen</td>
+              <td>10d ago</td>
             </tr>
             <tr>
-              <td>release-mobile<br>54 runs </td>
-              <td>abcd/mobile-app<br>7890abc chore: bump dependencies to l...</td>
-              <td>2h ago <br>5m 12s</td>
-              <td>Failed</td>
-              <td>production</td>
+              <td>Webhook Received</td>
+              <td>push → acme/api-server (WebhookEvent)</td>
+              <td>github</td>
+              <td>11d ago</td>
             </tr>
           </tbody>
         </table>
