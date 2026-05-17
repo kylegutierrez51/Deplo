@@ -18,8 +18,11 @@
     align-items: start;
     flex-direction: column;
     gap: 10px;
-    margin-right: 15px;
-    margin-left: 15px;
+}
+
+.title-group .subtitle {
+    display: flex;
+    gap: 5px;
 }
 
 .subheader .add-div {

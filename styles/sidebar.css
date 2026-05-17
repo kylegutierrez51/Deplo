@@ -114,7 +114,7 @@ Sidebar Content
   border-bottom: 2px solid var(--border-clr);
 }
 
-.subtitle {
+.sidebar .subtitle {
   margin-left: 15px;
   font-family: "JetBrains Mono";
   font-size: 14px;
