@@ -15,6 +15,7 @@ Webhooks
 */
 .webhook-grid {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -29,7 +30,14 @@ Webhooks
   padding-left: 30px;
   padding-right: 30px;
   border: 1px solid var(--light-border-clr);
-  border-radius: 12px;
+}
+
+.webhook-container:first-of-type {
+  border-radius: 12px 12px 0 0;
+}
+
+.webhook-container:last-of-type {
+  border-radius: 0 0 12px 12px;
 }
 
 .webhook-flex {
@@ -63,6 +71,14 @@ Webhooks
 .webhook-detail .name-status .active {
   background-color: var(--header-clr);
   color: var(--text-blue-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.webhook-detail .name-status .inactive {
+  
+  border: 1px solid var(--light-border-clr);
+  color: var(--text-white-clr);
   padding: 7px;
   border-radius: 42%;
 }
