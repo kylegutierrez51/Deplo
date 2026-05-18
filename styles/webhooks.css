@@ -24,7 +24,7 @@ Webhooks
   width: 100%;
   min-width: 527px;
   max-width: 780px;
-  padding-top: 30px;
+  padding-top: 20px;
   padding-bottom: 15px;
   padding-left: 30px;
   padding-right: 30px;
@@ -90,6 +90,7 @@ Webhooks
 
 .pipeline-info .secret ion-icon {
   font-size: 19px;
+  cursor: pointer;
 }
 
 .pipeline-info .time {
@@ -105,6 +106,15 @@ Webhooks
 
 .pipeline-info .registered {
   margin-left: 15px;
+}
+
+.webhook-flex .options {
+  display: flex;
+  gap: 15px;
+}
+
+.webhook-flex .options > ion-icon {
+  cursor: pointer;
 }
 
 
