@@ -33,11 +33,11 @@ table td {
 }
 
 table tbody tr {
-  border-bottom: 1px solid #474747;
+  border-bottom: 1px solid var(--light-border-clr);
 }
 
 table tbody tr:first-of-type {
-  border-top: 1px solid #474747;
+  border-top: 1px solid var(--light-border-clr);
 }
 
 table tbody tr:last-of-type {
@@ -67,7 +67,6 @@ table tbody td.filter {
 
 table tbody td.filter > div {
   display: inline;
-  margin-left: 10px;
 }
 
 table tbody td.filter ion-icon {
