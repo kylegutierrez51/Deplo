@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deplo | Audit Log</title>
+  <title>Deplo | Run History</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
@@ -80,6 +80,7 @@
         <div class="sign-out">Sign Out</div>
       </div>
     </div>
+
   </section>
 
   <button class="sidebar-toggle" id="sidebarToggle">
@@ -91,16 +92,15 @@
     <section class="subheader">
       <div class="subheader-flex">
         <div class="title-group">
-            <h1>Audit Log</h1>
+            <h1>Run History</h1>
             <div class='subtitle'>
-              <span id='subtitle-count'>20</span>
-              <span>events</span>
+              <span>All pipeline executions across your projects.</span>
             </div>
         </div>
         <div class="add-div">
           <button class='add-btn'>
-            <ion-icon name="download-outline"></ion-icon>
-            <div>Export</div>
+            <ion-icon name="caret-forward-outline"></ion-icon>
+            <div>Run Pipeline</div>
           </button>
         </div>
       </div>
@@ -110,28 +110,38 @@
       <div class="filters-flex">
         <div class="input-group">
           <ion-icon name="search-outline"></ion-icon>
-          <input type="text" placeholder="Search events, users, resources..."/>
-        </div>
-        <div class="select-group">
-          <select id="environment" name="environment">
-            <option value="all">All actions</option>
-            <option value="production">Pipeline</option>
-            <option value="staging">Runs</option>
-            <option value="development">Approvals</option>
-            <option value="preview">Secrets</option>
-            <option value="preview">Webhooks</option>
-            <option value="preview">Team</option>
-            <option value="preview">Settings</option>
-          </select>
+          <input type="text" placeholder="Search pipelines, commits..."/>
         </div>
         <div class="select-group">
           <select id="status" name="status">
-            <option value="all">All time</option>
-            <option value="succeeded">Today</option>
-            <option value="failed">Last 7 days</option>
-            <option value="running">Last 30 days</option>
-            <option value="queued">Last 90 days</option>
+            <option value="all">All statuses</option>
+            <option value="succeeded">Queued</option>
+            <option value="failed">Running</option>
+            <option value="running">Succeeded</option>
+            <option value="queued">Failed</option>
+            <option value="cancelled">Cancelled</option>
           </select>
+        </div>
+        <div class="select-group">
+          <select id="trigger" name="trigger">
+            <option value="all">All triggers</option>
+            <option value="production">Webhook</option>
+            <option value="staging">Manual</option>
+            <option value="development">API</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <select id="environment" name="environment">
+            <option value="all">All environments</option>
+            <option value="production">Production</option>
+            <option value="staging">Staging</option>
+            <option value="development">Development</option>
+            <option value="preview">Preview</option>
+          </select>
+        </div>
+        <div class="active-runs">
+          <div>&bull; 3 active</div>
+         
         </div>
       </div>
     </section>
@@ -141,30 +151,35 @@
         <table>
           <thead>
             <tr>
-              <th>Action</th>
-              <th>Resource</th>
-              <th>Actor</th>
-              <th>Time</th>
+              <th>Pipeline</th>
+              <th>Duration</th>
+              <th class="filter"><ion-icon name="swap-vertical-outline"></ion-icon>Time</th> <!-- filter by time -->
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Run Completed</td>
-              <td>deploy-api #482 (PipelineRun)</td>
-              <td>system</td>
-              <td>10d ago</td>
+              <td>(Queued) deploy-api (production) <br>acbcd/api-server &bull; v12</td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>-</div>
+              </td>
+              <td>6h ago</td>
             </tr>
             <tr>
-              <td>Pipeline Triggered</td>
-              <td>deploy-api #482 (Pipeline)</td>
-              <td>sarah.chen</td>
-              <td>10d ago</td>
+              <td>(Running) build-frontend (staging) <br>acbcd/web-client &bull; v8</td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>6h 1m</div>
+              </td>
+              <td>6h ago</td>
             </tr>
             <tr>
-              <td>Webhook Received</td>
-              <td>push → acme/api-server (WebhookEvent)</td>
-              <td>github</td>
-              <td>11d ago</td>
+              <td>(Succeeded) deploy-api (production) <br>acbcd/api-server &bull; v14</td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>8m 0s</div>
+              </td>
+              <td>11h ago</td>
             </tr>
           </tbody>
         </table>

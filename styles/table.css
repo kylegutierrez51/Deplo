@@ -44,6 +44,36 @@ table tbody tr:last-of-type {
   border-bottom: none;
 }
 
+table thead .filter {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+table th ion-icon {
+  font-size: 17px;
+}
+
+table td ion-icon {
+  font-size: 20px;
+}
+
+
+/* below 3 are needed to center the .filter class to the center of its row */
+table tbody td.filter {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+table tbody td.filter > div {
+  display: inline;
+  margin-left: 10px;
+}
+
+table tbody td.filter ion-icon {
+  vertical-align: middle;
+}
+
 
 /*
 ========================================
