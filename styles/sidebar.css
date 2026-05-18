@@ -30,11 +30,12 @@ Page Content (layout when sidebar present)
   transition: margin-left 0.3s ease;
 }
 
+/* max-width and width are used for the Webhooks page for centering */
 .page-flex {
   display: flex;
   flex-direction: column;
+  margin: 0 auto; /* centers entire container */
   max-width: 1000px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -90,24 +91,6 @@ Sidebar Header
 .sidebar-flex .title {
   font-size: 20px;
 }
-
-.chevron-container {
-  display: flex;
-  align-items: center;
-  padding: 5px 5px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.chevron-container:hover {
-  background-color: var(--border-clr);
-}
-
-ion-icon[name="chevron-back-outline"] {
-  font-size: 20px;
-}
-
 
 /*
 ========================================
