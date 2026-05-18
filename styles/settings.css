@@ -1,0 +1,96 @@
+.webhook-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.webhook-container {
+  width: 100%;
+  min-width: 527px;
+  max-width: 780px;
+  margin-bottom: 100px;
+  padding-top: 30px;
+  padding-bottom: 15px;
+  padding-left: 30px;
+  padding-right: 30px;
+  border: 1px solid var(--light-border-clr);
+  border-radius: 12px;
+}
+
+.webhook-flex {
+  display: flex;
+  justify-content: space-between;
+}
+
+.webhook-detail {
+  display: flex;
+  gap: 20px;
+}
+
+.webhook-detail .git-icon ion-icon {
+  background-color: var(--light-border-clr);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.pipeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.webhook-detail .name-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.webhook-detail .name-status .active {
+  background-color: var(--header-clr);
+  color: var(--text-blue-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.pipeline-info .events {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.pipeline-info .event-type {
+  font-size: 12px;
+  background-color: var(--light-border-clr);
+  padding: 7px;
+  border-radius: 5px;
+}
+
+.pipeline-info .secret {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pipeline-info .secret ion-icon {
+  font-size: 19px;
+}
+
+.pipeline-info .time {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-info .last-delivery {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pipeline-info .registered {
+  margin-left: 15px;
+}
+
+
