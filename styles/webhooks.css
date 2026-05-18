@@ -13,7 +13,7 @@ Settings Subheader
 Webhooks
 ========================================
 */
-.webhook-grid {
+.webhook-layout {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -23,8 +23,8 @@ Webhooks
 
 .webhook-container {
   width: 100%;
-  min-width: 527px;
-  max-width: 780px;
+  min-width: 536px;
+  max-width: 1000px;
   padding-top: 20px;
   padding-bottom: 15px;
   padding-left: 30px;
@@ -131,6 +131,33 @@ Webhooks
 
 .webhook-flex .options > ion-icon {
   cursor: pointer;
+}
+
+
+/*
+============================================================
+Pagination overrides for centered layout
+ -- this makes the pagination centered at the rightmost side
+============================================================
+*/
+.page-flex .page-view {
+  padding: 30px 0;
+  justify-content: space-between;
+}
+
+/*
+This one is tricky:
+ - .pages is set to "position: absolute" in table.css
+ - That means if you don't override it back to "position: static" (the default position)
+ - Then the .pagination-flex will just go all the way to the left because "justify-content: space-betewen" from above will not account for an element with position: absolute
+*/
+.page-flex .page-view .pages {
+  position: static;
+}
+
+.page-flex .pagination-flex {
+  padding-left: 0;
+  gap: 15px;
 }
 
 
