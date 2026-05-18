@@ -1,0 +1,136 @@
+/*
+========================================
+Settings Subheader
+========================================
+*/
+.settings-subheader {
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--light-border-clr);
+}
+
+/*
+========================================
+Webhooks
+========================================
+*/
+.webhook-grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.webhook-container {
+  width: 100%;
+  min-width: 527px;
+  max-width: 780px;
+  padding-top: 20px;
+  padding-bottom: 15px;
+  padding-left: 30px;
+  padding-right: 30px;
+  border: 1px solid var(--light-border-clr);
+}
+
+.webhook-container:first-of-type {
+  border-radius: 12px 12px 0 0;
+}
+
+.webhook-container:last-of-type {
+  border-radius: 0 0 12px 12px;
+}
+
+.webhook-flex {
+  display: flex;
+  justify-content: space-between;
+}
+
+.webhook-detail {
+  display: flex;
+  gap: 20px;
+}
+
+.webhook-detail .git-icon ion-icon {
+  background-color: var(--light-border-clr);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.pipeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.webhook-detail .name-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.webhook-detail .name-status .active {
+  background-color: var(--header-clr);
+  color: var(--text-blue-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.webhook-detail .name-status .inactive {
+  
+  border: 1px solid var(--light-border-clr);
+  color: var(--text-white-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.pipeline-info .events {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.pipeline-info .event-type {
+  font-size: 12px;
+  background-color: var(--light-border-clr);
+  padding: 7px;
+  border-radius: 5px;
+}
+
+.pipeline-info .secret {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pipeline-info .secret ion-icon {
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.pipeline-info .time {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-info .last-delivery {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pipeline-info .registered {
+  margin-left: 15px;
+}
+
+.webhook-flex .options {
+  display: flex;
+  gap: 15px;
+}
+
+.webhook-flex .options > ion-icon {
+  cursor: pointer;
+}
+
+
