@@ -1,3 +1,18 @@
+/*
+========================================
+Settings Subheader
+========================================
+*/
+.settings-subheader {
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--light-border-clr);
+}
+
+/*
+========================================
+Webhooks
+========================================
+*/
 .webhook-grid {
   display: flex;
   justify-content: center;
@@ -9,7 +24,6 @@
   width: 100%;
   min-width: 527px;
   max-width: 780px;
-  margin-bottom: 100px;
   padding-top: 30px;
   padding-bottom: 15px;
   padding-left: 30px;
