@@ -1,45 +1,45 @@
 .subheader {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .subheader-flex {
-    display: flex;
-    justify-content: space-between;
-    padding-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 20px;
 }
 
 .subheader .title-group {
-    display: flex;
-    align-items: start;
-    flex-direction: column;
-    gap: 10px;
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .title-group .subtitle {
-    display: flex;
-    gap: 5px;
+  display: flex;
+  gap: 5px;
 }
 
 .subheader .add-div {
-    display: flex;
-    justify-content: end;
-    align-items: center
+  display: flex;
+  justify-content: end;
+  align-items: center
 }
 
 .subheader .add-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    background-color: var(--button-clr);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: var(--button-clr);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
 }
 
 .subheader ion-icon {
-    margin-right: 5px;
-    font-size: 20px;
+  margin-right: 5px;
+  font-size: 20px;
 }
 
 .subheader .add-btn div {
@@ -48,6 +48,6 @@
 }
 
 .subheader button:hover {
-    background-color: var(--button-clr-hover);
-    cursor: pointer;
+  background-color: var(--button-clr-hover);
+  cursor: pointer;
 }
