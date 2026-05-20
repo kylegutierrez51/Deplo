@@ -8,6 +8,7 @@
   padding: 40px 30px;
   padding-top: 30px;
   border: 1px solid var(--border-clr);
+  border-right: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
