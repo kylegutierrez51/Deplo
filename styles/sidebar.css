@@ -100,7 +100,7 @@ Sidebar Nav (scrollable area)
 ========================================
 */
 .sidebar-nav {
-  flex: 1;
+  flex: 1; /* this makes .sidebar-nav stretch to fill out its entire container, pushing .profile to the bottom of the screen. */
   overflow-y: auto;
   position: relative;
   z-index: 0;
@@ -223,7 +223,7 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   margin-right: 5px;
 }
 
-.profile-view-container {
+.profile-options {
   position: fixed;
   z-index: 9999;
   padding: 10px 10px;
@@ -234,14 +234,28 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-border-clr);
   border-radius: 10px;
+  overflow-y: auto; /* scrollbar appears if you resize DevTools all the way up to the top */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
-.profile-view-container.visible {
+.profile-options.visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+.profile-options::-webkit-scrollbar {
+  width: 4px;
+}
+
+.profile-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-options::-webkit-scrollbar-thumb {
+  background: var(--border-clr);
+  border-radius: 4px;
 }
 
 .profile-view-flex {
