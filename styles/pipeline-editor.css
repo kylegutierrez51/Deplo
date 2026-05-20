@@ -96,6 +96,10 @@ Header Buttons
   border-radius: 5px;
 }
 
+.right-side button ion-icon {
+  margin-right: 5px;
+}
+
 
 
 .right-side button div {
