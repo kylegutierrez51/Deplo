@@ -178,11 +178,13 @@
 
     <form id="post-form" method="POST">
       <div class="stage-sidebar-nav">
+
         <div class="stage-name">
           <label>STAGE NAME</label>
           <input name="stage-name" placeholder="e.g. build">
         </div>
-        <div class="stage-name">
+
+        <div class="stage-types">
           <label>STAGE TYPE</label>
           <div class="stage-type-grid">
             <div class="item">
@@ -207,84 +209,87 @@
             </div>
           </div>
         </div>
-      </div>
-    </form>    
 
-    <div class="stage-sidebar-nav">
-      <div class="stage-sidebar-content">
-        <div class="stage-sidebar-content-flex">
-          <div class="subtitle">DEPLOY</div>
-          <ul>
-            <li>
-              <ion-icon name="git-network-outline"></ion-icon>
-              <a href="pipeline-list.html">
-                <div class="title">Pipelines</div>
-              </a>
-            </li>
-            <li>
+        <div class="command">
+          <label>COMMAND</label>
+          <textarea name="command" placeholder="e.g. npm run build"></textarea>
+        </div>
+
+        <div class="timeout-and-retries">
+          <div class="timeout">
+            <div>
               <ion-icon name="time-outline"></ion-icon>
-              <a href="run-history.html">
-                <div class="title">Run History</div>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <a href="approvals.html">
-                <div class="title">Approvals</div>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <div class="subtitle">MANAGE</div>
-          <ul>
-            <li>
-              <ion-icon name="lock-closed-outline"></ion-icon>
-              <a href="secrets.html">
-                <div class="title">Secrets</div>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="settings-outline"></ion-icon>
-              <a href="environments.html">
-                <div class="title">Environments</div>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="flash-outline"></ion-icon>
-              <a href="webhooks.html">
-                <div class="title">Webhooks</div>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="reader-outline"></ion-icon>
-              <a href="audit-log.html">
-                <div class="title">Audit Log</div>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="profile">
-      <div class="profile-flex">
-        <div class="profile-container">
-          <div class="profile-pic"></div>
-          <div class="profile-details">
-            <div class="name">Coco</div>
-            <div class="role">ADMIN</div>
+              <label>TIMEOUT (S)</label>
+            </div>
+            <input name="timeout" placeholder="e.g. npm run build" value="0">
+          </div>
+          <div class="retries">
+            <div>
+              <ion-icon name="refresh-outline"></ion-icon>
+              <label>RETRIES</label>
+            </div>
+            <input name="retries" placeholder="e.g. npm run build" value="0">   
           </div>
         </div>
-        <div>
-          <ion-icon name="chevron-up-outline"></ion-icon>
-        </div>
-      </div>
-    </div>
 
+        <div class="env-vars">
+          <div class="env-title-container">
+            <div class="env-title">
+              <ion-icon name="settings-outline"></ion-icon>
+              <label>ENV VARIABLES</label>
+            </div>
+            <button class='add-env-btn'>
+              <ion-icon name="add-outline"></ion-icon>
+              Add
+            </button>
+          </div>
+          <div class="env-vars-flex">
+            <div class="env-container">
+              <input name="env-key" placeholder="KEY">
+              <span>=</span>
+              <input name="env-value" placeholder="VALUE">
+            </div>
+            <div class="env-container">
+              <input name="env-key" placeholder="KEY">
+              <span>=</span>
+              <input name="env-value" placeholder="VALUE">
+            </div>
+          </div>
+        </div>
+
+        <div class="secrets">
+          <div class="secrets-info">
+            <div>
+              <ion-icon name="lock-closed-outline"></ion-icon>
+              <label>SECRETS</label>
+            </div>
+            <div class="info">Injected at runtime. Never logged.</div>
+          </div>
+        </div>
+        <div class="secrets-flex">
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+        </div>
+    </form>    
   </section>
 
 </body>
