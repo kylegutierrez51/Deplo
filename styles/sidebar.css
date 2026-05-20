@@ -75,7 +75,7 @@ Sidebar Toggle Button
 }
 
 .sidebar.closed ~ .sidebar-toggle {
-  left: 15px;
+  left: 20px;
 }
 
 /*

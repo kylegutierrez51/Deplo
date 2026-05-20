@@ -165,6 +165,133 @@
     <div>Pipeline Editor</div>
   </main>
 
+  <section class="stage-sidebar">
+    <div class="stage-sidebar-header">
+      <div class="stage-title">
+        <div class="icon-border">
+          <ion-icon name="rocket-outline"></ion-icon>
+        </div>
+        <div class="title">Configure Stage</div>
+      </div>
+      <button class="exit-btn">x</button>
+    </div>
+
+    <form id="post-form" method="POST">
+      <div class="stage-sidebar-nav">
+
+        <div class="stage-name">
+          <label>STAGE NAME</label>
+          <input name="stage-name" placeholder="e.g. build">
+        </div>
+
+        <div class="stage-types">
+          <label>STAGE TYPE</label>
+          <div class="stage-type-grid">
+            <div class="item">
+              <ion-icon name="hammer-outline"></ion-icon>
+              <div>Build</div>
+            </div>
+            <div class="item">
+              <ion-icon name="pencil-outline"></ion-icon>
+              <div>Test</div>
+            </div>
+            <div class="item">
+              <ion-icon name="rocket-outline"></ion-icon>
+              <div>Deploy</div>
+            </div>
+            <div class="item">
+              <ion-icon name="shield-checkmark-outline"></ion-icon>
+              <div>Approval</div>
+            </div>
+            <div class="item">
+              <ion-icon name="code-outline"></ion-icon>
+              <div>Script</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="command">
+          <label>COMMAND</label>
+          <textarea name="command" placeholder="e.g. npm run build"></textarea>
+        </div>
+
+        <div class="timeout-and-retries">
+          <div class="timeout">
+            <div>
+              <ion-icon name="time-outline"></ion-icon>
+              <label>TIMEOUT (S)</label>
+            </div>
+            <input name="timeout" placeholder="e.g. npm run build" value="0">
+          </div>
+          <div class="retries">
+            <div>
+              <ion-icon name="refresh-outline"></ion-icon>
+              <label>RETRIES</label>
+            </div>
+            <input name="retries" placeholder="e.g. npm run build" value="0">   
+          </div>
+        </div>
+
+        <div class="env-vars">
+          <div class="env-title-container">
+            <div class="env-title">
+              <ion-icon name="settings-outline"></ion-icon>
+              <label>ENV VARIABLES</label>
+            </div>
+            <button class='add-env-btn'>
+              <ion-icon name="add-outline"></ion-icon>
+              Add
+            </button>
+          </div>
+          <div class="env-vars-flex">
+            <div class="env-container">
+              <input name="env-key" placeholder="KEY">
+              <span>=</span>
+              <input name="env-value" placeholder="VALUE">
+            </div>
+            <div class="env-container">
+              <input name="env-key" placeholder="KEY">
+              <span>=</span>
+              <input name="env-value" placeholder="VALUE">
+            </div>
+          </div>
+        </div>
+
+        <div class="secrets">
+          <div class="secrets-info">
+            <div>
+              <ion-icon name="lock-closed-outline"></ion-icon>
+              <label>SECRETS</label>
+            </div>
+            <div class="info">Injected at runtime. Never logged.</div>
+          </div>
+        </div>
+        <div class="secrets-flex">
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+          <label class="secret-container">
+            <div class="secret">
+              <input type="checkbox">
+              <span class="secret-key">DATABASE_URL</span>
+            </div>
+            <span class="secret-env">production</span>
+          </label>
+        </div>
+    </form>    
+  </section>
+
 </body>
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
