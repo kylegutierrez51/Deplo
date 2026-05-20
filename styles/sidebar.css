@@ -104,6 +104,10 @@ Sidebar Nav (scrollable area)
   overflow-y: auto;
   position: relative;
   z-index: 0;
+
+  /* positions scrollbar at edge of sidebar */
+  margin-right: -30px;
+  padding-right: 30px;
 }
 
 .sidebar-nav::-webkit-scrollbar {
