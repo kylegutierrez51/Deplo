@@ -140,6 +140,14 @@ Stage Sidebar
 ==================
 */
 
+label {
+  font-family: "JetBrains Mono";
+}
+
+.stage-sidebar input {
+  padding-left: 10px;
+}
+
 .stage-sidebar {
   position: fixed;
   right: 0;
@@ -195,3 +203,42 @@ Stage Sidebar
   font-size: 15px;
   cursor: pointer;
 }
+
+.stage-sidebar-nav {
+  padding: 20px 0;
+}
+
+.stage-name {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stage-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+
+}
+
+.stage-type-grid .item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 5px;
+  background-color: var(--dark-clr-2);
+  border-radius: 10px;
+  border: 1px solid var(--border-clr);
+  cursor: pointer;
+}
+
+.stage-type-grid .item:hover {
+  background-color: var(--light-border-clr);
+}
+
+
+

@@ -176,9 +176,43 @@
       <button class="exit-btn">x</button>
     </div>
 
-    <div class="sidebar-nav">
-      <div class="sidebar-content">
-        <div class="sidebar-content-flex">
+    <form id="post-form" method="POST">
+      <div class="stage-sidebar-nav">
+        <div class="stage-name">
+          <label>STAGE NAME</label>
+          <input name="stage-name" placeholder="e.g. build">
+        </div>
+        <div class="stage-name">
+          <label>STAGE TYPE</label>
+          <div class="stage-type-grid">
+            <div class="item">
+              <ion-icon name="hammer-outline"></ion-icon>
+              <div>Build</div>
+            </div>
+            <div class="item">
+              <ion-icon name="pencil-outline"></ion-icon>
+              <div>Test</div>
+            </div>
+            <div class="item">
+              <ion-icon name="rocket-outline"></ion-icon>
+              <div>Deploy</div>
+            </div>
+            <div class="item">
+              <ion-icon name="shield-checkmark-outline"></ion-icon>
+              <div>Approval</div>
+            </div>
+            <div class="item">
+              <ion-icon name="code-outline"></ion-icon>
+              <div>Script</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>    
+
+    <div class="stage-sidebar-nav">
+      <div class="stage-sidebar-content">
+        <div class="stage-sidebar-content-flex">
           <div class="subtitle">DEPLOY</div>
           <ul>
             <li>
