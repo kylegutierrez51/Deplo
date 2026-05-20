@@ -21,9 +21,9 @@
 
 
 /*
-========================================
-Page Content (layout when sidebar present)
-========================================
+==========================================================================
+Page Content (layout when sidebar present -- excluding pipeline editor)
+==========================================================================
 */
 .page-content {
   margin-top: 40px;
@@ -44,7 +44,6 @@ Page Content (layout when sidebar present)
 .sidebar.closed ~ .page-content {
   margin-left: 0;
 }
-
 
 /*
 ========================================
