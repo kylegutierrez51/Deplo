@@ -28,7 +28,7 @@ a {
   --text-blue-clr: #50a5ff;
   --dark-clr-1: #00000026;
   --dark-clr-2: #1e1e1e;
-  --border-clr: #ffffff14;
+  --border-clr: #ffffff14; /* 14 is an alpha value since this is an 8-digit hex code */
   --light-border-clr: #474747;
   --button-clr: #163452;
   --button-clr-hover: #11283f;
