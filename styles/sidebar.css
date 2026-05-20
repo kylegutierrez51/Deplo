@@ -8,7 +8,9 @@
   padding: 40px 30px;
   padding-top: 30px;
   border: 1px solid var(--border-clr);
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   transition: transform 0.3s ease;
   z-index: 100;
 }
@@ -94,6 +96,31 @@ Sidebar Header
 
 /*
 ========================================
+Sidebar Nav (scrollable area)
+========================================
+*/
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 0;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--border-clr);
+  border-radius: 4px;
+}
+
+/*
+========================================
 Sidebar Content
 ========================================
 */
@@ -139,13 +166,9 @@ Profile
 ========================================
 */
 .profile {
-  position: absolute;
-  bottom: 20px;
-  /* left and right are set to match the sidebar's horizontal padding (30px each) */
-  left: 30px;
-  right: 30px;
-  
-
+  position: relative;
+  z-index: 1;
+  margin-top: 20px;
   padding: 10px 10px;
   background-color: var(--dark-clr-2);
   border: 1px solid var(--border-clr);
@@ -197,17 +220,18 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 }
 
 .profile-view-container {
-  position: absolute;
-  bottom: 100px;
-  /* left and right are set to match the sidebar's horizontal padding (30px each) */
-  left: 30px;
-  right: 30px;
+  position: fixed;
+  z-index: 9999;
   padding: 10px 10px;
-  background-color: var(--border-clr);
-  border: 1px solid var(--border-clr);
+  /* setting these colors makes this not go over .sidebar-content when you pull up DevTools because --border-clr is 8% opacity white, menaing nav items show through it. Look at general.css for more info */
+  /* background-color: var(--border-clr);
+  border: 1px solid var(--border-clr); */
+
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-border-clr);
   border-radius: 10px;
   opacity: 0;
-  pointer-events: none; /* when invisible, this div can't be clicked */
+  pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
@@ -229,6 +253,7 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 
 .profile-view-flex div:hover {
   background-color: var(--border-clr);
+  cursor: pointer;
 }
 
 .profile-view-flex .sign-out {

@@ -17,62 +17,64 @@
       <div class="title">Deplo</div>
     </div>
 
-    <div class="sidebar-content">
-      <div class="sidebar-content-flex">
-        <div class="subtitle">DEPLOY</div>
-        <ul>
-          <li>
-            <ion-icon name="git-network-outline"></ion-icon>
-            <a href="../pipeline-list.html">
-              <div class="title">Pipelines</div>
-            </a>
-            
-          </li>
-          <li>
-            <ion-icon name="time-outline"></ion-icon>
-            <a href="../run-history.html">
-              <div class="title">Run History</div>
-            </a>
-          </li>
-          <li>
-            <ion-icon name="checkmark-circle-outline"></ion-icon>
-            <a href="../approvals.html">
-              <div class="title">Approvals</div>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <div class="sidebar-nav">
+      <div class="sidebar-content">
+        <div class="sidebar-content-flex">
+          <div class="subtitle">DEPLOY</div>
+          <ul>
+            <li>
+              <ion-icon name="git-network-outline"></ion-icon>
+              <a href="../pipeline-list.html">
+                <div class="title">Pipelines</div>
+              </a>
 
-    <div class="sidebar-content">
-      <div class="sidebar-content-flex">
-        <div class="subtitle">MANAGE</div>
-        <ul>
-          <li>
-            <ion-icon name="lock-closed-outline"></ion-icon>
-            <a href="../secrets.html">
-              <div class="title">Secrets</div>
-            </a>
-          </li>
-          <li>
-            <ion-icon name="settings-outline"></ion-icon>
-            <a href="../environments.html">
-              <div class="title">Environments</div>
-            </a>
-          </li>
-          <li>
-            <ion-icon name="flash-outline"></ion-icon>
-            <a href="../webhooks.html">
-              <div class="title">Webhooks</div>
-            </a>
-          </li>
-          <li>
-            <ion-icon name="reader-outline"></ion-icon>
-            <a href="../audit-log.html">
-              <div class="title">Audit Log</div>
-            </a>
-          </li>
-        </ul>
+            </li>
+            <li>
+              <ion-icon name="time-outline"></ion-icon>
+              <a href="../run-history.html">
+                <div class="title">Run History</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <a href="../approvals.html">
+                <div class="title">Approvals</div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="sidebar-content-flex">
+          <div class="subtitle">MANAGE</div>
+          <ul>
+            <li>
+              <ion-icon name="lock-closed-outline"></ion-icon>
+              <a href="../secrets.html">
+                <div class="title">Secrets</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="settings-outline"></ion-icon>
+              <a href="../environments.html">
+                <div class="title">Environments</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="flash-outline"></ion-icon>
+              <a href="../webhooks.html">
+                <div class="title">Webhooks</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="reader-outline"></ion-icon>
+              <a href="../audit-log.html">
+                <div class="title">Audit Log</div>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -91,21 +93,34 @@
       </div>
     </div>
 
-    <div class="profile-view-container">
-      <div class="profile-view-flex">
-        <div class="profile-view">Profile</div>
-        <div class="sign-out">Sign Out</div>
-      </div>
-    </div>
-
   </section>
+
+  <div class="profile-view-container">
+    <div class="profile-view-flex">
+      <div class="profile-view">Profile</div>
+      <div class="sign-out">Sign Out</div>
+    </div>
+  </div>
+
 </body>
 
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script>
-  document.querySelector('.profile').addEventListener('click', function () {
-    document.querySelector('.profile-view-container').classList.toggle('visible');
+  /* 
+  This script allows the .profile-view-container to lay over other parts of the sidebar (.sidebar-content) when DevTools is up 
+
+  JS-computed position: On click, getBoundingClientRect() measures exactly where the profile card sits in the viewport and sets the .profile-view-container's (popup) bottom/left/width accordingly to position it properly. It'll always align correctly even when DevTools changes the viewport height.
+  */
+  const profile = document.querySelector('.profile');
+  const popup = document.querySelector('.profile-view-container');
+
+  profile.addEventListener('click', function () {
+    const rect = profile.getBoundingClientRect();
+    popup.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+    popup.style.left = rect.left + 'px';
+    popup.style.width = rect.width + 'px';
+    popup.classList.toggle('visible');
   });
 </script>
 
