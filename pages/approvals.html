@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deplo | Pipelines</title>
+  <title>Deplo | Approvals</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../styles/subheader.css">
   <link rel="stylesheet" href="../styles/filters.css">
   <link rel="stylesheet" href="../styles/cards.css">
+  <link rel="stylesheet" href="../../styles/approvals.css">
 </head>
 
 <body>
@@ -109,104 +110,194 @@
   </button>
 
   <main class="page-content">
+    <div class="page-flex">
 
-    <section class="subheader">
-      <div class="subheader-flex">
-        <div class="title-group">
-            <h1>Approvals</h1>
-            <div class='subtitle'>
-              <span>Pipeline runs waiting for manual approval before proceeding.</span>
+      <section class="subheader">
+        <div class="subheader-flex">
+          <div class="title-group">
+              <h1>Approvals</h1>
+              <div class='subtitle'>
+                <span>Pipeline runs waiting for manual approval before proceeding.</span>
+              </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cards">
+        <div class="cards-flex">
+          <div class="card">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <div class="card-detail">
+              <span class="card-total">4</span>
+              <span class="card-name">PENDING</span>
             </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="cards">
-      <div class="cards-flex">
-        <div class="card">
-          <ion-icon name="alert-circle-outline"></ion-icon>
-          <div class="card-detail">
-            <span class="card-total">4</span>
-            <span class="card-name">PENDING</span>
+          </div>
+          <div class="card">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <div class="card-detail">
+              <span class="card-total">3</span>
+              <span class="card-name">PRODUCTION</span>
+            </div>
+          </div>
+          <div class="card">
+            <ion-icon name="stopwatch-outline"></ion-icon>
+            <div class="card-detail">
+              <span class="card-total">18h 17m</span>
+              <span class="card-name">LONGEST WAIT</span>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <ion-icon name="alert-circle-outline"></ion-icon>
-          <div class="card-detail">
-            <span class="card-total">3</span>
-            <span class="card-name">PRODUCTION</span>
+      </section>
+
+      <section class="filters">
+        <div class="filters-flex">
+          <div class="input-group">
+            <ion-icon name="search-outline"></ion-icon>
+            <input type="text" placeholder="Search by pipeline, repo, branch, user..."/>
+          </div>
+          <div class="select-group">
+            <select id="environment" name="environment">
+              <option value="all">All environments</option>
+              <option value="production">Production</option>
+              <option value="staging">Staging</option>
+              <option value="development">Development</option>
+              <option value="preview">Preview</option>
+              <option value="preview">Custom</option>
+            </select>
+          </div>
+          <div class="select-group">
+            <select id="recency" name="recency">
+              <option value="oldest">Oldest first</option>
+              <option value="newest">Newest first</option>
+            </select>
           </div>
         </div>
-        <div class="card">
-          <ion-icon name="stopwatch-outline"></ion-icon>
-          <div class="card-detail">
-            <span class="card-total">18h 17m</span>
-            <span class="card-name">LONGEST WAIT</span>
+      </section>
+
+      <section class="approvals-layout">
+        <div class="approval-card">
+          <div class="approvals-flex">
+            <div class="approvals-detail">
+              <div class="pipeline-name-type">
+                <span>release-mobile</span>
+                <div class="production">Production</div>
+                <div class="type manual">Manual</div>
+              </div>
+              <div class="feature-info">
+                <div class="feature-id">
+                  <ion-icon name="git-commit-outline"></ion-icon>
+                  <span>c3d4e5f</span>
+                </div>
+                <span>fix: resolve deep link crash on Android 14</span>
+              </div>
+              <div class="extra-info">
+                <div class="info-flex">
+                  <ion-icon name="person-outline"></ion-icon>
+                  <span>alex.kim</span>
+                </div>
+                <div class="info-flex">
+                  <ion-icon name="git-branch-outline"></ion-icon>
+                  <span>main</span>
+                </div>
+                <div class="info-flex">
+                  <ion-icon name="stopwatch-outline"></ion-icon>
+                  <span>Waiting <span class="waiting-time">18h 17m</span></span>
+                </div>
+                <div class="info-flex">
+                  <ion-icon name="caret-forward-outline"></ion-icon>
+                  <span>6/8 stages complete</span>
+                </div>
+              </div>
+              <div class="stage-view">
+                <div>
+                  <ion-icon name="chevron-down-outline"></ion-icon>
+                  <span>Hide stages</span>
+                </div>
+              </div>
+            </div>
+            <div class="btn-group">
+              <div class="btn">
+                <button class='reject-btn'>
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                  Reject
+                </button>
+              </div>
+              <div class="btn">
+                <button class='approve-btn'>
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  Approve
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="stages">
+            <div class="stages-flex">
+              <div class="stage">
+                <ion-icon name="cube-outline"></ion-icon>
+                <span>install-deps</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div>→</div>
+              <div class="stage">
+                <ion-icon name="cube-outline"></ion-icon>
+                <span>lint</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div>→</div>
+              <div class="stage">
+                <ion-icon name="flask-outline"></ion-icon>
+                <span>unit-tests</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div>→</div>
+              <div class="stage approval">
+                <ion-icon name="shield-outline"></ion-icon>
+                <span>release-approval</span>
+                <ion-icon name="alert-circle-outline"></ion-icon>
+              </div>
+              <div>→</div>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="filters">
-      <div class="filters-flex">
-        <div class="input-group">
-          <ion-icon name="search-outline"></ion-icon>
-          <input type="text" placeholder="Search by pipeline, repo, branch, user..."/>
+      <section class="page-view">
+        <div class="pages">
+          Showing 1-5 of 20
         </div>
-        <div class="select-group">
-          <select id="environment" name="environment">
-            <option value="all">All environments</option>
-            <option value="production">Production</option>
-            <option value="staging">Staging</option>
-            <option value="development">Development</option>
-            <option value="preview">Preview</option>
-            <option value="preview">Custom</option>
-          </select>
-        </div>
-        <div class="select-group">
-          <select id="recency" name="recency">
-            <option value="oldest">Oldest first</option>
-            <option value="newest">Newest first</option>
-          </select>
-        </div>
-      </div>
-    </section>
 
+        <div class="pagination-container">
+          <div class="pagination-flex">
+            <div class="view-option">
+              <ion-icon name="chevron-back-outline"></ion-icon>
+              <div>Prev</div>
+            </div>
 
+            <div class="page-numbers">
+              <div class="page-number">1</div>
+              <div class="page-number">...</div>
+              <div class="page-number">8</div>
+              <div class="page-number"><span>9</span></div>
+              <div class="page-number">10</div>
+              <div class="page-number">...</div>
+              <div class="page-number">22</div>
+            </div>
 
-    <section class="page-view">
-      <div class="pages">
-        Showing 1-5 of 20
-      </div>
+            <div class="view-option">
+              <div>Next</div>
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </div>
 
-      <div class="pagination-container">
-        <div class="pagination-flex">
-          <div class="view-option">
-            <ion-icon name="chevron-back-outline"></ion-icon>
-            <div>Prev</div>
           </div>
-
-          <div class="page-numbers">
-            <div class="page-number">1</div>
-            <div class="page-number">...</div>
-            <div class="page-number">8</div>
-            <div class="page-number"><span>9</span></div>
-            <div class="page-number">10</div>
-            <div class="page-number">...</div>
-            <div class="page-number">22</div>
-          </div>
-
-          <div class="view-option">
-            <div>Next</div>
-            <ion-icon name="chevron-forward-outline"></ion-icon>
-          </div>
-
         </div>
-      </div>
-    </section>
-
+      </section>
+    </div>
   </main>
-
 </body>
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
