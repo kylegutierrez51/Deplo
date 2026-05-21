@@ -18,7 +18,7 @@ Styles <input>, <select>, and <option> globally
   width: 25%;
 }
 
-.input-group ion-icon {
+.input-group ion-icon, .webhook-event-input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -99,6 +99,12 @@ select:hover, input:hover, textarea:hover {
   color: var(--text-blue-clr);
 }
 
+
+/* input needs to be slightly biggert to hold the placeholder text */
+.webhook-event-input-group {
+  position: relative;
+  width: 30%;
+}
 
 
 
