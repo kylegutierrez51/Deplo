@@ -1,0 +1,184 @@
+/*
+============================================================
+Pagination overrides for centered layout
+ -- this makes the pagination centered at the rightmost side
+============================================================
+*/
+.page-flex .page-view {
+  padding: 30px 0;
+  justify-content: space-between;
+}
+
+/*
+This one is tricky:
+ - .pages is set to "position: absolute" in table.css
+ - That means if you don't override it back to "position: static" (the default position)
+ - Then the .pagination-flex will just go all the way to the left because "justify-content: space-betewen" from above will not account for an element with position: absolute
+*/
+.page-flex .page-view .pages {
+  position: static;
+}
+
+.page-flex .pagination-flex {
+  padding-left: 0;
+  gap: 15px;
+}
+
+
+/*
+===================================
+Approval Cards
+===================================
+*/
+
+.approvals-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.approval-card ion-icon {
+  font-size: 19px;
+}
+
+.approval-card {
+  width: 100%;
+  min-width: 536px;
+  max-width: 1000px;
+  padding-top: 20px;
+  padding-bottom: 15px;
+  padding-left: 30px;
+  padding-right: 30px;
+  border: 1px solid var(--light-border-clr);
+  border-radius: 12px;
+}
+
+.approvals-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.approvals-flex {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pipeline-name-type {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pipeline-name-type span {
+  font-weight: bold;
+}
+
+.pipeline-name-type .production {
+  background-color: var(--header-clr);
+  color: var(--text-white-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.pipeline-name-type .type {
+  background-color: purple;
+  color: var(--text-white-clr);
+  padding: 7px;
+  border-radius: 42%;
+}
+
+.feature-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.feature-id {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.extra-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.info-flex {
+  display: flex;
+  align-items: center;
+}
+
+.info-flex .waiting-time {
+  color: red;
+}
+
+.stage-view {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stage-view > div:hover {
+  cursor: pointer;
+}
+
+.btn-group {
+  display: flex;
+  gap: 20px;
+}
+
+.reject-btn, .approve-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.reject-btn {
+  background-color: rgb(226, 43, 43);
+}
+
+.approve-btn {
+  background-color: #14532d;
+}
+
+
+/* 
+stages
+*/
+.stages {
+  border-top: 1px solid var(--light-border-clr);
+  padding-top: 10px;
+}
+
+.stages-flex {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stages-flex .stage {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--light-border-clr);
+  border-radius: 10px;
+}
+
+.stages-flex .stage span {
+  font-weight: bold;
+}
+
+.stages-flex .approval {
+  background-color: rgb(209, 140, 13);
+}
