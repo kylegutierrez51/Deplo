@@ -1,5 +1,56 @@
 /*
 ===============================
+Topbar
+===============================
+*/
+
+.topbar {
+  position: fixed;
+  top: 20px;
+  left: 310px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+  transition: left 0.3s ease;
+}
+
+.sidebar.closed ~ .topbar {
+  left: 20px;
+}
+
+.topbar .sidebar-toggle {
+  position: static;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--subtitle-clr);
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-clr);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.back-link ion-icon {
+  font-size: 16px;
+  color: var(--subtitle-clr);
+}
+
+.back-link:hover {
+  background-color: var(--border-clr);
+  color: var(--text-white-clr);
+}
+
+.back-link:hover ion-icon {
+  color: var(--text-white-clr);
+}
+
+/*
+===============================
 Run Detail Card
 ===============================
 */
