@@ -20,6 +20,10 @@
   gap: 5px;
 }
 
+.title-group .subtitle span {
+  color: var(--subtitle-clr);
+}
+
 .subheader .add-div {
   display: flex;
   justify-content: end;
