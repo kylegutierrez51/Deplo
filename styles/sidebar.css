@@ -83,12 +83,6 @@ Sidebar Toggle Button
 Sidebar Header
 ========================================
 */
-.sidebar-header-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* border-bottom: 2px solid var(--border-clr); */
-}
 
 .sidebar-flex .title {
   font-size: 20px;
