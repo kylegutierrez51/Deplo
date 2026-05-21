@@ -1,7 +1,8 @@
 .cards-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  display: flex;
+  border: 1px solid var(--light-border-clr);
+  border-radius: 10px;
+  overflow: hidden;
   margin-bottom: 40px;
 }
 
@@ -9,14 +10,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 15px;
-  border: 1px solid var(--light-border-clr);
-  border-radius: 10px;
+  padding: 12px 16px;
+  flex: 1;
+  border-right: 1px solid var(--light-border-clr);
+}
+
+.card:last-child {
+  border-right: none;
 }
 
 .card-detail {
   display: flex;
   flex-direction: column;
+}
+
+.card-detail .card-total {
+  font-weight: bold;
 }
 
 .card-detail .card-name {
