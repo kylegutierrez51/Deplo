@@ -1,10 +1,10 @@
-/*
+﻿/*
 ============================================================
 Pagination overrides for centered layout
  -- this makes the pagination centered at the rightmost side
 ============================================================
 */
-.page-flex .page-view {
+.page-layout .page-view {
   padding: 30px 0;
   justify-content: space-between;
 }
@@ -13,13 +13,13 @@ Pagination overrides for centered layout
 This one is tricky:
  - .pages is set to "position: absolute" in table.css
  - That means if you don't override it back to "position: static" (the default position)
- - Then the .pagination-flex will just go all the way to the left because "justify-content: space-betewen" from above will not account for an element with position: absolute
+ - Then the .pagination-row will just go all the way to the left because "justify-content: space-betewen" from above will not account for an element with position: absolute
 */
-.page-flex .page-view .pages {
+.page-layout .page-view .pages {
   position: static;
 }
 
-.page-flex .pagination-flex {
+.page-layout .pagination-row {
   padding-left: 0;
   gap: 15px;
 }
@@ -59,7 +59,7 @@ Approval Cards
   flex-direction: column;
 }
 
-.approvals-flex {
+.approval-card-row {
   display: flex;
   justify-content: space-between;
 }
@@ -108,12 +108,12 @@ Approval Cards
   margin-bottom: 10px;
 }
 
-.info-flex {
+.meta-row {
   display: flex;
   align-items: center;
 }
 
-.info-flex .waiting-time {
+.meta-row .waiting-time {
   color: red;
 }
 
@@ -160,13 +160,13 @@ stages
   padding-top: 10px;
 }
 
-.stages-flex {
+.stages-row {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-.stages-flex .stage {
+.stages-row .stage {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -175,10 +175,10 @@ stages
   border-radius: 10px;
 }
 
-.stages-flex .stage span {
+.stages-row .stage span {
   font-weight: bold;
 }
 
-.stages-flex .approval {
+.stages-row .approval {
   background-color: rgb(209, 140, 13);
 }

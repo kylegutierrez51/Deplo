@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -17,29 +17,29 @@
 
 <body>
 
-  <section class="sidebar">
+  <aside class="sidebar">
 
-    <div class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
         <div class="sidebar-content-flex">
-          <div class="subtitle">DEPLOY</div>
+          <span class="subtitle">DEPLOY</span>
           <ul>
             <li>
               <ion-icon name="git-network-outline"></ion-icon>
               <a href="pipeline-list.html">
-                <div class="title">Pipelines</div>
+                <span class="title">Pipelines</span>
               </a>
             </li>
             <li>
               <ion-icon name="time-outline"></ion-icon>
               <a href="run-history.html">
-                <div class="title">Run History</div>
+                <span class="title">Run History</span>
               </a>
             </li>
             <li>
               <ion-icon name="checkmark-circle-outline"></ion-icon>
               <a href="approvals.html">
-                <div class="title">Approvals</div>
+                <span class="title">Approvals</span>
               </a>
             </li>
           </ul>
@@ -48,56 +48,52 @@
 
       <div class="sidebar-content">
         <div class="sidebar-content-flex">
-          <div class="subtitle">MANAGE</div>
+          <span class="subtitle">MANAGE</span>
           <ul>
             <li>
               <ion-icon name="key-outline"></ion-icon>
               <a href="secrets.html">
-                <div class="title">Secrets</div>
+                <span class="title">Secrets</span>
               </a>
             </li>
             <li>
               <ion-icon name="settings-outline"></ion-icon>
               <a href="environments.html">
-                <div class="title">Environments</div>
+                <span class="title">Environments</span>
               </a>
             </li>
             <li>
               <ion-icon name="flash-outline"></ion-icon>
               <a href="webhooks.html">
-                <div class="title">Webhooks</div>
+                <span class="title">Webhooks</span>
               </a>
             </li>
             <li>
               <ion-icon name="reader-outline"></ion-icon>
               <a href="audit-log.html">
-                <div class="title">Audit Log</div>
+                <span class="title">Audit Log</span>
               </a>
             </li>
           </ul>
         </div>
       </div>
-    </div>
+    </nav>
 
     <div class="profile">
-      <div class="profile-flex">
-        <div class="profile-container">
-          <div class="profile-pic"></div>
-          <div class="profile-details">
-            <div class="name">Coco</div>
-            <div class="role">ADMIN</div>
-          </div>
-        </div>
-        <div>
-          <ion-icon name="chevron-up-outline"></ion-icon>
-        </div>
+      <div class="profile-pic"></div>
+      <div class="profile-details">
+        <div class="user">
+          <div class="name">Coco</div>
+          <div class="role">ADMIN</div>
+        </div>     
+        <ion-icon name="chevron-up-outline"></ion-icon>
       </div>
     </div>
 
-  </section>
+  </aside>
 
   <div class="profile-options">
-    <div class="profile-view-flex">
+    <div class="profile-menu">
       <div class="profile-view">Profile</div>
       <div class="sign-out">Sign Out</div>
     </div>
@@ -109,16 +105,13 @@
 
   <main class="page-content">
 
-    <section class="subheader">
-      <div class="subheader-flex">
+    <div class="subheader">
+      <div class="subheader-inner">
         <div class="title-group">
             <h1>Pipelines</h1>
-            <div class='subtitle'>
-              <span id='subtitle-count'>8</span>
-              <span>pipelines across your repositories</span>
-            </div>
+            <p class='subtitle'><span id='subtitle-count'>8</span> pipelines across your repositories</p>
         </div>
-        <div class="button-flex">
+        <div class="button-group">
           <button class='add-btn'>
             <ion-icon name="add-outline"></ion-icon>
             <div>New Pipeline</div>
@@ -129,10 +122,10 @@
           </button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="filters">
-      <div class="filters-flex">
+    <div class="filters">
+      <div class="filters-bar">
         <div class="input-group">
           <ion-icon name="search-outline"></ion-icon>
           <input type="text" placeholder="Search pipelines..."/>
@@ -157,9 +150,9 @@
           </select>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="table-wrapper">
+    <div class="table-wrapper">
       <div class="table-border">
         <table>
           <thead>
@@ -196,15 +189,15 @@
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
 
-    <section class="page-view">
+    <div class="page-view">
       <div class="pages">
         Showing 1-10 of 20
       </div>
 
       <div class="pagination-container">
-        <div class="pagination-flex">
+        <div class="pagination-row">
           <div class="view-option">
             <ion-icon name="chevron-back-outline"></ion-icon>
             <div>Prev</div>
@@ -227,7 +220,7 @@
 
         </div>
       </div>
-    </section>
+    </div>
 
   </main>
 

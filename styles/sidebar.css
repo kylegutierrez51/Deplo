@@ -1,4 +1,4 @@
-.sidebar {
+﻿.sidebar {
   position: fixed;
   left: 0;
   bottom: 0;
@@ -34,7 +34,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
 }
 
 /* max-width and width are used for the Webhooks page for centering */
-.page-flex {
+.page-layout {
   display: flex;
   flex-direction: column;
   margin: 0 auto; /* centers entire container */
@@ -172,23 +172,14 @@ Profile
   background-color: var(--dark-clr-2);
   border: 1px solid var(--border-clr);
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .profile:hover {
   background-color: var(--border-clr);
-}
-
-.profile-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.profile-container {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .profile-pic {
@@ -199,6 +190,13 @@ Profile
 }
 
 .profile-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.user {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -216,6 +214,7 @@ Profile
 ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   font-size: 20px;
   margin-right: 5px;
+  justify-self: end;
 }
 
 .profile-options {
@@ -253,22 +252,22 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   border-radius: 4px;
 }
 
-.profile-view-flex {
+.profile-menu {
   display: flex;
   flex-direction: column;
 }
 
-.profile-view-flex div {
+.profile-menu div {
   font-weight: bold;
   padding: 10px 10px;
   border-radius: 7px;
 }
 
-.profile-view-flex div:hover {
+.profile-menu div:hover {
   background-color: var(--border-clr);
   cursor: pointer;
 }
 
-.profile-view-flex .sign-out {
+.profile-menu .sign-out {
   color: rgb(255, 57, 57);
 }

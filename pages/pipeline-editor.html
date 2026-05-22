@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -18,29 +18,29 @@
 
 <body>
 
-  <section class="sidebar">
+  <aside class="sidebar">
 
-    <div class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
         <div class="sidebar-content-flex">
-          <div class="subtitle">DEPLOY</div>
+          <span class="subtitle">DEPLOY</span>
           <ul>
             <li>
               <ion-icon name="git-network-outline"></ion-icon>
               <a href="pipeline-list.html">
-                <div class="title">Pipelines</div>
+                <span class="title">Pipelines</span>
               </a>
             </li>
             <li>
               <ion-icon name="time-outline"></ion-icon>
               <a href="run-history.html">
-                <div class="title">Run History</div>
+                <span class="title">Run History</span>
               </a>
             </li>
             <li>
               <ion-icon name="checkmark-circle-outline"></ion-icon>
               <a href="approvals.html">
-                <div class="title">Approvals</div>
+                <span class="title">Approvals</span>
               </a>
             </li>
           </ul>
@@ -49,56 +49,52 @@
 
       <div class="sidebar-content">
         <div class="sidebar-content-flex">
-          <div class="subtitle">MANAGE</div>
+          <span class="subtitle">MANAGE</span>
           <ul>
             <li>
               <ion-icon name="key-outline"></ion-icon>
               <a href="secrets.html">
-                <div class="title">Secrets</div>
+                <span class="title">Secrets</span>
               </a>
             </li>
             <li>
               <ion-icon name="settings-outline"></ion-icon>
               <a href="environments.html">
-                <div class="title">Environments</div>
+                <span class="title">Environments</span>
               </a>
             </li>
             <li>
               <ion-icon name="flash-outline"></ion-icon>
               <a href="webhooks.html">
-                <div class="title">Webhooks</div>
+                <span class="title">Webhooks</span>
               </a>
             </li>
             <li>
               <ion-icon name="reader-outline"></ion-icon>
               <a href="audit-log.html">
-                <div class="title">Audit Log</div>
+                <span class="title">Audit Log</span>
               </a>
             </li>
           </ul>
         </div>
       </div>
-    </div>
+    </nav>
 
     <div class="profile">
-      <div class="profile-flex">
-        <div class="profile-container">
-          <div class="profile-pic"></div>
-          <div class="profile-details">
-            <div class="name">Coco</div>
-            <div class="role">ADMIN</div>
-          </div>
-        </div>
-        <div>
-          <ion-icon name="chevron-up-outline"></ion-icon>
-        </div>
+      <div class="profile-pic"></div>
+      <div class="profile-details">
+        <div class="user">
+          <div class="name">Coco</div>
+          <div class="role">ADMIN</div>
+        </div>     
+        <ion-icon name="chevron-up-outline"></ion-icon>
       </div>
     </div>
 
-  </section>
+  </aside>
 
   <div class="profile-options">
-    <div class="profile-view-flex">
+    <div class="profile-menu">
       <div class="profile-view">Profile</div>
       <div class="sign-out">Sign Out</div>
     </div>
@@ -161,7 +157,7 @@
     <div>Pipeline Editor</div>
   </main>
 
-  <section class="stage-sidebar">
+  <aside class="stage-sidebar">
     <div class="stage-sidebar-header">
       <div class="stage-title">
         <div class="icon-border">
@@ -176,8 +172,8 @@
       <div class="stage-sidebar-nav">
 
         <div class="stage-name">
-          <label>STAGE NAME</label>
-          <input name="stage-name" placeholder="e.g. build">
+          <label for="stage-name">STAGE NAME</label>
+          <input id="stage-name" name="stage-name" placeholder="e.g. build">
         </div>
 
         <div class="stage-types">
@@ -207,24 +203,24 @@
         </div>
 
         <div class="command">
-          <label>COMMAND</label>
-          <textarea name="command" placeholder="e.g. npm run build"></textarea>
+          <label for="command">COMMAND</label>
+          <textarea id="command" name="command" placeholder="e.g. npm run build"></textarea>
         </div>
 
         <div class="timeout-and-retries">
           <div class="timeout">
             <div>
               <ion-icon name="time-outline"></ion-icon>
-              <label>TIMEOUT (S)</label>
+              <label for="timeout">TIMEOUT (S)</label>
             </div>
-            <input name="timeout" placeholder="e.g. npm run build" value="0">
+            <input id="timeout" name="timeout" placeholder="e.g. npm run build" value="0">
           </div>
           <div class="retries">
             <div>
               <ion-icon name="refresh-outline"></ion-icon>
-              <label>RETRIES</label>
+              <label for="retries">RETRIES</label>
             </div>
-            <input name="retries" placeholder="e.g. npm run build" value="0">   
+            <input id="retries" name="retries" placeholder="e.g. npm run build" value="0">
           </div>
         </div>
 
@@ -239,7 +235,7 @@
               Add
             </button>
           </div>
-          <div class="env-vars-flex">
+          <div class="env-vars-list">
             <div class="env-container">
               <input name="env-key" placeholder="KEY">
               <span>=</span>
@@ -262,7 +258,7 @@
             <div class="info">Injected at runtime. Never logged.</div>
           </div>
         </div>
-        <div class="secrets-flex">
+        <div class="secrets-list">
           <label class="secret-container">
             <div class="secret">
               <input type="checkbox">
@@ -285,8 +281,8 @@
             <span class="secret-env">production</span>
           </label>
         </div>
-    </form>    
-  </section>
+    </form>
+  </aside>
 
 </body>
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>

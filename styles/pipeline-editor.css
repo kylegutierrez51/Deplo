@@ -1,4 +1,4 @@
-/*
+﻿/*
 ==================
 Header
 ==================
@@ -140,7 +140,7 @@ Stage Sidebar
 ==================
 */
 
-label {
+.stage-sidebar label {
   font-family: "JetBrains Mono";
   font-size: 15px;
 }
@@ -232,19 +232,6 @@ label {
   min-height: 0;
 }
 
-/* scrollbar */
-.stage-sidebar .stage-sidebar-nav::-webkit-scrollbar {
-  width: 7px;
-}
-
-.stage-sidebar .stage-sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.stage-sidebar .stage-sidebar-nav::-webkit-scrollbar-thumb {
-  background: var(--text-white-clr);
-  border-radius: 4px;
-}
 
 .stage-name, .stage-types, .command, .env-vars, .secrets {
   display: flex;
@@ -327,7 +314,7 @@ label {
   color: var(--text-blue-clr);
 }
 
-.env-vars-flex {
+.env-vars-list {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -360,7 +347,7 @@ label {
   font-size: 14px;
 }
 
-.secrets-flex {
+.secrets-list {
   display: flex;
   flex-direction: column;
 }
