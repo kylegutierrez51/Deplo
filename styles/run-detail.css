@@ -262,6 +262,9 @@ Section Select (Overview, Logs)
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .section.active ion-icon,
