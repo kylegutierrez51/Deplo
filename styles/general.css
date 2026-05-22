@@ -68,7 +68,7 @@ a {
   --radius-md: 6px;
   --radius-lg: 10px;
   --radius-xl: 12px;
-  --radius-pill: 42%;
+  --radius-pill: 100px;
 
   /* Border widths */
   --border-width-sm: 1.5px;

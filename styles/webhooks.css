@@ -30,6 +30,7 @@ Webhooks
   padding-left: var(--space-xl);
   padding-right: var(--space-xl);
   border: 1px solid var(--light-border-clr);
+  background: var(--dark-clr-2);
 }
 
 .webhook-container:first-of-type {
@@ -51,7 +52,7 @@ Webhooks
 }
 
 .webhook-detail .git-icon ion-icon {
-  background-color: var(--light-border-clr);
+  background-color: var(--color-border-dark);
   padding: var(--space-sm);
   border-radius: var(--radius-lg);
 }
@@ -71,30 +72,39 @@ Webhooks
 .webhook-detail .name-status .active {
   background-color: var(--header-clr);
   color: var(--text-blue-clr);
-  padding: var(--space-2xs);
+  padding: 3px var(--space-sm);
   border-radius: var(--radius-pill);
+  border: 1px solid #1e4a72;
+  font-size: var(--font-size-body);
 }
 
 .webhook-detail .name-status .inactive {
-
   border: 1px solid var(--light-border-clr);
-  color: var(--text-white-clr);
-  padding: var(--space-2xs);
+  color: var(--subtitle-clr);
+  padding: 3px var(--space-sm);
   border-radius: var(--radius-pill);
+  font-size: var(--font-size-body);
+}
+
+.webhook-detail .name-status .name {
+  font-size: 17px;
+  font-weight: bold;
 }
 
 .pipeline-info .events {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-sm);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 
 .pipeline-info .event-type {
-  font-size: 12px;
-  background-color: var(--light-border-clr);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-border-dark);
   padding: var(--space-2xs);
   border-radius: var(--radius-sm);
+  border: 1px solid #3a3a3a;
+  color: var(--subtitle-clr);
 }
 
 .pipeline-info .secret {
@@ -102,6 +112,10 @@ Webhooks
   align-items: center;
   gap: var(--space-gap-md);
   margin-bottom: var(--space-sm);
+}
+
+.pipeline-info .secret-val {
+  color: var(--subtitle-clr);
 }
 
 .pipeline-info .secret ion-icon {
@@ -112,6 +126,7 @@ Webhooks
 .pipeline-info .time {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .pipeline-info .last-delivery {
@@ -121,7 +136,7 @@ Webhooks
 }
 
 .pipeline-info .registered {
-  margin-left: var(--space-md);
+  color: var(--subtitle-clr);
 }
 
 .webhook-row .options {
@@ -131,6 +146,15 @@ Webhooks
 
 .webhook-row .options > ion-icon {
   cursor: pointer;
+  transition: color 0.15s;
+}
+
+.webhook-row .options > ion-icon:first-child:hover {
+  color: var(--text-white-clr);
+}
+
+.webhook-row .options > ion-icon:last-child:hover {
+  color: #e05555;
 }
 
 
