@@ -48,13 +48,6 @@
   pointer-events: none;
 }
 
-.active-runs {
-  align-self: flex-start;
-}
-
-.active-runs > div {
-  color: var(--text-blue-clr);
-}
 
 /* input needs to be slightly bigger to hold the placeholder text */
 .webhook-event-input-group {

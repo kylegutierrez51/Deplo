@@ -15,6 +15,38 @@
   gap: var(--space-sm);
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.active-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #1a2e1a;
+  border: 1px solid #2d4d2d;
+  border-radius: var(--radius-pill);
+  padding: 3px var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--active-dot-clr);
+}
+
+.active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--active-dot-clr);
+  flex-shrink: 0;
+  animation: dot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--active-dot-clr) 40%, transparent); }
+  50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 4px transparent; }
+}
+
 .title-group .subtitle {
   display: flex;
   gap: var(--space-xs);
