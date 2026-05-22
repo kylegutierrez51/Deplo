@@ -119,3 +119,53 @@ input:focus, select:focus, textarea:focus {
 select:hover, input:hover, textarea:hover {
   border-color: var(--input-clr);
 }
+
+/*
+============================================================
+Table Base Styles
+============================================================
+*/
+
+table {
+  border-collapse: collapse;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+table thead tr {
+  background-color: var(--header-clr);
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
+table th,
+table td {
+  padding: 12px 15px;
+}
+
+table tbody tr {
+  border-bottom: 1px solid var(--light-border-clr);
+}
+
+table tbody tr:first-of-type {
+  border-top: 1px solid var(--light-border-clr);
+}
+
+table tbody tr:last-of-type {
+  border-bottom: none;
+}
+
+table thead .filter {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+table th ion-icon {
+  font-size: 17px;
+}
+
+table td ion-icon {
+  font-size: 20px;
+}
