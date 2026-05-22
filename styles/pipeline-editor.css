@@ -166,7 +166,7 @@ Stage Sidebar
   min-width: 320px;
   max-width: 320px;
   background-color: var(--dark-clr-1);
-  padding: var(--space-lg) 0 var(--space-lg) var(--space-lg);
+  padding: var(--space-lg) 0 0 var(--space-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -388,4 +388,35 @@ Stage Sidebar
 
 .secret-container .secret-env {
   font-weight: 100;
+}
+
+
+/* Delete Stage Button */
+.delete-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg) var(--space-sm) var(--space-lg) var(--space-lg);
+  border-top: 1px solid var(--border-clr);
+  margin: 0 0 0 calc(-1 * var(--space-lg));
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--red-text);
+  background-color: var(--red-btn-clr);
+  border: 1px solid var(--red-btn-border-clr);
+  border-radius: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: var(--red-btn-hover-clr);
 }

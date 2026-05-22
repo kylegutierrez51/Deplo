@@ -216,13 +216,13 @@ Run Detail Card
 }
 
 .rdc-btn-cancel {
-  color: #f87171;
-  border: var(--border-width-sm) solid #f87171;
+  color: var(--red-text);
+  border: var(--border-width-sm) solid var(--red-btn-border-clr);
   background-color: rgba(248, 113, 113, 0.06);
 }
 
 .rdc-btn-cancel:hover {
-  background-color: rgba(248, 113, 113, 0.14);
+  background-color: var(--red-btn-hover-clr);
 }
 
 .rdc-btn-rerun {
@@ -332,7 +332,11 @@ Overview
   color: orange;
 }
 
-/* Jobs */
+/*
+===============
+Pipeline
+===============
+*/
 .pipeline {
   display: flex;
   align-items: center;
