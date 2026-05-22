@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deplo | Run Detail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/general.css">
+  <link rel="stylesheet" href="../../styles/sidebar.css">
+  <link rel="stylesheet" href="../../styles/table.css">
+  <link rel="stylesheet" href="../../styles/subheader.css">
+  <link rel="stylesheet" href="../../styles/filters.css">
+  <link rel="stylesheet" href="../../styles/webhooks.css">
+  <link rel="stylesheet" href="../../styles/run-detail.css">
+</head>
+<body>
+  <section class="sidebar">
+
+    <div class="sidebar-nav">
+      <div class="sidebar-content">
+        <div class="sidebar-content-flex">
+          <div class="subtitle">DEPLOY</div>
+          <ul>
+            <li>
+              <ion-icon name="git-network-outline"></ion-icon>
+              <a href="../pipeline-list.html">
+                <div class="title">Pipelines</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="time-outline"></ion-icon>
+              <a href="../run-history.html">
+                <div class="title">Run History</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <a href="../approvals.html">
+                <div class="title">Approvals</div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="sidebar-content-flex">
+          <div class="subtitle">MANAGE</div>
+          <ul>
+            <li>
+              <ion-icon name="key-outline"></ion-icon>
+              <a href="../secrets.html">
+                <div class="title">Secrets</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="settings-outline"></ion-icon>
+              <a href="../environments.html">
+                <div class="title">Environments</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="flash-outline"></ion-icon>
+              <a href="../webhooks.html">
+                <div class="title">Webhooks</div>
+              </a>
+            </li>
+            <li>
+              <ion-icon name="reader-outline"></ion-icon>
+              <a href="../audit-log.html">
+                <div class="title">Audit Log</div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile">
+      <div class="profile-flex">
+        <div class="profile-container">
+          <div class="profile-pic"></div>
+          <div class="profile-details">
+            <div class="name">Coco</div>
+            <div class="role">ADMIN</div>
+          </div>
+        </div>
+        <div>
+          <ion-icon name="chevron-up-outline"></ion-icon>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="profile-options">
+    <div class="profile-view-flex">
+      <div class="profile-view">Profile</div>
+      <div class="sign-out">Sign Out</div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <ion-icon name="menu-outline"></ion-icon>
+    </button>
+    <a href="run-history.html" class="back-link">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      Run History
+    </a>
+  </div>
+
+
+  <main class="page-content">
+    <div class="page-flex">
+
+      <section class="run-detail-card">
+        <div class="rdc-inner">
+
+          <div class="rdc-info">
+            <!-- Row 1: name, run number, status, environment -->
+            <div class="rdc-title-row">
+              <span class="rdc-name">deploy-api</span>
+              <span class="rdc-num">#47</span>
+              <div class="rdc-status running">
+                <ion-icon name="sync-outline"></ion-icon>
+                Running
+              </div>
+              <div class="rdc-env production">production</div>
+            </div>
+
+            <!-- Row 2: commit info -->
+            <div class="rdc-commit-row">
+              <div class="rdc-commit-ref">
+                <ion-icon name="git-commit-outline"></ion-icon>
+                <span class="rdc-commit-hash">a1b2c3d</span>
+              </div>
+              <span class="rdc-commit-msg">fix: resolve connection pool exhaustion under load</span>
+              <div class="rdc-meta-item">
+                <ion-icon name="git-branch-outline"></ion-icon>
+                <span>main</span>
+              </div>
+              <div class="rdc-meta-item rdc-link">
+                <ion-icon name="open-outline"></ion-icon>
+                <span>acme/api-server</span>
+              </div>
+            </div>
+
+            <!-- Row 3: trigger info -->
+            <div class="rdc-trigger-row">
+              <div class="rdc-meta-item">
+                <ion-icon name="flash-outline"></ion-icon>
+                <span>Triggered by webhook <span class="rdc-user">(sarah.chen)</span></span>
+              </div>
+              <div class="rdc-meta-item">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <span>7m 12s</span>
+              </div>
+              <div class="rdc-meta-item">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>7m ago</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="rdc-actions">
+            <button class="rdc-btn-cancel">
+              <ion-icon name="ban-outline"></ion-icon>
+              Cancel Run
+            </button>
+            <button class="rdc-btn-rerun">
+              <ion-icon name="refresh-outline"></ion-icon>
+              Re-run
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="sections">
+        <div class="sections-flex">
+          <div class="section active" data-section="overview">
+            <ion-icon name="layers-outline"></ion-icon>
+            <span>Overview</span>
+          </div>
+          <div class="section" data-section="logs">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <span>Logs</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="overview" id="section-overview">
+        <div class="job-statuses">
+          <div>
+            <span class="total">8</span>
+            <span>Total</span>
+          </div>
+          <div>
+            <span class="succeeded">4</span>
+            <span>Succeeded</span>
+          </div>
+          <div>
+            <span class="running">1</span>
+            <span>Running</span>
+          </div>
+          <div>
+            <span class="failed">0</span>
+            <span>Failed</span>
+          </div>
+          <div>
+            <span class="approval">0</span>
+            <span>Awaiting Approval</span>
+          </div>
+          <div>
+            <span>3</span>
+            <span>Pending</span>
+          </div>
+        </div>
+
+        <section class="pipeline">
+          <div class="pipeline-flex">
+
+            <!-- install-deps -->
+            <div class="job">
+              <div class="job-name">
+                <span>install-deps</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-succeeded">Succeeded</div>
+                <span>42s</span>
+              </div>
+            </div>
+
+            <!-- Fork: install-deps → lint + unit-tests -->
+            <div class="connector-fork">
+              <div class="cf-stem"></div>
+              <div class="cf-arms">
+                <div class="cf-spacer"></div>
+                <div class="cf-arm cf-arm-left"></div>
+                <div class="cf-arm cf-arm-right"></div>
+                <div class="cf-spacer"></div>
+              </div>
+            </div>
+
+            <!-- Parallel: lint + unit-tests -->
+            <div class="parallel-row">
+              <div class="job">
+                <div class="job-name">
+                  <span>lint</span>
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                </div>
+                <div class="job-status-time">
+                  <div class="job-succeeded">Succeeded</div>
+                  <span>38s</span>
+                </div>
+              </div>
+              <div class="job">
+                <div class="job-name">
+                  <span>unit-tests</span>
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                </div>
+                <div class="job-status-time">
+                  <div class="job-succeeded">Succeeded</div>
+                  <span>2m 13s</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Merge: lint + unit-tests → build -->
+            <div class="connector-merge">
+              <div class="cm-arms">
+                <div class="cm-spacer"></div>
+                <div class="cm-arm cm-arm-left"></div>
+                <div class="cm-arm cm-arm-right"></div>
+                <div class="cm-spacer"></div>
+              </div>
+              <div class="cm-stem"></div>
+            </div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>build</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-succeeded">Succeeded</div>
+                <span>1m 25s</span>
+              </div>
+            </div>
+
+            <!-- Connector: build → deploy-staging (active) -->
+            <div class="connector-straight active"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>deploy-staging</span>
+                <ion-icon name="sync-outline" class="job-icon-running"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-running-badge">Running</div>
+                <span>24m 4s</span>
+              </div>
+            </div>
+
+            <!-- Connector: deploy-staging → smoke-tests -->
+            <div class="connector-straight"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>smoke-tests</span>
+                <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-pending-badge">Pending</div>
+              </div>
+            </div>
+
+            <!-- Connector: smoke-tests → manual-approval -->
+            <div class="connector-straight"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>manual-approval</span>
+                <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-pending-badge">Pending</div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </section>
+
+      <section class="logs" id="section-logs" style="display:none;">
+
+        <div class="filters">
+          <div class="filters-flex">
+            <div class="select-group">
+              <select id="status" name="status">
+                <option value="all">install deps - succeeded</option>
+                <option value="succeeded">lint - succeeded</option>
+                <option value="failed">unit-tests - succeeded</option>
+                <option value="running">build - succeeded</option>
+                <option value="queued">deploy-staging - running</option>
+                <option value="cancelled">smoke-tests - pending</option>
+                <option value="cancelled">manual-approval - pending</option>
+                <option value="cancelled">deploy-production - pending</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <ion-icon name="search-outline"></ion-icon>
+              <input type="text" placeholder="Search logs..."/>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="log-viewer">
+
+          <div class="log-header">
+            <div class="log-header-left">
+              <ion-icon name="checkmark-circle-outline" class="log-job-icon succeeded"></ion-icon>
+              <span class="log-job-name">install-deps</span>
+              <span class="log-job-cmd">npm ci --production=false</span>
+            </div>
+            <span class="log-duration">42s</span>
+          </div>
+
+          <div class="log-body">
+            <div class="log-line">
+              <span class="log-num">1</span>
+              <span class="log-time">00:00.0</span>
+              <span class="log-content"><span class="log-prompt">$</span> npm ci --production=false</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">2</span>
+              <span class="log-time">00:00.3</span>
+              <span class="log-content log-warn">npm warn deprecated inflight@1.0.6: This module is not supported</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">3</span>
+              <span class="log-time">00:02.1</span>
+              <span class="log-content">added 1,247 packages in 38s</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">4</span>
+              <span class="log-time">00:02.2</span>
+              <span class="log-content">182 packages are looking for funding</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">5</span>
+              <span class="log-time">00:42.0</span>
+              <span class="log-content log-success">&#10003; Dependencies installed successfully</span>
+            </div>
+          </div>
+
+          <div class="log-footer">
+            <span>Process exited with code 0</span>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+</body>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<script type="module" src="../utils/toggleSidebar.js"></script>
+<script type="module" src="../utils/sidebar-profile.js"></script>
+<script>
+  document.querySelectorAll('.section').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.section').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.section;
+      document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+      document.getElementById('section-' + target).style.display = '';
+    });
+  });
+</script>
+</html>

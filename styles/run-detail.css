@@ -1,0 +1,672 @@
+/*
+===============================
+Topbar
+===============================
+*/
+
+.topbar {
+  position: fixed;
+  top: 20px;
+  left: 310px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+  transition: left 0.3s ease;
+}
+
+.sidebar.closed ~ .topbar {
+  left: 20px;
+}
+
+.topbar .sidebar-toggle {
+  position: static;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--subtitle-clr);
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-clr);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.back-link ion-icon {
+  font-size: 16px;
+  color: var(--subtitle-clr);
+}
+
+.back-link:hover {
+  background-color: var(--border-clr);
+  color: var(--text-white-clr);
+}
+
+.back-link:hover ion-icon {
+  color: var(--text-white-clr);
+}
+
+/*
+===============================
+Run Detail Card
+===============================
+*/
+
+.run-detail-card {
+  width: 100%;
+  max-width: 1000px;
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-border-clr);
+  border-radius: 12px;
+  padding: 22px 28px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.rdc-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.rdc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Row 1: title */
+.rdc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rdc-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-white-clr);
+}
+
+.rdc-num {
+  font-size: 15px;
+  color: var(--subtitle-clr);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.rdc-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rdc-status.running {
+  color: var(--text-blue-clr);
+  border: 1.5px solid var(--text-blue-clr);
+  background-color: rgba(80, 165, 255, 0.07);
+}
+
+.rdc-status.running ion-icon {
+  font-size: 14px;
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+@keyframes rdc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rdc-env {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rdc-env.production {
+  color: #f87171;
+  border: 1.5px solid #f87171;
+  background-color: rgba(248, 113, 113, 0.07);
+}
+
+/* Row 2: commit */
+.rdc-commit-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rdc-commit-ref {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rdc-commit-ref ion-icon {
+  font-size: 15px;
+  color: var(--icon-clr);
+}
+
+.rdc-commit-hash {
+  color: var(--text-blue-clr);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+
+.rdc-commit-msg {
+  font-size: 13px;
+  color: var(--subtitle-clr);
+}
+
+/* Row 3: trigger */
+.rdc-trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Shared meta item */
+.rdc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--subtitle-clr);
+}
+
+.rdc-meta-item ion-icon {
+  font-size: 15px;
+  color: var(--icon-clr);
+}
+
+.rdc-link span {
+  color: var(--text-blue-clr);
+}
+
+.rdc-user {
+  color: var(--text-blue-clr);
+}
+
+/* Action buttons */
+.rdc-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.rdc-btn-cancel,
+.rdc-btn-rerun {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rdc-btn-cancel {
+  color: #f87171;
+  border: 1.5px solid #f87171;
+  background-color: rgba(248, 113, 113, 0.06);
+}
+
+.rdc-btn-cancel:hover {
+  background-color: rgba(248, 113, 113, 0.14);
+}
+
+.rdc-btn-rerun {
+  color: var(--text-white-clr);
+  border: 1.5px solid var(--light-border-clr);
+  background-color: transparent;
+}
+
+.rdc-btn-rerun:hover {
+  background-color: var(--border-clr);
+}
+
+.rdc-btn-cancel ion-icon,
+.rdc-btn-rerun ion-icon {
+  font-size: 16px;
+}
+
+
+/*
+===============================
+Section Select (Overview, Logs)
+===============================
+*/
+
+.sections {
+  padding: 0 0 10px 20px;
+  border-bottom: 1px solid var(--border-clr);
+}
+
+.sections-flex {
+  display: flex;
+  gap: 40px;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.section.active ion-icon,
+.section.active span {
+  font-weight: bold;
+}
+
+/*
+===============================
+Overview
+===============================
+*/
+
+/* Fix height chain so .overview scrolls instead of the whole page */
+.page-content {
+  height: calc(100vh - 40px); /* 40px matches page-content margin-top in sidebar.css*/
+  overflow: hidden;
+  /* this makes page itself not grow beyond viewport */
+}
+
+.page-flex {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Statuses */
+.overview {
+  margin-top: 20px;
+  flex: 1;
+  min-height: 0; /* lets flex child shrink below its content size */
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+.overview::-webkit-scrollbar {
+  width: 7px;
+  
+}
+
+.overview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overview::-webkit-scrollbar-thumb {
+  background: var(--text-white-clr);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.overview .job-statuses {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.overview .job-statuses > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.total, .succeeded, .running, .failed, .approval {
+  font-weight: bold;
+}
+
+.succeeded {
+  color: green;
+}
+
+.running {
+  color: var(--text-blue-clr);
+}
+
+.failed {
+  color: red;
+}
+
+.approval {
+  color: orange;
+}
+
+/* Jobs */
+.pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.pipeline-flex {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.job {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 250px;
+  max-width: 250px;
+  padding: 20px;
+  border: 1px solid var(--input-clr);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.job-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.job-name span {
+  font-weight: bold;
+}
+
+.job-name ion-icon[name="checkmark-circle-outline"] {
+  color: green;
+}
+
+.job-status-time {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.job-succeeded {
+  background-color: #14532d;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 13px;
+}
+
+.job-status-time span {
+  font-size: 13px;
+}
+
+.job-running-badge {
+  background-color: rgba(80, 165, 255, 0.15);
+  color: var(--text-blue-clr);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.job-pending-badge {
+  color: var(--subtitle-clr);
+  border: 1px solid var(--border-clr);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.job-icon-running {
+  color: var(--text-blue-clr);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+.job-icon-pending {
+  color: var(--subtitle-clr);
+}
+
+/*
+===============================
+Pipeline Connectors
+===============================
+*/
+
+.parallel-row {
+  display: flex;
+  gap: 40px;
+}
+
+/* Straight connector between sequential jobs */
+.connector-straight {
+  width: 2px;
+  height: 36px;
+  background-color: var(--border-clr);
+  position: relative;
+}
+
+.connector-straight::before,
+.connector-straight::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--border-clr);
+  left: -3px;
+}
+
+.connector-straight::before { top: -4px; }
+.connector-straight::after  { bottom: -4px; }
+
+.connector-straight.active {
+  background-color: var(--text-blue-clr);
+}
+
+.connector-straight.active::before,
+.connector-straight.active::after {
+  background-color: var(--text-blue-clr);
+}
+
+/* Fork connector: one job splits into two parallel jobs */
+.connector-fork {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 540px; /* 250px job + 40px gap + 250px job */
+}
+
+.cf-stem {
+  width: 2px;
+  height: 20px;
+  background-color: var(--border-clr);
+}
+
+.cf-arms {
+  display: flex;
+  width: 100%;
+}
+
+.cf-spacer {
+  width: 125px; /* half of job width (250 / 2) — aligns arm edges to card centers */
+  flex-shrink: 0;
+}
+
+.cf-arm {
+  flex: 1;
+  height: 20px;
+}
+
+.cf-arm-left  { border-top: 2px solid var(--border-clr); border-left:  2px solid var(--border-clr); }
+.cf-arm-right { border-top: 2px solid var(--border-clr); border-right: 2px solid var(--border-clr); }
+
+/* Merge connector: two parallel jobs converge into one */
+.connector-merge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 540px;
+}
+
+.cm-stem {
+  width: 2px;
+  height: 20px;
+  background-color: var(--border-clr);
+}
+
+.cm-arms {
+  display: flex;
+  width: 100%;
+}
+
+.cm-spacer {
+  width: 125px;
+  flex-shrink: 0;
+}
+
+.cm-arm {
+  flex: 1;
+  height: 20px;
+}
+
+.cm-arm-left  { border-bottom: 2px solid var(--border-clr); border-left:  2px solid var(--border-clr); }
+.cm-arm-right { border-bottom: 2px solid var(--border-clr); border-right: 2px solid var(--border-clr); }
+
+/*
+===============================
+Log Viewer
+===============================
+*/
+
+.logs {
+  margin-top: 30px;
+  flex: 1;
+  min-height: 0; /* lets flex child shrink below its content size */
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+.logs .filters {
+  margin-bottom: 15px;
+}
+
+.log-viewer {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 400;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: #161b22;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.log-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-job-icon {
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.log-job-icon.succeeded {
+  color: #3fb950;
+}
+
+.log-job-icon.running {
+  color: var(--text-blue-clr);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+.log-job-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e6edf3;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-job-cmd {
+  font-size: 13px;
+  color: #7d8590;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-duration {
+  font-size: 13px;
+  color: #7d8590;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-body {
+  background-color: #0d1117;
+  padding: 10px 0;
+}
+
+.log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 2px 0;
+  line-height: 1.6;
+}
+
+.log-line:hover {
+  background-color: #161b22;
+}
+
+.log-num {
+  font-size: 13px;
+  color: #404040;
+  text-align: right;
+  min-width: 36px;
+  padding-right: 16px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.log-time {
+  font-size: 13px;
+  color: #3fb950;
+  min-width: 80px;
+  padding-right: 20px;
+  flex-shrink: 0;
+}
+
+.log-content {
+  font-size: 13px;
+  color: #c9d1d9;
+  white-space: pre;
+}
+
+.log-prompt {
+  color: #39c5cf;
+}
+
+.log-warn {
+  color: #7d8590;
+}
+
+.log-success {
+  color: #3fb950;
+}
+
+.log-footer {
+  padding: 10px 18px;
+  background-color: #0d1117;
+  border-top: 1px solid #2a2a2a;
+}
+
+.log-footer span {
+  font-size: 13px;
+  color: #3fb950;
+  font-family: "JetBrains Mono", monospace;
+}
