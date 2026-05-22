@@ -61,3 +61,7 @@
   position: relative;
   width: 30%;
 }
+
+.webhook-event-input-group input {
+  padding-left: 34px;
+}
