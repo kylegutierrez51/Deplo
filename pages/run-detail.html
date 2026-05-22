@@ -182,18 +182,18 @@
 
       <section class="sections">
         <div class="sections-flex">
-          <div class="section">
+          <div class="section active" data-section="overview">
             <ion-icon name="layers-outline"></ion-icon>
             <span>Overview</span>
           </div>
-          <div class="section">
+          <div class="section" data-section="logs">
             <ion-icon name="receipt-outline"></ion-icon>
             <span>Logs</span>
           </div>
         </div>
       </section>
 
-      <section class="overview">
+      <section class="overview" id="section-overview">
         <div class="job-statuses">
           <div>
             <span class="total">8</span>
@@ -337,6 +337,10 @@
         </section>
       </section>
 
+      <section class="overview" id="section-logs" style="display:none;">
+        <p style="color: var(--subtitle-clr); padding: 20px 0;">No logs available.</p>
+      </section>
+
     </div>
   </main>
 
@@ -345,4 +349,15 @@
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script type="module" src="../utils/toggleSidebar.js"></script>
 <script type="module" src="../utils/sidebar-profile.js"></script>
+<script>
+  document.querySelectorAll('.section').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.section').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.section;
+      document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+      document.getElementById('section-' + target).style.display = '';
+    });
+  });
+</script>
 </html>

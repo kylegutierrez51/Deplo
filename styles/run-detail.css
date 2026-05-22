@@ -264,6 +264,11 @@ Section Select (Overview, Logs)
   cursor: pointer;
 }
 
+.section.active ion-icon,
+.section.active span {
+  font-weight: bold;
+}
+
 /*
 ===============================
 Overview
