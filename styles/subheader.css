@@ -18,9 +18,6 @@
 .title-group .subtitle {
   display: flex;
   gap: 5px;
-}
-
-.title-group .subtitle span {
   color: var(--subtitle-clr);
 }
 
