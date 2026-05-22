@@ -35,6 +35,17 @@ a {
   --button-clr-hover: #11283f;
   --icon-clr: #888;
   --input-clr: #666;
+
+  --space-xs: 5px;
+  --space-sm: 10px;
+  --space-md: 15px;
+  --space-lg: 20px;
+  --space-xl: 30px;
+
+  --z-sidebar: 100;
+  --z-dropdown: 200;
+  --z-modal: 1000;
+  --z-tooltip: 9999;
 }
 
 /*
