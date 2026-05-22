@@ -106,7 +106,7 @@
     <button class="sidebar-toggle" id="sidebarToggle">
       <ion-icon name="menu-outline"></ion-icon>
     </button>
-    <a href="../run-history.html" class="back-link">
+    <a href="run-history.html" class="back-link">
       <ion-icon name="arrow-back-outline"></ion-icon>
       Run History
     </a>
@@ -180,7 +180,162 @@
         </div>
       </section>
 
-      
+      <section class="sections">
+        <div class="sections-flex">
+          <div class="section">
+            <ion-icon name="layers-outline"></ion-icon>
+            <span>Overview</span>
+          </div>
+          <div class="section">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <span>Logs</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="overview">
+        <div class="job-statuses">
+          <div>
+            <span class="total">8</span>
+            <span>Total</span>
+          </div>
+          <div>
+            <span class="succeeded">4</span>
+            <span>Succeeded</span>
+          </div>
+          <div>
+            <span class="running">1</span>
+            <span>Running</span>
+          </div>
+          <div>
+            <span class="failed">0</span>
+            <span>Failed</span>
+          </div>
+          <div>
+            <span class="approval">0</span>
+            <span>Awaiting Approval</span>
+          </div>
+          <div>
+            <span>3</span>
+            <span>Pending</span>
+          </div>
+        </div>
+
+        <section class="pipeline">
+          <div class="pipeline-flex">
+
+            <!-- install-deps -->
+            <div class="job">
+              <div class="job-name">
+                <span>install-deps</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-succeeded">Succeeded</div>
+                <span>42s</span>
+              </div>
+            </div>
+
+            <!-- Fork: install-deps → lint + unit-tests -->
+            <div class="connector-fork">
+              <div class="cf-stem"></div>
+              <div class="cf-arms">
+                <div class="cf-spacer"></div>
+                <div class="cf-arm cf-arm-left"></div>
+                <div class="cf-arm cf-arm-right"></div>
+                <div class="cf-spacer"></div>
+              </div>
+            </div>
+
+            <!-- Parallel: lint + unit-tests -->
+            <div class="parallel-row">
+              <div class="job">
+                <div class="job-name">
+                  <span>lint</span>
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                </div>
+                <div class="job-status-time">
+                  <div class="job-succeeded">Succeeded</div>
+                  <span>38s</span>
+                </div>
+              </div>
+              <div class="job">
+                <div class="job-name">
+                  <span>unit-tests</span>
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                </div>
+                <div class="job-status-time">
+                  <div class="job-succeeded">Succeeded</div>
+                  <span>2m 13s</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Merge: lint + unit-tests → build -->
+            <div class="connector-merge">
+              <div class="cm-arms">
+                <div class="cm-spacer"></div>
+                <div class="cm-arm cm-arm-left"></div>
+                <div class="cm-arm cm-arm-right"></div>
+                <div class="cm-spacer"></div>
+              </div>
+              <div class="cm-stem"></div>
+            </div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>build</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-succeeded">Succeeded</div>
+                <span>1m 25s</span>
+              </div>
+            </div>
+
+            <!-- Connector: build → deploy-staging (active) -->
+            <div class="connector-straight active"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>deploy-staging</span>
+                <ion-icon name="sync-outline" class="job-icon-running"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-running-badge">Running</div>
+                <span>24m 4s</span>
+              </div>
+            </div>
+
+            <!-- Connector: deploy-staging → smoke-tests -->
+            <div class="connector-straight"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>smoke-tests</span>
+                <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-pending-badge">Pending</div>
+              </div>
+            </div>
+
+            <!-- Connector: smoke-tests → manual-approval -->
+            <div class="connector-straight"></div>
+
+            <div class="job">
+              <div class="job-name">
+                <span>manual-approval</span>
+                <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
+              </div>
+              <div class="job-status-time">
+                <div class="job-pending-badge">Pending</div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </section>
 
     </div>
   </main>

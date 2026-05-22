@@ -115,6 +115,7 @@ Sidebar Nav (scrollable area)
 .sidebar-nav::-webkit-scrollbar-thumb {
   background: var(--border-clr);
   border-radius: 4px;
+  cursor: pointer;
 }
 
 /*
