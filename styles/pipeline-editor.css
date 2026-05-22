@@ -111,27 +111,27 @@ Header Buttons
 }
 
 .add-stage-btn {
-  background-color: #1e293b;
+  background-color: var(--stage-btn-clr);
 }
 
 .add-stage-btn:hover {
-  background-color: #162032;
+  background-color: var(--stage-btn-hover-clr)
 }
 
 .save-btn {
-  background-color: #134e4a;
+  background-color: var(--draft-btn-clr);
 }
 
 .save-btn:hover {
-  background-color: #0d3b38;
+  background-color: var(--draft-btn-hover-clr);
 }
 
 .run-btn {
-  background-color: #14532d;
+  background-color: var(--run-btn-clr);
 }
 
 .run-btn:hover {
-  background-color: #0f3d22;
+  background-color: var(--run-btn-hover-clr);
 }
 
 /*

@@ -59,30 +59,43 @@
   align-items: center
 }
 
-.subheader .add-btn {
+.subheader button {
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  background-color: var(--button-clr);
   border: none;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
+  cursor: pointer;
 }
+
+
 
 .subheader ion-icon {
   margin-right: var(--space-xs);
   font-size: 20px;
 }
 
-.subheader .add-btn div {
+.subheader div {
   font-size: 15px;
   font-weight: bold;
 }
 
-.subheader button:hover {
+.subheader .add-btn {
+  background-color: var(--button-clr);
+}
+
+.subheader .add-btn:hover {
   background-color: var(--button-clr-hover);
-  cursor: pointer;
+}
+
+.subheader .view-drafts-btn {
+  background-color: var(--draft-btn-clr);
+}
+
+.subheader .view-drafts-btn:hover {
+  background-color: var(--draft-btn-hover-clr);
 }
 
 

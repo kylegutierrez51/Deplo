@@ -41,6 +41,19 @@ a {
   --color-border-dark: #2a2a2a;
   --color-border-mid: #474747;
 
+  --green-clr: #1a2e1a;
+  --green-border-clr: #2d4d2d;
+
+  --stage-btn-clr: #1e293b;
+  --stage-btn-hover-clr: #162032;
+
+  --draft-btn-clr: #134e4a;
+  --draft-btn-hover-clr: #0d3b38;
+
+  --run-btn-clr: #14532d;
+  --run-btn-hover-clr: #0f3d22;
+
+
   /* Spacing */
   --space-xs: 5px;
   --space-sm: 10px;
