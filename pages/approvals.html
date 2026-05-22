@@ -93,7 +93,7 @@
   </aside>
 
   <div class="profile-options">
-    <div class="profile-view-flex">
+    <div class="profile-menu">
       <div class="profile-view">Profile</div>
       <div class="sign-out">Sign Out</div>
     </div>
@@ -104,10 +104,10 @@
   </button>
 
   <main class="page-content">
-    <div class="page-flex">
+    <div class="page-layout">
 
       <div class="subheader">
-        <div class="subheader-flex">
+        <div class="subheader-inner">
           <div class="title-group">
               <h1>Approvals</h1>
               <p class='subtitle'>Pipeline runs waiting for manual approval before proceeding.</p>
@@ -116,7 +116,7 @@
       </div>
 
       <div class="cards">
-        <div class="cards-flex">
+        <div class="cards-row">
           <div class="card">
             <ion-icon name="alert-circle-outline"></ion-icon>
             <div class="card-detail">
@@ -142,7 +142,7 @@
       </div>
 
       <div class="filters">
-        <div class="filters-flex">
+        <div class="filters-bar">
           <div class="input-group">
             <ion-icon name="search-outline"></ion-icon>
             <input type="text" placeholder="Search by pipeline, repo, branch, user..."/>
@@ -168,7 +168,7 @@
 
       <div class="approvals-layout">
         <div class="approval-card">
-          <div class="approvals-flex">
+          <div class="approval-card-row">
             <div class="approvals-detail">
               <div class="pipeline-name-type">
                 <span>release-mobile</span>
@@ -183,19 +183,19 @@
                 <span>fix: resolve deep link crash on Android 14</span>
               </div>
               <div class="extra-info">
-                <div class="info-flex">
+                <div class="meta-row">
                   <ion-icon name="person-outline"></ion-icon>
                   <span>alex.kim</span>
                 </div>
-                <div class="info-flex">
+                <div class="meta-row">
                   <ion-icon name="git-branch-outline"></ion-icon>
                   <span>main</span>
                 </div>
-                <div class="info-flex">
+                <div class="meta-row">
                   <ion-icon name="stopwatch-outline"></ion-icon>
                   <span>Waiting <span class="waiting-time">18h 17m</span></span>
                 </div>
-                <div class="info-flex">
+                <div class="meta-row">
                   <ion-icon name="caret-forward-outline"></ion-icon>
                   <span>6/8 stages complete</span>
                 </div>
@@ -219,7 +219,7 @@
             </div>
           </div>
           <div class="stages">
-            <div class="stages-flex">
+            <div class="stages-row">
               <div class="stage">
                 <ion-icon name="cube-outline"></ion-icon>
                 <span>install-deps</span>
@@ -260,7 +260,7 @@
         </div>
 
         <div class="pagination-container">
-          <div class="pagination-flex">
+          <div class="pagination-row">
             <div class="view-option">
               <ion-icon name="chevron-back-outline"></ion-icon>
               <div>Prev</div>

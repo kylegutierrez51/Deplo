@@ -1,4 +1,4 @@
-.sidebar {
+﻿.sidebar {
   position: fixed;
   left: 0;
   bottom: 0;
@@ -34,7 +34,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
 }
 
 /* max-width and width are used for the Webhooks page for centering */
-.page-flex {
+.page-layout {
   display: flex;
   flex-direction: column;
   margin: 0 auto; /* centers entire container */
@@ -244,22 +244,22 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   border-radius: 4px;
 }
 
-.profile-view-flex {
+.profile-menu {
   display: flex;
   flex-direction: column;
 }
 
-.profile-view-flex div {
+.profile-menu div {
   font-weight: bold;
   padding: 10px 10px;
   border-radius: 7px;
 }
 
-.profile-view-flex div:hover {
+.profile-menu div:hover {
   background-color: var(--border-clr);
   cursor: pointer;
 }
 
-.profile-view-flex .sign-out {
+.profile-menu .sign-out {
   color: rgb(255, 57, 57);
 }

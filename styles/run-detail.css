@@ -1,4 +1,4 @@
-/*
+﻿/*
 ===============================
 Topbar
 ===============================
@@ -252,7 +252,7 @@ Section Select (Overview, Logs)
   border-bottom: 1px solid var(--border-clr);
 }
 
-.sections-flex {
+.tabs-row {
   display: flex;
   gap: 40px;
 }
@@ -285,7 +285,7 @@ Overview
   /* this makes page itself not grow beyond viewport */
 }
 
-.page-flex {
+.page-layout {
   height: 100%;
   overflow: hidden;
 }
@@ -354,7 +354,7 @@ Overview
   margin-top: 40px;
 }
 
-.pipeline-flex {
+.pipeline-inner {
   display: flex;
   align-items: center;
   flex-direction: column;

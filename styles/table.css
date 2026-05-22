@@ -1,4 +1,4 @@
-/*
+﻿/*
 ========================================
 Table
 ========================================
@@ -94,7 +94,7 @@ Pagination
   left: 0;
 }
 
-.pagination-flex {
+.pagination-row {
   display: flex;
   justify-content: center;
   align-items: center;

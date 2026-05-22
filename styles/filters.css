@@ -1,8 +1,8 @@
-.filters {
+﻿.filters {
     margin-bottom: 40px;
 }
 
-.filters-flex {
+.filters-bar {
   display: flex;
   align-items: center;
   justify-content: start;

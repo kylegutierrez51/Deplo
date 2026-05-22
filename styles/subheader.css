@@ -1,8 +1,8 @@
-.subheader {
+﻿.subheader {
   margin-bottom: 20px;
 }
 
-.subheader-flex {
+.subheader-inner {
   display: flex;
   justify-content: space-between;
   padding-bottom: 20px;
@@ -55,7 +55,7 @@
 
 
 /* Pipeline List */
-.button-flex {
+.button-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
