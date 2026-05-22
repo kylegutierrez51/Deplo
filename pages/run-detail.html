@@ -337,8 +337,74 @@
         </section>
       </section>
 
-      <section class="overview" id="section-logs" style="display:none;">
-        <p style="color: var(--subtitle-clr); padding: 20px 0;">No logs available.</p>
+      <section class="logs" id="section-logs" style="display:none;">
+
+        <div class="filters">
+          <div class="filters-flex">
+            <div class="select-group">
+              <select id="status" name="status">
+                <option value="all">install deps - succeeded</option>
+                <option value="succeeded">lint - succeeded</option>
+                <option value="failed">unit-tests - succeeded</option>
+                <option value="running">build - succeeded</option>
+                <option value="queued">deploy-staging - running</option>
+                <option value="cancelled">smoke-tests - pending</option>
+                <option value="cancelled">manual-approval - pending</option>
+                <option value="cancelled">deploy-production - pending</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <ion-icon name="search-outline"></ion-icon>
+              <input type="text" placeholder="Search logs..."/>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="log-viewer">
+
+          <div class="log-header">
+            <div class="log-header-left">
+              <ion-icon name="checkmark-circle-outline" class="log-job-icon succeeded"></ion-icon>
+              <span class="log-job-name">install-deps</span>
+              <span class="log-job-cmd">npm ci --production=false</span>
+            </div>
+            <span class="log-duration">42s</span>
+          </div>
+
+          <div class="log-body">
+            <div class="log-line">
+              <span class="log-num">1</span>
+              <span class="log-time">00:00.0</span>
+              <span class="log-content"><span class="log-prompt">$</span> npm ci --production=false</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">2</span>
+              <span class="log-time">00:00.3</span>
+              <span class="log-content log-warn">npm warn deprecated inflight@1.0.6: This module is not supported</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">3</span>
+              <span class="log-time">00:02.1</span>
+              <span class="log-content">added 1,247 packages in 38s</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">4</span>
+              <span class="log-time">00:02.2</span>
+              <span class="log-content">182 packages are looking for funding</span>
+            </div>
+            <div class="log-line">
+              <span class="log-num">5</span>
+              <span class="log-time">00:42.0</span>
+              <span class="log-content log-success">&#10003; Dependencies installed successfully</span>
+            </div>
+          </div>
+
+          <div class="log-footer">
+            <span>Process exited with code 0</span>
+          </div>
+
+        </div>
       </section>
 
     </div>
