@@ -4,7 +4,7 @@ Settings Subheader
 ========================================
 */
 .settings-subheader {
-    padding-bottom: 15px;
+    padding-bottom: var(--space-md);
     border-bottom: 1px solid var(--light-border-clr);
 }
 
@@ -25,19 +25,19 @@ Webhooks
   width: 100%;
   min-width: 536px;
   max-width: 1000px;
-  padding-top: 20px;
-  padding-bottom: 15px;
-  padding-left: 30px;
-  padding-right: 30px;
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-md);
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
   border: 1px solid var(--light-border-clr);
 }
 
 .webhook-container:first-of-type {
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .webhook-container:last-of-type {
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .webhook-row {
@@ -47,61 +47,61 @@ Webhooks
 
 .webhook-detail {
   display: flex;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 .webhook-detail .git-icon ion-icon {
   background-color: var(--light-border-clr);
-  padding: 10px;
-  border-radius: 10px;
+  padding: var(--space-sm);
+  border-radius: var(--radius-lg);
 }
 
 .pipeline-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .webhook-detail .name-status {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 .webhook-detail .name-status .active {
   background-color: var(--header-clr);
   color: var(--text-blue-clr);
-  padding: 7px;
-  border-radius: 42%;
+  padding: var(--space-2xs);
+  border-radius: var(--radius-pill);
 }
 
 .webhook-detail .name-status .inactive {
-  
+
   border: 1px solid var(--light-border-clr);
   color: var(--text-white-clr);
-  padding: 7px;
-  border-radius: 42%;
+  padding: var(--space-2xs);
+  border-radius: var(--radius-pill);
 }
 
 .pipeline-info .events {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 10px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .pipeline-info .event-type {
   font-size: 12px;
   background-color: var(--light-border-clr);
-  padding: 7px;
-  border-radius: 5px;
+  padding: var(--space-2xs);
+  border-radius: var(--radius-sm);
 }
 
 .pipeline-info .secret {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: var(--space-gap-md);
+  margin-bottom: var(--space-sm);
 }
 
 .pipeline-info .secret ion-icon {
@@ -117,16 +117,16 @@ Webhooks
 .pipeline-info .last-delivery {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .pipeline-info .registered {
-  margin-left: 15px;
+  margin-left: var(--space-md);
 }
 
 .webhook-row .options {
   display: flex;
-  gap: 15px;
+  gap: var(--space-md);
 }
 
 .webhook-row .options > ion-icon {
@@ -141,7 +141,7 @@ Pagination overrides for centered layout
 ============================================================
 */
 .page-layout .page-view {
-  padding: 30px 0;
+  padding: var(--space-xl) 0;
   justify-content: space-between;
 }
 
@@ -157,7 +157,7 @@ This one is tricky:
 
 .page-layout .pagination-row {
   padding-left: 0;
-  gap: 15px;
+  gap: var(--space-md);
 }
 
 

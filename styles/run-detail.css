@@ -10,7 +10,7 @@ Topbar
   left: 310px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-gap-md);
   z-index: 200;
   transition: left 0.3s ease;
 }
@@ -27,10 +27,10 @@ Topbar
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   color: var(--subtitle-clr);
   padding: 6px 10px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-clr);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -60,10 +60,10 @@ Run Detail Card
   max-width: 1000px;
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-border-clr);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 22px 28px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+  margin-top: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
 }
 
 .rdc-inner {
@@ -76,14 +76,14 @@ Run Detail Card
 .rdc-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 /* Row 1: title */
 .rdc-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-gap-md);
 }
 
 .rdc-name {
@@ -104,13 +104,13 @@ Run Detail Card
   gap: 6px;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .rdc-status.running {
   color: var(--text-blue-clr);
-  border: 1.5px solid var(--text-blue-clr);
+  border: var(--border-width-sm) solid var(--text-blue-clr);
   background-color: rgba(80, 165, 255, 0.07);
 }
 
@@ -127,13 +127,13 @@ Run Detail Card
 .rdc-env {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .rdc-env.production {
   color: #f87171;
-  border: 1.5px solid #f87171;
+  border: var(--border-width-sm) solid #f87171;
   background-color: rgba(248, 113, 113, 0.07);
 }
 
@@ -158,11 +158,11 @@ Run Detail Card
 .rdc-commit-hash {
   color: var(--text-blue-clr);
   font-family: "JetBrains Mono", monospace;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .rdc-commit-msg {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--subtitle-clr);
 }
 
@@ -170,15 +170,15 @@ Run Detail Card
 .rdc-trigger-row {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 /* Shared meta item */
 .rdc-meta-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 13px;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
   color: var(--subtitle-clr);
 }
 
@@ -198,7 +198,7 @@ Run Detail Card
 /* Action buttons */
 .rdc-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-gap-md);
   flex-shrink: 0;
 }
 
@@ -207,9 +207,9 @@ Run Detail Card
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: var(--space-sm) 18px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -217,7 +217,7 @@ Run Detail Card
 
 .rdc-btn-cancel {
   color: #f87171;
-  border: 1.5px solid #f87171;
+  border: var(--border-width-sm) solid #f87171;
   background-color: rgba(248, 113, 113, 0.06);
 }
 
@@ -227,7 +227,7 @@ Run Detail Card
 
 .rdc-btn-rerun {
   color: var(--text-white-clr);
-  border: 1.5px solid var(--light-border-clr);
+  border: var(--border-width-sm) solid var(--light-border-clr);
   background-color: transparent;
 }
 
@@ -248,7 +248,7 @@ Section Select (Overview, Logs)
 */
 
 .sections {
-  padding: 0 0 10px 20px;
+  padding: 0 0 var(--space-sm) var(--space-lg);
   border-bottom: 1px solid var(--border-clr);
 }
 
@@ -260,7 +260,7 @@ Section Select (Overview, Logs)
 .section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
   cursor: pointer;
   background: none;
   border: none;
@@ -292,11 +292,11 @@ Overview
 
 /* Statuses */
 .overview {
-  margin-top: 20px;
+  margin-top: var(--space-lg);
   flex: 1;
   min-height: 0; /* lets flex child shrink below its content size */
   overflow-y: auto;
-  padding-bottom: 40px;
+  padding-bottom: var(--space-2xl);
 }
 
 
@@ -309,7 +309,7 @@ Overview
 .overview .job-statuses > div {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .total, .succeeded, .running, .failed, .approval {
@@ -337,7 +337,7 @@ Overview
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: var(--space-2xl);
 }
 
 .pipeline-inner {
@@ -349,12 +349,12 @@ Overview
 .job {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
   min-width: 250px;
   max-width: 250px;
-  padding: 20px;
+  padding: var(--space-lg);
   border: 1px solid var(--input-clr);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
 }
 
@@ -375,34 +375,34 @@ Overview
 .job-status-time {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 .job-succeeded {
   background-color: #14532d;
-  border-radius: 5px;
-  padding: 5px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+  font-size: var(--font-size-sm);
 }
 
 .job-status-time span {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .job-running-badge {
   background-color: rgba(80, 165, 255, 0.15);
   color: var(--text-blue-clr);
-  border-radius: 5px;
-  padding: 5px 8px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) 8px;
+  font-size: var(--font-size-sm);
 }
 
 .job-pending-badge {
   color: var(--subtitle-clr);
   border: 1px solid var(--border-clr);
-  border-radius: 5px;
-  padding: 5px 8px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) 8px;
+  font-size: var(--font-size-sm);
 }
 
 .job-icon-running {
@@ -427,7 +427,7 @@ Pipeline Connectors
 
 /* Straight connector between sequential jobs */
 .connector-straight {
-  width: 2px;
+  width: var(--border-width-md);
   height: 36px;
   background-color: var(--border-clr);
   position: relative;
@@ -465,7 +465,7 @@ Pipeline Connectors
 }
 
 .cf-stem {
-  width: 2px;
+  width: var(--border-width-md);
   height: 20px;
   background-color: var(--border-clr);
 }
@@ -485,8 +485,8 @@ Pipeline Connectors
   height: 20px;
 }
 
-.cf-arm-left  { border-top: 2px solid var(--border-clr); border-left:  2px solid var(--border-clr); }
-.cf-arm-right { border-top: 2px solid var(--border-clr); border-right: 2px solid var(--border-clr); }
+.cf-arm-left  { border-top: var(--border-width-md) solid var(--border-clr); border-left:  var(--border-width-md) solid var(--border-clr); }
+.cf-arm-right { border-top: var(--border-width-md) solid var(--border-clr); border-right: var(--border-width-md) solid var(--border-clr); }
 
 /* Merge connector: two parallel jobs converge into one */
 .connector-merge {
@@ -497,7 +497,7 @@ Pipeline Connectors
 }
 
 .cm-stem {
-  width: 2px;
+  width: var(--border-width-md);
   height: 20px;
   background-color: var(--border-clr);
 }
@@ -517,8 +517,8 @@ Pipeline Connectors
   height: 20px;
 }
 
-.cm-arm-left  { border-bottom: 2px solid var(--border-clr); border-left:  2px solid var(--border-clr); }
-.cm-arm-right { border-bottom: 2px solid var(--border-clr); border-right: 2px solid var(--border-clr); }
+.cm-arm-left  { border-bottom: var(--border-width-md) solid var(--border-clr); border-left:  var(--border-width-md) solid var(--border-clr); }
+.cm-arm-right { border-bottom: var(--border-width-md) solid var(--border-clr); border-right: var(--border-width-md) solid var(--border-clr); }
 
 /*
 ===============================
@@ -531,7 +531,7 @@ Log Viewer
   flex: 1;
   min-height: 0; /* lets flex child shrink below its content size */
   overflow-y: auto;
-  padding-bottom: 40px;
+  padding-bottom: var(--space-2xl);
 }
 
 .logs .filters {
@@ -540,9 +540,9 @@ Log Viewer
 
 .log-viewer {
   width: 100%;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--color-border-dark);
   font-family: "JetBrains Mono", monospace;
   font-weight: 400;
 }
@@ -551,15 +551,15 @@ Log Viewer
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
+  padding: var(--space-gap-md) 18px;
   background-color: #161b22;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--color-border-dark);
 }
 
 .log-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .log-job-icon {
@@ -584,20 +584,20 @@ Log Viewer
 }
 
 .log-job-cmd {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #7d8590;
   font-family: "JetBrains Mono", monospace;
 }
 
 .log-duration {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #7d8590;
   font-family: "JetBrains Mono", monospace;
 }
 
 .log-body {
   background-color: #0d1117;
-  padding: 10px 0;
+  padding: var(--space-sm) 0;
 }
 
 .log-line {
@@ -613,7 +613,7 @@ Log Viewer
 }
 
 .log-num {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #404040;
   text-align: right;
   min-width: 36px;
@@ -623,15 +623,15 @@ Log Viewer
 }
 
 .log-time {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #3fb950;
   min-width: 80px;
-  padding-right: 20px;
+  padding-right: var(--space-lg);
   flex-shrink: 0;
 }
 
 .log-content {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #c9d1d9;
   white-space: pre;
 }
@@ -649,13 +649,13 @@ Log Viewer
 }
 
 .log-footer {
-  padding: 10px 18px;
+  padding: var(--space-sm) 18px;
   background-color: #0d1117;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--color-border-dark);
 }
 
 .log-footer span {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: #3fb950;
   font-family: "JetBrains Mono", monospace;
 }

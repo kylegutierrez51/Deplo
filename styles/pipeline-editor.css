@@ -9,8 +9,8 @@ header {
   top: 0;
   left: 300px;
   right: 0;
-  z-index: 100;
-  height: 72px;
+  z-index: var(--z-header);
+  height: var(--size-topbar-height);
   background-color: var(--dark-clr-1);
   transition: left 0.3s ease;
 }
@@ -21,7 +21,7 @@ header {
 
 /* Override sidebar.css's .page-content to exclude the 72px fixed header */
 .page-content {
-  margin-top: 72px;
+  margin-top: var(--size-topbar-height);
   padding: 0;
 }
 
@@ -29,7 +29,7 @@ header {
   display: flex;
   justify-content: space-between;
   height: 100%;
-  margin-left: 20px;
+  margin-left: var(--space-lg);
 }
 
 .divider {
@@ -41,7 +41,7 @@ header {
 header .left-side {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--space-md);
 }
 
 header .left-side .sidebar-toggle {
@@ -54,20 +54,20 @@ header .left-side .sidebar-toggle {
 header .left-side .pipeline-title {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 header .left-side .nodes-edges {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 header .right-side {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-right: 20px;
+  gap: var(--space-md);
+  margin-right: var(--space-lg);
 }
 
 .right-side .sidebar-icon {
@@ -91,12 +91,12 @@ Header Buttons
   align-items: center;
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
 }
 
 .right-side button ion-icon {
-  margin-right: 5px;
+  margin-right: var(--space-xs);
 }
 
 
@@ -147,7 +147,7 @@ Stage Sidebar
 
 /* removes checkbox blue outline */
 .stage-sidebar input:not([type="checkbox"]) {
-  padding-left: 10px;
+  padding-left: var(--space-sm);
 }
 
 .secret-container input[type="checkbox"],
@@ -162,16 +162,16 @@ Stage Sidebar
   position: fixed;
   right: 0;
   bottom: 0;
-  top: 72px;
+  top: var(--size-topbar-height);
   min-width: 320px;
   max-width: 320px;
   background-color: var(--dark-clr-1);
-  padding: 20px 0 20px 20px;
+  padding: var(--space-lg) 0 var(--space-lg) var(--space-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
-  z-index: 100;
+  z-index: var(--z-stage-sidebar);
   opacity: 1; /* should originally be 0, then changed to 1 when triggered and back to 0 when untriggered */
 }
 
@@ -181,15 +181,15 @@ Stage Sidebar
   justify-content: space-between;
 
   /* for border-bottom */
-  margin: 0 0 0 -20px;
-  padding: 0 20px 20px;
+  margin: 0 0 0 calc(-1 * var(--space-lg));
+  padding: 0 var(--space-lg) var(--space-lg);
   border-bottom: 1px solid var(--border-clr);
 }
 
 .stage-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .stage-title .icon-border {
@@ -197,7 +197,7 @@ Stage Sidebar
   align-items: center;
   background-color: var(--border-clr);
   border-radius: 7px;
-  padding: 5px 5px;
+  padding: var(--space-xs) var(--space-xs);
 }
 
 .stage-title .title {
@@ -209,7 +209,7 @@ Stage Sidebar
   border: none;
   background-color: var(--border-clr);
   padding: 4px 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   font-size: 15px;
   cursor: pointer;
 }
@@ -226,7 +226,7 @@ Stage Sidebar
 
 
 .stage-sidebar-nav {
-  padding: 20px 10px 20px 0;
+  padding: var(--space-lg) var(--space-sm) var(--space-lg) 0;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -236,8 +236,8 @@ Stage Sidebar
 .stage-name, .stage-types, .command, .env-vars, .secrets {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 
 }
 
@@ -246,7 +246,7 @@ Stage Sidebar
 .stage-type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: var(--space-sm);
 
 }
 
@@ -257,9 +257,9 @@ Stage Sidebar
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 5px;
+  padding: var(--space-xs);
   background-color: var(--dark-clr-2);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-clr);
   cursor: pointer;
 }
@@ -272,15 +272,15 @@ Stage Sidebar
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
 .timeout, .retries {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .timeout ion-icon, .retries ion-icon, .env-vars ion-icon, .secrets ion-icon {
@@ -297,7 +297,7 @@ Stage Sidebar
 .env-title {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .env-vars .add-env-btn {
@@ -306,7 +306,7 @@ Stage Sidebar
   background-color: transparent;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
   cursor: pointer;
 }
 
@@ -318,7 +318,7 @@ Stage Sidebar
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .env-container {
@@ -334,13 +334,13 @@ Stage Sidebar
 .secrets-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .secrets-info > div {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .secrets-info .info {
@@ -356,8 +356,8 @@ Stage Sidebar
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: 10px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--light-border-clr);
   background-color: var(--dark-clr-2);
   cursor: pointer;
@@ -371,7 +371,7 @@ Stage Sidebar
 .secret-container .secret {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .secret .secret-key {

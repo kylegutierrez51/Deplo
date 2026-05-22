@@ -1,23 +1,23 @@
 ﻿.subheader {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
 }
 
 .subheader-inner {
   display: flex;
   justify-content: space-between;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-lg);
 }
 
 .subheader .title-group {
   display: flex;
   align-items: start;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .title-group .subtitle {
   display: flex;
-  gap: 5px;
+  gap: var(--space-xs);
   color: var(--subtitle-clr);
 }
 
@@ -34,12 +34,12 @@
   color: white;
   background-color: var(--button-clr);
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
 }
 
 .subheader ion-icon {
-  margin-right: 5px;
+  margin-right: var(--space-xs);
   font-size: 20px;
 }
 
@@ -58,5 +58,5 @@
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
