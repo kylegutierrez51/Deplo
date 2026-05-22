@@ -140,7 +140,7 @@ Stage Sidebar
 ==================
 */
 
-label {
+.stage-sidebar label {
   font-family: "JetBrains Mono";
   font-size: 15px;
 }
