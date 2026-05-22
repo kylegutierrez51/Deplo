@@ -176,8 +176,8 @@
       <div class="stage-sidebar-nav">
 
         <div class="stage-name">
-          <label>STAGE NAME</label>
-          <input name="stage-name" placeholder="e.g. build">
+          <label for="stage-name">STAGE NAME</label>
+          <input id="stage-name" name="stage-name" placeholder="e.g. build">
         </div>
 
         <div class="stage-types">
@@ -207,24 +207,24 @@
         </div>
 
         <div class="command">
-          <label>COMMAND</label>
-          <textarea name="command" placeholder="e.g. npm run build"></textarea>
+          <label for="command">COMMAND</label>
+          <textarea id="command" name="command" placeholder="e.g. npm run build"></textarea>
         </div>
 
         <div class="timeout-and-retries">
           <div class="timeout">
             <div>
               <ion-icon name="time-outline"></ion-icon>
-              <label>TIMEOUT (S)</label>
+              <label for="timeout">TIMEOUT (S)</label>
             </div>
-            <input name="timeout" placeholder="e.g. npm run build" value="0">
+            <input id="timeout" name="timeout" placeholder="e.g. npm run build" value="0">
           </div>
           <div class="retries">
             <div>
               <ion-icon name="refresh-outline"></ion-icon>
-              <label>RETRIES</label>
+              <label for="retries">RETRIES</label>
             </div>
-            <input name="retries" placeholder="e.g. npm run build" value="0">   
+            <input id="retries" name="retries" placeholder="e.g. npm run build" value="0">
           </div>
         </div>
 
