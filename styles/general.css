@@ -54,6 +54,7 @@ a {
   --run-btn-hover-clr: #0f3d22;
 
   --red-text: #f87171;
+  --red-dark-text: rgb(255, 57, 57);
   --red-btn-clr: rgba(248, 113, 113, 0.06);
   --red-btn-border-clr: #f87171;
   --red-btn-hover-clr: rgba(248, 113, 113, 0.14);

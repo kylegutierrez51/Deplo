@@ -124,8 +124,11 @@ Sidebar Content
 ========================================
 */
 .sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
   padding-top: 50px;
-  padding-bottom: 25px;
+  padding-bottom: var(--space-md);
   border-bottom: 2px solid var(--border-clr);
 }
 
@@ -133,7 +136,6 @@ Sidebar Content
   margin-left: var(--space-md);
   font-family: "JetBrains Mono";
   font-size: var(--font-size-body);
-  padding-bottom: var(--space-lg);
 }
 
 .sidebar-content li {
@@ -213,7 +215,7 @@ Profile
 
 ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   font-size: 20px;
-  margin-right: 5px;
+  margin-right: var(--space-xs);
   justify-self: end;
 }
 
@@ -269,5 +271,5 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 }
 
 .profile-menu .sign-out {
-  color: rgb(255, 57, 57);
+  color: var(--red-dark-text);
 }
