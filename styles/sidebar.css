@@ -191,6 +191,13 @@ Profile
 
 .profile-details {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.user {
+  display: flex;
   flex-direction: column;
   gap: 4px;
 }
@@ -207,6 +214,7 @@ Profile
 ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   font-size: 20px;
   margin-right: 5px;
+  justify-self: end;
 }
 
 .profile-options {
