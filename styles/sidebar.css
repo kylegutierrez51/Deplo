@@ -172,23 +172,14 @@ Profile
   background-color: var(--dark-clr-2);
   border: 1px solid var(--border-clr);
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .profile:hover {
   background-color: var(--border-clr);
-}
-
-.profile-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.profile-container {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .profile-pic {
