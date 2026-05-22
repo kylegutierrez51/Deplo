@@ -186,6 +186,14 @@ Stage Sidebar
   border-bottom: 1px solid var(--border-clr);
 }
 
+/* Includes all sections */
+.stage-name, .stage-types, .command, .env-vars, .secrets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
 .stage-title {
   display: flex;
   align-items: center;
@@ -233,16 +241,10 @@ Stage Sidebar
 }
 
 
-.stage-name, .stage-types, .command, .env-vars, .secrets {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-
-}
 
 
 
+/* Stage Types */
 .stage-type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -268,6 +270,8 @@ Stage Sidebar
   background-color: var(--light-border-clr);
 }
 
+
+/* Timeout and Retries */
 .timeout-and-retries {
   display: flex;
   justify-content: space-between;
@@ -287,7 +291,7 @@ Stage Sidebar
   font-size: 15px;
 }
 
-
+/* Environment Variables */
 .env-title-container {
   display: flex;
   justify-content: space-between;
@@ -331,6 +335,7 @@ Stage Sidebar
   flex: 1;
 }
 
+/* Secrets */
 .secrets-info {
   display: flex;
   flex-direction: column;
@@ -350,6 +355,9 @@ Stage Sidebar
 .secrets-list {
   display: flex;
   flex-direction: column;
+  /* max-height and overflow-y add a 3 scrollbar after more than 3 secrets */
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 .secret-container {
