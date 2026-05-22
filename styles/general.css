@@ -97,15 +97,15 @@ textarea {
   padding: 5px;
 }
 
-textarea::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 7px;
 }
 
-textarea::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-textarea::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--text-white-clr);
   border-radius: 4px;
 }

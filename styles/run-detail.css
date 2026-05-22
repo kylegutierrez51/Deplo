@@ -299,20 +299,6 @@ Overview
   padding-bottom: 40px;
 }
 
-.overview::-webkit-scrollbar {
-  width: 7px;
-  
-}
-
-.overview::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.overview::-webkit-scrollbar-thumb {
-  background: var(--text-white-clr);
-  border-radius: 4px;
-  cursor: pointer;
-}
 
 .overview .job-statuses {
   display: flex;
