@@ -49,6 +49,7 @@ Approval Cards
 
 .approval-card ion-icon {
   font-size: 19px;
+  color: var(--icon-clr);
 }
 
 .approval-card {
@@ -125,6 +126,7 @@ Approval Cards
 
 .feature-info .feature {
   color: var(--subtitle-clr);
+  font-size: var(--font-size-body);
 }
 
 .extra-info {

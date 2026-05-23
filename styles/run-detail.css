@@ -125,6 +125,7 @@ Run Detail Card
   display: flex;
   align-items: center;
   gap: 14px;
+  font-size: 16px;
 }
 
 .rdc-commit-ref {
@@ -141,11 +142,11 @@ Run Detail Card
 .rdc-commit-hash {
   color: var(--text-blue-clr);
   font-family: "JetBrains Mono", monospace;
-  font-size: var(--font-size-sm);
+  font-size: inherit;
 }
 
 .rdc-commit-msg {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-body);
   color: var(--subtitle-clr);
 }
 
@@ -161,12 +162,12 @@ Run Detail Card
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: var(--font-size-sm);
+  font-size: 16px;
   color: var(--subtitle-clr);
 }
 
 .rdc-meta-item ion-icon {
-  font-size: 15px;
+  font-size: 19px;
   color: var(--icon-clr);
 }
 
