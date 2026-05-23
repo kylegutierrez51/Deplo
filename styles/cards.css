@@ -26,8 +26,29 @@
 
 .card-detail .card-total {
   font-weight: bold;
+  color: var(--text-blue-clr);
 }
 
 .card-detail .card-name {
   font-family: "JetBrains Mono";
 }
+
+/* Approvals */
+.card-detail .card-total.wait-time {
+  color: var(--red-text);
+}
+
+/* Webhook Events */
+.card-detail .card-total.processed {
+  color: var(--pill-succeeded-text);
+}
+
+.card-detail .card-total.ignored {
+  color: var(--pill-ignored-text);
+}
+
+.card-detail .card-total.failed {
+  color: var(--pill-failed-text);
+}
+
+
