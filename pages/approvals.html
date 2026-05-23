@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../styles/subheader.css">
   <link rel="stylesheet" href="../styles/filters.css">
   <link rel="stylesheet" href="../styles/cards.css">
-  <link rel="stylesheet" href="../../styles/approvals.css">
+  <link rel="stylesheet" href="../styles/approvals.css">
 </head>
 
 <body>
@@ -101,10 +101,6 @@
     <ion-icon name="menu-outline"></ion-icon>
   </button>
 
-  <button class="sidebar-toggle" id="sidebarToggle">
-    <ion-icon name="menu-outline"></ion-icon>
-  </button>
-
   <main class="page-content">
     <div class="page-layout">
 
@@ -145,9 +141,9 @@
 
       <div class="filters">
         <div class="filters-bar">
-          <div class="input-group">
+          <div class=" input-group approvals-input-group">
             <ion-icon name="search-outline"></ion-icon>
-            <input type="text" placeholder="Search by pipeline, repo, branch, user..."/>
+            <input class="approvals-input" type="text" placeholder="Search by pipeline, repo, branch, user..."/>
           </div>
           <div class="select-group">
             <select id="environment" name="environment">
@@ -182,7 +178,7 @@
                   <ion-icon name="git-commit-outline"></ion-icon>
                   <span>c3d4e5f</span>
                 </div>
-                <span>fix: resolve deep link crash on Android 14</span>
+                <span class="feature">fix: resolve deep link crash on Android 14</span>
               </div>
               <div class="extra-info">
                 <div class="meta-row">

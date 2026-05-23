@@ -41,9 +41,12 @@ a {
   --color-border-dark: #2a2a2a;
   --color-border-mid: #474747;
 
+  /* Green Ghost Button */
+  --green-text: rgb(1, 163, 1);
   --green-clr: #1a2e1a;
-  --green-border-clr: #2d4d2d;
-
+  --green-hover-clr: #234123;
+  --green-border-clr: rgb(1, 163, 1);
+  
   --stage-btn-clr: #1e293b;
   --stage-btn-hover-clr: #162032;
 
@@ -53,6 +56,7 @@ a {
   --run-btn-clr: #14532d;
   --run-btn-hover-clr: #0f3d22;
 
+  /* Red Ghost Button */
   --red-text: #f87171;
   --red-dark-text: rgb(255, 57, 57);
   --red-btn-clr: rgba(248, 113, 113, 0.06);

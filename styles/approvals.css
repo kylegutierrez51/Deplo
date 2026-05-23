@@ -24,6 +24,15 @@ This one is tricky:
   gap: var(--space-md);
 }
 
+/* 
+======================
+Input Size Override
+======================
+*/
+.approvals-input-group {
+  position: relative;
+  width: 30%;
+}
 
 /*
 ===================================
@@ -52,6 +61,7 @@ Approval Cards
   padding-right: var(--space-xl);
   border: 1px solid var(--light-border-clr);
   border-radius: 12px;
+  background: var(--dark-clr-2);
 }
 
 .approvals-detail {
@@ -72,6 +82,7 @@ Approval Cards
 
 .pipeline-name-type span {
   font-weight: bold;
+  font-size: 18px;
 }
 
 .pipeline-name-type .production {
@@ -82,7 +93,7 @@ Approval Cards
 }
 
 .pipeline-name-type .type {
-  background-color: purple;
+  background-color: #1e2d6b;
   color: var(--text-white-clr);
   padding: var(--space-2xs);
   border-radius: var(--radius-pill);
@@ -95,10 +106,14 @@ Approval Cards
   margin-bottom: var(--space-sm);
 }
 
-.feature-id {
+.feature-info .feature-id {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+}
+
+.feature-info .feature {
+  color: var(--subtitle-clr);
 }
 
 .extra-info {
@@ -111,10 +126,11 @@ Approval Cards
 .meta-row {
   display: flex;
   align-items: center;
+  gap: var(--space-xs);
 }
 
 .meta-row .waiting-time {
-  color: red;
+  color: var(--red-text);
 }
 
 .stage-view {
@@ -129,6 +145,7 @@ Approval Cards
 
 .btn-group {
   display: flex;
+  align-items: flex-start;
   gap: var(--space-lg);
 }
 
@@ -144,11 +161,23 @@ Approval Cards
 }
 
 .reject-btn {
-  background-color: rgb(226, 43, 43);
+  color: var(--red-text);
+  background-color: var(--red-btn-clr);
+  border: 1px solid var(--red-btn-border-clr);
+}
+
+.reject-btn:hover {
+  background-color: var(--red-btn-hover-clr);
 }
 
 .approve-btn {
-  background-color: #14532d;
+  color: var(--green-text);
+  background-color: var(--green-clr);
+  border: 1px solid var(--green-border-clr);
+}
+
+.approve-btn:hover {
+  background-color: var(--green-hover-clr);
 }
 
 
@@ -156,7 +185,7 @@ Approval Cards
 stages
 */
 .stages {
-  border-top: 1px solid var(--light-border-clr);
+  border-top: 2px solid var(--light-border-clr);
   padding-top: var(--space-sm);
 }
 
@@ -180,5 +209,5 @@ stages
 }
 
 .stages-row .approval {
-  background-color: rgb(209, 140, 13);
+  background-color: #94471a;
 }
