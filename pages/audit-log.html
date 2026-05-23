@@ -7,7 +7,7 @@
   <title>Deplo | Audit Log</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles/general.css">
   <link rel="stylesheet" href="../styles/sidebar.css">
   <link rel="stylesheet" href="../styles/table.css">
@@ -21,61 +21,57 @@
 
     <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">DEPLOY</span>
-          <ul>
-            <li>
-              <ion-icon name="git-network-outline"></ion-icon>
-              <a href="pipeline-list.html">
-                <span class="title">Pipelines</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="time-outline"></ion-icon>
-              <a href="run-history.html">
-                <span class="title">Run History</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <a href="approvals.html">
-                <span class="title">Approvals</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">DEPLOY</span>
+        <ul>
+          <li>
+            <ion-icon name="git-network-outline"></ion-icon>
+            <a href="pipeline-list.html">
+              <span class="title">Pipelines</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="time-outline"></ion-icon>
+            <a href="run-history.html">
+              <span class="title">Run History</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <a href="approvals.html">
+              <span class="title">Approvals</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">MANAGE</span>
-          <ul>
-            <li>
-              <ion-icon name="key-outline"></ion-icon>
-              <a href="secrets.html">
-                <span class="title">Secrets</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="settings-outline"></ion-icon>
-              <a href="environments.html">
-                <span class="title">Environments</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="flash-outline"></ion-icon>
-              <a href="webhooks.html">
-                <span class="title">Webhooks</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="reader-outline"></ion-icon>
-              <a href="audit-log.html">
-                <span class="title">Audit Log</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">MANAGE</span>
+        <ul>
+          <li>
+            <ion-icon name="key-outline"></ion-icon>
+            <a href="secrets.html">
+              <span class="title">Secrets</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="settings-outline"></ion-icon>
+            <a href="environments.html">
+              <span class="title">Environments</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="flash-outline"></ion-icon>
+            <a href="webhooks.html">
+              <span class="title">Webhooks</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="reader-outline"></ion-icon>
+            <a href="audit-log.html">
+              <span class="title">Audit Log</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -109,7 +105,7 @@
       <div class="subheader-inner">
         <div class="title-group">
             <h1>Audit Log</h1>
-            <p class='subtitle'><span id='subtitle-count'>20</span> events</p>
+            <p class='subtitle'>Immutable record of every action taken across your workspace</p>
         </div>
         <div class="add-div">
           <button class='add-btn'>
@@ -134,7 +130,6 @@
             <option value="development">Approvals</option>
             <option value="preview">Secrets</option>
             <option value="preview">Webhooks</option>
-            <option value="preview">Team</option>
             <option value="preview">Settings</option>
           </select>
         </div>
@@ -164,19 +159,19 @@
           <tbody>
             <tr>
               <td>Run Completed</td>
-              <td>deploy-api #482 (PipelineRun)</td>
+              <td>deploy-api #482 <span class="audit-action">[PipelineRun]</span></td>
               <td>system</td>
               <td>10d ago</td>
             </tr>
             <tr>
               <td>Pipeline Triggered</td>
-              <td>deploy-api #482 (Pipeline)</td>
+              <td>deploy-api #482 <span class="audit-action">[Pipeline]</span></td>
               <td>sarah.chen</td>
               <td>10d ago</td>
             </tr>
             <tr>
               <td>Webhook Received</td>
-              <td>push → acme/api-server (WebhookEvent)</td>
+              <td>push → acme/api-server <span class="audit-action">[WebhookEvent]</span></td>
               <td>github</td>
               <td>11d ago</td>
             </tr>

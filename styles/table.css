@@ -5,10 +5,10 @@ Table
 */
 
 .table-border {
-  border-left: 1px solid #474747;
-  border-right: 1px solid #474747;
-  border-bottom: 1px solid #474747;
-  border-radius: 5px 5px 5px 5px;
+  border-left: 1px solid var(--color-border-mid);
+  border-right: 1px solid var(--color-border-mid);
+  border-bottom: 1px solid var(--color-border-mid);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-sm);
   overflow: hidden;
 }
 
@@ -28,6 +28,22 @@ table tbody td.filter ion-icon {
   vertical-align: middle;
 }
 
+
+/* Secrets */
+td.filter ion-icon[name="eye-outline"] {
+  cursor: pointer;
+}
+
+td.filter ion-icon[name="copy-outline"] {
+  cursor: pointer;
+}
+
+/* Audit Log */
+td .audit-action {
+  margin-left: 10px;
+  color: var(--subtitle-clr);
+  font-size: 14px;
+}
 
 /*
 ========================================
@@ -62,7 +78,7 @@ Pagination
   justify-content: space-evenly;
   align-items: center;
   gap: 10px;
-  border: 1px solid #474747;
+  border: 1px solid var(--color-border-mid);
   padding: 12px 15px;
   cursor: pointer;
 }
@@ -81,7 +97,7 @@ Pagination
   width: max-content;
   background-color: var(--header-clr);
   padding: 5px 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 
 

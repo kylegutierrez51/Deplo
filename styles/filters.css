@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: start;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .input-group {
@@ -48,16 +48,13 @@
   pointer-events: none;
 }
 
-.active-runs {
-  align-self: flex-start;
-}
-
-.active-runs > div {
-  color: var(--text-blue-clr);
-}
 
 /* input needs to be slightly bigger to hold the placeholder text */
 .webhook-event-input-group {
   position: relative;
   width: 30%;
+}
+
+.webhook-event-input-group input {
+  padding-left: 34px;
 }

@@ -6,7 +6,7 @@
   <title>Deplo | Run Detail</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../styles/general.css">
   <link rel="stylesheet" href="../../styles/sidebar.css">
   <link rel="stylesheet" href="../../styles/table.css">
@@ -20,61 +20,57 @@
 
     <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">DEPLOY</span>
-          <ul>
-            <li>
-              <ion-icon name="git-network-outline"></ion-icon>
-              <a href="../pipeline-list.html">
-                <span class="title">Pipelines</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="time-outline"></ion-icon>
-              <a href="../run-history.html">
-                <span class="title">Run History</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <a href="../approvals.html">
-                <span class="title">Approvals</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">DEPLOY</span>
+        <ul>
+          <li>
+            <ion-icon name="git-network-outline"></ion-icon>
+            <a href="pipeline-list.html">
+              <span class="title">Pipelines</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="time-outline"></ion-icon>
+            <a href="run-history.html">
+              <span class="title">Run History</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <a href="approvals.html">
+              <span class="title">Approvals</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">MANAGE</span>
-          <ul>
-            <li>
-              <ion-icon name="key-outline"></ion-icon>
-              <a href="../secrets.html">
-                <span class="title">Secrets</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="settings-outline"></ion-icon>
-              <a href="../environments.html">
-                <span class="title">Environments</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="flash-outline"></ion-icon>
-              <a href="../webhooks.html">
-                <span class="title">Webhooks</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="reader-outline"></ion-icon>
-              <a href="../audit-log.html">
-                <span class="title">Audit Log</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">MANAGE</span>
+        <ul>
+          <li>
+            <ion-icon name="key-outline"></ion-icon>
+            <a href="secrets.html">
+              <span class="title">Secrets</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="settings-outline"></ion-icon>
+            <a href="environments.html">
+              <span class="title">Environments</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="flash-outline"></ion-icon>
+            <a href="webhooks.html">
+              <span class="title">Webhooks</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="reader-outline"></ion-icon>
+            <a href="audit-log.html">
+              <span class="title">Audit Log</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -120,11 +116,11 @@
             <div class="rdc-title-row">
               <span class="rdc-name">deploy-api</span>
               <span class="rdc-num">#47</span>
-              <div class="rdc-status running">
+              <div class="rdc-status running pill pill--running">
                 <ion-icon name="sync-outline"></ion-icon>
                 Running
               </div>
-              <div class="rdc-env production">production</div>
+              <div class="pill pill--production">Production</div>
             </div>
 
             <!-- Row 2: commit info -->
@@ -192,29 +188,24 @@
       <section class="overview" id="section-overview">
         <div class="job-statuses">
           <div>
-            <span class="total">8</span>
-            <span>Total</span>
+            <div class="pill pill--total">8 Total</div>
           </div>
           <div>
-            <span class="succeeded">4</span>
-            <span>Succeeded</span>
+            <div class="pill pill--succeeded">4 Succeeded</div>
           </div>
           <div>
-            <span class="running">1</span>
-            <span>Running</span>
+            <div class="pill pill--running">1 Running</div>
           </div>
           <div>
-            <span class="failed">0</span>
-            <span>Failed</span>
+            <div class="pill pill--queued">3 Queued</div>
           </div>
           <div>
-            <span class="approval">0</span>
-            <span>Awaiting Approval</span>
+            <div class="pill pill--failed"> 0 Failed</div>
           </div>
           <div>
-            <span>3</span>
-            <span>Pending</span>
+            <div class="pill pill--approval">0 Awaiting Approval</div>
           </div>
+
         </div>
 
         <div class="pipeline">
@@ -227,7 +218,7 @@
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
               </div>
               <div class="job-status-time">
-                <div class="job-succeeded">Succeeded</div>
+                <div class="pill pill--succeeded">Succeeded</div>
                 <span>42s</span>
               </div>
             </div>
@@ -251,7 +242,7 @@
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
                 </div>
                 <div class="job-status-time">
-                  <div class="job-succeeded">Succeeded</div>
+                  <div class="pill pill--succeeded">Succeeded</div>
                   <span>38s</span>
                 </div>
               </div>
@@ -261,7 +252,7 @@
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
                 </div>
                 <div class="job-status-time">
-                  <div class="job-succeeded">Succeeded</div>
+                  <div class="pill pill--succeeded">Succeeded</div>
                   <span>2m 13s</span>
                 </div>
               </div>
@@ -284,7 +275,7 @@
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
               </div>
               <div class="job-status-time">
-                <div class="job-succeeded">Succeeded</div>
+                <div class="pill pill--succeeded">Succeeded</div>
                 <span>1m 25s</span>
               </div>
             </div>
@@ -298,7 +289,7 @@
                 <ion-icon name="sync-outline" class="job-icon-running"></ion-icon>
               </div>
               <div class="job-status-time">
-                <div class="job-running-badge">Running</div>
+                <div class="pill pill--running">Running</div>
                 <span>24m 4s</span>
               </div>
             </div>
@@ -312,7 +303,7 @@
                 <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
               </div>
               <div class="job-status-time">
-                <div class="job-pending-badge">Pending</div>
+                <div class="pill pill--queued">Queued</div>
               </div>
             </div>
 
@@ -325,7 +316,7 @@
                 <ion-icon name="time-outline" class="job-icon-pending"></ion-icon>
               </div>
               <div class="job-status-time">
-                <div class="job-pending-badge">Pending</div>
+                <div class="pill pill--queued">Queued</div>
               </div>
             </div>
 

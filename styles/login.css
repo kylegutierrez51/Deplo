@@ -15,21 +15,19 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .title {
   font-weight: 600;
   font-size: 60px;
-
-  
 }
 
 .login-container button {
   color: var(--text-white-clr);
   background-color: var(--button-clr);
   border: none;
-  padding: 10px 20px;
+  padding: var(--space-sm) var(--space-lg);
   border-radius: 7px;
   font-size: 18px;
   cursor: pointer;

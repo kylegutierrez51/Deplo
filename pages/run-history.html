@@ -7,7 +7,7 @@
   <title>Deplo | Run History</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles/general.css">
   <link rel="stylesheet" href="../styles/sidebar.css">
   <link rel="stylesheet" href="../styles/table.css">
@@ -21,61 +21,57 @@
 
     <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">DEPLOY</span>
-          <ul>
-            <li>
-              <ion-icon name="git-network-outline"></ion-icon>
-              <a href="pipeline-list.html">
-                <span class="title">Pipelines</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="time-outline"></ion-icon>
-              <a href="run-history.html">
-                <span class="title">Run History</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <a href="approvals.html">
-                <span class="title">Approvals</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">DEPLOY</span>
+        <ul>
+          <li>
+            <ion-icon name="git-network-outline"></ion-icon>
+            <a href="pipeline-list.html">
+              <span class="title">Pipelines</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="time-outline"></ion-icon>
+            <a href="run-history.html">
+              <span class="title">Run History</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <a href="approvals.html">
+              <span class="title">Approvals</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">MANAGE</span>
-          <ul>
-            <li>
-              <ion-icon name="key-outline"></ion-icon>
-              <a href="secrets.html">
-                <span class="title">Secrets</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="settings-outline"></ion-icon>
-              <a href="environments.html">
-                <span class="title">Environments</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="flash-outline"></ion-icon>
-              <a href="webhooks.html">
-                <span class="title">Webhooks</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="reader-outline"></ion-icon>
-              <a href="audit-log.html">
-                <span class="title">Audit Log</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">MANAGE</span>
+        <ul>
+          <li>
+            <ion-icon name="key-outline"></ion-icon>
+            <a href="secrets.html">
+              <span class="title">Secrets</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="settings-outline"></ion-icon>
+            <a href="environments.html">
+              <span class="title">Environments</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="flash-outline"></ion-icon>
+            <a href="webhooks.html">
+              <span class="title">Webhooks</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="reader-outline"></ion-icon>
+            <a href="audit-log.html">
+              <span class="title">Audit Log</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -108,8 +104,14 @@
     <div class="subheader">
       <div class="subheader-inner">
         <div class="title-group">
+          <div class="title-row">
             <h1>Run History</h1>
-            <p class='subtitle'>All pipeline executions across your projects.</p>
+            <div class="active-badge">
+              <span class="active-dot"></span>
+              <span>3 active</span>
+            </div>
+          </div>
+          <p class='subtitle'>All pipeline executions across your projects.</p>
         </div>
         <div class="add-div">
           <button class='add-btn'>
@@ -146,16 +148,13 @@
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All environments</option>
+            <option value="all">All environment types</option>
             <option value="production">Production</option>
             <option value="staging">Staging</option>
             <option value="development">Development</option>
             <option value="preview">Preview</option>
+            <option value="preview">Custom</option>
           </select>
-        </div>
-        <div class="active-runs">
-          <div>&bull; 3 active</div>
-         
         </div>
       </div>
     </div>
@@ -166,13 +165,17 @@
           <thead>
             <tr>
               <th>Pipeline</th>
+              <th>Environment Type</th>
+              <th>Trigger</th>
               <th>Duration</th>
               <th class="filter"><ion-icon name="swap-vertical-outline"></ion-icon>Time</th> <!-- filter by time -->
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>(Queued) deploy-api (production) <br>acbcd/api-server &bull; v12</td>
+              <td><div class="pill pill--queued">Queued</div> deploy-api <br><span>acbcd/api-server</span> &bull; v12</td>
+              <td><div class="pill pill--production">Production</div></td>
+              <td><div class="pill pill--webhook">Webhook</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>-</div>
@@ -180,7 +183,9 @@
               <td>6h ago</td>
             </tr>
             <tr>
-              <td>(Running) build-frontend (staging) <br>acbcd/web-client &bull; v8</td>
+              <td><div class="pill pill--running">Running</div> build-frontend <br><span>acbcd/web-client</span> &bull; v8</td>
+              <td><div class="pill pill--staging">Staging</div></td>
+              <td><div class="pill pill--manual">Manual</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>6h 1m</div>
@@ -188,7 +193,29 @@
               <td>6h ago</td>
             </tr>
             <tr>
-              <td>(Succeeded) deploy-api (production) <br>acbcd/api-server &bull; v14</td>
+              <td><div class="pill pill--succeeded">Succeeded</div> deploy-api <br><span>acbcd/api-server</span> &bull; v14</td>
+              <td><div class="pill pill--development">Development</div></td>
+              <td><div class="pill pill--api">API</div></td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>8m 0s</div>
+              </td>
+              <td>11h ago</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--failed">Failed</div> deploy-api <br><span>acbcd/api-server</span> &bull; v14</td>
+              <td><div class="pill pill--preview">Preview</div></td>
+              <td><div class="pill pill--webhook">Webhook</div></td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>8m 0s</div>
+              </td>
+              <td>11h ago</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--cancelled">Cancelled</div> deploy-api <br><span>acbcd/api-server</span> &bull; v14</td>
+              <td><div class="pill pill--custom">Custom</div></td>
+              <td><div class="pill pill--manual">Manual</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>8m 0s</div>

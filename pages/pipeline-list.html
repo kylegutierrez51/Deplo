@@ -7,7 +7,7 @@
   <title>Deplo | Pipelines</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles/general.css">
   <link rel="stylesheet" href="../styles/sidebar.css">
   <link rel="stylesheet" href="../styles/table.css">
@@ -21,61 +21,57 @@
 
     <nav class="sidebar-nav" aria-label="Main">
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">DEPLOY</span>
-          <ul>
-            <li>
-              <ion-icon name="git-network-outline"></ion-icon>
-              <a href="pipeline-list.html">
-                <span class="title">Pipelines</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="time-outline"></ion-icon>
-              <a href="run-history.html">
-                <span class="title">Run History</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <a href="approvals.html">
-                <span class="title">Approvals</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">DEPLOY</span>
+        <ul>
+          <li>
+            <ion-icon name="git-network-outline"></ion-icon>
+            <a href="pipeline-list.html">
+              <span class="title">Pipelines</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="time-outline"></ion-icon>
+            <a href="run-history.html">
+              <span class="title">Run History</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <a href="approvals.html">
+              <span class="title">Approvals</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div class="sidebar-content">
-        <div class="sidebar-content-flex">
-          <span class="subtitle">MANAGE</span>
-          <ul>
-            <li>
-              <ion-icon name="key-outline"></ion-icon>
-              <a href="secrets.html">
-                <span class="title">Secrets</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="settings-outline"></ion-icon>
-              <a href="environments.html">
-                <span class="title">Environments</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="flash-outline"></ion-icon>
-              <a href="webhooks.html">
-                <span class="title">Webhooks</span>
-              </a>
-            </li>
-            <li>
-              <ion-icon name="reader-outline"></ion-icon>
-              <a href="audit-log.html">
-                <span class="title">Audit Log</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+        <span class="subtitle">MANAGE</span>
+        <ul>
+          <li>
+            <ion-icon name="key-outline"></ion-icon>
+            <a href="secrets.html">
+              <span class="title">Secrets</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="settings-outline"></ion-icon>
+            <a href="environments.html">
+              <span class="title">Environments</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="flash-outline"></ion-icon>
+            <a href="webhooks.html">
+              <span class="title">Webhooks</span>
+            </a>
+          </li>
+          <li>
+            <ion-icon name="reader-outline"></ion-icon>
+            <a href="audit-log.html">
+              <span class="title">Audit Log</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -116,7 +112,7 @@
             <ion-icon name="add-outline"></ion-icon>
             <div>New Pipeline</div>
           </button>
-          <button class='add-btn'>
+          <button class='view-drafts-btn'>
             <ion-icon name="reader-outline"></ion-icon>
             <div>View Drafts</div>
           </button>
@@ -142,11 +138,12 @@
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All environments</option>
+            <option value="all">All environment types</option>
             <option value="production">Production</option>
             <option value="staging">Staging</option>
             <option value="development">Development</option>
             <option value="preview">Preview</option>
+            <option value="preview">Custom</option>
           </select>
         </div>
       </div>
@@ -159,32 +156,40 @@
             <tr>
               <th>Pipeline</th>
               <th>Repository</th>
+              <th>Environment Type</th>
               <th>Last Run</th>
-              <th>Status</th>
-              <th>Environment</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>build-frontend<br>79 runs </td>
-              <td>abcd/web-client<br>f4e5d6c feat: add retry logic to webhook...</td>
-              <td>1h ago <br>2m 14s</td>
-              <td>Running</td>
-              <td>staging</td>
+              <td><div class="pill pill--running">Running</div> build-frontend <br><span>79 runs</span></td>
+              <td>abcd/web-client<br><span>f4e5d6c feat: add retry logic to webhook...</span></td>
+              <td><div class="pill pill--staging">Staging</div></td>
+              <td>1h ago <br><span>2m 14s</span></td>
             </tr>
             <tr>
-              <td>deploy-api<br>182 runs</td>
-              <td>abcd/api-server<br>a1b2c3d fix: resolve connection pool exh...</td>
-              <td>1h ago <br>7m 7s</td>
-              <td>Succeeded</td>
-              <td>production</td>
+              <td><div class="pill pill--succeeded">Succeeded</div> deploy-api <br><span>182 runs</span></td>
+              <td>abcd/api-server<br><span>a1b2c3d fix: resolve connection pool exh...</span></td>
+              <td><div class="pill pill--production">Production</div></td>
+              <td>1h ago <br><span>7m 7s</span></td>
             </tr>
             <tr>
-              <td>release-mobile<br>54 runs </td>
-              <td>abcd/mobile-app<br>7890abc chore: bump dependencies to l...</td>
-              <td>2h ago <br>5m 12s</td>
-              <td>Failed</td>
-              <td>production</td>
+              <td><div class="pill pill--failed">Failed</div> release-mobile <br><span>68 runs</span></td>
+              <td>abcd/mobile-app<br><span>7890abc chore: bump dependencies to l...</span></td>
+              <td><div class="pill pill--custom">Custom</div></td> 
+              <td>2h ago <br><span>5m 12s</span></td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--queued">Queued</div> release-mobile <br><span>54 runs</span></td>
+              <td>abcd/mobile-app<br><span>7890abc chore: bump dependencies to l...</span></td>
+              <td><div class="pill pill--preview">Preview</div></td>
+              <td>2h ago <br><span>5m 12s</span></td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--cancelled">Cancelled</div> release-mobile <br><span>22 runs</span></td>
+              <td>abcd/mobile-app<br><span>7890abc chore: bump dependencies to l...</span></td>
+              <td><div class="pill pill--development">Development</div></td>
+              <td>2h ago <br><span>5m 12s</span></td>
             </tr>
           </tbody>
         </table>

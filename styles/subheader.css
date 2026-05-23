@@ -1,23 +1,55 @@
 ﻿.subheader {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
 }
 
 .subheader-inner {
   display: flex;
   justify-content: space-between;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-lg);
 }
 
 .subheader .title-group {
   display: flex;
   align-items: start;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.active-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #1a2e1a;
+  border: 1px solid #2d4d2d;
+  border-radius: var(--radius-pill);
+  padding: 3px var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--active-dot-clr);
+}
+
+.active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--active-dot-clr);
+  flex-shrink: 0;
+  animation: dot-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--active-dot-clr) 40%, transparent); }
+  50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 4px transparent; }
 }
 
 .title-group .subtitle {
   display: flex;
-  gap: 5px;
+  gap: var(--space-xs);
   color: var(--subtitle-clr);
 }
 
@@ -27,30 +59,43 @@
   align-items: center
 }
 
-.subheader .add-btn {
+.subheader button {
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  background-color: var(--button-clr);
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }
 
+
+
 .subheader ion-icon {
-  margin-right: 5px;
+  margin-right: var(--space-xs);
   font-size: 20px;
 }
 
-.subheader .add-btn div {
+.subheader div {
   font-size: 15px;
   font-weight: bold;
 }
 
-.subheader button:hover {
+.subheader .add-btn {
+  background-color: var(--button-clr);
+}
+
+.subheader .add-btn:hover {
   background-color: var(--button-clr-hover);
-  cursor: pointer;
+}
+
+.subheader .view-drafts-btn {
+  background-color: var(--draft-btn-clr);
+}
+
+.subheader .view-drafts-btn:hover {
+  background-color: var(--draft-btn-hover-clr);
 }
 
 
@@ -58,5 +103,5 @@
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
