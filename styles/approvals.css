@@ -119,6 +119,10 @@ Approval Cards
   gap: var(--space-xs);
 }
 
+.feature-info .feature-id span {
+  color: var(--text-blue-clr);
+}
+
 .feature-info .feature {
   color: var(--subtitle-clr);
 }

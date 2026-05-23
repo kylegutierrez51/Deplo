@@ -138,6 +138,14 @@ a {
   --pill-cancelled-bg: #64748b1a;
   --pill-cancelled-border: #64748b4d;
 
+  --pill-total-text: #e2e8f0;
+  --pill-total-bg: #e2e8f01a;
+  --pill-total-border: #e2e8f04d;
+
+  --pill-approval-text: #fb923c;
+  --pill-approval-bg: #fb923c1a;
+  --pill-approval-border: #fb923c4d;
+
   /* Secret Statuses */
   --pill-processed-text: #4ade80;
   --pill-processed-bg: #4ade801a;
@@ -342,6 +350,8 @@ Pill Base + Variants
 .pill--succeeded   { color: var(--pill-succeeded-text);   background: var(--pill-succeeded-bg);   border-color: var(--pill-succeeded-border); }
 .pill--failed      { color: var(--pill-failed-text);      background: var(--pill-failed-bg);      border-color: var(--pill-failed-border); }
 .pill--cancelled   { color: var(--pill-cancelled-text);   background: var(--pill-cancelled-bg);   border-color: var(--pill-cancelled-border); }
+.pill--total       { color: var(--pill-total-text);       background: var(--pill-total-bg);       border-color: var(--pill-total-border); }
+.pill--approval    { color: var(--pill-approval-text);    background: var(--pill-approval-bg);    border-color: var(--pill-approval-border); }
 .pill--processed   { color: var(--pill-processed-text);   background: var(--pill-processed-bg);   border-color: var(--pill-processed-border); }
 .pill--ignored     { color: var(--pill-ignored-text);     background: var(--pill-ignored-bg);     border-color: var(--pill-ignored-border); }
 
