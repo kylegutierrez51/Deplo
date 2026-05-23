@@ -29,6 +29,22 @@ table tbody td.filter ion-icon {
 }
 
 
+/* Secrets */
+td.filter ion-icon[name="eye-outline"] {
+  cursor: pointer;
+}
+
+td.filter ion-icon[name="copy-outline"] {
+  cursor: pointer;
+}
+
+/* Audit Log */
+td .audit-action {
+  margin-left: 10px;
+  color: var(--subtitle-clr);
+  font-size: 14px;
+}
+
 /*
 ========================================
 Pagination

@@ -141,9 +141,9 @@ a {
   --pill-ignored-border: #a0aec04d;
 
   /* Environments */
-  --pill-production-text: #fb923c;
-  --pill-production-bg: #fb923c1a;
-  --pill-production-border: #fb923c4d;
+  --pill-production-text: #f87171;
+  --pill-production-bg: rgba(248, 113, 113, 0.06);
+  --pill-production-border: #f87171;
 
   --pill-staging-text: #fbbf24;
   --pill-staging-bg: #fbbf241a;
@@ -244,6 +244,7 @@ textarea {
 ::-webkit-scrollbar-thumb {
   background: var(--text-white-clr);
   border-radius: 4px;
+  cursor: pointer;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -305,3 +306,48 @@ table th ion-icon {
 table td ion-icon {
   font-size: 20px;
 }
+
+/*
+============================================================
+Pill Base + Variants
+============================================================
+*/
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  border: var(--border-width-sm) solid transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+/* Status */
+.pill--queued      { color: var(--pill-queued-text);      background: var(--pill-queued-bg);      border-color: var(--pill-queued-border); }
+.pill--running     { color: var(--pill-running-text);     background: var(--pill-running-bg);     border-color: var(--pill-running-border); }
+.pill--succeeded   { color: var(--pill-succeeded-text);   background: var(--pill-succeeded-bg);   border-color: var(--pill-succeeded-border); }
+.pill--failed      { color: var(--pill-failed-text);      background: var(--pill-failed-bg);      border-color: var(--pill-failed-border); }
+.pill--cancelled   { color: var(--pill-cancelled-text);   background: var(--pill-cancelled-bg);   border-color: var(--pill-cancelled-border); }
+.pill--processed   { color: var(--pill-processed-text);   background: var(--pill-processed-bg);   border-color: var(--pill-processed-border); }
+.pill--ignored     { color: var(--pill-ignored-text);     background: var(--pill-ignored-bg);     border-color: var(--pill-ignored-border); }
+
+/* Environments */
+.pill--production  { color: var(--pill-production-text);  background: var(--pill-production-bg);  border-color: var(--pill-production-border); }
+.pill--staging     { color: var(--pill-staging-text);     background: var(--pill-staging-bg);     border-color: var(--pill-staging-border); }
+.pill--development { color: var(--pill-development-text); background: var(--pill-development-bg); border-color: var(--pill-development-border); }
+.pill--preview     { color: var(--pill-preview-text);     background: var(--pill-preview-bg);     border-color: var(--pill-preview-border); }
+.pill--custom      { color: var(--pill-custom-text);      background: var(--pill-custom-bg);      border-color: var(--pill-custom-border); }
+
+/* Triggers */
+.pill--webhook     { color: var(--pill-webhook-text);     background: var(--pill-webhook-bg);     border-color: var(--pill-webhook-border); }
+.pill--manual      { color: var(--pill-manual-text);      background: var(--pill-manual-bg);      border-color: var(--pill-manual-border); }
+.pill--api         { color: var(--pill-api-text);         background: var(--pill-api-bg);         border-color: var(--pill-api-border); }
+
+/* Event Types */
+.pill--push          { color: var(--pill-push-text);          background: var(--pill-push-bg);          border-color: var(--pill-push-border); }
+.pill--pull-request  { color: var(--pill-pull-request-text);  background: var(--pill-pull-request-bg);  border-color: var(--pill-pull-request-border); }
+
+

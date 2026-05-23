@@ -138,7 +138,7 @@
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All environments</option>
+            <option value="all">All environment types</option>
             <option value="production">Production</option>
             <option value="staging">Staging</option>
             <option value="development">Development</option>
@@ -156,32 +156,40 @@
             <tr>
               <th>Pipeline</th>
               <th>Repository</th>
+              <th>Environment Type</th>
               <th>Last Run</th>
-              <th>Status</th>
-              <th>Environment</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>build-frontend<br>79 runs </td>
+              <td><div class="pill pill--running">Running</div> build-frontend <br>79 runs</td>
               <td>abcd/web-client<br>f4e5d6c feat: add retry logic to webhook...</td>
+              <td><div class="pill pill--staging">Staging</div></td>
               <td>1h ago <br>2m 14s</td>
-              <td>Running</td>
-              <td>staging</td>
             </tr>
             <tr>
-              <td>deploy-api<br>182 runs</td>
+              <td><div class="pill pill--succeeded">Succeeded</div> deploy-api <br>182 runs</td>
               <td>abcd/api-server<br>a1b2c3d fix: resolve connection pool exh...</td>
+              <td><div class="pill pill--production">Production</div></td>
               <td>1h ago <br>7m 7s</td>
-              <td>Succeeded</td>
-              <td>production</td>
             </tr>
             <tr>
-              <td>release-mobile<br>54 runs </td>
+              <td><div class="pill pill--failed">Failed</div> release-mobile <br>54 runs</td>
               <td>abcd/mobile-app<br>7890abc chore: bump dependencies to l...</td>
+              <td><div class="pill pill--custom">Custom</div></td>
               <td>2h ago <br>5m 12s</td>
-              <td>Failed</td>
-              <td>production</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--queued">Queued</div> release-mobile <br>54 runs</td>
+              <td>abcd/mobile-app<br>7890abc chore: bump dependencies to l...</td>
+              <td><div class="pill pill--preview">Preview</div></td>
+              <td>2h ago <br>5m 12s</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--cancelled">Cancelled</div> release-mobile <br>54 runs</td>
+              <td>abcd/mobile-app<br>7890abc chore: bump dependencies to l...</td>
+              <td><div class="pill pill--development">Development</div></td>
+              <td>2h ago <br>5m 12s</td>
             </tr>
           </tbody>
         </table>

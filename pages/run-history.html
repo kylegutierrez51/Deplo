@@ -148,7 +148,7 @@
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All environments</option>
+            <option value="all">All environment types</option>
             <option value="production">Production</option>
             <option value="staging">Staging</option>
             <option value="development">Development</option>
@@ -165,13 +165,17 @@
           <thead>
             <tr>
               <th>Pipeline</th>
+              <th>Environment Type</th>
+              <th>Trigger</th>
               <th>Duration</th>
               <th class="filter"><ion-icon name="swap-vertical-outline"></ion-icon>Time</th> <!-- filter by time -->
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>(Queued) deploy-api (production) <br>acbcd/api-server &bull; v12</td>
+              <td><div class="pill pill--queued">Queued</div> deploy-api <br>acbcd/api-server &bull; v12</td>
+              <td><div class="pill pill--production">Production</div></td>
+              <td><div class="pill pill--webhook">Webhook</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>-</div>
@@ -179,7 +183,9 @@
               <td>6h ago</td>
             </tr>
             <tr>
-              <td>(Running) build-frontend (staging) <br>acbcd/web-client &bull; v8</td>
+              <td><div class="pill pill--running">Running</div> build-frontend <br>acbcd/web-client &bull; v8</td>
+              <td><div class="pill pill--staging">Staging</div></td>
+              <td><div class="pill pill--manual">Manual</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>6h 1m</div>
@@ -187,7 +193,29 @@
               <td>6h ago</td>
             </tr>
             <tr>
-              <td>(Succeeded) deploy-api (production) <br>acbcd/api-server &bull; v14</td>
+              <td><div class="pill pill--succeeded">Succeeded</div> deploy-api <br>acbcd/api-server &bull; v14</td>
+              <td><div class="pill pill--development">Development</div></td>
+              <td><div class="pill pill--api">API</div></td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>8m 0s</div>
+              </td>
+              <td>11h ago</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--failed">Failed</div> deploy-api <br>acbcd/api-server &bull; v14</td>
+              <td><div class="pill pill--preview">Preview</div></td>
+              <td><div class="pill pill--webhook">Webhook</div></td>
+              <td class="filter">
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div>8m 0s</div>
+              </td>
+              <td>11h ago</td>
+            </tr>
+            <tr>
+              <td><div class="pill pill--cancelled">Cancelled</div> deploy-api <br>acbcd/api-server &bull; v14</td>
+              <td><div class="pill pill--custom">Custom</div></td>
+              <td><div class="pill pill--manual">Manual</div></td>
               <td class="filter">
                 <ion-icon name="stopwatch-outline"></ion-icon>
                 <div>8m 0s</div>

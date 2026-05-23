@@ -147,7 +147,7 @@
           </div>
           <div class="select-group">
             <select id="environment" name="environment">
-              <option value="all">All environments</option>
+              <option value="all">All environment types</option>
               <option value="production">Production</option>
               <option value="staging">Staging</option>
               <option value="development">Development</option>
@@ -170,8 +170,8 @@
             <div class="approvals-detail">
               <div class="pipeline-name-type">
                 <span>release-mobile</span>
-                <div class="production">Production</div>
-                <div class="type manual">Manual</div>
+                <div class="pill pill--production">Production</div>
+                <div class="pill pill--manual">Manual</div>
               </div>
               <div class="feature-info">
                 <div class="feature-id">
@@ -223,30 +223,44 @@
                 <span>install-deps</span>
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
               </div>
-              <div>→</div>
+              <span>→</span>
               <div class="stage">
                 <ion-icon name="cube-outline"></ion-icon>
                 <span>lint</span>
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
               </div>
-              <div>→</div>
+              <span>→</span>
               <div class="stage">
                 <ion-icon name="flask-outline"></ion-icon>
                 <span>unit-tests</span>
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
               </div>
-              <div>→</div>
+              <span>→</span>
               <div class="stage approval">
                 <ion-icon name="shield-outline"></ion-icon>
                 <span>release-approval</span>
                 <ion-icon name="alert-circle-outline"></ion-icon>
               </div>
-              <div>→</div>
+              <span>→</span>
               <div class="stage">
                 <ion-icon name="rocket-outline"></ion-icon>
                 <span>publish-stores</span>
                 <ion-icon name="time-outline"></ion-icon>
               </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+            </div>
+
             </div>
           </div>
         </div>

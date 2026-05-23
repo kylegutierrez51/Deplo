@@ -158,7 +158,7 @@
         </div>
         <div class="select-group">
           <select id="environment" name="environment">
-            <option value="all">All tiers</option>
+            <option value="all">All environment types</option>
             <option value="production">Production</option>
             <option value="staging">Staging</option>
             <option value="development">Development</option>
@@ -183,8 +183,8 @@
         <table>
           <thead>
             <tr>
-              <th>Environment</th>
-              <th>Tier</th>
+              <th>Name</th>
+              <th>Environment Type</th>
               <th>Secrets</th>
               <th>Pipelines</th>
               <th>Last Updated</th>
@@ -197,7 +197,7 @@
                 <div>production</div>
                 <ion-icon name="lock-closed-outline"></ion-icon>
               </td>
-              <td>Production</td>
+              <td><div class="pill pill--development">Development</div></td>
               <td class="filter">
                 <ion-icon name="key-outline"></ion-icon>
                 <div>14</div>
@@ -210,7 +210,7 @@
               <td class="filter">
                 <div>staging</div>
               </td>
-              <td>Staging</td>
+              <td><div class="pill pill--staging">Staging</div></td>
               <td class="filter">
                 <ion-icon name="key-outline"></ion-icon>
                 <div>12</div>
@@ -223,7 +223,33 @@
               <td class="filter">
                 <div>development</div>
               </td>
-              <td>Development</td>
+              <td><div class="pill pill--production">Production</div></td>
+              <td class="filter">
+                <ion-icon name="key-outline"></ion-icon>
+                <div>8</div>
+              </td>
+              <td>3</td>
+              <td>8d ago</td>
+              <td>coco</td>
+            </tr>
+            <tr>
+              <td class="filter">
+                <div>development</div>
+              </td>
+              <td><div class="pill pill--preview">Preview</div></td>
+              <td class="filter">
+                <ion-icon name="key-outline"></ion-icon>
+                <div>8</div>
+              </td>
+              <td>3</td>
+              <td>8d ago</td>
+              <td>coco</td>
+            </tr>
+            <tr>
+              <td class="filter">
+                <div>development</div>
+              </td>
+              <td><div class="pill pill--custom">Custom</div></td>
               <td class="filter">
                 <ion-icon name="key-outline"></ion-icon>
                 <div>8</div>
