@@ -102,6 +102,86 @@ a {
   /* Sizing */
   --size-control-height: 38px;
   --size-topbar-height: 72px;
+
+
+
+
+
+  
+  /* --- Pills --- */
+
+  /* Status */
+  --pill-queued-text: #a0aec0;
+  --pill-queued-bg: #a0aec01a;
+  --pill-queued-border: #a0aec04d;
+
+  --pill-running-text: #50a5ff;
+  --pill-running-bg: #50a5ff1a;
+  --pill-running-border: #50a5ff4d;
+
+  --pill-succeeded-text: #4ade80;
+  --pill-succeeded-bg: #4ade801a;
+  --pill-succeeded-border: #4ade804d;
+
+  --pill-failed-text: #f87171;
+  --pill-failed-bg: #f871711a;
+  --pill-failed-border: #f871714d;
+
+  --pill-cancelled-text: #64748b;
+  --pill-cancelled-bg: #64748b1a;
+  --pill-cancelled-border: #64748b4d;
+
+  /* Secret Statuses */
+  --pill-processed-text: #4ade80;
+  --pill-processed-bg: #4ade801a;
+  --pill-processed-border: #4ade804d;
+
+  --pill-ignored-text: #a0aec0;
+  --pill-ignored-bg: #a0aec01a;
+  --pill-ignored-border: #a0aec04d;
+
+  /* Environments */
+  --pill-production-text: #fb923c;
+  --pill-production-bg: #fb923c1a;
+  --pill-production-border: #fb923c4d;
+
+  --pill-staging-text: #fbbf24;
+  --pill-staging-bg: #fbbf241a;
+  --pill-staging-border: #fbbf244d;
+
+  --pill-development-text: #38bdf8;
+  --pill-development-bg: #38bdf81a;
+  --pill-development-border: #38bdf84d;
+
+  --pill-preview-text: #c084fc;
+  --pill-preview-bg: #c084fc1a;
+  --pill-preview-border: #c084fc4d;
+
+  --pill-custom-text: #94a3b8;
+  --pill-custom-bg: #94a3b81a;
+  --pill-custom-border: #94a3b84d;
+
+  /* Triggers */
+  --pill-webhook-text: #a78bfa;
+  --pill-webhook-bg: #a78bfa1a;
+  --pill-webhook-border: #a78bfa4d;
+
+  --pill-manual-text: #50a5ff;
+  --pill-manual-bg: #50a5ff1a;
+  --pill-manual-border: #50a5ff4d;
+
+  --pill-api-text: #2dd4bf;
+  --pill-api-bg: #2dd4bf1a;
+  --pill-api-border: #2dd4bf4d;
+
+  /* Event Types */
+  --pill-push-text: #818cf8;
+  --pill-push-bg: #818cf81a;
+  --pill-push-border: #818cf84d;
+
+  --pill-pull-request-text: #c084fc;
+  --pill-pull-request-bg: #c084fc1a;
+  --pill-pull-request-border: #c084fc4d;
 }
 
 /*
