@@ -11,7 +11,7 @@ Topbar
   display: flex;
   align-items: center;
   gap: var(--space-gap-md);
-  z-index: 200;
+  z-index: var(--z-dropdown);
   transition: left 0.3s ease;
 }
 
@@ -31,7 +31,7 @@ Topbar
   color: var(--subtitle-clr);
   padding: 6px var(--space-sm);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-clr);
+  border: 1px solid var(--gray-clr);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -41,12 +41,12 @@ Topbar
 }
 
 .back-link:hover {
-  background-color: var(--border-clr);
-  color: var(--text-white-clr);
+  background-color: var(--gray-clr);
+  color: var(--white-clr);
 }
 
 .back-link:hover ion-icon {
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 /*
@@ -57,9 +57,9 @@ Run Detail Card
 
 .run-detail-card {
   width: 100%;
-  max-width: 1000px;
+  max-width: var(--width-xl);
   background-color: var(--dark-clr-2);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   border-radius: var(--radius-xl);
   padding: 22px 28px;
   margin-top: var(--space-2xl);
@@ -89,11 +89,11 @@ Run Detail Card
 .rdc-name {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 .rdc-num {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   color: var(--subtitle-clr);
   font-family: "JetBrains Mono", monospace;
 }
@@ -102,7 +102,7 @@ Run Detail Card
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 4px var(--space-gap-md);
   border-radius: 20px;
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -135,12 +135,12 @@ Run Detail Card
 }
 
 .rdc-commit-ref ion-icon {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   color: var(--icon-clr);
 }
 
 .rdc-commit-hash {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
   font-family: "JetBrains Mono", monospace;
   font-size: inherit;
 }
@@ -172,11 +172,11 @@ Run Detail Card
 }
 
 .rdc-link span {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
 }
 
 .rdc-user {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
 }
 
 /* Action buttons */
@@ -201,7 +201,7 @@ Run Detail Card
 
 .rdc-btn-cancel {
   color: var(--red-text);
-  border: var(--border-width-sm) solid var(--red-btn-border-clr);
+  border: 1.5px solid var(--red-btn-border-clr);
   background-color: rgba(248, 113, 113, 0.06);
 }
 
@@ -210,13 +210,13 @@ Run Detail Card
 }
 
 .rdc-btn-rerun {
-  color: var(--text-white-clr);
-  border: var(--border-width-sm) solid var(--light-border-clr);
+  color: var(--white-clr);
+  border: 1.5px solid var(--light-gray-clr);
   background-color: transparent;
 }
 
 .rdc-btn-rerun:hover {
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .rdc-btn-cancel ion-icon,
@@ -233,12 +233,12 @@ Section Select (Overview, Logs)
 
 .sections {
   padding: 0 0 0 var(--space-lg);
-  border-bottom: 1px solid var(--border-clr);
+  border-bottom: 1px solid var(--gray-clr);
 }
 
 .tabs-row {
   display: flex;
-  gap: 40px;
+  gap: var(--space-2xl);
 }
 
 .section {
@@ -248,14 +248,14 @@ Section Select (Overview, Logs)
   font-size: 18px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--border-width-md) solid transparent;
   padding: 0 0 var(--space-sm) 0;
   margin-bottom: -1px;
   cursor: pointer;
 }
 
 .section.active {
-  border-bottom-color: var(--text-blue-clr);
+  border-bottom-color: var(--blue-clr);
   
 }
 
@@ -315,7 +315,7 @@ Pipeline
   min-height: 0;
   overflow-y: auto;
   padding-bottom: var(--space-2xl);
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
 }
 
 .pipeline-inner {
@@ -361,7 +361,7 @@ Pipeline
 }
 
 .job-icon-running {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
   animation: rdc-spin 1.2s linear infinite;
 }
 
@@ -384,7 +384,7 @@ Pipeline Connectors
 .connector-straight {
   width: var(--border-width-md);
   height: 36px;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
   position: relative;
 }
 
@@ -395,7 +395,7 @@ Pipeline Connectors
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
   left: -3px;
 }
 
@@ -403,12 +403,12 @@ Pipeline Connectors
 .connector-straight::after  { bottom: -4px; }
 
 .connector-straight.active {
-  background-color: var(--text-blue-clr);
+  background-color: var(--blue-clr);
 }
 
 .connector-straight.active::before,
 .connector-straight.active::after {
-  background-color: var(--text-blue-clr);
+  background-color: var(--blue-clr);
 }
 
 /* Fork connector: one job splits into two parallel jobs */
@@ -422,7 +422,7 @@ Pipeline Connectors
 .cf-stem {
   width: var(--border-width-md);
   height: 20px;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .cf-arms {
@@ -440,8 +440,8 @@ Pipeline Connectors
   height: 20px;
 }
 
-.cf-arm-left  { border-top: var(--border-width-md) solid var(--border-clr); border-left:  var(--border-width-md) solid var(--border-clr); }
-.cf-arm-right { border-top: var(--border-width-md) solid var(--border-clr); border-right: var(--border-width-md) solid var(--border-clr); }
+.cf-arm-left  { border-top: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
+.cf-arm-right { border-top: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
 
 /* Merge connector: two parallel jobs converge into one */
 .connector-merge {
@@ -454,7 +454,7 @@ Pipeline Connectors
 .cm-stem {
   width: var(--border-width-md);
   height: 20px;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .cm-arms {
@@ -472,8 +472,8 @@ Pipeline Connectors
   height: 20px;
 }
 
-.cm-arm-left  { border-bottom: var(--border-width-md) solid var(--border-clr); border-left:  var(--border-width-md) solid var(--border-clr); }
-.cm-arm-right { border-bottom: var(--border-width-md) solid var(--border-clr); border-right: var(--border-width-md) solid var(--border-clr); }
+.cm-arm-left  { border-bottom: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
+.cm-arm-right { border-bottom: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
 
 /*
 ===============================
@@ -527,7 +527,7 @@ Log Viewer
 }
 
 .log-job-icon.running {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
   animation: rdc-spin 1.2s linear infinite;
 }
 

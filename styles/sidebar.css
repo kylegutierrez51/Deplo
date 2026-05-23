@@ -7,7 +7,7 @@
   background-color: var(--dark-clr-1);
   padding: var(--space-2xl) var(--space-xl);
   padding-top: var(--space-xl);
-  border: 1px solid var(--border-clr);
+  border: 1px solid var(--gray-clr);
   border-right: none;
   overflow: hidden;
   display: flex;
@@ -38,7 +38,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   display: flex;
   flex-direction: column;
   margin: 0 auto; /* centers entire container */
-  max-width: 1000px;
+  max-width: var(--width-xl);
   width: 100%;
 }
 
@@ -57,7 +57,7 @@ Sidebar Toggle Button
   left: 310px;
   z-index: var(--z-dropdown);
   background: transparent;
-  border: 1px solid var(--border-clr);
+  border: 1px solid var(--gray-clr);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
@@ -67,7 +67,7 @@ Sidebar Toggle Button
 }
 
 .sidebar-toggle:hover {
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .sidebar-toggle ion-icon {
@@ -113,7 +113,7 @@ Sidebar Nav (scrollable area)
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: var(--border-clr);
+  background: var(--gray-clr);
   border-radius: var(--radius-xs);
   cursor: pointer;
 }
@@ -129,7 +129,7 @@ Sidebar Content
   gap: var(--space-lg);
   padding-top: 50px;
   padding-bottom: var(--space-md);
-  border-bottom: 2px solid var(--border-clr);
+  border-bottom: var(--border-width-md) solid var(--gray-clr);
 }
 
 .sidebar .subtitle {
@@ -149,7 +149,7 @@ Sidebar Content
 }
 
 .sidebar-content li:hover {
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .sidebar-content li .title {
@@ -172,7 +172,7 @@ Profile
   margin-top: var(--space-lg);
   padding: var(--space-sm) var(--space-sm);
   background-color: var(--dark-clr-2);
-  border: 1px solid var(--border-clr);
+  border: 1px solid var(--gray-clr);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -181,7 +181,7 @@ Profile
 }
 
 .profile:hover {
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 .profile-pic {
@@ -211,7 +211,7 @@ Profile
 
 .profile .role {
   font-family: "JetBrains Mono";
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
@@ -224,12 +224,12 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
   position: fixed;
   z-index: var(--z-profile);
   padding: var(--space-sm) var(--space-sm);
-  /* setting these colors makes this not go over .sidebar-content when you pull up DevTools because --border-clr is 8% opacity white, menaing nav items show through it. Look at general.css for more info */
-  /* background-color: var(--border-clr);
-  border: 1px solid var(--border-clr); */
+  /* setting these colors makes this not go over .sidebar-content when you pull up DevTools because --gray-clr is 8% opacity white, menaing nav items show through it. Look at general.css for more info */
+  /* background-color: var(--gray-clr);
+  border: 1px solid var(--gray-clr); */
 
   background-color: var(--dark-clr-2);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   border-radius: var(--radius-lg);
   overflow-y: auto; /* scrollbar appears if you resize DevTools all the way up to the top */
   opacity: 0;
@@ -251,7 +251,7 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 }
 
 .profile-options::-webkit-scrollbar-thumb {
-  background: var(--border-clr);
+  background: var(--gray-clr);
   border-radius: var(--radius-xs);
 }
 
@@ -267,7 +267,7 @@ ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
 }
 
 .profile-menu div:hover {
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
   cursor: pointer;
 }
 

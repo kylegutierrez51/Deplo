@@ -42,7 +42,7 @@ td.filter ion-icon[name="copy-outline"] {
 td .audit-action {
   margin-left: var(--space-sm);
   color: var(--subtitle-clr);
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 
