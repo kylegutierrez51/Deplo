@@ -24,8 +24,8 @@
 }
 
 .login-container button {
-  color: var(--text-white-clr);
-  background-color: var(--button-clr);
+  color: var(--white-clr);
+  background-color: var(--btn-subheader-clr);
   border: none;
   padding: var(--space-sm) var(--space-lg);
   border-radius: 7px;
@@ -34,5 +34,5 @@
 }
 
 .login-container button:hover {
-  background-color: var(--button-clr-hover);
+  background-color: var(--btn-subheader-clr-hover);
 }

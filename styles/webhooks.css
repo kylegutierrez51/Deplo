@@ -5,7 +5,7 @@ Settings Subheader
 */
 .settings-subheader {
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--light-border-clr);
+    border-bottom: 1px solid var(--light-gray-clr);
 }
 
 /*
@@ -24,12 +24,12 @@ Webhooks
 .webhook-container {
   width: 100%;
   min-width: 536px;
-  max-width: 1000px;
+  max-width: var(--width-xl);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-md);
   padding-left: var(--space-xl);
   padding-right: var(--space-xl);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   background: var(--dark-clr-2);
 }
 
@@ -71,7 +71,7 @@ Webhooks
 
 .webhook-detail .name-status .active {
   background-color: var(--header-clr);
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
   padding: 3px var(--space-sm);
   border-radius: var(--radius-pill);
   border: 1px solid #1e4a72;
@@ -79,7 +79,7 @@ Webhooks
 }
 
 .webhook-detail .name-status .inactive {
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   color: var(--subtitle-clr);
   padding: 3px var(--space-sm);
   border-radius: var(--radius-pill);
@@ -101,7 +101,7 @@ Webhooks
 .pipeline-info .event-type {
   font-size: var(--font-size-sm);
   background-color: var(--color-border-dark);
-  padding: var(--space-2xs);
+  padding: 7px;
   border-radius: var(--radius-sm);
   border: 1px solid #3a3a3a;
   color: var(--subtitle-clr);
@@ -126,7 +126,7 @@ Webhooks
 .pipeline-info .time {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .pipeline-info .last-delivery {
@@ -150,7 +150,7 @@ Webhooks
 }
 
 .webhook-row .options > ion-icon:first-child:hover {
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 .webhook-row .options > ion-icon:last-child:hover {

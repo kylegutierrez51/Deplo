@@ -1,18 +1,18 @@
 ﻿.cards-row {
   display: flex;
-  border: 1px solid var(--light-border-clr);
-  border-radius: 10px;
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
 }
 
 .card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: var(--space-sm);
+  padding: var(--space-gap-md) 16px;
   flex: 1;
-  border-right: 1px solid var(--light-border-clr);
+  border-right: 1px solid var(--light-gray-clr);
 }
 
 .card:last-child {
@@ -26,8 +26,29 @@
 
 .card-detail .card-total {
   font-weight: bold;
+  color: var(--blue-clr);
 }
 
 .card-detail .card-name {
   font-family: "JetBrains Mono";
 }
+
+/* Approvals */
+.card-detail .card-total.wait-time {
+  color: var(--red-text);
+}
+
+/* Webhook Events */
+.card-detail .card-total.processed {
+  color: var(--pill-succeeded-text);
+}
+
+.card-detail .card-total.ignored {
+  color: var(--pill-ignored-text);
+}
+
+.card-detail .card-total.failed {
+  color: var(--pill-failed-text);
+}
+
+

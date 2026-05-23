@@ -55,12 +55,12 @@ Approval Cards
 .approval-card {
   width: 100%;
   min-width: 536px;
-  max-width: 1000px;
+  max-width: var(--width-xl);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-md);
   padding-left: var(--space-xl);
   padding-right: var(--space-xl);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   background: var(--dark-clr-2);
 }
 
@@ -75,7 +75,7 @@ Approval Cards
 .approvals-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .approval-card-row {
@@ -94,20 +94,6 @@ Approval Cards
   font-size: 18px;
 }
 
-.pipeline-name-type .production {
-  background-color: var(--header-clr);
-  color: var(--text-white-clr);
-  padding: var(--space-2xs);
-  border-radius: var(--radius-pill);
-}
-
-.pipeline-name-type .type {
-  background-color: #1e2d6b;
-  color: var(--text-white-clr);
-  padding: var(--space-2xs);
-  border-radius: var(--radius-pill);
-}
-
 .feature-info {
   display: flex;
   align-items: center;
@@ -121,7 +107,7 @@ Approval Cards
 }
 
 .feature-info .feature-id span {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
 }
 
 .feature-info .feature {
@@ -148,7 +134,7 @@ Approval Cards
 .stage-view {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-sm);
 }
 
 .stage-view > div:hover {
@@ -217,10 +203,10 @@ Approval Cards
 stages
 */
 .stages {
-  border-top: 2px solid var(--light-border-clr);
+  border-top: var(--border-width-md) solid var(--light-gray-clr);
   padding-top: var(--space-sm);
   overflow-x: auto;
-  padding-bottom: 15px;
+  padding-bottom: var(--space-md);
 }
 
 .stages::-webkit-scrollbar {
@@ -238,7 +224,7 @@ stages
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-sm);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   border-radius: var(--radius-lg);
   white-space: nowrap;
 }

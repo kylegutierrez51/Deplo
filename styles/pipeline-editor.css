@@ -35,7 +35,7 @@ header {
 .divider {
   width: 1px;
   height: 30px;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
 }
 
 header .left-side {
@@ -93,29 +93,21 @@ Header Buttons
   border: none;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .right-side button ion-icon {
   margin-right: var(--space-xs);
 }
 
-
-
-.right-side button div {
-  font-size: 15px;
-  font-weight: bold;
-}
-
-.right-side button:hover {
-  cursor: pointer;
-}
-
 .add-stage-btn {
-  background-color: var(--stage-btn-clr);
+  background-color: #1e293b;
 }
 
 .add-stage-btn:hover {
-  background-color: var(--stage-btn-hover-clr)
+  background-color: #162032;
 }
 
 .save-btn {
@@ -127,11 +119,11 @@ Header Buttons
 }
 
 .run-btn {
-  background-color: var(--run-btn-clr);
+  background-color: #14532d;
 }
 
 .run-btn:hover {
-  background-color: var(--run-btn-hover-clr);
+  background-color: #0f3d22;
 }
 
 /*
@@ -142,7 +134,7 @@ Stage Sidebar
 
 .stage-sidebar label {
   font-family: "JetBrains Mono";
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 /* removes checkbox blue outline */
@@ -183,7 +175,7 @@ Stage Sidebar
   /* for border-bottom */
   margin: 0 0 0 calc(-1 * var(--space-lg));
   padding: 0 var(--space-lg) var(--space-lg);
-  border-bottom: 1px solid var(--border-clr);
+  border-bottom: 1px solid var(--gray-clr);
 }
 
 /* Includes all sections */
@@ -203,7 +195,7 @@ Stage Sidebar
 .stage-title .icon-border {
   display: flex;
   align-items: center;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
   border-radius: 7px;
   padding: var(--space-xs) var(--space-xs);
 }
@@ -215,10 +207,10 @@ Stage Sidebar
 
 .stage-sidebar-header .exit-btn {
   border: none;
-  background-color: var(--border-clr);
+  background-color: var(--gray-clr);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
 }
 
@@ -262,12 +254,12 @@ Stage Sidebar
   padding: var(--space-xs);
   background-color: var(--dark-clr-2);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-clr);
+  border: 1px solid var(--gray-clr);
   cursor: pointer;
 }
 
 .stage-type-grid .item:hover {
-  background-color: var(--light-border-clr);
+  background-color: var(--light-gray-clr);
 }
 
 
@@ -288,7 +280,7 @@ Stage Sidebar
 }
 
 .timeout ion-icon, .retries ion-icon, .env-vars ion-icon, .secrets ion-icon {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 /* Environment Variables */
@@ -305,7 +297,7 @@ Stage Sidebar
 }
 
 .env-vars .add-env-btn {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
   border: none;
   background-color: transparent;
   display: flex;
@@ -315,7 +307,7 @@ Stage Sidebar
 }
 
 .env-vars .add-env-btn ion-icon {
-  color: var(--text-blue-clr);
+  color: var(--blue-clr);
 }
 
 .env-vars-list {
@@ -349,7 +341,7 @@ Stage Sidebar
 }
 
 .secrets-info .info {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .secrets-list {
@@ -366,13 +358,13 @@ Stage Sidebar
   align-items: center;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   background-color: var(--dark-clr-2);
   cursor: pointer;
 }
 
 .secret-container:has(input:checked) {
-  border-color: var(--text-blue-clr);
+  border-color: var(--blue-clr);
   background-color: var(--header-clr);
 }
 
@@ -397,7 +389,7 @@ Stage Sidebar
   align-items: center;
   justify-content: center;
   padding: var(--space-lg) var(--space-sm) var(--space-lg) var(--space-lg);
-  border-top: 1px solid var(--border-clr);
+  border-top: 1px solid var(--gray-clr);
   margin: 0 0 0 calc(-1 * var(--space-lg));
 }
 
@@ -405,14 +397,14 @@ Stage Sidebar
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: var(--space-xs);
   width: 100%;
   font-weight: bold;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   color: var(--red-text);
   background-color: var(--red-btn-clr);
   border: 1px solid var(--red-btn-border-clr);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 8px 0;
   cursor: pointer;
 }

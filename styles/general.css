@@ -6,7 +6,7 @@
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 body {
@@ -26,15 +26,18 @@ a {
   --background-clr: #191919;
   --header-clr: #163452;
   --subtitle-clr: #b6b5b5;
+
   --table-span-clr: #9c9a9a;
-  --text-white-clr: #dcdcdc;
-  --text-blue-clr: #50a5ff;
+  --white-clr: #dcdcdc;
+  --blue-clr: #50a5ff;
   --dark-clr-1: #00000026;
   --dark-clr-2: #1e1e1e;
-  --border-clr: #ffffff14; /* 14 is an alpha value since this is an 8-digit hex code */
-  --light-border-clr: #474747;
-  --button-clr: #163452;
-  --button-clr-hover: #11283f;
+  --gray-clr: #ffffff14; /* 14 is an alpha value since this is an 8-digit hex code */
+  --light-gray-clr: #474747;
+
+  --btn-subheader-clr: #163452;
+  --btn-subheader-clr-hover: #11283f;
+
   --icon-clr: #888;
   --input-clr: #666;
   --active-dot-clr: #4ade80;
@@ -42,26 +45,24 @@ a {
   --color-border-dark: #2a2a2a;
   --color-border-mid: #474747;
 
+
+  --draft-btn-clr: #134e4a;
+  --draft-btn-hover-clr: #0d3b38;
+
+
   /* Green Ghost Button */
   --green-text: rgb(1, 163, 1);
   --green-clr: #1a2e1a;
   --green-hover-clr: #234123;
   --green-border-clr: rgb(1, 163, 1);
   
-  --stage-btn-clr: #1e293b;
-  --stage-btn-hover-clr: #162032;
-
-  --draft-btn-clr: #134e4a;
-  --draft-btn-hover-clr: #0d3b38;
-
-  --run-btn-clr: #14532d;
-  --run-btn-hover-clr: #0f3d22;
 
   /* Blue Ghost Button */
-  --blue-text: var(--text-blue-clr);
+  --blue-text: var(--blue-clr);
   --blue-btn-clr: rgba(80, 165, 255, 0.08);
-  --blue-btn-border-clr: var(--text-blue-clr);
+  --blue-btn-border-clr: var(--blue-clr);
   --blue-btn-hover-clr: rgba(80, 165, 255, 0.16);
+
 
   /* Red Ghost Button */
   --red-text: #f87171;
@@ -78,7 +79,6 @@ a {
   --space-md: 15px;
   --space-lg: 20px;
   --space-xl: 30px;
-  --space-2xs: 7px;
   --space-2xl: 40px;
   --space-gap-md: 12px;
 
@@ -93,6 +93,7 @@ a {
   /* Typography */
   --font-size-sm: 13px;
   --font-size-body: 14px;
+  --font-size-lg: 15px;
 
   /* Border radius */
   --radius-xs: 4px;
@@ -103,15 +104,14 @@ a {
   --radius-pill: 100px;
 
   /* Border widths */
-  --border-width-sm: 1.5px;
   --border-width-md: 2px;
 
   /* Sizing */
   --size-control-height: 38px;
   --size-topbar-height: 72px;
 
-
-
+  /* Width */
+  --width-xl: 1000px;
 
 
   
@@ -164,7 +164,7 @@ a {
   --pill-staging-bg: #212b2a;
   --pill-staging-border: #295552;
 
-  --pill-development-text: var(--text-blue-clr);
+  --pill-development-text: var(--blue-clr);
   --pill-development-bg: rgba(80, 165, 255, 0.08);
   --pill-development-border: #38bdf84d;
 
@@ -210,9 +210,9 @@ input {
   height: var(--size-control-height);
   font-size: var(--font-size-body);
   border-radius: var(--radius-md);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   background-color: var(--dark-clr-2);
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 input::placeholder {
@@ -223,10 +223,10 @@ select {
   height: var(--size-control-height);
   font-size: var(--font-size-body);
   border-radius: var(--radius-md);
-  border: 1px solid var(--light-border-clr);
+  border: 1px solid var(--light-gray-clr);
   background-color: var(--dark-clr-2);
-  color: var(--text-white-clr);
-  padding: 0 34px 0 12px;
+  color: var(--white-clr);
+  padding: 0 34px 0 var(--space-gap-md);
   cursor: pointer;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -235,17 +235,17 @@ select {
 
 select option {
   background-color: var(--dark-clr-2);
-  color: var(--text-white-clr);
+  color: var(--white-clr);
 }
 
 textarea {
   width: 100%;
-  color: var(--text-white-clr);
-  border-radius: 10px;
-  font-size: 15px;
-  border: 1px solid var(--light-border-clr);
+  color: var(--white-clr);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-lg);
+  border: 1px solid var(--light-gray-clr);
   background-color: var(--dark-clr-2);
-  padding: 5px;
+  padding: var(--space-xs);
 }
 
 ::-webkit-scrollbar {
@@ -257,14 +257,14 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-white-clr);
-  border-radius: 4px;
+  background: var(--white-clr);
+  border-radius: var(--radius-xs);
   cursor: pointer;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--text-blue-clr);
+  border-color: var(--blue-clr);
   box-shadow: 0 0 0 3px rgba(80, 165, 255, 0.18);
 }
 
@@ -293,15 +293,15 @@ table thead tr {
 
 table th,
 table td {
-  padding: 12px 15px;
+  padding: var(--space-gap-md) var(--space-md);
 }
 
 table tbody tr {
-  border-bottom: 1px solid var(--light-border-clr);
+  border-bottom: 1px solid var(--light-gray-clr);
 }
 
 table tbody tr:first-of-type {
-  border-top: 1px solid var(--light-border-clr);
+  border-top: 1px solid var(--light-gray-clr);
 }
 
 table tbody tr:last-of-type {
@@ -335,9 +335,9 @@ Pill Base + Variants
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  padding: 2px var(--space-sm);
   border-radius: var(--radius-pill);
-  border: var(--border-width-sm) solid transparent;
+  border: 1.5px solid transparent;
   font-size: var(--font-size-sm);
   font-weight: 500;
   white-space: nowrap;
