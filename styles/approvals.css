@@ -75,7 +75,7 @@ Approval Cards
 .approvals-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .approval-card-row {
@@ -96,13 +96,6 @@ Approval Cards
 
 .pipeline-name-type .production {
   background-color: var(--header-clr);
-  color: var(--text-white-clr);
-  padding: var(--space-2xs);
-  border-radius: var(--radius-pill);
-}
-
-.pipeline-name-type .type {
-  background-color: #1e2d6b;
   color: var(--text-white-clr);
   padding: var(--space-2xs);
   border-radius: var(--radius-pill);

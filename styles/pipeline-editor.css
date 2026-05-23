@@ -349,7 +349,7 @@ Stage Sidebar
 }
 
 .secrets-info .info {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .secrets-list {
@@ -405,7 +405,7 @@ Stage Sidebar
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: var(--space-xs);
   width: 100%;
   font-weight: bold;
   font-size: 15px;

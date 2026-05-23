@@ -29,7 +29,7 @@ Topbar
   gap: 6px;
   font-size: var(--font-size-body);
   color: var(--subtitle-clr);
-  padding: 6px 10px;
+  padding: 6px var(--space-sm);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-clr);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -111,7 +111,7 @@ Run Detail Card
 
 
 .rdc-status.running ion-icon {
-  font-size: 14px;
+  font-size: var(--font-size-body);
   animation: rdc-spin 1.2s linear infinite;
 }
 
@@ -131,7 +131,7 @@ Run Detail Card
 .rdc-commit-ref {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 
 .rdc-commit-ref ion-icon {
@@ -296,34 +296,10 @@ Overview
 .overview .job-statuses {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: var(--space-xl);
 }
 
-.overview .job-statuses > div {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
 
-.total, .succeeded, .running, .failed, .approval {
-  font-weight: bold;
-}
-
-.succeeded {
-  color: green;
-}
-
-.running {
-  color: var(--text-blue-clr);
-}
-
-.failed {
-  color: red;
-}
-
-.approval {
-  color: orange;
-}
 
 /*
 ===============
@@ -401,7 +377,7 @@ Pipeline Connectors
 
 .parallel-row {
   display: flex;
-  gap: 40px;
+  gap: var(--space-2xl);
 }
 
 /* Straight connector between sequential jobs */
@@ -506,7 +482,7 @@ Log Viewer
 */
 
 .logs {
-  margin-top: 30px;
+  margin-top: var(--space-xl);
   flex: 1;
   min-height: 0; /* lets flex child shrink below its content size */
   overflow-y: auto;
@@ -514,7 +490,7 @@ Log Viewer
 }
 
 .logs .filters {
-  margin-bottom: 15px;
+  margin-bottom: var(--space-md);
 }
 
 .log-viewer {
@@ -556,7 +532,7 @@ Log Viewer
 }
 
 .log-job-name {
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 700;
   color: #e6edf3;
   font-family: "JetBrains Mono", monospace;

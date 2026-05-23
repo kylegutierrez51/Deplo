@@ -126,7 +126,7 @@ Webhooks
 .pipeline-info .time {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .pipeline-info .last-delivery {

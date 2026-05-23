@@ -5,7 +5,7 @@
   top: 0;
   width: 300px;
   background-color: var(--dark-clr-1);
-  padding: 40px var(--space-xl);
+  padding: var(--space-2xl) var(--space-xl);
   padding-top: var(--space-xl);
   border: 1px solid var(--border-clr);
   border-right: none;
@@ -27,7 +27,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
 ==========================================================================
 */
 .page-content {
-  margin-top: 40px;
+  margin-top: var(--space-2xl);
   margin-left: 300px;
   padding: 0 150px;
   transition: margin-left 0.3s ease;
@@ -55,7 +55,7 @@ Sidebar Toggle Button
   position: fixed;
   top: var(--space-lg);
   left: 310px;
-  z-index: 200;
+  z-index: var(--z-dropdown);
   background: transparent;
   border: 1px solid var(--border-clr);
   cursor: pointer;
@@ -186,9 +186,10 @@ Profile
 
 .profile-pic {
   background-color: blue;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  flex-shrink: 0; /* prevents flex container from compressing the profile pic, keeping it a true 40x40 square */
 }
 
 .profile-details {
