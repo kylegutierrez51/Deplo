@@ -147,6 +147,7 @@ Approval Cards
   display: flex;
   align-items: flex-start;
   gap: var(--space-lg);
+  font-size: var(--font-size-sm);
 }
 
 .reject-btn, .approve-btn {
@@ -157,6 +158,7 @@ Approval Cards
   border-radius: var(--radius-sm);
   border: none;
   font-weight: bold;
+  font-size: inherit;
   cursor: pointer;
 }
 
@@ -178,6 +180,24 @@ Approval Cards
 
 .approve-btn:hover {
   background-color: var(--green-hover-clr);
+}
+
+.view-run-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--blue-btn-border-clr);
+  background-color: var(--blue-btn-clr);
+  color: var(--blue-text);
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.view-run-btn:hover {
+  background-color: var(--blue-btn-hover-clr);
 }
 
 
@@ -208,6 +228,7 @@ stages
   padding: var(--space-sm);
   border: 1px solid var(--light-border-clr);
   border-radius: var(--radius-lg);
+  white-space: nowrap;
 }
 
 .stages-row .stage span {

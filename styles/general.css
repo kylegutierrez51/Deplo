@@ -56,6 +56,12 @@ a {
   --run-btn-clr: #14532d;
   --run-btn-hover-clr: #0f3d22;
 
+  /* Blue Ghost Button */
+  --blue-text: var(--text-blue-clr);
+  --blue-btn-clr: rgba(80, 165, 255, 0.08);
+  --blue-btn-border-clr: var(--text-blue-clr);
+  --blue-btn-hover-clr: rgba(80, 165, 255, 0.16);
+
   /* Red Ghost Button */
   --red-text: #f87171;
   --red-dark-text: rgb(255, 57, 57);
@@ -143,19 +149,19 @@ a {
   /* Environments */
   --pill-production-text: #f87171;
   --pill-production-bg: rgba(248, 113, 113, 0.06);
-  --pill-production-border: #f87171;
+  --pill-production-border: #944646;
 
-  --pill-staging-text: #fbbf24;
-  --pill-staging-bg: #fbbf241a;
-  --pill-staging-border: #fbbf244d;
+  --pill-staging-text: #15c7bb;
+  --pill-staging-bg: #212b2a;
+  --pill-staging-border: #295552;
 
-  --pill-development-text: #38bdf8;
-  --pill-development-bg: #38bdf81a;
+  --pill-development-text: var(--text-blue-clr);
+  --pill-development-bg: rgba(80, 165, 255, 0.08);
   --pill-development-border: #38bdf84d;
 
-  --pill-preview-text: #c084fc;
-  --pill-preview-bg: #c084fc1a;
-  --pill-preview-border: #c084fc4d;
+  --pill-preview-text: #c399ee;
+  --pill-preview-bg: #a144ff1a;
+  --pill-preview-border: #a884fc4d;
 
   --pill-custom-text: #94a3b8;
   --pill-custom-bg: #94a3b81a;
@@ -349,5 +355,10 @@ Pill Base + Variants
 /* Event Types */
 .pill--push          { color: var(--pill-push-text);          background: var(--pill-push-bg);          border-color: var(--pill-push-border); }
 .pill--pull-request  { color: var(--pill-pull-request-text);  background: var(--pill-pull-request-bg);  border-color: var(--pill-pull-request-border); }
+
+
+
+
+
 
 
