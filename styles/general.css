@@ -26,6 +26,7 @@ a {
   --background-clr: #191919;
   --header-clr: #163452;
   --subtitle-clr: #b6b5b5;
+  --table-span-clr: #9c9a9a;
   --text-white-clr: #dcdcdc;
   --text-blue-clr: #50a5ff;
   --dark-clr-1: #00000026;
@@ -311,6 +312,10 @@ table th ion-icon {
 
 table td ion-icon {
   font-size: 20px;
+}
+
+table td span {
+  color: var(--table-span-clr);
 }
 
 /*

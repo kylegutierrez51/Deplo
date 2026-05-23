@@ -264,7 +264,106 @@
                 <ion-icon name="time-outline"></ion-icon>
               </div>
             </div>
-
+          </div>
+        </div>
+        <div class="approval-card">
+          <div class="approval-card-row">
+            <div class="approvals-detail">
+              <div class="pipeline-name-type">
+                <span>release-mobile</span>
+                <div class="pill pill--development">Development</div>
+                <div class="pill pill--manual">Manual</div>
+              </div>
+              <div class="feature-info">
+                <div class="feature-id">
+                  <ion-icon name="git-commit-outline"></ion-icon>
+                  <span>c3d4e5f</span>
+                </div>
+                <span class="feature">fix: resolve deep link crash on Android 14</span>
+              </div>
+              <div class="extra-info">
+                <div class="meta-row">
+                  <ion-icon name="person-outline"></ion-icon>
+                  <span>alex.kim</span>
+                </div>
+                <div class="meta-row">
+                  <ion-icon name="git-branch-outline"></ion-icon>
+                  <span>main</span>
+                </div>
+                <div class="meta-row">
+                  <ion-icon name="stopwatch-outline"></ion-icon>
+                  <span>Waiting <span class="waiting-time">18h 17m</span></span>
+                </div>
+                <div class="meta-row">
+                  <ion-icon name="caret-forward-outline"></ion-icon>
+                  <span>6/8 stages complete</span>
+                </div>
+              </div>
+              <div class="stage-view">
+                <div>
+                  <ion-icon name="chevron-down-outline"></ion-icon>
+                  <span>Hide stages</span>
+                </div>
+              </div>
+            </div>
+            <div class="btn-group">
+              <a href="run-detail.html" class="view-run-btn">
+                <ion-icon name="open-outline"></ion-icon>
+                View Run
+              </a>
+              <button class='reject-btn'>
+                <ion-icon name="close-circle-outline"></ion-icon>
+                Reject
+              </button>
+              <button class='approve-btn'>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                Approve
+              </button>
+            </div>
+          </div>
+          <div class="stages">
+            <div class="stages-row">
+              <div class="stage">
+                <ion-icon name="cube-outline"></ion-icon>
+                <span>install-deps</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="cube-outline"></ion-icon>
+                <span>lint</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="flask-outline"></ion-icon>
+                <span>unit-tests</span>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage approval">
+                <ion-icon name="shield-outline"></ion-icon>
+                <span>release-approval</span>
+                <ion-icon name="alert-circle-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
+              <span>→</span>
+              <div class="stage">
+                <ion-icon name="rocket-outline"></ion-icon>
+                <span>publish-stores</span>
+                <ion-icon name="time-outline"></ion-icon>
+              </div>
             </div>
           </div>
         </div>
@@ -276,6 +375,7 @@
         </div>
 
         <div class="pagination-container">
+
           <div class="pagination-row">
             <div class="view-option">
               <ion-icon name="chevron-back-outline"></ion-icon>
@@ -296,7 +396,6 @@
               <div>Next</div>
               <ion-icon name="chevron-forward-outline"></ion-icon>
             </div>
-
           </div>
         </div>
       </div>

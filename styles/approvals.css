@@ -60,13 +60,21 @@ Approval Cards
   padding-left: var(--space-xl);
   padding-right: var(--space-xl);
   border: 1px solid var(--light-border-clr);
-  border-radius: 12px;
   background: var(--dark-clr-2);
+}
+
+.approval-card:first-of-type {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.approval-card:last-of-type {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .approvals-detail {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .approval-card-row {
@@ -103,7 +111,6 @@ Approval Cards
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  margin-bottom: var(--space-sm);
 }
 
 .feature-info .feature-id {
@@ -120,7 +127,6 @@ Approval Cards
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  margin-bottom: var(--space-sm);
 }
 
 .meta-row {
@@ -136,7 +142,7 @@ Approval Cards
 .stage-view {
   display: flex;
   align-items: center;
-  margin-bottom: var(--space-sm);
+  margin-bottom: 10px;
 }
 
 .stage-view > div:hover {
