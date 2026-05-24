@@ -1,0 +1,327 @@
+/*
+  webhooks.css — Responsive media queries for webhooks.html
+  Strategy: desktop-first (max-width), matching the existing codebase convention.
+
+  Breakpoints:
+    1195px — reduce heavy horizontal padding
+    1024px — filter bar flex-wrap
+     874px — collapse sidebar, reflow content, stack subheader
+     768px — tablet refinements: wider search, tighter card padding, hide secondary timestamp
+     480px — small phones: full-width controls, compact cards, stacked pagination
+*/
+
+
+/* ============================================================
+   1195px — Small laptops
+   Halve the heavy horizontal page padding so the content area
+   gains room. Widen the search input to compensate.
+   ============================================================ */
+@media (max-width: 1195px) {
+
+  .page-content {
+    padding: 0 60px;
+  }
+
+  .input-group {
+    width: 35%;
+  }
+}
+
+
+
+
+/* ============================================================
+   1024px — Filter bar wrapping
+   With sidebar (300px) + reduced padding (120px) consuming 420px,
+   the three-item filter bar starts overflowing around ~1050px.
+   Allow wrapping so each control stays usable.
+   ============================================================ */
+@media (max-width: 1024px) {
+
+  .filters-bar {
+    flex-wrap: wrap;
+  }
+
+  /* Prevent the search input shrinking below a comfortable width. */
+  .input-group {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 961px) {
+  /* --- Pagination --- */
+
+  /* Stack the "Showing X of Y" label above the pagination controls */
+  .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl) 0;
+  }
+
+  /* Remove absolute positioning so the label flows naturally in the column */
+  .page-view .pages {
+    position: static;
+  }
+
+  /* Remove the manual left-offset that was there to visually center the row
+     with the indented page content */
+  .pagination-row {
+    padding-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* ============================================================
+   874px — Collapse sidebar, reflow content
+   Matches the breakpoint used across all other pages.
+   ============================================================ */
+@media (max-width: 874px) {
+
+  /* --- Sidebar --- */
+
+  /* Force the sidebar off-screen regardless of the desktop
+     .closed toggle state so the full viewport is available. */
+  .sidebar {
+    transform: translateX(-300px);
+  }
+
+  /* Hamburger button moves to the far-left collapsed position. */
+  .sidebar-toggle {
+    left: 20px;
+  }
+
+  /* toggleSidebar.js adds .open at mobile widths when the hamburger
+     is tapped. Solid background prevents page content from bleeding
+     through the near-transparent --dark-clr-1.
+     NOTE: toggleSidebar.js switches to .open-class mode at ≤768px.
+     Between 769px–874px the JS is still in desktop mode (.closed
+     toggle) so the sidebar won't open at those widths — a JS fix
+     extending MOBILE_BREAKPOINT to 874 is needed for full coverage. */
+  .sidebar.open {
+    transform: translateX(0);
+    background-color: var(--dark-clr-2);
+  }
+
+  .sidebar.open ~ .sidebar-toggle {
+    left: 310px;
+  }
+
+  /* --- Page content --- */
+
+  .page-content {
+    margin-left: 0;
+    padding: 60px var(--space-xl) 0;
+  }
+
+  /* --- Subheader --- */
+
+  /* Stack the title group above the action button. */
+  .subheader-inner {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  /* Comfortable touch target for the Add Webhook button. */
+  .subheader button {
+    min-height: 44px;
+  }
+
+  /* --- Filters --- */
+
+  /* Restore the 25% base width; content is now full-width so
+     25% provides a reasonable search bar without dominating the row. */
+  .input-group {
+    width: 25%;
+  }
+
+  /* --- Webhook cards --- */
+
+  /* Remove the hard 536px floor; without the sidebar consuming
+     300px the content fits naturally at any viewport width. */
+  .webhook-container {
+    min-width: 0;
+  }
+
+  /* --- Pagination --- */
+
+  /* The 961px block stacks the pagination vertically. Revert it
+     here — with the sidebar gone the row has room to sit side-by-side. */
+  .page-view {
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  .pagination-row {
+    width: auto;
+  }
+}
+
+
+/* ============================================================
+   768px — Tablets
+   Sidebar is already off-screen (874px rule). Refine card layout,
+   widen the search bar, and trim secondary metadata.
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* At ~750px content width, 25% = ~190px for the search bar —
+     tight for typing. Bump to 40% for better usability. */
+  .input-group {
+    width: 40%;
+  }
+
+  /* Reduce horizontal card padding from var(--space-xl) 20px
+     to var(--space-md) 15px per side for tighter content fit. */
+  .webhook-container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  /* Hide the bullet and "Registered N days ago" timestamp — both
+     are direct span children of .time. The last-delivery line
+     (a div) remains and carries the essential timing info. */
+  .pipeline-info .time > span {
+    display: none;
+  }
+}
+
+@media(max-width: 598px) {
+  /* --- Filters --- */
+
+  /* Search input spans the full row */
+  .input-group {
+    width: 100%;
+  }
+
+  /* Dropdowns stretch to fill the row for easy tapping */
+  .select-group {
+    width: 100%;
+  }
+
+  .select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* Match select height so all controls are uniform */
+  .input-group input {
+    min-height: 44px;
+  }
+
+  /* --- Pagination --- */
+
+  /* Stack the "Showing X of Y" label above the pagination controls */
+  .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl) 0;
+  }
+
+  /* Remove absolute positioning so the label flows naturally in the column */
+  .page-view .pages {
+    position: static;
+  }
+
+  /* Remove the manual left-offset that was there to visually center the row
+     with the indented page content */
+  .pagination-row {
+    padding-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* ============================================================
+   480px — Small phones
+   ============================================================ */
+@media (max-width: 480px) {
+
+  /* --- Page content --- */
+
+  /* Tighter horizontal padding; preserve vertical clearance for
+     the hamburger button established at 874px. */
+  .page-content {
+    padding: 60px var(--space-md) 0;
+  }
+
+  /* --- Subheader --- */
+
+  /* Scale the heading down so it doesn't overflow narrow screens. */
+  .subheader-inner h1 {
+    font-size: 22px;
+  }
+
+  /* Full-width, touch-friendly Add Webhook button. */
+  .subheader button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* --- Filters --- */
+
+  /* All three controls go full-width and stack vertically.
+     flex-wrap: wrap is already active from the 1024px rule. */
+  .input-group {
+    width: 100%;
+  }
+
+  .select-group {
+    width: 100%;
+  }
+
+  .select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .input-group input {
+    min-height: 44px;
+  }
+
+  /* --- Webhook cards --- */
+
+  /* Further tighten card padding to maximise interior space. */
+  .webhook-container {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  /* Reduce the gap between the git icon and pipeline info column. */
+  .webhook-detail {
+    gap: var(--space-sm);
+  }
+
+  /* --- Pagination --- */
+
+  /* "Showing 1-5 of 20" + the full pagination row can't share a
+     single line at this width (~460px). Stack them vertically. */
+  .page-layout .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-lg) 0;
+  }
+
+  /* Expand the wrapper so the centered pagination fills the full
+     available width, not just the natural content width. */
+  .page-layout .pagination-container {
+    width: 100%;
+  }
+
+  .page-layout .pagination-row {
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .page-numbers {
+    gap: var(--space-xs);
+  }
+}

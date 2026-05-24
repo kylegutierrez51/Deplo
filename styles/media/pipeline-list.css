@@ -26,8 +26,6 @@
   /* Pull the label out of absolute flow so space-between can place it */
   .page-view .pages {
     position: static;
-    white-space: nowrap;
-    
   }
 
   /* The 150px left offset was only needed when centering manually */
