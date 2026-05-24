@@ -10,6 +10,7 @@
 .page-view .pages {
   position: absolute;
   left: 0;
+  white-space: nowrap;
 }
 
 .pagination-row {

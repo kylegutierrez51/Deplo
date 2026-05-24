@@ -148,6 +148,7 @@ Run Detail Card
 .rdc-commit-msg {
   font-size: var(--font-size-body);
   color: var(--subtitle-clr);
+  white-space: nowrap;
 }
 
 /* Row 3: trigger */
@@ -171,6 +172,9 @@ Run Detail Card
   color: var(--icon-clr);
 }
 
+.rdc-meta-item span {
+  white-space: nowrap;
+}
 .rdc-link span {
   color: var(--blue-clr);
 }

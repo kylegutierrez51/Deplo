@@ -164,7 +164,11 @@ Stage Sidebar
   flex-direction: column;
   transition: transform 0.3s ease;
   z-index: var(--z-stage-sidebar);
-  opacity: 1; /* should originally be 0, then changed to 1 when triggered and back to 0 when untriggered */
+  transform: translateX(100%);
+}
+
+.stage-sidebar.open {
+  transform: translateX(0);
 }
 
 .stage-sidebar-header {

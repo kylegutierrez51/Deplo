@@ -1,0 +1,408 @@
+/*
+  run-detail.css — Responsive media queries for run-detail.html
+  Strategy: desktop-first (max-width), matching the existing codebase convention.
+
+  Breakpoints:
+    1450px — stack run-detail card (info above buttons); wrap commit row
+    1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
+    1195px — reduce heavy horizontal padding
+    1024px — shrink pipeline job cards so the graph fits with the sidebar present
+     930px — wrap trigger row so timing items fall to a second line (sidebar present)
+     874px — collapse sidebar; remove viewport-height constraint; reflow content
+     768px — tablet refinements; wrap job-status pills
+     579px — wrap trigger row so timing items fall to a second line (sidebar gone)
+     480px — small phones: tighter padding, stacked buttons, further reduced pipeline
+*/
+
+
+/*
+  Base correction (no media query)
+  .log-viewer uses overflow: hidden for border-radius clipping, which also
+  clips long log lines at any viewport width. Override only the x-axis so
+  lines scroll horizontally instead of being cut off. Vertical overflow and
+  border-radius corner clipping are unaffected.
+*/
+.log-viewer {
+  overflow-x: auto;
+}
+
+
+@media (max-width: 1450px) {
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+}
+
+
+/* ============================================================
+   1300px — Job status pills wrap
+   At this width "0 Awaiting Approval" gets clipped against the
+   card edge. Allow the pill row to wrap so it drops to a second
+   line rather than overflow.
+   ============================================================ */
+@media (max-width: 1300px) {
+
+  .job-statuses {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* ============================================================
+   1195px — Small laptops
+   Halve the heavy horizontal page padding so the pipeline graph
+   and run-detail card have room without the sidebar eating width.
+   ============================================================ */
+@media (max-width: 1195px) {
+
+  .page-content {
+    padding: 0 60px;
+  }
+}
+
+
+/* ============================================================
+   1024px — Landscape tablets / small laptops
+   With sidebar (300px) + padding (120px) consuming 420px, the
+   pipeline graph (540px) starts to overflow below ~960px.
+   Shrink job cards to 200px so the graph (200+40+200 = 440px)
+   fits all the way down to the 874px sidebar-collapse breakpoint.
+   ============================================================ */
+@media (max-width: 1024px) {
+
+  /* --- Pipeline graph --- */
+
+  .job {
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  /* Fork/merge connector total = 200px job + 40px gap + 200px job */
+  .connector-fork,
+  .connector-merge {
+    width: 440px;
+  }
+
+  /* Spacer = half of job width (200 / 2) so arm edges align to card centres */
+  .cf-spacer,
+  .cm-spacer {
+    width: 100px;
+  }
+}
+
+
+/* ============================================================
+   930px — Trigger row wrap (sidebar still present)
+   Same fix as 579px: the trigger description claims the full
+   first line so the two timing items drop to a second line.
+   ============================================================ */
+@media (max-width: 930px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   874px — Collapse sidebar, remove height constraint, reflow
+   Matches the breakpoint used across all other pages.
+   ============================================================ */
+@media (max-width: 874px) {
+
+  /* --- Sidebar --- */
+
+  /* Force the sidebar off-screen regardless of the desktop
+     .closed toggle state so the full viewport is available. */
+  .sidebar {
+    transform: translateX(-300px);
+  }
+
+  /* Hamburger button moves to the far-left collapsed position. */
+  .sidebar-toggle {
+    left: 20px;
+  }
+
+  /* JS adds .open when the user taps the hamburger at mobile widths.
+     Solid background prevents page content from bleeding through
+     the near-transparent --dark-clr-1. */
+  .sidebar.open {
+    transform: translateX(0);
+    background-color: var(--dark-clr-2);
+  }
+
+  .sidebar.open ~ .sidebar-toggle {
+    left: 310px;
+  }
+
+  /* --- Topbar --- */
+
+  /* The topbar uses its own left: 310px (not the sidebar-toggle's
+     absolute position). With the sidebar always hidden here,
+     drive it to the far-left collapsed position. */
+  .topbar {
+    left: 20px;
+  }
+
+  /* Slide it back right when the user opens the sidebar overlay. */
+  .sidebar.open ~ .topbar {
+    left: 310px;
+  }
+
+  /* --- Page content --- */
+
+  /* Drop the sidebar margin and restore normal document flow. */
+  .page-content {
+    margin-left: 0;
+    padding: 60px var(--space-xl) 0;
+    /* run-detail.css locks the page to 100vh with overflow: hidden so
+       only .pipeline scrolls internally. On mobile the card stacks
+       vertically and gets taller — remove the constraint so the whole
+       page scrolls naturally instead. */
+    height: auto;
+    overflow: visible;
+  }
+
+  /* --- Layout containers --- */
+
+  /* Same reason: lift the height: 100% / overflow: hidden chain so
+     children can grow to their natural content height. */
+  .page-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Let .overview grow to its content height instead of filling the
+     remaining viewport. */
+  .overview {
+    flex: none;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  /* .pipeline was the sole scroll area on desktop. With the page now
+     scrolling, let it expand to its natural height. */
+  .pipeline {
+    flex: none;
+    overflow-y: visible;
+  }
+
+  /* --- Run detail card --- */
+
+  /* Remove the top margin that created double-spacing once
+     padding-top: 60px is already accounting for topbar clearance. */
+  .run-detail-card {
+    margin-top: 0;
+  }
+}
+
+
+/* ============================================================
+   768px — Tablets
+   Sidebar is already off-screen (874px rule). Stack the run-detail
+   card so info and action buttons don't fight for horizontal space.
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* --- Job status pills --- */
+
+  /* Wrap the pill row so no pill is clipped. */
+  .job-statuses {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* --- Filters (Logs tab) --- */
+
+  /* Widen the search input now that the sidebar is gone. */
+  .input-group {
+    width: 40%;
+  }
+}
+
+
+/* ============================================================
+   579px — Trigger row wrap
+   At this width "7m ago" gets clipped. Push the two timing items
+   (duration + relative time) to a second line while keeping
+   "Triggered by webhook" alone on line 1.
+   ============================================================ */
+@media (max-width: 579px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  /* Force the trigger description to claim the full first line,
+     which pushes the stopwatch and clock items down to line 2. */
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   480px — Small phones
+   ============================================================ */
+@media (max-width: 480px) {
+
+  /* --- Page content --- */
+
+  /* Tighten horizontal padding; 60px top clearance for the
+     hamburger button is preserved from the 874px rule. */
+  .page-content {
+    padding: 60px var(--space-md) 0;
+  }
+
+  /* --- Run detail card --- */
+
+  /* Reduce card padding so the interior content has more room. */
+  .run-detail-card {
+    padding: var(--space-md);
+  }
+
+  /* Scale the pipeline name down slightly. */
+  .rdc-name {
+    font-size: 16px;
+  }
+
+  /* Allow the title row (name, run#, status pill, env pill) to wrap
+     onto a second line if the pills don't all fit in one row. */
+  .rdc-title-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* Stack commit row items vertically so the long commit message
+     doesn't force a horizontal overflow. */
+  .rdc-commit-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  /* Stack the trigger/timing metadata items vertically. */
+  .rdc-trigger-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  /* Stack action buttons vertically with 44px touch targets. */
+  .rdc-actions {
+    flex-direction: column;
+  }
+
+  .rdc-btn-cancel,
+  .rdc-btn-rerun {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* --- Pipeline graph --- */
+
+  /* Reduce job cards further so the graph fits a ~450px viewport. */
+  .job {
+    min-width: 150px;
+    max-width: 150px;
+  }
+
+  /* Tighten the gap between the two parallel jobs. */
+  .parallel-row {
+    gap: var(--space-lg);
+  }
+
+  /* Fork/merge connector total = 150px job + 20px gap + 150px job */
+  .connector-fork,
+  .connector-merge {
+    width: 320px;
+  }
+
+  /* Spacer = half of job width (150 / 2) so arm edges align to card centres */
+  .cf-spacer,
+  .cm-spacer {
+    width: 75px;
+  }
+
+  /* If the pipeline graph still overflows (e.g. many parallel jobs
+     added later), let it scroll horizontally rather than clip. */
+  .pipeline {
+    overflow-x: auto;
+  }
+
+  /* --- Filters (Logs tab) --- */
+
+  /* Stretch all filter controls to full width for easy tapping. */
+  .input-group {
+    width: 100%;
+  }
+
+  .select-group {
+    width: 100%;
+  }
+
+  .select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .input-group input {
+    min-height: 44px;
+  }
+
+  /* --- Log viewer --- */
+
+  /* Prevent the log header command label from forcing the viewer wider
+     than the viewport — truncate with an ellipsis instead. */
+  .log-job-cmd {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
+  }
+}

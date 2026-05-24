@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../styles/general.css">
   <link rel="stylesheet" href="../styles/sidebar.css">
   <link rel="stylesheet" href="../styles/pipeline-editor.css">
+  <link rel="stylesheet" href="../styles/media/pipeline-editor.css">
 </head>
 
 <body>
@@ -147,7 +148,7 @@
   </header>
 
   <main class="page-content">
-    <div>Pipeline Editor</div>
+    <button id="stageSidebarToggle" style="background-color: var(--header-clr); border: none; margin: 20px; cursor: pointer;">Open Stage Sidebar</button>
   </main>
 
   <aside class="stage-sidebar">
@@ -313,5 +314,6 @@
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script type="module" src="../utils/toggleSidebar.js"></script>
 <script type="module" src="../utils/sidebar-profile.js"></script>
+<script type="module" src="../utils/toggleStageSidebar.js"></script>
 
 </html>
