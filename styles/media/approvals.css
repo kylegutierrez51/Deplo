@@ -37,12 +37,27 @@
   white-space: nowrap;
 }
 
+/* Switch .approval-card-row to CSS Grid so .stage-view auto-places to column 1,
+   row 2 — below .approvals-detail but visually in the same left column. The
+   base-CSS justify-content: space-between carries into grid and preserves the
+   original push-to-edges desktop spacing. At ≤1530px this is overridden back
+   to flex-column; DOM order then gives the correct stack. */
+.approval-card-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  row-gap: var(--space-sm);
+}
+
 @media (max-width: 1530px) {
   /* --- Approval cards --- */
 
-  /* Stack approvals-detail above the btn-group. */
+  /* Override grid back to flex-column. DOM order (approvals-detail → btn-group
+     → stage-view) gives the desired visual stack without any order: hacks. */
   .approval-card-row {
+    display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: var(--space-md);
   }
 
@@ -214,9 +229,12 @@
 
   /* --- Approval cards --- */
 
-  /* Stack approvals-detail above the btn-group. */
+  /* 1530px rule already set display: flex; this block reinforces flex-column
+     so the cascade is explicit should the 1530px block ever be removed. */
   .approval-card-row {
+    display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: var(--space-md);
   }
 
