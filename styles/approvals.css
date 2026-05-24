@@ -129,6 +129,7 @@ Approval Cards
 
 .meta-row .waiting-time {
   color: var(--red-text);
+  white-space: nowrap;
 }
 
 .stage-view {
