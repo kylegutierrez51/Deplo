@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../styles/filters.css">
   <link rel="stylesheet" href="../styles/table.css">
   <link rel="stylesheet" href="../styles/pagination.css">
+  <link rel="stylesheet" href="../styles/media/run-history.css">
 </head>
 
 <body>
@@ -155,6 +156,12 @@
             <option value="preview">Custom</option>
           </select>
         </div>
+        <div class="select-group">
+          <select id="recency" name="recency">
+            <option value="recent">Most recent</option>
+            <option value="production">Least recent</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -167,7 +174,7 @@
               <th>Environment Type</th>
               <th>Trigger</th>
               <th>Duration</th>
-              <th class="filter"><ion-icon name="swap-vertical-outline"></ion-icon>Time</th> <!-- filter by time -->
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
