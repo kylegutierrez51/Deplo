@@ -119,6 +119,46 @@
   table thead th.filter {
     height: 100%;
   }
+
+  /* --- Table --- */
+
+  /* With only ~500px of content width at this breakpoint (viewport − 300px sidebar −
+     120px padding), tighten horizontal cell padding so more columns fit on-screen. */
+  table th,
+  table td {
+    padding: var(--space-gap-md) 6px;
+  }
+
+  /* Compact pills in the table — saves ~30px across the Status and Event columns,
+     which is enough to bring one more column into view without scrolling. */
+  table .pill {
+    padding: 2px 6px;
+    font-size: 12px;
+  }
+
+  /* Cap variable-length text columns with ellipsis so they don't dominate the row */
+  table td:nth-child(3), /* Repository */
+  table td:nth-child(4), /* Branch */
+  table td:nth-child(6) { /* Pipeline */
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Commit: cap the cell so the hash stays fully readable; the message span
+     truncates separately via its own overflow rule below. */
+  table td:nth-child(5) {
+    max-width: 80px;
+    overflow: hidden;
+  }
+
+  table td:nth-child(5) span {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 
@@ -234,6 +274,36 @@
      the content area is now full-width so 25% is already generous */
   .webhook-event-input-group {
     width: 25%;
+  }
+
+  /* --- Table --- */
+
+  /* Sidebar gone; content area jumps to ~860px — all 7 columns fit naturally.
+     Undo the column caps and restore pills to their standard size. */
+  table th,
+  table td {
+    padding: var(--space-gap-md) var(--space-sm);
+  }
+
+  table .pill {
+    padding: 2px var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  table td:nth-child(3),
+  table td:nth-child(4),
+  table td:nth-child(5),
+  table td:nth-child(6) {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  table td:nth-child(5) span {
+    display: inline;
+    white-space: normal;
+    overflow: visible;
   }
 }
 
