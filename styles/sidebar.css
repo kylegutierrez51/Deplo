@@ -52,7 +52,7 @@ Sidebar Toggle Button
 ========================================
 */
 .sidebar-toggle {
-  position: fixed;
+  position: absolute;
   top: var(--space-lg);
   left: 310px;
   z-index: var(--z-dropdown);
