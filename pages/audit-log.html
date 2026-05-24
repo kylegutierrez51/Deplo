@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../styles/filters.css">
   <link rel="stylesheet" href="../styles/table.css">
   <link rel="stylesheet" href="../styles/pagination.css">
-
+  <link rel="stylesheet" href="../styles/media/audit-log.css">
 </head>
 
 <body>
@@ -140,6 +140,12 @@
             <option value="failed">Last 7 days</option>
             <option value="running">Last 30 days</option>
             <option value="queued">Last 90 days</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <select id="recency" name="recency">
+            <option value="recent">Most recent</option>
+            <option value="production">Least recent</option>
           </select>
         </div>
       </div>
