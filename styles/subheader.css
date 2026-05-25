@@ -53,7 +53,7 @@
   color: var(--subtitle-clr);
 }
 
-.subheader button {
+.subheader button, .subheader .new-pipeline-btn {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -68,7 +68,7 @@
   cursor: pointer;
 }
 
-.subheader button:hover {
+.subheader button:hover, .subheader .new-pipeline-btn:hover {
   background-color: var(--btn-subheader-clr-hover);
 }
 
