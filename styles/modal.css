@@ -106,15 +106,6 @@ input::placeholder {
   text-align: left;
 }
 
-.modal-overlay .modal-form {
-  width: 100%;
-  flex: 1;
-  flex-shrink: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 .form-items .button-group {
   display: flex;
   align-items: center;
@@ -165,34 +156,11 @@ input::placeholder {
 }
 
 .options .create-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
   background-color: #0e4477;
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  cursor: pointer;
 }
 
 .options .create-btn:hover {
   background-color: #103a64;
-}
-
-.options .cancel-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: var(--space-sm) 18px;
-  border-radius: 8px;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
 .options .cancel-btn {
