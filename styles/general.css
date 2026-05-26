@@ -219,6 +219,8 @@ input::placeholder {
   color: var(--input-clr);
 }
 
+
+
 select {
   height: var(--size-control-height);
   font-size: var(--font-size-body);

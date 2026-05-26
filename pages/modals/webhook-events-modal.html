@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deplo | Add Webhook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/general.css">
+  <link rel="stylesheet" href="../../styles/modals/webhook-events.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal-container">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-icon-box">
+            <ion-icon name="git-network-outline"></ion-icon>
+          </div>
+          <div class="modal-title-group">
+            <h3>Add Webhook</h3>
+            <p>Register a GitHub webhook to trigger a pipeline automatically.</p>
+          </div>
+        </div>
+        <button class="close-btn" type="button" id="close-btn">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Scrollable form body -->
+      <form class="modal-form" method="POST">
+        <div class="form-items">
+
+          <!-- Repository -->
+          <div class="field-group">
+            <label for="webhook-repo">Repository</label>
+            <div class="select-wrapper">
+              <ion-icon name="git-branch-outline" class="select-icon-left"></ion-icon>
+              <select id="webhook-repo" name="repository">
+                <option value="" disabled selected>Select a repository...</option>
+              </select>
+              <ion-icon name="chevron-down-outline" class="select-icon-right"></ion-icon>
+            </div>
+          </div>
+
+          <!-- Pipeline to trigger -->
+          <div class="field-group">
+            <label for="webhook-pipeline">Pipeline to trigger</label>
+            <div class="select-wrapper">
+              <ion-icon name="link-outline" class="select-icon-left"></ion-icon>
+              <select id="webhook-pipeline" name="pipeline">
+                <option value="" disabled selected>Select a pipeline...</option>
+              </select>
+              <ion-icon name="chevron-down-outline" class="select-icon-right"></ion-icon>
+            </div>
+          </div>
+
+          <!-- Branch filter -->
+          <div class="field-group">
+            <label for="webhook-branch">
+              Branch filter
+              <span class="optional-badge">optional</span>
+            </label>
+            <input
+              type="text"
+              id="webhook-branch"
+              name="branch_filter"
+              placeholder="e.g. main, release/*, feature/**"
+            >
+            <p class="field-hint">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              Glob pattern. Leave empty to trigger on all branches.
+            </p>
+          </div>
+
+          <!-- Trigger events -->
+          <div class="field-group">
+            <label>Trigger events</label>
+            <div class="event-cards">
+              <label class="event-card">
+                <div class="event-card-checkbox">
+                  <input type="checkbox" name="event_push" id="event-push">
+                  <span class="custom-checkbox"></span>
+                </div>
+                <div class="event-card-content">
+                  <span class="event-name">Push</span>
+                  <span class="event-desc">Triggered when commits are pushed to a branch</span>
+                </div>
+              </label>
+              <label class="event-card">
+                <div class="event-card-checkbox">
+                  <input type="checkbox" name="event_pr" id="event-pr">
+                  <span class="custom-checkbox"></span>
+                </div>
+                <div class="event-card-content">
+                  <span class="event-name">Pull Request</span>
+                  <span class="event-desc">Triggered on PR open, sync, or merge</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Webhook secret -->
+          <div class="field-group">
+            <div class="field-label-row">
+              <label for="webhook-secret">Webhook secret</label>
+              <button type="button" class="regenerate-btn" title="Regenerate secret">
+                <ion-icon name="refresh-outline"></ion-icon>
+              </button>
+            </div>
+            <div class="secret-input-wrapper">
+              <ion-icon name="key-outline" class="input-icon-left"></ion-icon>
+              <input
+                type="password"
+                id="webhook-secret"
+                name="webhook_secret"
+                value="whsec_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+                class="secret-input"
+              >
+              <div class="secret-actions">
+                <button type="button" class="icon-action-btn" title="Toggle visibility">
+                  <ion-icon name="eye-outline"></ion-icon>
+                </button>
+                <span class="secret-divider"></span>
+                <button type="button" class="icon-action-btn" title="Copy secret">
+                  <ion-icon name="copy-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+            <p class="field-hint">
+              Used for HMAC-SHA256 signature validation. Store securely — it won't be shown again.
+            </p>
+          </div>
+
+        </div>
+      </form>
+
+      <!-- Footer actions -->
+      <div class="modal-footer">
+        <button id="cancel-btn" class="cancel-btn" type="button">Cancel</button>
+        <button id="register-btn" class="register-btn" type="submit">Register Webhook</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Toggle secret visibility
+    document.querySelector('.secret-actions .icon-action-btn').addEventListener('click', function () {
+      const input = document.getElementById('webhook-secret');
+      const icon = this.querySelector('ion-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('name', 'eye-off-outline');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('name', 'eye-outline');
+      }
+    });
+
+    // Copy secret
+    document.querySelectorAll('.secret-actions .icon-action-btn')[1].addEventListener('click', function () {
+      const val = document.getElementById('webhook-secret').value;
+      navigator.clipboard.writeText(val);
+    });
+  </script>
+</body>
+</html>
