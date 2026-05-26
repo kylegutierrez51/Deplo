@@ -180,13 +180,6 @@
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }
-
-  /* Hide the bullet and "Registered N days ago" timestamp — both
-     are direct span children of .time. The last-delivery line
-     (a div) remains and carries the essential timing info. */
-  .pipeline-info .time > span {
-    display: none;
-  }
 }
 
 @media(max-width: 598px) {

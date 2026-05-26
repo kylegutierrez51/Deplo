@@ -21,6 +21,10 @@ a {
   text-decoration: none;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 :root {
   /* Colors */
   --background-clr: #191919;
