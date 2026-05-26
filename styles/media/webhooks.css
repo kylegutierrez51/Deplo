@@ -190,6 +190,14 @@
 }
 
 @media(max-width: 598px) {
+
+  /* Full-width touch-friendly button */
+  .subheader button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  
   /* --- Filters --- */
 
   /* Search input spans the full row */
