@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deplo | Modal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/general.css">
+  <link rel="stylesheet" href="../styles/modal.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>New Secret</h3>
+        <button class="close-btn" id="close-btn">x</button>
+      </div>
+
+      <form class="modal-form" method="POST">
+        <div class="form-items">
+          <div class="key-box">
+            <label>Key</label>
+            <input name="secret_key" placeholder="e.g. DATABASE_URL">
+          </div>
+
+          <div class="value-box">
+            <label>Value</label>
+            <div class="value-input-wrapper">
+              <textarea name="secret_value" placeholder="Secret value - encrypted at rest with AES-256-GCM"></textarea>
+              <ion-icon name="eye-outline" class="value-toggle-icon"></ion-icon>
+            </div>
+          </div>
+
+          <div class="environment-box">
+            <label>Environments</label>
+            <div class="button-group">
+              <button class="prod-btn">Production</button>
+              <button class="staging-btn">Staging</button>
+              <button class="dev-btn">Development</button>
+              <button class="prev-btn">Preview</button>
+              <button class="custom-btn">Custom</button>
+            </div>
+          </div>
+
+          <div class="notes-box">
+            <label>Notes <span>(optional)</span></label>
+            <textarea name="notes" placeholder="e.g. Rotated quarterly, scoped to read-only"></textarea>
+          </div>
+        </div>
+
+        <div class="options">
+          <button id="cancel-btn" class="cancel-btn" type="button">Cancel</button>
+          <button id="create-btn" class="create-btn" type="submit">Create</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>
