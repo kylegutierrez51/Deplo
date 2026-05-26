@@ -106,7 +106,7 @@
   pointer-events: none;
 }
 
-input::placeholder {
+.form-items input::placeholder {
   color: var(--input-clr);
   text-align: left;
 }
@@ -132,6 +132,94 @@ input::placeholder {
   border: 1px solid gray;
   resize: vertical;
 }
+
+/*
+=======================
+Approval Toggle
+=======================
+*/
+
+.approval-toggle-box {
+  border: 1px solid gray;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.approval-toggle-box #require-approval {
+  display: none;
+}
+
+.toggle-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  background-color: var(--light-gray-clr);
+  border-radius: var(--radius-pill);
+  position: relative;
+  margin-top: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--white-clr);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+#require-approval:checked + .toggle-option .toggle-switch {
+  background-color: var(--blue-clr);
+}
+
+#require-approval:checked + .toggle-option .toggle-switch::after {
+  transform: translateX(18px);
+}
+
+.toggle-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.toggle-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--white-clr);
+}
+
+.toggle-title ion-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.toggle-description {
+  text-transform: none;
+  font-size: var(--font-size-sm);
+  color: rgb(204, 204, 204);
+  line-height: 1.5;
+}
+
+
+/*
+===========================
+Footer
+===========================
+*/
 
 .options {
   position: sticky;
@@ -216,86 +304,7 @@ Environment Buttons
 }
 
 
-/*
-=======================
-Approval Toggle
-=======================
-*/
 
-.approval-toggle-box {
-  border: 1px solid var(--color-border-mid);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-
-.approval-toggle-box #require-approval {
-  display: none;
-}
-
-.toggle-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  cursor: pointer;
-}
-
-.toggle-switch {
-  flex-shrink: 0;
-  width: 42px;
-  height: 24px;
-  background-color: var(--light-gray-clr);
-  border-radius: var(--radius-pill);
-  position: relative;
-  margin-top: 1px;
-  transition: background-color 0.2s ease;
-}
-
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  background-color: var(--white-clr);
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-#require-approval:checked + .toggle-option .toggle-switch {
-  background-color: var(--blue-clr);
-}
-
-#require-approval:checked + .toggle-option .toggle-switch::after {
-  transform: translateX(18px);
-}
-
-.toggle-content {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.toggle-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  color: var(--white-clr);
-}
-
-.toggle-title ion-icon {
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-.toggle-description {
-  text-transform: none;
-  font-size: var(--font-size-sm);
-  color: rgb(204, 204, 204);
-  line-height: 1.5;
-}
 
 
 
