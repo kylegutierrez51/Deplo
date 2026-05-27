@@ -170,6 +170,7 @@
   /* Tighter horizontal padding on narrow screens */
   .page-content {
     padding: 0 var(--space-md);
+    padding-top: 40px;
   }
 
   /* --- Subheader --- */

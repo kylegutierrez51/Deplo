@@ -66,6 +66,8 @@
   font-weight: bold;
   align-self: start;
   cursor: pointer;
+  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
+  white-space: nowrap; /* keep button text on one line regardless of container width */
 }
 
 .subheader button:hover, .subheader .new-pipeline-btn:hover {
