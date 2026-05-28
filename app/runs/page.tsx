@@ -3,7 +3,7 @@ import subheaderStyles from "@/styles/subheader.module.css";
 import filterStyles from "@/styles/filters.module.css";
 import tableStyles from "@/styles/table.module.css";
 import paginationStyles from "@/styles/pagination.module.css";
-import pipelineListMediaStyles from "@/styles/media/pipeline-list.module.css";
+import runHistoryMediaStyles from "@/styles/media/run-history.module.css";
 
 const styles = {
   ...sidebarStyles,
@@ -11,7 +11,7 @@ const styles = {
   ...filterStyles,
   ...tableStyles,
   ...paginationStyles,
-  ...pipelineListMediaStyles,
+  ...runHistoryMediaStyles,
 };
 
 
