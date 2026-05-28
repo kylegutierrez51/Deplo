@@ -1,79 +1,8 @@
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: none;
-  z-index: var(--z-modal);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px); /* supports Safari */
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-overlay .modal-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  border-radius: 15px;
-  background-color: rgb(48, 48, 48);
-  box-shadow: 0 4px 16px rgba(43, 43, 43, 0.4);
-  /* background-color: var(--dark-clr-1); */
-  overflow: hidden;
-}
-
-.modal-overlay .modal-header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 30px;
-  border-bottom: 1px solid gray;
-}
-
-.modal-overlay .modal-container .close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgb(65, 65, 65);
-  border: none;
-  padding: 5px 7px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.close-btn ion-icon {
-  font-size: 16px;
-  color: var(--white-clr);
-}
-
-.modal-form {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.form-items {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 30px;
-  padding: 30px;
-}
-
-.key-box, .value-box, .environment-box, .notes-box {
+.item {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-
 
 .form-items label {
   font-size: 14px;
@@ -220,58 +149,6 @@ Approval Toggle
   font-size: var(--font-size-sm);
   color: rgb(204, 204, 204);
   line-height: 1.5;
-}
-
-
-/*
-===========================
-Footer
-===========================
-*/
-
-.options {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 30px;
-  border-top: 1px solid gray;
-  background-color: rgb(48, 48, 48);
-}
-
-.options button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  background-color: var(--btn-subheader-clr);
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  align-self: start;
-  cursor: pointer;
-}
-
-.options .create-btn {
-  background-color: #0e4477;
-}
-
-.options .create-btn:hover {
-  background-color: #103a64;
-}
-
-.options .cancel-btn {
-  color: var(--white-clr);
-  border: 1.5px solid var(--light-gray-clr);
-  background-color: transparent;
-}
-
-.options .cancel-btn:hover {
-  background-color: var(--gray-clr);
 }
 
 
