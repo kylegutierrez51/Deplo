@@ -1,52 +1,8 @@
 /*
 ============================================================
-Modal Overlay & Container
-============================================================
-*/
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: none;
-  z-index: var(--z-modal);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-overlay .modal-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  border-radius: 15px;
-  background-color: rgb(48, 48, 48);
-  box-shadow: 0 4px 16px rgba(43, 43, 43, 0.4);
-  overflow: hidden;
-}
-
-/*
-============================================================
 Header
 ============================================================
 */
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-  padding: 30px;
-  border-bottom: 1px solid gray;
-}
 
 .modal-header-left {
   display: flex;
@@ -88,43 +44,6 @@ Header
   font-size: 13px;
   color: rgb(160, 160, 160);
   line-height: 1.5;
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgb(65, 65, 65);
-  border: none;
-  padding: 5px 7px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.close-btn ion-icon {
-  font-size: 16px;
-  color: var(--white-clr);
-}
-
-/*
-============================================================
-Form Body (Scrollable)
-============================================================
-*/
-
-.modal-form {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.form-items {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 30px;
-  padding: 30px;
 }
 
 /*
@@ -399,55 +318,4 @@ Field Label Row (label + inline action)
 .regenerate-btn ion-icon {
   font-size: 15px;
   color: var(--white-clr);
-}
-
-
-/*
-============================================================
-Footer
-============================================================
-*/
-
-.modal-footer {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 30px;
-  border-top: 1px solid gray;
-  background-color: rgb(48, 48, 48);
-}
-
-.modal-footer button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  background-color: var(--btn-subheader-clr);
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.modal-footer .register-btn {
-  background-color: #0e4477;
-}
-
-.modal-footer .register-btn:hover {
-  background-color: #103a64;
-}
-
-.cancel-btn {
-  color: var(--white-clr);
-  border: 1.5px solid var(--light-gray-clr) !important;
-  background-color: transparent !important;
-}
-
-.cancel-btn:hover {
-  background-color: var(--gray-clr) !important;
 }
