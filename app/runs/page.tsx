@@ -16,7 +16,7 @@ const styles = {
 
 
 
-export default function runHistory() {
+export default function RunHistory() {
   return (
     <>
       <aside className={styles.sidebar}>

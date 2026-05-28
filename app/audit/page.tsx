@@ -16,7 +16,7 @@ const styles = {
 
 
 
-export default function auditLog() {
+export default function AuditLog() {
   return (
     <>
       <aside className={styles.sidebar}>

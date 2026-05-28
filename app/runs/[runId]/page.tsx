@@ -12,7 +12,7 @@ const styles = {
 
 
 
-export default function runDetail() {
+export default function RunDetail() {
   return (
     <>
       <aside className={styles.sidebar}>
