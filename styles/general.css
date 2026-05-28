@@ -332,6 +332,32 @@ table td span {
   color: var(--table-span-clr);
 }
 
+
+
+
+
+/*
+============================================================
+Modal Overlay
+============================================================
+*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px); /* supports Safari */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /*
 ============================================================
 Pill Base + Variants
