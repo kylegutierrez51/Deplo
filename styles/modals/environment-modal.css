@@ -38,11 +38,19 @@
 }
 
 .modal-overlay .modal-container .close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: rgb(65, 65, 65);
   border: none;
   padding: 5px 7px;
   border-radius: var(--radius-sm);
   cursor: pointer;
+}
+
+.close-btn ion-icon {
+  font-size: 16px;
+  color: var(--white-clr);
 }
 
 .modal-form {
