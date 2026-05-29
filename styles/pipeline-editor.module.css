@@ -1,4 +1,4 @@
-﻿/*
+/*
 ==================
 Header
 ==================
@@ -415,4 +415,14 @@ Stage Sidebar
 
 .delete-btn:hover {
   background-color: var(--red-btn-hover-clr);
+}
+
+
+
+
+.toggle-stage-sidebar {
+  background-color: var(--header-clr); 
+  border: none; 
+  margin: 20px; 
+  cursor: pointer;
 }

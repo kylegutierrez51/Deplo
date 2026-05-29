@@ -1,0 +1,56 @@
+Notes to help assist my own learning
+
+
+CSS Modules
+
+Having something like:
+
+        const styles = {
+          ...sidebarStyles,
+          ...subheaderStyles,
+          ...filterStyles,
+          ...tableStyles,
+          ...paginationStyles,
+          ...pipelineListStyles,
+        };
+
+isn't slow. Next.js doesn't just scan these different CSS style files at runtime, it's resolved at buildtime. When Next.js processes a module.css file, it gives you a plain JS object of name mappings like (for sidebarStyles):
+
+          {
+            "sidebar": "sidebar_sidebar__a3Kx9",
+            "sidebar-content": "sidebar_sidebar-content__b7Rp2",
+            "profile": "sidebar_profile__c1Lm4",
+            // ...
+          }
+
+These are hashed names, meaning it's an O(1) object key lookup on this pre-built dictionary. So by the time a component runs, "styles" is already a fully resolved JS object sitting in memory.
+
+
+REGEX to convert classes to 'className' in .tsx files:
+
+      REPLACE something like 'class="page-content"' to 'className={styles.page-content}:
+
+            Find:
+            class="([^"]+)"
+
+            Replace:
+            className={styles.$1}
+
+
+      REPLACE something like 'className={styles.page-content}' to 'className={styles['page-content']}'
+
+            Find:
+            className=\{styles\.([a-zA-Z0-9_-]*-[a-zA-Z0-9_-]*)\}
+
+            Replace:
+            className={styles['$1']}
+
+
+      REPLACE something like 'className={styles.pill pill--queued}' to 'className={`${styles.pill} ${styles['pill--queued']}`}'
+
+            Find: className=\{styles\.([a-zA-Z0-9_-]+) ([a-zA-Z0-9_-]+)\}
+
+            Replace: className={`${styles.$1} ${styles['$2']}`}
+
+===================================================================================================================================
+

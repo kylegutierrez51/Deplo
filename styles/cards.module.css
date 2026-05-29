@@ -1,4 +1,4 @@
-﻿.cards-row {
+.cards-row {
   display: flex;
   border: 1px solid var(--light-gray-clr);
   border-radius: var(--radius-lg);

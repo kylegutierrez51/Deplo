@@ -1,4 +1,4 @@
-﻿.sidebar {
+.sidebar {
   position: fixed;
   left: 0;
   bottom: 0;
@@ -93,6 +93,7 @@ Sidebar Header
 Sidebar Nav (scrollable area)
 ========================================
 */
+
 .sidebar-nav {
   flex: 1; /* this makes .sidebar-nav stretch to fill out its entire container, pushing .profile to the bottom of the screen. */
   overflow-y: auto;
@@ -156,7 +157,7 @@ Sidebar Content
   font-size: 18px;
 }
 
-ion-icon {
+.sidebar-content :global(ion-icon) {
   font-size: 25px;
 }
 
@@ -214,7 +215,7 @@ Profile
   font-size: var(--font-size-lg);
 }
 
-ion-icon[name="chevron-back-outline"], ion-icon[name="chevron-up-outline"] {
+.profile :global(ion-icon[name="chevron-up-outline"]) {
   font-size: 20px;
   margin-right: var(--space-xs);
   justify-self: end;
