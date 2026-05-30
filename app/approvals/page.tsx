@@ -1,4 +1,5 @@
 import styles from "./approvals.module.css"
+import Subheader from "@/components/Subheader";
 
 export default function Approvals() {
   return (
@@ -88,14 +89,11 @@ export default function Approvals() {
       <main className={styles['page-content']}>
         <div className={styles['page-layout']}>
 
-          <div className={styles.subheader}>
-            <div className={styles['subheader-inner']}>
-              <div className={styles['title-group']}>
-                <h1>Approvals</h1>
-                <p className={styles['subtitle']}>Pipeline runs waiting for manual approval before proceeding.</p>
-              </div>
-            </div>
-          </div>
+
+          <Subheader 
+            title="Approvals"
+            subtitle="Pipeline runs waiting for manual approval before proceeding.">
+          </Subheader>
 
           <div className={styles.cards}>
             <div className={styles['cards-row']}>

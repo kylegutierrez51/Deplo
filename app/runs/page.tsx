@@ -1,4 +1,5 @@
 import styles from "./run-history.module.css";
+import Subheader from "@/components/Subheader";
 
 export default function RunHistory() {
   return (
@@ -87,24 +88,15 @@ export default function RunHistory() {
 
       <main className={styles['page-content']}>
 
-        <div className={styles.subheader}>
-          <div className={styles['subheader-inner']}>
-            <div className={styles['title-group']}>
-              <div className={styles['title-row']}>
-                <h1>Run History</h1>
-                <div className={styles['active-badge']}>
-                  <span className={styles['active-dot']}></span>
-                  <span>3 active</span>
-                </div>
-              </div>
-              <p className={styles['subtitle']}>All pipeline executions across your projects.</p>
-            </div>
+        <Subheader 
+          title="Run History"
+          subtitle="All pipeline executions across your projects."
+          badge={{ count: 3, label: 'Active'}}>
             <button>
               <ion-icon name="caret-forward-outline"></ion-icon>
               Run Pipeline
             </button>
-          </div>
-        </div>
+        </Subheader>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>

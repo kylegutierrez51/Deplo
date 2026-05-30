@@ -1,5 +1,5 @@
 import styles from "./audit.module.css";
-
+import Subheader from "@/components/Subheader";
 
 
 export default function AuditLog() {
@@ -89,18 +89,14 @@ export default function AuditLog() {
 
       <main className={styles['page-content']}>
 
-        <div className={styles.subheader}>
-          <div className={styles['subheader-inner']}>
-            <div className={styles['title-group']}>
-              <h1>Audit Log</h1>
-              <p className={styles['subtitle']}>Immutable record of every action taken across your workspace</p>
-            </div>
+        <Subheader 
+          title="Audit Log"
+          subtitle="Immutable record of every action taken across your workspace.">
             <button>
               <ion-icon name="download-outline"></ion-icon>
               Export
             </button>
-          </div>
-        </div>
+        </Subheader>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
