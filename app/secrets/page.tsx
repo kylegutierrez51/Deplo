@@ -1,5 +1,5 @@
 import styles from "./secrets.module.css";
-
+import Subheader from "@/components/Subheader";
 
 export default function Secrets() {
   return (
@@ -88,18 +88,14 @@ export default function Secrets() {
 
   <main className={styles['page-content']}>
 
-    <div className={styles.subheader}>
-      <div className={styles['subheader-inner']}>
-        <div className={styles['title-group']}>
-          <h1>Secrets</h1>
-          <p className={styles.subtitle}>Encrypted environment variables injected into pipeline stages at runtime</p>
-        </div>
+    <Subheader 
+      title="Secrets"
+      subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
         <button>
           <ion-icon name="add-outline"></ion-icon>
           Add Secret
         </button>
-      </div>
-    </div>
+    </Subheader>
 
     <div className={styles.filters}>
       <div className={styles['filters-bar']}>

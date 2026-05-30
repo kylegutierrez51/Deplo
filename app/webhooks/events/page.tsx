@@ -1,4 +1,5 @@
 import styles from "./webhook-events.module.css";
+import Subheader from "@/components/Subheader";
 
 export default function Webhooks() {
   return (
@@ -88,18 +89,14 @@ export default function Webhooks() {
 
       <main className={styles['page-content']}>
 
-        <div className={styles.subheader}>
-          <div className={styles['subheader-inner']}>
-            <div className={styles['title-group']}>
-              <h1>Webhook Events</h1>
-              <p className={styles['subtitle']}>Incoming webhook deliveries from GitHub</p>
-            </div>
+        <Subheader 
+          title="Webhook Events"
+          subtitle="Incoming webhook deliveries from GitHub.">
             <button>
               <ion-icon name="refresh-outline"></ion-icon>
               Refresh
             </button>
-          </div>
-        </div>
+        </Subheader>
 
         <div className={styles.cards}>
           <div className={styles['cards-row']}>

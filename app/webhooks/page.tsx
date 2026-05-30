@@ -1,5 +1,5 @@
 import styles from "./webhooks.module.css"
-
+import Subheader from "@/components/Subheader"
 
 
 export default function Webhooks() {
@@ -87,21 +87,19 @@ export default function Webhooks() {
         <ion-icon name="menu-outline"></ion-icon>
       </button>
 
+
       <main className={styles['page-content']}>
         <div className={styles['page-layout']}>
-          <div className={styles.subheader}>
-            <div className={styles['subheader-inner']}>
-              <div className={styles['title-group']}>
-                <h1>GitHub Webhooks</h1>
-                <p className={styles['subtitle']}>Register webhooks to automatically trigger pipelines on push or pull request events.</p>
-              </div>
+
+          <Subheader 
+            title="GitHub Webhooks"
+            subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
               <button>
                 <ion-icon name="add-outline"></ion-icon>
                 Add Webhook
               </button>
-            </div>
-          </div>
-
+          </Subheader>
+      
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
               <div className={styles['input-group']}>
