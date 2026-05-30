@@ -574,29 +574,28 @@ Pagination
 
 /*
 ======================================================================================
-Audit Log Media Queries
+Pipeline List Media Queries
 ======================================================================================
 */
 
 /*
-  run-history.css — Responsive media queries for run-history.html
+  pipeline-list.css — Responsive media queries for pipeline-list.html
   Strategy: desktop-first (max-width), matching the existing codebase convention.
 
   Breakpoints:
     1350px — pagination overlap fix
-    1345px — drop "Most recent" filter to row 2
-    1195px — reduce heavy horizontal padding
-    1017px — stack pagination vertically; enable table scroll
-     874px — collapse sidebar, reflow content
-     514px — phone optimizations
+    1195px
+    1017px
+     874px
+     514px
 */
 
 
 /* ============================================================
    1350px — Pagination overlap fix
-   The absolute-positioned "Showing X of Y" label starts
-   colliding with the centered pagination row at this width.
-   Switch .page-view to space-between so both ends are clear.
+   At this width the absolute-positioned "Showing…" label starts
+   colliding with the centered pagination row. Switch to
+   space-between so they sit on opposite ends instead.
    ============================================================ */
 @media (max-width: 1350px) {
 
@@ -608,90 +607,37 @@ Audit Log Media Queries
   /* Pull the label out of absolute flow so space-between can place it */
   .page-view .pages {
     position: static;
-    white-space: nowrap;
   }
 
   /* The 150px left offset was only needed when centering manually */
   .pagination-row {
     padding-left: 0;
   }
-
-  /* --- Table --- */
-
-  /* The secrets table overflows at ~1276px (content = 676px) and again at ~1097px
-     (content = 677px after padding drops at 1195px). overflow: auto only renders a
-     scrollbar when there is actual overflow, so setting it here is safe at all widths
-     below 1350px. Placed on .table-border rather than .table-wrapper because
-     table.css sets overflow: hidden on .table-border, clipping the table before
-     .table-wrapper can scroll it. */
-  .table-border {
-    overflow: auto;
-  }
 }
 
 
-/* ============================================================
-   1345px — Drop "Most recent" to row 2
-   Five filter items can't share a row with the sidebar + 150px
-   padding consuming so much space. Push the last filter below
-   so the search input stays at a readable width.
-   ============================================================ */
-@media (max-width: 1345px) {
-
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  /* Prevent the search input from shrinking below a usable width
-     regardless of how many items are on its row */
-  .input-group {
-    min-width: 180px;
-  }
-}
-
-
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the content area
-   has more room without leaving the sidebar empty.
-   ============================================================ */
 @media (max-width: 1195px) {
 
+  /* Halve the heavy horizontal padding so content has more breathing room */
   .page-content {
     padding: 0 60px;
   }
 
-  /* Match the reduced right-padding offset used for pagination alignment */
+  /* Match the reduced page-content padding */
   .page-view {
     padding: 50px 60px 50px 0;
   }
 
-  /* Widen the search input slightly to compensate for less available width */
+  /* Widen search input slightly to compensate for the narrower content area */
   .input-group {
     width: 35%;
   }
-
-  /* When "Environment Type" wraps to two lines the row grows taller, but the flex
-     container on th.filter doesn't fill that height — so align-items: center has
-     nothing to center against and the content drifts to the top.
-     height: 1px on the tr is a CSS table trick that enables height: 100% on cells;
-     without it, percentage heights on table cells are treated as auto. */
-  :global(table thead tr) {
-    height: 1px;
-  }
-
-  table thead th.filter {
-    height: 100%;
-  }
 }
 
-/* ============================================================
-   1017px — Stack pagination; enable table scroll
-   Horizontal space gets too tight for the label + pagination
-   to sit side-by-side. Stack them vertically instead.
-   ============================================================ */
 @media (max-width: 1017px) {
+  /* --- Pagination --- */
 
+  /* Stack the "Showing X of Y" label above the pagination controls */
   .page-view {
     flex-direction: column;
     align-items: flex-start;
@@ -704,49 +650,45 @@ Audit Log Media Queries
     position: static;
   }
 
-  /* Remove manual left-offset; center pagination within the full content width */
+  /* Remove the manual left-offset that was there to visually center the row
+     with the indented page content */
   .pagination-row {
     padding-left: 0;
     width: 100%;
     justify-content: center;
   }
-
 }
 
-
-/* ============================================================
-   874px — Collapse sidebar, reflow content
-   ============================================================ */
 @media (max-width: 874px) {
 
   /* --- Sidebar --- */
 
-  /* Force sidebar off-screen regardless of .sidebar.closed state so the
-     full viewport is available for content on tablet/phone. */
+  /* Visually close the sidebar by default so it doesn't eat content area.
+     NOTE: the existing JS toggle adds/removes .sidebar.closed via class.
+     At this breakpoint the sidebar starts translated-off regardless of that
+     class, so the toggle button will need a JS update to also overlay-open
+     the sidebar (i.e. temporarily translate it back to 0). See flag below. */
   .sidebar {
     transform: translateX(-300px);
   }
 
-  /* Hamburger button moves to the far-left collapsed position */
+  /* Move the toggle button to the far-left position (same as .sidebar.closed) */
   .sidebar-toggle {
     left: 20px;
   }
 
   /* JS adds .open when the user taps the hamburger at this breakpoint.
-     NOTE: toggleSidebar.js switches to .open-class mode at <= 768px. Between
-     769px–874px the JS is still in desktop mode (.closed toggle) so the
-     button won't visually open the sidebar there — a JS-only fix is needed
-     to extend MOBILE_BREAKPOINT to 874 to cover this range. */
+     These two rules override the forced-closed defaults above. */
   .sidebar.open {
     transform: translateX(0);
-    background-color: var(--dark-clr-2); /* solid bg; overrides near-transparent --dark-clr-1 */
+    background-color: var(--dark-clr-2); /* solid — overrides the near-transparent --dark-clr-1 */
   }
 
   .sidebar.open ~ .sidebar-toggle {
     left: 310px;
   }
 
-  /* Content fills the full viewport width since the sidebar is off-screen */
+  /* Content fills the full viewport since the sidebar is hidden */
   .page-content {
     margin-left: 0;
     padding: 60px var(--space-xl) 0;
@@ -754,36 +696,51 @@ Audit Log Media Queries
 
   /* --- Subheader --- */
 
-  /* Stack the title group above the action button */
+  /* Stack the title group above the action buttons */
   .subheader-inner {
     flex-direction: column;
     gap: var(--space-md);
   }
 
-  /* Ensure comfortable touch target for the Run Pipeline button */
+  /* On tablets the two buttons still fit side-by-side */
+  .button-group {
+    flex-direction: row;
+  }
+
+  /* Ensure comfortable touch targets */
   .subheader button {
     min-height: 44px;
   }
 
-  /* Restore the base 25% width (overrides the 35% set at 1195px);
-     the content area is now full-width so 25% is already generous */
+  /* --- Filters --- */
+
+  /* Allow filter controls to wrap onto a second line */
+  .filters-bar {
+    flex-wrap: wrap;
+  }
+
+  /* Search input spans the full row */
   .input-group {
     width: 25%;
   }
+
+  /* --- Table --- */
+
+  /* Enable horizontal scroll so the 4-column table never breaks the layout */
+  .table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+  }
 }
 
-
-/* ============================================================
-   514px — Small phones
-   ============================================================ */
 @media (max-width: 514px) {
 
   /* --- Page content --- */
 
-  /* Tighter horizontal padding on very narrow screens; preserve top clearance
-     for the hamburger toggle button (set at 874px) */
+  /* Tighter horizontal padding on narrow screens */
   .page-content {
-    padding: 60px var(--space-md) 0;
+    padding: 0 var(--space-md);
+    padding-top: 40px;
   }
 
   /* --- Subheader --- */
@@ -793,7 +750,12 @@ Audit Log Media Queries
     font-size: 22px;
   }
 
-  /* Full-width touch-friendly button */
+  /* Each button gets its own full-width row for easy tapping */
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
   .subheader button {
     width: 100%;
     min-height: 44px;
@@ -802,12 +764,10 @@ Audit Log Media Queries
 
   /* --- Filters --- */
 
-  /* Search input spans the full row */
   .input-group {
     width: 100%;
   }
-
-  /* Dropdowns stretch to fill the row for easy tapping */
+  /* Dropdowns stretch to fill the row, keeping them tap-friendly */
   .select-group {
     width: 100%;
   }
@@ -817,14 +777,14 @@ Audit Log Media Queries
     min-height: 44px;
   }
 
-  /* Match select height so all controls are uniform */
+  /* Match select height for the search input */
   .input-group input {
     min-height: 44px;
   }
 
   /* --- Pagination --- */
 
-  /* Tighten the gap between page-number chips */
+  /* Tighter gap between page number chips on very small screens */
   .pagination-row {
     gap: var(--space-sm);
     flex-wrap: wrap;

@@ -1,20 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css";
-import paginationStyles from "@/styles/pagination.module.css";
-import pipelineListMediaStyles from "@/styles/media/pipeline-list.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...pipelineListMediaStyles,
-};
-
-
+import styles from "./pipelines.module.css"
 
 export default function PipelineList() {
   return (
@@ -164,34 +148,34 @@ export default function PipelineList() {
               </thead>
               <tbody>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--running']}`}>Running</div> build-frontend <br /><span>79 runs</span></td>
+                  <td><div className="pill pill--running">Running</div> build-frontend <br /><span className="nowrap">79 runs</span></td>
                   <td>abcd/web-client<br /><span>f4e5d6c feat: add retry logic to webhook...</span></td>
-                  <td><div className={`${styles.pill} ${styles['pill--staging']}`}>Staging</div></td>
-                  <td className={styles.nowrap}>1h ago <br /><span className={styles.nowrap}>2m 14s</span></td>
+                  <td><div className="pill pill--staging">Staging</div></td>
+                  <td className="nowrap">1h ago <br /><span className="nowrap">2m 14s</span></td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div> deploy-api <br /><span>182 runs</span></td>
+                  <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span className="nowrap">182 runs</span></td>
                   <td>abcd/api-server<br /><span>a1b2c3d fix: resolve connection pool exh...</span></td>
-                  <td><div className={`${styles.pill} ${styles['pill--production']}`}>Production</div></td>
-                  <td className={styles.nowrap}>1h ago <br /><span className={styles.nowrap}>7m 7s</span></td>
+                  <td><div className="pill pill--production">Production</div></td>
+                  <td className="nowrap">1h ago <br /><span className="nowrap">7m 7s</span></td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--failed']}`}>Failed</div> release-mobile <br /><span>68 runs</span></td>
+                  <td><div className="pill pill--failed">Failed</div> release-mobile <br /><span className="nowrap">68 runs</span></td>
                   <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className={`${styles.pill} ${styles['pill--custom']}`}>Custom</div></td>
-                  <td className={styles.nowrap}>2h ago <br /><span className={styles.nowrap}>5m 12s</span></td>
+                  <td><div className="pill pill--custom">Custom</div></td>
+                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--queued']}`}>Queued</div> release-mobile <br /><span>54 runs</span></td>
+                  <td><div className="pill pill--queued">Queued</div> release-mobile <br /><span className="nowrap">54 runs</span></td>
                   <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className={`${styles.pill} ${styles['pill--preview']}`}>Preview</div></td>
-                  <td className={styles.nowrap}>2h ago <br /><span className={styles.nowrap}>5m 12s</span></td>
+                  <td><div className="pill pill--preview">Preview</div></td>
+                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--cancelled']}`}>Cancelled</div> release-mobile <br /><span>22 runs</span></td>
+                  <td><div className="pill pill--cancelled">Cancelled</div> release-mobile <br /><span className="nowrap">22 runs</span></td>
                   <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className={`${styles.pill} ${styles['pill--development']}`}>Development</div></td>
-                  <td className={styles.nowrap}>2h ago <br /><span className={styles.nowrap}>5m 12s</span></td>
+                  <td><div className="pill pill--development">Development</div></td>
+                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
                 </tr>
               </tbody>
             </table>
