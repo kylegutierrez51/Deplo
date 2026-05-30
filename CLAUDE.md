@@ -4,54 +4,84 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## About the Project
 
-Deplo is a CI/CD pipeline management UI — a static frontend (no framework, no build step, no package manager). Open any `.html` file directly in a browser to view it. There is no dev server, no compilation, and no `npm install`.
+Deplo is a CI/CD pipeline management UI. It has two coexisting layers:
 
-## Viewing Pages
+- **`app/`** — Next.js App Router application (the active development target)
+- **`pages/`** — Static HTML/CSS prototype (design reference only; open files directly in a browser, no build step)
 
-Open files directly from the `pages/` directory in a browser. For example:
-- `pages/pipeline-list.html` — main pipeline table view
-- `pages/run-detail.html` — pipeline run detail with Overview and Logs tabs
-- `pages/pipeline-editor.html` — pipeline editor
+## Commands
 
-`pages/components/` holds isolated reference copies of components used during development (e.g., `sidebar.html`, `approval-card.html`).
+```bash
+npm run dev    # start Next.js dev server at localhost:3000
+npm run build  # production build
+npm run lint   # ESLint
+```
 
-## Architecture
+## Next.js App Architecture
+
+The app uses the App Router with file-based routing under `app/`. Each route directory contains a `page.tsx` and a co-located `[route].module.css`.
 
 ### CSS
 
-All CSS custom properties (colors, borders) are defined in `styles/general.css` under `:root`. Never hardcode color values in other stylesheets — always use a `var(--...)` reference. Add new design tokens there.
+**Design tokens and global base styles** live in `app/globals.css` under `:root`. Never hardcode color values — always use a `var(--...)` reference. New design tokens go there.
 
-CSS is split by concern, not by page:
+**Shared component modules** in `styles/*.module.css` are imported across multiple pages:
 
 | File | Covers |
 |---|---|
-| `general.css` | Global reset + CSS variables |
-| `sidebar.css` | Sidebar layout, toggle, profile popup, and `.page-content` margins |
-| `table.css` | Data tables |
-| `subheader.css` | Page title + action button rows |
-| `filters.css` | Search/filter bars |
-| `cards.css` | Card components |
-| `run-detail.css` | Run detail card, pipeline graph, log viewer |
-| `approvals.css` | Approvals-specific layout |
-| `webhooks.css` | Webhooks-specific layout |
-| `pipeline-editor.css` | Pipeline editor layout |
+| `styles/sidebar.module.css` | Sidebar layout, toggle, profile popup |
+| `styles/table.module.css` | Data tables |
+| `styles/subheader.module.css` | Page title + action button rows |
+| `styles/filters.module.css` | Search/filter bars |
+| `styles/cards.module.css` | Card components |
+| `styles/run-detail.module.css` | Run detail card, pipeline graph, log viewer |
+| `styles/approvals.module.css` | Approvals layout |
+| `styles/webhooks.module.css` | Webhooks layout |
+| `styles/pipeline-editor.module.css` | Pipeline editor layout |
+| `styles/pagination.module.css` | Pagination controls |
+| `styles/media/*.module.css` | Responsive breakpoints per page |
+| `styles/modals/*.module.css` | Modal-specific layout |
 
-### JavaScript
+Pages that need multiple style modules merge them into a single `styles` object:
 
-Two utilities in `utils/` are included on every page with sidebars:
+```tsx
+const styles = { ...sidebarStyles, ...tableStyles, ...pageStyles };
+```
 
-- `toggleSidebar.js` — toggles `.sidebar.closed` on the hamburger button click, which also slides `.page-content` via CSS sibling selectors.
-- `sidebar-profile.js` — positions the `.profile-options` popup using `getBoundingClientRect()` so it stays correctly aligned even when DevTools changes the viewport height.
+This is resolved at build time (O(1) key lookups at runtime — no performance cost).
 
-Both are loaded as ES modules (`type="module"`). Ionicons is loaded from the unpkg CDN.
+**CSS Modules class naming**: hyphenated class names require bracket notation in TSX:
 
-### Sidebar Pattern
+```tsx
+className={styles['sidebar-nav']}   // hyphenated → bracket
+className={styles.sidebar}          // single-word → dot
+```
 
-The sidebar HTML block (`.sidebar`, `.profile-options`, and the `#sidebarToggle` button) is copy-pasted into every page — there is no server-side include or JS templating. When editing the sidebar (links, structure), update it in all pages. `pages/components/sidebar.html` is the canonical reference copy.
+**Global (non-module) classes** in `app/globals.css` — `pill`, `pill--running`, `modal-overlay`, `nowrap`, etc. — are applied as plain strings, not via `styles`:
+
+```tsx
+<div className="pill pill--running">Running</div>
+```
+
+### TypeScript for Ionicons
+
+`declarations.d.ts` declares `<ion-icon>` as a valid JSX intrinsic element with `name`, `size`, `color`, and `src` props. Ionicons is loaded via `next/script` in `app/layout.tsx` from the unpkg CDN.
 
 ### Fonts
 
-Three Google Fonts families are used: **Open Sans** (body default), **JetBrains Mono** (monospace labels, subtitles, code), **Montserrat** (headings where used).
+Loaded via `next/font/google` in `app/layout.tsx`: **Open Sans** (`--font-open-sans`) and **JetBrains Mono** (`--font-jetbrains-mono`). CSS variable names are set on the `<html>` element.
+
+### React Compiler
+
+`reactCompiler: true` is set in `next.config.ts`. The React Compiler handles memoization automatically — do not add `useMemo`/`useCallback` manually.
+
+## Sidebar Pattern
+
+The sidebar JSX (`.sidebar`, `.profile-options`, `#sidebarToggle` button) is copy-pasted into every page — there is no shared component. When editing the sidebar (links, structure), update all pages. `pages/components/sidebar.html` is the canonical reference shape.
+
+## Static HTML Prototype (`pages/`)
+
+Open `.html` files directly in a browser — no dev server, no build step. The `utils/` JS files (`toggleSidebar.js`, `sidebar-profile.js`, `toggleStageSidebar.js`) are ES modules used only by these static pages, not the Next.js app.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
