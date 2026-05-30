@@ -1,5 +1,7 @@
 import styles from "./pipelines.module.css"
 
+import Subheader from "@/components/Subheader";
+
 export default function PipelineList() {
   return (
     <>
@@ -87,24 +89,20 @@ export default function PipelineList() {
 
       <main className={styles['page-content']}>
 
-        <div className={styles.subheader}>
-          <div className={styles['subheader-inner']}>
-            <div className={styles['title-group']}>
-              <h1>Pipelines</h1>
-              <p className={styles.subtitle}><span id='subtitle-count'>8</span> pipelines across your repositories</p>
-            </div>
-            <div className={styles['button-group']}>
-              <a href="pipeline-editor.html" className={styles['new-pipeline-btn']}>
-                <ion-icon name="add-outline"></ion-icon>
-                New Pipeline
-              </a>
-              <button className={styles['view-drafts-btn']}>
-                <ion-icon name="reader-outline"></ion-icon>
-                View Drafts
-              </button>
-            </div>
+        <Subheader 
+          title="Pipelines"
+          subtitle={<><span id="subtitle-count">8</span> pipelines across your repositories</>}>
+          <div className={styles['button-group']}>
+            <a href="pipeline-editor.html" className={styles['new-pipeline-btn']}>
+              <ion-icon name="add-outline"></ion-icon>
+              New Pipeline
+            </a>
+            <button className={styles['view-drafts-btn']}>
+              <ion-icon name="reader-outline"></ion-icon>
+              View Drafts
+            </button>
           </div>
-        </div>
+        </Subheader>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>

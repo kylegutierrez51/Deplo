@@ -1,5 +1,5 @@
 import styles from './env.module.css';
-
+import Subheader from "@/components/Subheader";
 
 
 export default function Environments() {
@@ -89,18 +89,14 @@ export default function Environments() {
 
       <main className={styles['page-content']}>
 
-        <div className={styles.subheader}>
-          <div className={styles['subheader-inner']}>
-            <div className={styles['title-group']}>
-              <h1>Environments</h1>
-              <p className={styles['subtitle']}>Manage deploy targets and their secret scoping.</p>
-            </div>
-            <button>
-              <ion-icon name="add-outline"></ion-icon>
-              Create Environment
-            </button>
-          </div>
-        </div>
+        <Subheader 
+          title="Environments"
+          subtitle="Manage deploy targets and their secret scoping.">
+          <button>
+            <ion-icon name="add-outline"></ion-icon>
+            Create Environment
+          </button>
+        </Subheader>
 
         <div className={styles.cards}>
           <div className={styles['cards-row']}>
