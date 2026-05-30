@@ -1,27 +1,9 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import cardStyles from "@/styles/cards.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import approvalStyles from "@/styles/approvals.module.css"
-import paginationStyles from "@/styles/pagination.module.css";
-import approvalMediaStyles from "@/styles/media/approvals.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...cardStyles,
-  ...filterStyles,
-  ...approvalStyles,
-  ...paginationStyles,
-  ...approvalMediaStyles,
-};
-
-
+import styles from "./approvals.module.css"
 
 export default function Approvals() {
   return (
     <>
-      <aside className={styles.sidebar}>
+      <aside className={styles['sidebar']}>
 
         <nav className={styles['sidebar-nav']} aria-label="Main">
           <div className={styles['sidebar-content']}>
@@ -172,8 +154,8 @@ export default function Approvals() {
                 <div className={styles['approvals-detail']}>
                   <div className={styles['pipeline-name-type']}>
                     <span>release-mobile</span>
-                    <div className={`${styles.pill} ${styles['pill--production']}`}>Production</div>
-                    <div className={`${styles.pill} ${styles['pill--manual']}`}>Manual</div>
+                    <div className="pill pill--production">Production</div>
+                    <div className="pill pill--manual">Manual</div>
                   </div>
                   <div className={styles['feature-info']}>
                     <div className={styles['feature-id']}>
@@ -273,8 +255,8 @@ export default function Approvals() {
                 <div className={styles['approvals-detail']}>
                   <div className={styles['pipeline-name-type']}>
                     <span>release-mobile</span>
-                    <div className={`${styles.pill} ${styles['pill--development']}`}>Development</div>
-                    <div className={`${styles.pill} ${styles['pill--manual']}`}>Manual</div>
+                    <div className="pill pill--development">Development</div>
+                    <div className="pill pill--manual">Manual</div>
                   </div>
                   <div className={styles['feature-info']}>
                     <div className={styles['feature-id']}>

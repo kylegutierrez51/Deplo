@@ -12,43 +12,6 @@
 */
 
 
-/*
-  Base corrections (no media query)
-  ─────────────────────────────────
-  The card shrinks below its 1000px max-width starting around 1600px. Without
-  flex-shrink: 0, the .btn-group gets squeezed by .approvals-detail and "View
-  Run" wraps at the space character, making that button taller than the others.
-  white-space: nowrap guards against any future squeeze at all viewport widths.
-*/
-.btn-group {
-  flex-shrink: 0;
-}
-
-.view-run-btn,
-.reject-btn,
-.approve-btn {
-  white-space: nowrap;
-}
-
-/* The <span class="waiting-time"> child creates a soft-wrap opportunity right
-   before it, so "Waiting" and "18h 17m" split onto two lines at certain widths,
-   stretching the meta-row to 44px and pushing adjacent items apart. */
-.meta-row {
-  white-space: nowrap;
-}
-
-/* Switch .approval-card-row to CSS Grid so .stage-view auto-places to column 1,
-   row 2 — below .approvals-detail but visually in the same left column. The
-   base-CSS justify-content: space-between carries into grid and preserves the
-   original push-to-edges desktop spacing. At ≤1530px this is overridden back
-   to flex-column; DOM order then gives the correct stack. */
-.approval-card-row {
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: start;
-  row-gap: var(--space-sm);
-}
-
 @media (max-width: 1530px) {
   /* --- Approval cards --- */
 
