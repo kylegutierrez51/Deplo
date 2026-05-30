@@ -1,20 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import cardStyles from "@/styles/cards.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css"
-import paginationStyles from "@/styles/pagination.module.css";
-import environmentsMediaStyles from "@/styles/media/environments.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...cardStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...environmentsMediaStyles,
-};
+import styles from './env.module.css';
 
 
 
@@ -198,7 +182,7 @@ export default function Environments() {
                     <div>production</div>
                     <ion-icon name="lock-closed-outline"></ion-icon>
                   </td>
-                  <td><div className={`${styles.pill} ${styles['pill--development']}`}>Development</div></td>
+                  <td><div className="pill pill--development">Development</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="key-outline"></ion-icon>
                     <div>14</div>
@@ -211,7 +195,7 @@ export default function Environments() {
                   <td className={styles.filter}>
                     <div>staging</div>
                   </td>
-                  <td><div className={`${styles.pill} ${styles['pill--staging']}`}>Staging</div></td>
+                  <td><div className="pill pill--staging">Staging</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="key-outline"></ion-icon>
                     <div>12</div>
@@ -224,7 +208,7 @@ export default function Environments() {
                   <td className={styles.filter}>
                     <div>development</div>
                   </td>
-                  <td><div className={`${styles.pill} ${styles['pill--production']}`}>Production</div></td>
+                  <td><div className="pill pill--production">Production</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="key-outline"></ion-icon>
                     <div>8</div>
@@ -237,7 +221,7 @@ export default function Environments() {
                   <td className={styles.filter}>
                     <div>development</div>
                   </td>
-                  <td><div className={`${styles.pill} ${styles['pill--preview']}`}>Preview</div></td>
+                  <td><div className="pill pill--preview">Preview</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="key-outline"></ion-icon>
                     <div>8</div>
@@ -250,7 +234,7 @@ export default function Environments() {
                   <td className={styles.filter}>
                     <div>development</div>
                   </td>
-                  <td><div className={`${styles.pill} ${styles['pill--custom']}`}>Custom</div></td>
+                  <td><div className="pill pill--custom">Custom</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="key-outline"></ion-icon>
                     <div>8</div>

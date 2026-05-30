@@ -18,6 +18,7 @@ Table
 table tbody td.filter {
   display: table-cell;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 table tbody td.filter > div {
