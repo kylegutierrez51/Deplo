@@ -1,18 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import webhookStyles from "@/styles/webhooks.module.css";
-import paginationStyles from "@/styles/pagination.module.css";
-import webhookMediaStyles from "@/styles/media/webhooks.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...filterStyles,
-  ...webhookStyles,
-  ...paginationStyles,
-  ...webhookMediaStyles,
-};
+import styles from "./webhooks.module.css"
 
 
 
