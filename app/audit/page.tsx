@@ -1,18 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css";
-import paginationStyles from "@/styles/pagination.module.css";
-import auditLogMediaStyles from "@/styles/media/audit-log.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...auditLogMediaStyles,
-};
+import styles from "./audit.module.css";
 
 
 
