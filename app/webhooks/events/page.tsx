@@ -92,10 +92,10 @@ export default function Webhooks() {
         <Subheader 
           title="Webhook Events"
           subtitle="Incoming webhook deliveries from GitHub.">
-            <button>
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
+          <button>
+            <ion-icon name="refresh-outline"></ion-icon>
+            Refresh
+          </button>
         </Subheader>
 
         <div className={styles.cards}>

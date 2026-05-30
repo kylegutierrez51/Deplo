@@ -92,10 +92,10 @@ export default function Environments() {
         <Subheader 
           title="Environments"
           subtitle="Manage deploy targets and their secret scoping.">
-            <button>
-              <ion-icon name="add-outline"></ion-icon>
-              Create Environment
-            </button>
+          <button>
+            <ion-icon name="add-outline"></ion-icon>
+            Create Environment
+          </button>
         </Subheader>
 
         <div className={styles.cards}>

@@ -92,10 +92,10 @@ export default function RunHistory() {
           title="Run History"
           subtitle="All pipeline executions across your projects."
           badge={{ count: 3, label: 'Active'}}>
-            <button>
-              <ion-icon name="caret-forward-outline"></ion-icon>
-              Run Pipeline
-            </button>
+          <button>
+            <ion-icon name="caret-forward-outline"></ion-icon>
+            Run Pipeline
+          </button>
         </Subheader>
 
         <div className={styles.filters}>

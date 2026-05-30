@@ -92,10 +92,10 @@ export default function AuditLog() {
         <Subheader 
           title="Audit Log"
           subtitle="Immutable record of every action taken across your workspace.">
-            <button>
-              <ion-icon name="download-outline"></ion-icon>
-              Export
-            </button>
+          <button>
+            <ion-icon name="download-outline"></ion-icon>
+            Export
+          </button>
         </Subheader>
 
         <div className={styles.filters}>

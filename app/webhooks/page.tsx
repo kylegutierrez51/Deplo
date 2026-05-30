@@ -94,10 +94,10 @@ export default function Webhooks() {
           <Subheader 
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
-              <button>
-                <ion-icon name="add-outline"></ion-icon>
-                Add Webhook
-              </button>
+            <button>
+              <ion-icon name="add-outline"></ion-icon>
+              Add Webhook
+            </button>
           </Subheader>
       
           <div className={styles.filters}>

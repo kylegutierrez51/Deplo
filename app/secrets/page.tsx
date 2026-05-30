@@ -91,10 +91,10 @@ export default function Secrets() {
     <Subheader 
       title="Secrets"
       subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
-        <button>
-          <ion-icon name="add-outline"></ion-icon>
-          Add Secret
-        </button>
+      <button>
+        <ion-icon name="add-outline"></ion-icon>
+        Add Secret
+      </button>
     </Subheader>
 
     <div className={styles.filters}>
