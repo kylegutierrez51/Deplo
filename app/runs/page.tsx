@@ -1,20 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css";
-import paginationStyles from "@/styles/pagination.module.css";
-import runHistoryMediaStyles from "@/styles/media/run-history.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...runHistoryMediaStyles,
-};
-
-
+import styles from "./run-history.module.css";
 
 export default function RunHistory() {
   return (
@@ -179,54 +163,54 @@ export default function RunHistory() {
               </thead>
               <tbody>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--queued']}`}>Queued</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
-                  <td><div className={`${styles.pill} ${styles['pill--production']}`}>Production</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--webhook']}`}>Webhook</div></td>
+                  <td><div className="pill pill--queued">Queued</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
+                  <td><div className="pill pill--production">Production</div></td>
+                  <td><div className="pill pill--webhook">Webhook</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className={styles.nowrap}>-</div>
+                    <div className="nowrap">-</div>
                   </td>
-                  <td className={styles.nowrap}>6h ago</td>
+                  <td className="nowrap">6h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--running']}`}>Running</div> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
-                  <td><div className={`${styles.pill} ${styles['pill--staging']}`}>Staging</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--manual']}`}>Manual</div></td>
+                  <td><div className="pill pill--running">Running</div> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
+                  <td><div className="pill pill--staging">Staging</div></td>
+                  <td><div className="pill pill--manual">Manual</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className={styles.nowrap}>6h 1m</div>
+                    <div className="nowrap">6h 1m</div>
                   </td>
-                  <td className={styles.nowrap}>6h ago</td>
+                  <td className="nowrap">6h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className={`${styles.pill} ${styles['pill--development']}`}>Development</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--api']}`}>API</div></td>
+                  <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+                  <td><div className="pill pill--development">Development</div></td>
+                  <td><div className="pill pill--api">API</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className={styles.nowrap}>8m 0s</div>
+                    <div className="nowrap">8m 0s</div>
                   </td>
-                  <td className={styles.nowrap}>11h ago</td>
+                  <td className="nowrap">11h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--failed']}`}>Failed</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className={`${styles.pill} ${styles['pill--preview']}`}>Preview</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--webhook']}`}>Webhook</div></td>
+                  <td><div className="pill pill--failed">Failed</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+                  <td><div className="pill pill--preview">Preview</div></td>
+                  <td><div className="pill pill--webhook">Webhook</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className={styles.nowrap}>8m 0s</div>
+                    <div className="nowrap">8m 0s</div>
                   </td>
-                  <td className={styles.nowrap}>11h ago</td>
+                  <td className="nowrap">11h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--cancelled']}`}>Cancelled</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className={`${styles.pill} ${styles['pill--custom']}`}>Custom</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--manual']}`}>Manual</div></td>
+                  <td><div className="pill pill--cancelled">Cancelled</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+                  <td><div className="pill pill--custom">Custom</div></td>
+                  <td><div className="pill pill--manual">Manual</div></td>
                   <td className={styles.filter}>
                     <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className={styles.nowrap}>8m 0s</div>
+                    <div className="nowrap">8m 0s</div>
                   </td>
-                  <td className={styles.nowrap}>11h ago</td>
+                  <td className="nowrap">11h ago</td>
                 </tr>
               </tbody>
             </table>
