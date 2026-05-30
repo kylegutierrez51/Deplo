@@ -289,105 +289,22 @@ Subheader
 ======================================================================================
 */
 
-.subheader {
-  margin-bottom: var(--space-lg);
-}
-
-.subheader-inner {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: var(--space-lg);
-}
-
-.subheader .title-group {
-  display: flex;
-  align-items: start;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.active-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #1a2e1a;
-  border: 1px solid #2d4d2d;
-  border-radius: var(--radius-pill);
-  padding: 3px var(--space-sm);
-  font-size: var(--font-size-sm);
-  color: var(--active-dot-clr);
-}
-
-.active-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--active-dot-clr);
-  flex-shrink: 0;
-  animation: dot-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--active-dot-clr) 40%, transparent); }
-  50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 4px transparent; }
-}
-
-.title-group .subtitle {
-  display: flex;
-  gap: var(--space-xs);
-  color: var(--subtitle-clr);
-}
-
-.subheader button, .subheader .new-pipeline-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  background-color: var(--btn-subheader-clr);
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  align-self: start;
-  cursor: pointer;
-  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
-  white-space: nowrap; /* keep button text on one line regardless of container width */
-}
-
-.subheader button:hover, .subheader .new-pipeline-btn:hover {
-  background-color: var(--btn-subheader-clr-hover);
-}
-
-.subheader ion-icon {
-  margin-right: var(--space-xs);
-  font-size: 20px;
-}
-
-
-/* Pipeline List */
 .button-group {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
 }
 
-.subheader .new-pipeline-btn {
+.button-group .new-pipeline-btn {
   align-self: auto;
 }
 
-.subheader .view-drafts-btn {
+.button-group .view-drafts-btn {
   align-self: auto;
   background-color: var(--draft-btn-clr);
 }
 
-.subheader .view-drafts-btn:hover {
+.button-group .view-drafts-btn:hover {
   background-color: var(--draft-btn-hover-clr);
 }
 
@@ -696,20 +613,9 @@ Pipeline List Media Queries
 
   /* --- Subheader --- */
 
-  /* Stack the title group above the action buttons */
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
   /* On tablets the two buttons still fit side-by-side */
   .button-group {
     flex-direction: row;
-  }
-
-  /* Ensure comfortable touch targets */
-  .subheader button {
-    min-height: 44px;
   }
 
   /* --- Filters --- */
@@ -745,21 +651,10 @@ Pipeline List Media Queries
 
   /* --- Subheader --- */
 
-  /* Scale the page heading down so it doesn't overflow */
-  .subheader-inner h1 {
-    font-size: 22px;
-  }
-
   /* Each button gets its own full-width row for easy tapping */
   .button-group {
     flex-direction: column;
     width: 100%;
-  }
-
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
   }
 
   /* --- Filters --- */
