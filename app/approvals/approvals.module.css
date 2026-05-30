@@ -667,6 +667,12 @@ Approval Cards
   margin-bottom: var(--space-sm);
 }
 
+.stage-view > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
 .stage-view > div:hover {
   cursor: pointer;
 }
@@ -817,7 +823,8 @@ Pagination
   background-color: var(--dark-clr-2);
 }
 
-.view-option :global(ion-icon[name="chevron-back-outline"]) {
+.view-option ion-icon[name="chevron-back-outline"],
+.view-option ion-icon[name="chevron-forward-outline"] {
   font-size: 20px;
   margin-right: var(--space-xs);
   justify-self: end;
