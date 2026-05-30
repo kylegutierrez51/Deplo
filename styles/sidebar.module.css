@@ -157,7 +157,7 @@ Sidebar Content
   font-size: 18px;
 }
 
-.sidebar-content :global(ion-icon) {
+.sidebar-content ion-icon {
   font-size: 25px;
 }
 
@@ -215,7 +215,7 @@ Profile
   font-size: var(--font-size-lg);
 }
 
-.profile :global(ion-icon[name="chevron-up-outline"]) {
+.profile ion-icon[name="chevron-up-outline"] {
   font-size: 20px;
   margin-right: var(--space-xs);
   justify-self: end;
