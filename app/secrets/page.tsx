@@ -1,19 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css"
-import paginationStyles from "@/styles/pagination.module.css";
-import secretsMediaStyles from "@/styles/media/secrets.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...secretsMediaStyles,
-};
-
+import styles from "./secrets.module.css";
 
 
 export default function Secrets() {
@@ -155,8 +140,8 @@ export default function Secrets() {
                 <ion-icon name="eye-outline"></ion-icon>
                 <ion-icon name="copy-outline"></ion-icon>
               </td>
-              <td><div className={`${styles.pill} ${styles['pill--production']}`}>Production</div></td>
-              <td>11d ago</td>
+              <td><div className="pill pill--production">Production</div></td>
+              <td className="nowrap">11d ago</td>
               <td>sarah.chen</td>
             </tr>
             <tr>
@@ -166,8 +151,8 @@ export default function Secrets() {
                 <ion-icon name="eye-outline"></ion-icon>
                 <ion-icon name="copy-outline"></ion-icon>
               </td>
-              <td><div className={`${styles.pill} ${styles['pill--staging']}`}>Staging</div></td>
-              <td>13d ago</td>
+              <td><div className="pill pill--staging">Staging</div></td>
+              <td className="nowrap">13d ago</td>
               <td>sarah.chen</td>
             </tr>
             <tr>
@@ -177,8 +162,8 @@ export default function Secrets() {
                 <ion-icon name="eye-outline"></ion-icon>
                 <ion-icon name="copy-outline"></ion-icon>
               </td>
-              <td><div className={`${styles.pill} ${styles['pill--development']}`}>Development</div></td>
-              <td>12d ago <br/><span>5m 12s</span></td>
+              <td><div className="pill pill--development">Development</div></td>
+              <td className="nowrap">12d ago <br/><span className="nowrap">5m 12s</span></td>
               <td>marcus.coco</td>
             </tr>
             <tr>
@@ -188,8 +173,8 @@ export default function Secrets() {
                 <ion-icon name="eye-outline"></ion-icon>
                 <ion-icon name="copy-outline"></ion-icon>
               </td>
-              <td><div className={`${styles.pill} ${styles['pill--preview']}`}>Preview</div></td>
-              <td>12d ago <br/><span>5m 12s</span></td>
+              <td><div className="pill pill--preview">Preview</div></td>
+              <td className="nowrap">12d ago <br/><span className="nowrap">5m 12s</span></td>
               <td>marcus.coco</td>
             </tr>
             <tr>
@@ -199,8 +184,8 @@ export default function Secrets() {
                 <ion-icon name="eye-outline"></ion-icon>
                 <ion-icon name="copy-outline"></ion-icon>
               </td>
-              <td><div className={`${styles.pill} ${styles['pill--custom']}`}>Custom</div></td>
-              <td>12d ago <br/><span>5m 12s</span></td>
+              <td><div className="pill pill--custom">Custom</div></td>
+              <td className="nowrap">12d ago <br/><span className="nowrap">5m 12s</span></td>
               <td>marcus.coco</td>
             </tr>
           </tbody>

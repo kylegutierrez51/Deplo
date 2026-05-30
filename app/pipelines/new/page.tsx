@@ -1,14 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import pipelineEditorStyles from "@/styles/pipeline-editor.module.css";
-import pipelineEditorMediaStyles from "@/styles/media/pipeline-list.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...pipelineEditorStyles,
-  ...pipelineEditorMediaStyles,
-};
-
-
+import styles from "./pipeline-editor.module.css"
 
 export default function PipelineEditor() {
   return (
@@ -92,7 +82,7 @@ export default function PipelineEditor() {
       </div>
 
 
-      <header>
+      <header className={styles["editor-header"]}>
         <div className={styles['header-flex']}>
 
           <div className={styles['left-side']}>
@@ -122,7 +112,7 @@ export default function PipelineEditor() {
           </div>
 
           <div className={styles['right-side']}>
-            <button className='add-stage-btn'>
+            <button className={styles['add-stage-btn']}>
               <ion-icon name="add-outline"></ion-icon>
               Add Stage
             </button>
@@ -156,7 +146,7 @@ export default function PipelineEditor() {
             </div>
             <div className={styles.title}>Configure Stage</div>
           </div>
-          <button className={styles['exit-btn']}>x</button>
+          <button className={styles['exit-btn']}><ion-icon name="close-outline"></ion-icon></button>
         </div>
 
         <form id="post-form" method="POST">
@@ -204,14 +194,14 @@ export default function PipelineEditor() {
                   <ion-icon name="time-outline"></ion-icon>
                   <label htmlFor="timeout">TIMEOUT (S)</label>
                 </div>
-                <input id="timeout" name="timeout" placeholder="e.g. npm run build" value="0" />
+                <input id="timeout" name="timeout" placeholder="e.g. npm run build" defaultValue="0" />
               </div>
               <div className={styles.retries}>
                 <div>
                   <ion-icon name="refresh-outline"></ion-icon>
                   <label htmlFor="retries">RETRIES</label>
                 </div>
-                <input id="retries" name="retries" placeholder="e.g. npm run build" value="0" />
+                <input id="retries" name="retries" placeholder="e.g. npm run build" defaultValue="0" />
               </div>
             </div>
 

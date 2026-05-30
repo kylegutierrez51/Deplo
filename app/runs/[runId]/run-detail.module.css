@@ -1,0 +1,1392 @@
+/*
+======================================================================================
+Sidebar
+======================================================================================
+*/
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  width: 300px;
+  background-color: var(--dark-clr-1);
+  padding: var(--space-2xl) var(--space-xl);
+  padding-top: var(--space-xl);
+  border: 1px solid var(--gray-clr);
+  border-right: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+  z-index: var(--z-sidebar);
+}
+
+.sidebar.closed {
+  transform: translateX(-300px);
+}
+
+
+/*
+==========================================================================
+Page Content (layout when sidebar present -- excluding pipeline editor)
+==========================================================================
+*/
+.page-content {
+  margin-top: var(--space-2xl);
+  margin-left: 300px;
+  padding: 0 150px;
+  transition: margin-left 0.3s ease;
+}
+
+/* max-width and width are used for the Webhooks page for centering */
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto; /* centers entire container */
+  max-width: var(--width-xl);
+  width: 100%;
+}
+
+.sidebar.closed ~ .page-content {
+  margin-left: 0;
+}
+
+/*
+========================================
+Sidebar Toggle Button
+========================================
+*/
+.sidebar-toggle {
+  position: absolute;
+  top: var(--space-lg);
+  left: 310px;
+  z-index: var(--z-dropdown);
+  background: transparent;
+  border: 1px solid var(--gray-clr);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: left 0.3s ease, background-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--gray-clr);
+}
+
+.sidebar-toggle ion-icon {
+  font-size: 20px;
+}
+
+.sidebar.closed ~ .sidebar-toggle {
+  left: 20px;
+}
+
+/*
+========================================
+Sidebar Header
+========================================
+*/
+
+.sidebar-flex .title {
+  font-size: 20px;
+}
+
+/*
+========================================
+Sidebar Nav (scrollable area)
+========================================
+*/
+
+.sidebar-nav {
+  flex: 1; /* this makes .sidebar-nav stretch to fill out its entire container, pushing .profile to the bottom of the screen. */
+  overflow-y: auto;
+  position: relative;
+  z-index: 0;
+
+  /* positions scrollbar at edge of sidebar */
+  margin-right: calc(-1 * var(--space-xl));
+  padding-right: var(--space-xl);
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--gray-clr);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+/*
+========================================
+Sidebar Content
+========================================
+*/
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-top: 50px;
+  padding-bottom: var(--space-md);
+  border-bottom: var(--border-width-md) solid var(--gray-clr);
+}
+
+.sidebar .subtitle {
+  margin-left: var(--space-md);
+  font-family: "JetBrains Mono";
+  font-size: var(--font-size-body);
+}
+
+.sidebar-content li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-md);
+  border-radius: 7px;
+  margin-bottom: var(--space-xs);
+  cursor: pointer;
+}
+
+.sidebar-content li:hover {
+  background-color: var(--gray-clr);
+}
+
+.sidebar-content li .title {
+  font-size: 18px;
+}
+
+.sidebar-content ion-icon {
+  font-size: 25px;
+}
+
+
+/*
+========================================
+Profile
+========================================
+*/
+.profile {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-lg);
+  padding: var(--space-sm) var(--space-sm);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--gray-clr);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.profile:hover {
+  background-color: var(--gray-clr);
+}
+
+.profile-pic {
+  background-color: blue;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0; /* prevents flex container from compressing the profile pic, keeping it a true 40x40 square */
+}
+
+.profile-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.user {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile .name {
+  font-weight: 600;
+}
+
+.profile .role {
+  font-family: "JetBrains Mono";
+  font-size: var(--font-size-lg);
+}
+
+.profile ion-icon[name="chevron-up-outline"] {
+  font-size: 20px;
+  margin-right: var(--space-xs);
+  justify-self: end;
+}
+
+.profile-options {
+  position: fixed;
+  z-index: var(--z-profile);
+  padding: var(--space-sm) var(--space-sm);
+  /* setting these colors makes this not go over .sidebar-content when you pull up DevTools because --gray-clr is 8% opacity white, menaing nav items show through it. Look at general.css for more info */
+  /* background-color: var(--gray-clr);
+  border: 1px solid var(--gray-clr); */
+
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  overflow-y: auto; /* scrollbar appears if you resize DevTools all the way up to the top */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.profile-options.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.profile-options::-webkit-scrollbar {
+  width: 4px;
+}
+
+.profile-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-options::-webkit-scrollbar-thumb {
+  background: var(--gray-clr);
+  border-radius: var(--radius-xs);
+}
+
+.profile-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-menu div {
+  font-weight: bold;
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: 7px;
+}
+
+.profile-menu div:hover {
+  background-color: var(--gray-clr);
+  cursor: pointer;
+}
+
+.profile-menu .sign-out {
+  color: var(--red-dark-text);
+}
+
+/*
+======================================================================================
+Run Detail
+======================================================================================
+*/
+
+/*
+===============================
+Topbar
+===============================
+*/
+
+.topbar {
+  position: fixed;
+  top: 20px;
+  left: 310px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+  z-index: var(--z-dropdown);
+  transition: left 0.3s ease;
+}
+
+.sidebar.closed ~ .topbar {
+  left: 20px;
+}
+
+.topbar .sidebar-toggle {
+  position: static;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-body);
+  color: var(--subtitle-clr);
+  padding: 6px var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-clr);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.back-link ion-icon {
+  font-size: 16px;
+  color: var(--subtitle-clr);
+}
+
+.back-link:hover {
+  background-color: var(--gray-clr);
+  color: var(--white-clr);
+}
+
+.back-link:hover ion-icon {
+  color: var(--white-clr);
+}
+
+/*
+===============================
+Run Detail Card
+===============================
+*/
+
+.run-detail-card {
+  width: 100%;
+  max-width: var(--width-xl);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-xl);
+  padding: 22px 28px;
+  margin-top: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.rdc-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.rdc-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Row 1: title */
+.rdc-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+}
+
+.rdc-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white-clr);
+}
+
+.rdc-num {
+  font-size: var(--font-size-lg);
+  color: var(--subtitle-clr);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.rdc-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-gap-md);
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+
+
+.rdc-status.running ion-icon {
+  font-size: var(--font-size-body);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+@keyframes rdc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Row 2: commit */
+.rdc-commit-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 16px;
+}
+
+.rdc-commit-ref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.rdc-commit-ref ion-icon {
+  font-size: var(--font-size-lg);
+  color: var(--icon-clr);
+}
+
+.rdc-commit-hash {
+  color: var(--blue-clr);
+  font-family: "JetBrains Mono", monospace;
+  font-size: inherit;
+}
+
+.rdc-commit-msg {
+  font-size: var(--font-size-body);
+  color: var(--subtitle-clr);
+  white-space: nowrap;
+}
+
+/* Row 3: trigger */
+.rdc-trigger-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+/* Shared meta item */
+.rdc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 16px;
+  color: var(--subtitle-clr);
+}
+
+.rdc-meta-item ion-icon {
+  font-size: 19px;
+  color: var(--icon-clr);
+}
+
+.rdc-meta-item span {
+  white-space: nowrap;
+}
+.rdc-link span {
+  color: var(--blue-clr);
+}
+
+.rdc-user {
+  color: var(--blue-clr);
+}
+
+/* Action buttons */
+.rdc-actions {
+  display: flex;
+  gap: var(--space-gap-md);
+  flex-shrink: 0;
+}
+
+.rdc-btn-cancel,
+.rdc-btn-rerun {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-sm) 18px;
+  border-radius: 8px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rdc-btn-cancel {
+  color: var(--red-text);
+  border: 1.5px solid var(--red-btn-border-clr);
+  background-color: rgba(248, 113, 113, 0.06);
+}
+
+.rdc-btn-cancel:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+.rdc-btn-rerun {
+  color: var(--white-clr);
+  border: 1.5px solid var(--light-gray-clr);
+  background-color: transparent;
+}
+
+.rdc-btn-rerun:hover {
+  background-color: var(--gray-clr);
+}
+
+.rdc-btn-cancel ion-icon,
+.rdc-btn-rerun ion-icon {
+  font-size: 16px;
+}
+
+
+/*
+===============================
+Section Select (Overview, Logs)
+===============================
+*/
+
+.sections {
+  padding: 0 0 0 var(--space-lg);
+  border-bottom: 1px solid var(--gray-clr);
+}
+
+.tabs-row {
+  display: flex;
+  gap: var(--space-2xl);
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 18px;
+  background: none;
+  border: none;
+  border-bottom: var(--border-width-md) solid transparent;
+  padding: 0 0 var(--space-sm) 0;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+
+.section.active {
+  border-bottom-color: var(--blue-clr);
+  
+}
+
+.section.active ion-icon,
+.section.active span {
+  font-weight: bold;
+}
+
+/*
+===============================
+Overview
+===============================
+*/
+
+/* Fix height chain so .overview scrolls instead of the whole page */
+.page-content {
+  height: calc(100vh - 40px); /* 40px matches page-content margin-top in sidebar.css*/
+  overflow: hidden;
+  /* this makes page itself not grow beyond viewport */
+}
+
+.page-layout {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Statuses */
+.overview {
+  margin-top: var(--space-lg);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+.overview .job-statuses {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+
+
+/*
+===============
+Pipeline
+===============
+*/
+.pipeline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: var(--space-2xl);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.pipeline-inner {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.job {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 250px;
+  max-width: 250px;
+  padding: var(--space-lg);
+  border: 1px solid var(--input-clr);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.job-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.job-name span {
+  font-weight: bold;
+}
+
+.job-name ion-icon[name="checkmark-circle-outline"] {
+  color: green;
+}
+
+.job-status-time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.job-status-time span {
+  font-size: var(--font-size-sm);
+}
+
+.job-icon-running {
+  color: var(--blue-clr);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+.job-icon-pending {
+  color: var(--subtitle-clr);
+}
+
+/*
+===============================
+Pipeline Connectors
+===============================
+*/
+
+.parallel-row {
+  display: flex;
+  gap: var(--space-2xl);
+}
+
+/* Straight connector between sequential jobs */
+.connector-straight {
+  width: var(--border-width-md);
+  height: 36px;
+  background-color: var(--gray-clr);
+  position: relative;
+}
+
+.connector-straight::before,
+.connector-straight::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--gray-clr);
+  left: -3px;
+}
+
+.connector-straight::before { top: -4px; }
+.connector-straight::after  { bottom: -4px; }
+
+.connector-straight.active {
+  background-color: var(--blue-clr);
+}
+
+.connector-straight.active::before,
+.connector-straight.active::after {
+  background-color: var(--blue-clr);
+}
+
+/* Fork connector: one job splits into two parallel jobs */
+.connector-fork {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 540px; /* 250px job + 40px gap + 250px job */
+}
+
+.cf-stem {
+  width: var(--border-width-md);
+  height: 20px;
+  background-color: var(--gray-clr);
+}
+
+.cf-arms {
+  display: flex;
+  width: 100%;
+}
+
+.cf-spacer {
+  width: 125px; /* half of job width (250 / 2) — aligns arm edges to card centers */
+  flex-shrink: 0;
+}
+
+.cf-arm {
+  flex: 1;
+  height: 20px;
+}
+
+.cf-arm-left  { border-top: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
+.cf-arm-right { border-top: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
+
+/* Merge connector: two parallel jobs converge into one */
+.connector-merge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 540px;
+}
+
+.cm-stem {
+  width: var(--border-width-md);
+  height: 20px;
+  background-color: var(--gray-clr);
+}
+
+.cm-arms {
+  display: flex;
+  width: 100%;
+}
+
+.cm-spacer {
+  width: 125px;
+  flex-shrink: 0;
+}
+
+.cm-arm {
+  flex: 1;
+  height: 20px;
+}
+
+.cm-arm-left  { border-bottom: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
+.cm-arm-right { border-bottom: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
+
+/*
+===============================
+Log Viewer
+===============================
+*/
+
+.logs {
+  margin-top: var(--space-xl);
+  flex: 1;
+  min-height: 0; /* lets flex child shrink below its content size */
+  overflow-y: auto;
+  padding-bottom: var(--space-2xl);
+}
+
+.logs .filters {
+  margin-bottom: var(--space-md);
+}
+
+.log-viewer {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border-dark);
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 400;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-gap-md) 18px;
+  background-color: #161b22;
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.log-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.log-job-icon {
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.log-job-icon.succeeded {
+  color: #3fb950;
+}
+
+.log-job-icon.running {
+  color: var(--blue-clr);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+.log-job-name {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: #e6edf3;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-job-cmd {
+  font-size: var(--font-size-sm);
+  color: #7d8590;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-duration {
+  font-size: var(--font-size-sm);
+  color: #7d8590;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.log-body {
+  background-color: #0d1117;
+  padding: var(--space-sm) 0;
+}
+
+.log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 2px 0;
+  line-height: 1.6;
+}
+
+.log-line:hover {
+  background-color: #161b22;
+}
+
+.log-num {
+  font-size: var(--font-size-sm);
+  color: #404040;
+  text-align: right;
+  min-width: 36px;
+  padding-right: 16px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.log-time {
+  font-size: var(--font-size-sm);
+  color: #3fb950;
+  min-width: 80px;
+  padding-right: var(--space-lg);
+  flex-shrink: 0;
+}
+
+.log-content {
+  font-size: var(--font-size-sm);
+  color: #c9d1d9;
+  white-space: pre;
+}
+
+.log-prompt {
+  color: #39c5cf;
+}
+
+.log-warn {
+  color: #7d8590;
+}
+
+.log-success {
+  color: #3fb950;
+}
+
+.log-footer {
+  padding: var(--space-sm) 18px;
+  background-color: #0d1117;
+  border-top: 1px solid var(--color-border-dark);
+}
+
+.log-footer span {
+  font-size: var(--font-size-sm);
+  color: #3fb950;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/*
+======================================================================================
+Filters
+======================================================================================
+*/
+
+.filters {
+  margin-bottom: var(--space-2xl);
+}
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: var(--space-sm);
+}
+
+.input-group {
+  position: relative;
+  width: 25%;
+}
+
+.input-group ion-icon, .webhook-event-input-group ion-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--icon-clr);
+  pointer-events: none; /* clicks go through the search icon */
+  font-size: 16px;
+}
+
+/* offset text so it doesn't overlap the search icon */
+.input-group input {
+  padding-left: 34px;
+}
+
+.select-group {
+  position: relative;
+}
+
+/* custom chevron arrow */
+.select-group::after {
+  content: '';
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--icon-clr);
+  pointer-events: none;
+}
+
+
+/* input needs to be slightly bigger to hold the placeholder text */
+.webhook-event-input-group {
+  position: relative;
+  width: 30%;
+}
+
+.webhook-event-input-group input {
+  padding-left: 34px;
+}
+
+/*
+======================================================================================
+Run Detail Media Queries
+======================================================================================
+*/
+
+/*
+  run-detail.css — Responsive media queries for run-detail.html
+  Strategy: desktop-first (max-width), matching the existing codebase convention.
+
+  Breakpoints:
+    1450px — stack run-detail card (info above buttons); wrap commit row
+    1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
+    1195px — reduce heavy horizontal padding
+    1024px — shrink pipeline job cards so the graph fits with the sidebar present
+     930px — wrap trigger row so timing items fall to a second line (sidebar present)
+     874px — collapse sidebar; remove viewport-height constraint; reflow content
+     768px — tablet refinements; wrap job-status pills
+     579px — wrap trigger row so timing items fall to a second line (sidebar gone)
+     480px — small phones: tighter padding, stacked buttons, further reduced pipeline
+*/
+
+
+/*
+  Base correction (no media query)
+  .log-viewer uses overflow: hidden for border-radius clipping, which also
+  clips long log lines at any viewport width. Override only the x-axis so
+  lines scroll horizontally instead of being cut off. Vertical overflow and
+  border-radius corner clipping are unaffected.
+*/
+.log-viewer {
+  overflow-x: auto;
+}
+
+
+@media (max-width: 1450px) {
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+}
+
+
+/* ============================================================
+   1300px — Job status pills wrap
+   At this width "0 Awaiting Approval" gets clipped against the
+   card edge. Allow the pill row to wrap so it drops to a second
+   line rather than overflow.
+   ============================================================ */
+@media (max-width: 1300px) {
+
+  .job-statuses {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* ============================================================
+   1195px — Small laptops
+   Halve the heavy horizontal page padding so the pipeline graph
+   and run-detail card have room without the sidebar eating width.
+   ============================================================ */
+@media (max-width: 1195px) {
+
+  .page-content {
+    padding: 0 60px;
+  }
+}
+
+
+/* ============================================================
+   1024px — Landscape tablets / small laptops
+   With sidebar (300px) + padding (120px) consuming 420px, the
+   pipeline graph (540px) starts to overflow below ~960px.
+   Shrink job cards to 200px so the graph (200+40+200 = 440px)
+   fits all the way down to the 874px sidebar-collapse breakpoint.
+   ============================================================ */
+@media (max-width: 1024px) {
+
+  /* --- Pipeline graph --- */
+
+  .job {
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  /* Fork/merge connector total = 200px job + 40px gap + 200px job */
+  .connector-fork,
+  .connector-merge {
+    width: 440px;
+  }
+
+  /* Spacer = half of job width (200 / 2) so arm edges align to card centres */
+  .cf-spacer,
+  .cm-spacer {
+    width: 100px;
+  }
+}
+
+
+/* ============================================================
+   930px — Trigger row wrap (sidebar still present)
+   Same fix as 579px: the trigger description claims the full
+   first line so the two timing items drop to a second line.
+   ============================================================ */
+@media (max-width: 930px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   874px — Collapse sidebar, remove height constraint, reflow
+   Matches the breakpoint used across all other pages.
+   ============================================================ */
+@media (max-width: 874px) {
+
+  /* --- Sidebar --- */
+
+  /* Force the sidebar off-screen regardless of the desktop
+     .closed toggle state so the full viewport is available. */
+  .sidebar {
+    transform: translateX(-300px);
+  }
+
+  /* Hamburger button moves to the far-left collapsed position. */
+  .sidebar-toggle {
+    left: 20px;
+  }
+
+  /* JS adds .open when the user taps the hamburger at mobile widths.
+     Solid background prevents page content from bleeding through
+     the near-transparent --dark-clr-1. */
+  .sidebar.open {
+    transform: translateX(0);
+    background-color: var(--dark-clr-2);
+  }
+
+  .sidebar.open ~ .sidebar-toggle {
+    left: 310px;
+  }
+
+  /* --- Topbar --- */
+
+  /* The topbar uses its own left: 310px (not the sidebar-toggle's
+     absolute position). With the sidebar always hidden here,
+     drive it to the far-left collapsed position. */
+  .topbar {
+    left: 20px;
+  }
+
+  /* Slide it back right when the user opens the sidebar overlay. */
+  .sidebar.open ~ .topbar {
+    left: 310px;
+  }
+
+  /* --- Page content --- */
+
+  /* Drop the sidebar margin and restore normal document flow. */
+  .page-content {
+    margin-left: 0;
+    padding: 60px var(--space-xl) 0;
+    /* run-detail.css locks the page to 100vh with overflow: hidden so
+       only .pipeline scrolls internally. On mobile the card stacks
+       vertically and gets taller — remove the constraint so the whole
+       page scrolls naturally instead. */
+    height: auto;
+    overflow: visible;
+  }
+
+  /* --- Layout containers --- */
+
+  /* Same reason: lift the height: 100% / overflow: hidden chain so
+     children can grow to their natural content height. */
+  .page-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Let .overview grow to its content height instead of filling the
+     remaining viewport. */
+  .overview {
+    flex: none;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  /* .pipeline was the sole scroll area on desktop. With the page now
+     scrolling, let it expand to its natural height. */
+  .pipeline {
+    flex: none;
+    overflow-y: visible;
+  }
+
+  /* --- Run detail card --- */
+
+  /* Remove the top margin that created double-spacing once
+     padding-top: 60px is already accounting for topbar clearance. */
+  .run-detail-card {
+    margin-top: 0;
+  }
+}
+
+
+/* ============================================================
+   768px — Tablets
+   Sidebar is already off-screen (874px rule). Stack the run-detail
+   card so info and action buttons don't fight for horizontal space.
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* --- Job status pills --- */
+
+  /* Wrap the pill row so no pill is clipped. */
+  .job-statuses {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* --- Filters (Logs tab) --- */
+
+  /* Widen the search input now that the sidebar is gone. */
+  .input-group {
+    width: 40%;
+  }
+}
+
+
+/* ============================================================
+   579px — Trigger row wrap
+   At this width "7m ago" gets clipped. Push the two timing items
+   (duration + relative time) to a second line while keeping
+   "Triggered by webhook" alone on line 1.
+   ============================================================ */
+@media (max-width: 579px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  /* Force the trigger description to claim the full first line,
+     which pushes the stopwatch and clock items down to line 2. */
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   480px — Small phones
+   ============================================================ */
+@media (max-width: 480px) {
+
+  /* --- Page content --- */
+
+  /* Tighten horizontal padding; 60px top clearance for the
+     hamburger button is preserved from the 874px rule. */
+  .page-content {
+    padding: 60px var(--space-md) 0;
+  }
+
+  /* --- Run detail card --- */
+
+  /* Reduce card padding so the interior content has more room. */
+  .run-detail-card {
+    padding: var(--space-md);
+  }
+
+  /* Scale the pipeline name down slightly. */
+  .rdc-name {
+    font-size: 16px;
+  }
+
+  /* Allow the title row (name, run#, status pill, env pill) to wrap
+     onto a second line if the pills don't all fit in one row. */
+  .rdc-title-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* Stack commit row items vertically so the long commit message
+     doesn't force a horizontal overflow. */
+  .rdc-commit-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  /* Stack the trigger/timing metadata items vertically. */
+  .rdc-trigger-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  /* Stack action buttons vertically with 44px touch targets. */
+  .rdc-actions {
+    flex-direction: column;
+  }
+
+  .rdc-btn-cancel,
+  .rdc-btn-rerun {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* --- Pipeline graph --- */
+
+  /* Reduce job cards further so the graph fits a ~450px viewport. */
+  .job {
+    min-width: 150px;
+    max-width: 150px;
+  }
+
+  /* Tighten the gap between the two parallel jobs. */
+  .parallel-row {
+    gap: var(--space-lg);
+  }
+
+  /* Fork/merge connector total = 150px job + 20px gap + 150px job */
+  .connector-fork,
+  .connector-merge {
+    width: 320px;
+  }
+
+  /* Spacer = half of job width (150 / 2) so arm edges align to card centres */
+  .cf-spacer,
+  .cm-spacer {
+    width: 75px;
+  }
+
+  /* If the pipeline graph still overflows (e.g. many parallel jobs
+     added later), let it scroll horizontally rather than clip. */
+  .pipeline {
+    overflow-x: auto;
+  }
+
+  /* --- Filters (Logs tab) --- */
+
+  /* Stretch all filter controls to full width for easy tapping. */
+  .input-group {
+    width: 100%;
+  }
+
+  .select-group {
+    width: 100%;
+  }
+
+  .select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .input-group input {
+    min-height: 44px;
+  }
+
+  /* --- Log viewer --- */
+
+  /* Prevent the log header command label from forcing the viewer wider
+     than the viewport — truncate with an ellipsis instead. */
+  .log-job-cmd {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
+  }
+}

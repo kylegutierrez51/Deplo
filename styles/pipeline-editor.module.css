@@ -210,11 +210,14 @@ Stage Sidebar
 }
 
 .stage-sidebar-header .exit-btn {
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--gray-clr);
-  padding: 4px 8px;
+  padding: 4px;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-lg);
+  border: none;
   cursor: pointer;
 }
 

@@ -79,7 +79,10 @@ Approval Cards
 }
 
 .approval-card-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  row-gap: var(--space-sm);
   justify-content: space-between;
 }
 
@@ -125,6 +128,7 @@ Approval Cards
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  white-space: nowrap;
 }
 
 .meta-row .waiting-time {
@@ -138,6 +142,12 @@ Approval Cards
   margin-bottom: var(--space-sm);
 }
 
+.stage-view > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
 .stage-view > div:hover {
   cursor: pointer;
 }
@@ -147,6 +157,7 @@ Approval Cards
   align-items: flex-start;
   gap: var(--space-lg);
   font-size: var(--font-size-sm);
+  flex-shrink: 0;
 }
 
 .reject-btn, .approve-btn {
@@ -199,6 +210,12 @@ Approval Cards
   background-color: var(--blue-btn-hover-clr);
 }
 
+.view-run-btn,
+.reject-btn,
+.approve-btn {
+  white-space: nowrap;
+}
+
 
 /* 
 stages
@@ -236,4 +253,241 @@ stages
 
 .stages-row .approval {
   background-color: #94471a;
+}
+
+
+/* ============================================================
+   Responsive — desktop-first (max-width)
+   Breakpoints: 1530, 1195, 1024, 961, 874, 768, 610, 598, 480
+   ============================================================ */
+
+@media (max-width: 1530px) {
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .btn-group {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .extra-info {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 1195px) {
+  .page-content {
+    padding: 0 60px;
+  }
+
+  .approvals-input-group {
+    width: 40%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .filters-bar {
+    flex-wrap: wrap;
+  }
+
+  .approvals-input-group {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 961px) {
+  .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl) 0;
+  }
+
+  .page-view .pages {
+    position: static;
+  }
+
+  .pagination-row {
+    padding-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 874px) {
+  .sidebar {
+    transform: translateX(-300px);
+  }
+
+  .sidebar-toggle {
+    left: 20px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    background-color: var(--dark-clr-2);
+  }
+
+  .sidebar.open ~ .sidebar-toggle {
+    left: 310px;
+  }
+
+  .page-content {
+    margin-left: 0;
+    padding: 60px var(--space-xl) 0;
+  }
+
+  .subheader-inner {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .approval-card {
+    min-width: 0;
+  }
+
+  .page-view {
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  .pagination-row {
+    width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .approvals-input-group {
+    width: 40%;
+  }
+
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .btn-group {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .extra-info {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 610px) {
+  .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl) 0;
+  }
+
+  .page-view .pages {
+    position: static;
+  }
+
+  .pagination-row {
+    padding-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 598px) {
+  .approvals-input-group {
+    width: 100%;
+  }
+
+  .select-group {
+    width: 100%;
+  }
+
+  .select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .approvals-input {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 60px var(--space-md) 0;
+  }
+
+  .subheader-inner h1 {
+    font-size: 22px;
+  }
+
+  .approval-card {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .pipeline-name-type {
+    flex-wrap: wrap;
+  }
+
+  .feature-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+    gap: var(--space-sm);
+  }
+
+  .reject-btn,
+  .approve-btn,
+  .view-run-btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .page-layout .page-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .page-layout .pagination-container {
+    width: 100%;
+  }
+
+  .page-layout .pagination-row {
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .page-numbers {
+    gap: var(--space-xs);
+  }
 }
