@@ -1,22 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import subheaderStyles from "@/styles/subheader.module.css";
-import cardStyles from "@/styles/cards.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import tableStyles from "@/styles/table.module.css";
-import paginationStyles from "@/styles/pagination.module.css";
-import webhookEventsMediaStyles from "@/styles/media/webhook-events.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...subheaderStyles,
-  ...cardStyles,
-  ...filterStyles,
-  ...tableStyles,
-  ...paginationStyles,
-  ...webhookEventsMediaStyles,
-};
-
-
+import styles from "./webhook-events.module.css";
 
 export default function Webhooks() {
   return (
@@ -192,8 +174,8 @@ export default function Webhooks() {
               </thead>
               <tbody>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--processed']}`}>Processed</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--push']}`}>push</div></td>
+                  <td><div className="pill pill--processed">Processed</div></td>
+                  <td><div className="pill pill--push">push</div></td>
                   <td>abcd/api-server</td>
                   <td>main</td>
                   <td>a1b2c3d<br/><span>feat: add retry logic to webhook...</span></td>
@@ -201,8 +183,8 @@ export default function Webhooks() {
                   <td>1h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--ignored']}`}>Ignored</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--push']}`}>push</div></td>
+                  <td><div className="pill pill--ignored">Ignored</div></td>
+                  <td><div className="pill pill--push">push</div></td>
                   <td>abcd/web-client</td>
                   <td>release/v2.4.0</td>
                   <td>f4e5d6c<br/><span>feat: chore: bump dependencies to l...</span></td>
@@ -210,8 +192,8 @@ export default function Webhooks() {
                   <td>2h ago</td>
                 </tr>
                 <tr>
-                  <td><div className={`${styles.pill} ${styles['pill--failed']}`}>Failed</div></td>
-                  <td><div className={`${styles.pill} ${styles['pill--pull-request']}`}>pull_request</div></td>
+                  <td><div className="pill pill--failed">Failed</div></td>
+                  <td><div className="pill pill--pull-request">pull_request</div></td>
                   <td>abcd/web-client</td>
                   <td>feature/auth-flow</td>
                   <td>7890abc<br/><span>feat: add user role migration for...</span></td>
