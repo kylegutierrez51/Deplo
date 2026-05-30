@@ -1,14 +1,4 @@
-import sidebarStyles from "@/styles/sidebar.module.css";
-import runDetailStyles from "@/styles/run-detail.module.css";
-import filterStyles from "@/styles/filters.module.css";
-import runDetailMediaStyles from "@/styles/media/run-detail.module.css";
-
-const styles = {
-  ...sidebarStyles,
-  ...runDetailStyles,
-  ...filterStyles,
-  ...runDetailMediaStyles,
-};
+import styles from "./run-detail.module.css"
 
 
 
@@ -115,11 +105,11 @@ export default function RunDetail() {
                 <div className={styles['rdc-title-row']}>
                   <span className={styles['rdc-name']}>deploy-api</span>
                   <span className={styles['rdc-num']}>#47</span>
-                  <div className={`${styles['rdc-status']} ${styles.running} ${styles.pill} ${styles['pill--running']}`}>
+                  <div className={`${styles['rdc-status']} ${styles.running} pill pill--running`}>
                     <ion-icon name="sync-outline"></ion-icon>
                     Running
                   </div>
-                  <div className={`${styles.pill} ${styles['pill--production']}`}>Production</div>
+                  <div className="pill pill--production">Production</div>
                 </div>
 
                 {/* Row 2: commit info */}
@@ -186,12 +176,12 @@ export default function RunDetail() {
 
           <section className={styles.overview} id="section-overview">
             <div className={styles['job-statuses']}>
-              <div className={`${styles.pill} ${styles['pill--total']}`}>8 Total</div>
-              <div className={`${styles.pill} ${styles['pill--succeeded']}`}>4 Succeeded</div>
-              <div className={`${styles.pill} ${styles['pill--running']}`}>1 Running</div>
-              <div className={`${styles.pill} ${styles['pill--queued']}`}>3 Queued</div>
-              <div className={`${styles.pill} ${styles['pill--failed']}`}> 0 Failed</div>
-              <div className={`${styles.pill} ${styles['pill--approval']}`}>0 Awaiting Approval</div>
+              <div className="pill pill--total">8 Total</div>
+              <div className="pill pill--succeeded">4 Succeeded</div>
+              <div className="pill pill--running">1 Running</div>
+              <div className="pill pill--queued">3 Queued</div>
+              <div className="pill pill--failed"> 0 Failed</div>
+              <div className="pill pill--approval">0 Awaiting Approval</div>
             </div>
 
             <div className={styles.pipeline}>
@@ -204,7 +194,7 @@ export default function RunDetail() {
                     <ion-icon name="checkmark-circle-outline"></ion-icon>
                   </div>
                   <div className={styles['job-status-time']}>
-                    <div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div>
+                    <div className="pill pill--succeeded">Succeeded</div>
                     <span>42s</span>
                   </div>
                 </div>
@@ -228,7 +218,7 @@ export default function RunDetail() {
                       <ion-icon name="checkmark-circle-outline"></ion-icon>
                     </div>
                     <div className={styles['job-status-time']}>
-                      <div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div>
+                      <div className="pill pill--succeeded">Succeeded</div>
                       <span>38s</span>
                     </div>
                   </div>
@@ -238,7 +228,7 @@ export default function RunDetail() {
                       <ion-icon name="checkmark-circle-outline"></ion-icon>
                     </div>
                     <div className={styles['job-status-time']}>
-                      <div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div>
+                      <div className="pill pill--succeeded">Succeeded</div>
                       <span>2m 13s</span>
                     </div>
                   </div>
@@ -261,7 +251,7 @@ export default function RunDetail() {
                     <ion-icon name="checkmark-circle-outline"></ion-icon>
                   </div>
                   <div className={styles['job-status-time']}>
-                    <div className={`${styles.pill} ${styles['pill--succeeded']}`}>Succeeded</div>
+                    <div className="pill pill--succeeded">Succeeded</div>
                     <span>1m 25s</span>
                   </div>
                 </div>
@@ -275,7 +265,7 @@ export default function RunDetail() {
                     <ion-icon name="sync-outline" className={styles['job-icon-running']}></ion-icon>
                   </div>
                   <div className={styles['job-status-time']}>
-                    <div className={`${styles.pill} ${styles['pill--running']}`}>Running</div>
+                    <div className="pill pill--running">Running</div>
                     <span>24m 4s</span>
                   </div>
                 </div>
@@ -289,7 +279,7 @@ export default function RunDetail() {
                     <ion-icon name="time-outline" className={styles['job-icon-pending']}></ion-icon>
                   </div>
                   <div className={styles['job-status-time']}>
-                    <div className={`${styles.pill} ${styles['pill--queued']}`}>Queued</div>
+                    <div className="pill pill--queued">Queued</div>
                   </div>
                 </div>
 
@@ -302,7 +292,7 @@ export default function RunDetail() {
                     <ion-icon name="time-outline" className={styles['job-icon-pending']}></ion-icon>
                   </div>
                   <div className={styles['job-status-time']}>
-                    <div className={`${styles.pill} ${styles['pill--queued']}`}>Queued</div>
+                    <div className="pill pill--queued">Queued</div>
                   </div>
                 </div>
 
