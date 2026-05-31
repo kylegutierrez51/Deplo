@@ -143,121 +143,28 @@ td .audit-action {
 
 /*
 ======================================================================================
-Pagination
-======================================================================================
-*/
-
-.page-view {
-  padding: 75px 150px 75px 0;
-  position: relative;
-  display: flex;
-  justify-content: center; 
-  align-items: center;
-  /* since .pages is position: absolute, it isn't moved to to the center. It does gain the benefits of align-items though */
-}
-
-.page-view .pages {
-  position: absolute;
-  left: 0;
-  white-space: nowrap;
-}
-
-.pagination-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-xl);
-  padding-left: 150px; /* centers the pagination with the table */
-}
-
-.view-option {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  gap: var(--space-sm);
-  border: 1px solid var(--color-border-mid);
-  padding: var(--space-gap-md) var(--space-md);
-  cursor: pointer;
-}
-
-.view-option:hover {
-  background-color: var(--dark-clr-2);
-}
-
-.view-option ion-icon[name="chevron-back-outline"],
-.view-option ion-icon[name="chevron-forward-outline"] {
-  font-size: 20px;
-  margin-right: var(--space-xs);
-  justify-self: end;
-}
-
-.page-numbers {
-  display: flex;
-  gap: var(--space-gap-md);
-}
-
-.page-number span {
-  position: relative;  /* needed so that the underline is positioned relative to parent */
-  width: max-content;
-  background-color: var(--header-clr);
-  padding: var(--space-xs) 8px;
-  border-radius: var(--radius-sm);
-}
-
-/*
-======================================================================================
 Pipeline List Media Queries
 ======================================================================================
 */
 
 /*
-  pipeline-list.css — Responsive media queries for pipeline-list.html
-  Strategy: desktop-first (max-width), matching the existing codebase convention.
-
   Breakpoints:
-    1350px — pagination overlap fix
     1195px
     1017px
      874px
      514px
 */
 
-
-/* ============================================================
-   1350px — Pagination overlap fix
-   At this width the absolute-positioned "Showing…" label starts
-   colliding with the centered pagination row. Switch to
-   space-between so they sit on opposite ends instead.
-   ============================================================ */
-@media (max-width: 1350px) {
-
-  .page-view {
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  /* Pull the label out of absolute flow so space-between can place it */
-  .page-view .pages {
-    position: static;
-  }
-
-  /* The 150px left offset was only needed when centering manually */
-  .pagination-row {
-    padding-left: 0;
-  }
-}
-
-
+/* 
+============================================================
+1195px
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
   /* Halve the heavy horizontal padding so content has more breathing room */
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* Match the reduced .page-content padding */
-  .page-view {
-    padding: 50px 60px 50px 0;
   }
 
   /* Widen search input slightly to compensate for the narrower content area */
@@ -266,31 +173,11 @@ Pipeline List Media Queries
   }
 }
 
-@media (max-width: 1017px) {
-  /* --- Pagination --- */
-
-  /* Stack the "Showing X of Y" label above the pagination controls */
-  .page-view {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-xl) 0;
-  }
-
-  /* Remove absolute positioning so the label flows naturally in the column */
-  .page-view .pages {
-    position: static;
-  }
-
-  /* Remove the manual left-offset that was there to visually center the row
-     with the indented page content */
-  .pagination-row {
-    padding-left: 0;
-    width: 100%;
-    justify-content: center;
-  }
-}
-
+/* 
+============================================================
+874px
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Subheader --- */
@@ -321,6 +208,12 @@ Pipeline List Media Queries
   }
 }
 
+
+/* 
+============================================================
+514px
+============================================================ 
+*/
 @media (max-width: 514px) {
 
   /* --- Page content --- */
@@ -357,17 +250,5 @@ Pipeline List Media Queries
   /* Match select height for the search input */
   .input-group input {
     min-height: 44px;
-  }
-
-  /* --- Pagination --- */
-
-  /* Tighter gap between page number chips on very small screens */
-  .pagination-row {
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-  }
-
-  .page-numbers {
-    gap: var(--space-xs);
   }
 }

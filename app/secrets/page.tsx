@@ -1,6 +1,7 @@
 import styles from "./secrets.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import Pagination from "@/components/Pagination";
 
 export default function Secrets() {
   return (
@@ -110,37 +111,8 @@ export default function Secrets() {
           </div>
         </div>
 
-        <div className={styles['page-view']}>
-          <div className={styles.pages}>
-            Showing 1-10 of 20
-          </div>
-
-          <div className={styles['pagination-container']}>
-            <div className={styles['pagination-row']}>
-              <div className={styles['view-option']}>
-                <ion-icon name="chevron-back-outline"></ion-icon>
-                <div>Prev</div>
-              </div>
-
-              <div className={styles['page-numbers']}>
-                <div className={styles['page-number']}>1</div>
-                <div className={styles['page-number']}>...</div>
-                <div className={styles['page-number']}>8</div>
-                <div className={styles['page-number']}><span>9</span></div>
-                <div className={styles['page-number']}>10</div>
-                <div className={styles['page-number']}>...</div>
-                <div className={styles['page-number']}>22</div>
-              </div>
-
-              <div className={styles['view-option']}>
-                <div>Next</div>
-                <ion-icon name="chevron-forward-outline"></ion-icon>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
+        <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        
       </main>
     </>
   )
