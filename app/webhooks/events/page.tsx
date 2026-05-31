@@ -1,6 +1,7 @@
 import styles from "./webhook-events.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import StatCards from "@/components/Cards/StatCards";
 import Pagination from "@/components/Pagination";
 
 export default function Webhooks() {
@@ -19,38 +20,16 @@ export default function Webhooks() {
           </button>
         </Subheader>
 
-        <div className={styles.cards}>
-          <div className={styles['cards-row']}>
-            <div className={styles.card}>
-              <ion-icon name="flash-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={styles['card-total']}>7</span>
-                <span className={styles['card-name']}>TOTAL EVENTS</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={`${styles['card-total']} ${styles['processed']}`}>3</span>
-                <span className={styles['card-name']}>PROCESSED</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="remove-circle-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={`${styles['card-total']} ${styles['ignored']}`}>2</span> {/*-- only color this gray if it's >= 1 */}
-                <span className={styles['card-name']}>IGNORED</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="close-circle-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={`${styles['card-total']} ${styles['failed']}`}>2</span> {/* only color this red if it's >= 1 */}
-                <span className={styles['card-name']}>FAILED</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCards
+          cards={
+          [
+            { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
+            { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
+            { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
+            { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
+          ]
+        }>
+        </StatCards>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>

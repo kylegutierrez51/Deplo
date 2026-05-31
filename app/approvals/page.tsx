@@ -1,6 +1,7 @@
 import styles from "./approvals.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
+import StatCards from "@/components/Cards/StatCards";
 import Pagination from "@/components/Pagination";
 
 export default function Approvals() {
@@ -17,31 +18,16 @@ export default function Approvals() {
             subtitle="Pipeline runs waiting for manual approval before proceeding.">
           </Subheader>
 
-          <div className={styles.cards}>
-            <div className={styles['cards-row']}>
-              <div className={styles.card}>
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <div className={styles['card-detail']}>
-                  <span className={styles['card-total']}>4</span>
-                  <span className={styles['card-name']}>PENDING</span>
-                </div>
-              </div>
-              <div className={styles.card}>
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                <div className={styles['card-detail']}>
-                  <span className={styles['card-total']}>3</span>
-                  <span className={styles['card-name']}>PRODUCTION</span>
-                </div>
-              </div>
-              <div className={styles.card}>
-                <ion-icon name="stopwatch-outline"></ion-icon>
-                <div className={styles['card-detail']}>
-                  <span className={`${styles['wait-time']} ${styles['card-total']}`}>18h 17m</span>
-                  <span className={styles['card-name']}>LONGEST WAIT</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatCards
+            cards={
+              [
+                { icon: "alert-circle-outline", total: 4, label: "PENDING" },
+                { icon: "alert-circle-outline", total: 3, label: "PRODUCTION" },
+                { icon: "stopwatch-outline", total: "18h 17m", label: "LONGEST WAIT", valueClassName: "wait-time" },
+              ]
+            }
+            responsive={false}>
+          </StatCards>
 
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
