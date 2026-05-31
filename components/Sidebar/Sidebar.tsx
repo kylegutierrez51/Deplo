@@ -1,8 +1,8 @@
 "use client"
-
+import Link from 'next/link';
 import styles from './sidebar.module.css'
 
- type ActiveItem = 'pipelines' | 'run-history' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'audit';
+type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'audit';
 
 interface SidebarProps {
   activeItem?: ActiveItem;  
@@ -19,22 +19,22 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             <span className={styles.subtitle}>DEPLOY</span>
             <ul>
               <li className={active('pipelines')}>
-                <ion-icon name="git-network-outline"></ion-icon>
-                <a href="pipeline-list.html">
+                <Link href="/pipelines">
+                  <ion-icon name="git-network-outline"></ion-icon>
                   <span className={styles.title}>Pipelines</span>
-                </a>
+                </Link>
               </li>
-              <li className={active('run-history')}>
-                <ion-icon name="time-outline"></ion-icon>
-                <a href="run-history.html">
+              <li className={active('run-history') || active('run-detail')}>
+                <Link href="/runs">
+                  <ion-icon name="time-outline"></ion-icon>
                   <span className={styles.title}>Run History</span>
-                </a>
+                </Link>
               </li>
               <li className={active('approvals')}>
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                <a href="approvals.html">
+                <Link href="/approvals">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
                   <span className={styles.title}>Approvals</span>
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -43,28 +43,28 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             <span className={styles.subtitle}>MANAGE</span>
             <ul>
               <li className={active('secrets')}>
-                <ion-icon name="key-outline"></ion-icon>
-                <a href="secrets.html">
+                <Link href="/secrets">
+                  <ion-icon name="key-outline"></ion-icon>
                   <span className={styles.title}>Secrets</span>
-                </a>
+                </Link>
               </li>
               <li className={active('environments')}>
-                <ion-icon name="settings-outline"></ion-icon>
-                <a href="environments.html">
+                <Link href="/environments">
+                  <ion-icon name="settings-outline"></ion-icon>
                   <span className={styles.title}>Environments</span>
-                </a>
+                </Link>
               </li>
               <li className={active('webhooks')}>
-                <ion-icon name="flash-outline"></ion-icon>
-                <a href="webhooks.html">
+                <Link href="/webhooks">
+                  <ion-icon name="flash-outline"></ion-icon>
                   <span className={styles.title}>Webhooks</span>
-                </a>
+                </Link>
               </li>
               <li className={active('audit')}>
-                <ion-icon name="reader-outline"></ion-icon>
-                <a href="audit-log.html">
+                <Link href="/audit">
+                  <ion-icon name="reader-outline"></ion-icon>
                   <span className={styles.title}>Audit Log</span>
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -90,9 +90,23 @@ export default function Sidebar({ activeItem }: SidebarProps) {
         </div>
       </div>
 
-      <button className={styles['sidebar-toggle']} id="sidebarToggle">
+      {active('run-detail') ? (
+        <div className={styles.topbar}>
+          <button className={styles['sidebar-toggle']} id="sidebarToggle">
+            <ion-icon name="menu-outline"></ion-icon>
+          </button>
+      
+          <a href="run-history.html" className={styles['back-link']}>
+            <ion-icon name="arrow-back-outline"></ion-icon>
+            Run History
+          </a>
+        </div>
+      ) :
+        <button className={styles['sidebar-toggle']} id="sidebarToggle">
         <ion-icon name="menu-outline"></ion-icon>
-      </button>
+      </button>   
+      }
+
     </>
   )
 }
