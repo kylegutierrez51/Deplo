@@ -1,6 +1,8 @@
 "use client"
+
 import Link from 'next/link';
 import styles from './sidebar.module.css'
+import { useState } from 'react';
 
 type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'audit';
 
@@ -9,28 +11,31 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeItem }: SidebarProps) {
-  const active = (item: ActiveItem) => activeItem === item ? styles['nav-item-active'] : undefined;
+  const activePage = (item: ActiveItem) => activeItem === item ? styles['nav-item-activePage'] : undefined;
+
+  const [active, setActive] = useState(true);
+
   return (
     <>
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${active ? ` ${styles.closed}` : ''}`}>
 
         <nav className={styles['sidebar-nav']} aria-label="Main">
           <div className={styles['sidebar-content']}>
             <span className={styles.subtitle}>DEPLOY</span>
             <ul>
-              <li className={active('pipelines')}>
+              <li className={activePage('pipelines')}>
                 <Link href="/pipelines">
                   <ion-icon name="git-network-outline"></ion-icon>
                   <span className={styles.title}>Pipelines</span>
                 </Link>
               </li>
-              <li className={active('run-history') || active('run-detail')}>
+              <li className={activePage('run-history') || activePage('run-detail')}>
                 <Link href="/runs">
                   <ion-icon name="time-outline"></ion-icon>
                   <span className={styles.title}>Run History</span>
                 </Link>
               </li>
-              <li className={active('approvals')}>
+              <li className={activePage('approvals')}>
                 <Link href="/approvals">
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
                   <span className={styles.title}>Approvals</span>
@@ -42,25 +47,25 @@ export default function Sidebar({ activeItem }: SidebarProps) {
           <div className={styles['sidebar-content']}>
             <span className={styles.subtitle}>MANAGE</span>
             <ul>
-              <li className={active('secrets')}>
+              <li className={activePage('secrets')}>
                 <Link href="/secrets">
                   <ion-icon name="key-outline"></ion-icon>
                   <span className={styles.title}>Secrets</span>
                 </Link>
               </li>
-              <li className={active('environments')}>
+              <li className={activePage('environments')}>
                 <Link href="/environments">
                   <ion-icon name="settings-outline"></ion-icon>
                   <span className={styles.title}>Environments</span>
                 </Link>
               </li>
-              <li className={active('webhooks')}>
+              <li className={activePage('webhooks')}>
                 <Link href="/webhooks">
                   <ion-icon name="flash-outline"></ion-icon>
                   <span className={styles.title}>Webhooks</span>
                 </Link>
               </li>
-              <li className={active('audit')}>
+              <li className={activePage('audit')}>
                 <Link href="/audit">
                   <ion-icon name="reader-outline"></ion-icon>
                   <span className={styles.title}>Audit Log</span>
@@ -90,9 +95,9 @@ export default function Sidebar({ activeItem }: SidebarProps) {
         </div>
       </div>
 
-      {active('run-detail') ? (
+      {activePage('run-detail') ? (
         <div className={styles.topbar}>
-          <button className={styles['sidebar-toggle']} id="sidebarToggle">
+          <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setActive(active => !active)}>
             <ion-icon name="menu-outline"></ion-icon>
           </button>
       
@@ -102,11 +107,10 @@ export default function Sidebar({ activeItem }: SidebarProps) {
           </Link>
         </div>
       ) :
-        <button className={styles['sidebar-toggle']} id="sidebarToggle">
-        <ion-icon name="menu-outline"></ion-icon>
-      </button>   
+        <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setActive(active => !active)}>
+          <ion-icon name="menu-outline"></ion-icon>
+        </button>   
       }
-
     </>
   )
 }
