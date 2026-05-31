@@ -118,69 +118,6 @@ td .audit-action {
 
 /*
 ======================================================================================
-Pagination
-======================================================================================
-*/
-
-.page-view {
-  padding: 75px 150px 75px 0;
-  position: relative;
-  display: flex;
-  justify-content: center; 
-  align-items: center;
-  /* since .pages is position: absolute, it isn't moved to to the center. It does gain the benefits of align-items though */
-}
-
-.page-view .pages {
-  position: absolute;
-  left: 0;
-  white-space: nowrap;
-}
-
-.pagination-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-xl);
-  padding-left: 150px; /* centers the pagination with the table */
-}
-
-.view-option {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  gap: var(--space-sm);
-  border: 1px solid var(--color-border-mid);
-  padding: var(--space-gap-md) var(--space-md);
-  cursor: pointer;
-}
-
-.view-option:hover {
-  background-color: var(--dark-clr-2);
-}
-
-.view-option ion-icon[name="chevron-back-outline"],
-.view-option ion-icon[name="chevron-forward-outline"] {
-  font-size: 20px;
-  margin-right: var(--space-xs);
-  justify-self: end;
-}
-
-.page-numbers {
-  display: flex;
-  gap: var(--space-gap-md);
-}
-
-.page-number span {
-  position: relative;  /* needed so that the underline is positioned relative to parent */
-  width: max-content;
-  background-color: var(--header-clr);
-  padding: var(--space-xs) 8px;
-  border-radius: var(--radius-sm);
-}
-
-/*
-======================================================================================
 Run History Media Queries
 ======================================================================================
 */
@@ -251,20 +188,17 @@ Run History Media Queries
 }
 
 
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the content area
-   has more room without leaving the sidebar empty.
-   ============================================================ */
+/* 
+============================================================
+1195px — Small laptops
+  Halve the heavy horizontal page padding so the content area
+  has more room without leaving the sidebar empty.
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* Match the reduced right-padding offset used for pagination alignment */
-  .page-view {
-    padding: 50px 60px 50px 0;
   }
 
   /* Widen the search input slightly to compensate for less available width */
@@ -287,12 +221,14 @@ Run History Media Queries
 }
 
 
-/* ============================================================
-   1100px — Drop "All environment types" to row 2
-   With padding reduced at 1195px the row has more room, but
-   by ~1100px the four remaining row-1 items start to crowd the
-   search input again.
-   ============================================================ */
+/* 
+============================================================
+1100px — Drop "All environment types" to row 2
+  With padding reduced at 1195px the row has more room, but
+  by ~1100px the four remaining row-1 items start to crowd the
+  search input again.
+============================================================ 
+*/
 @media (max-width: 1100px) {
 
   /* Push "All environment types" (4th child) to row 2 alongside "Most recent" */
@@ -302,32 +238,12 @@ Run History Media Queries
 }
 
 
-/* ============================================================
-   1017px — Stack pagination; enable table scroll
-   Horizontal space gets too tight for the label + pagination
-   to sit side-by-side. Stack them vertically instead.
-   ============================================================ */
+/* 
+============================================================
+1017px
+============================================================ 
+*/
 @media (max-width: 1017px) {
-
-  .page-view {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-xl) 0;
-  }
-
-  /* Remove absolute positioning so the label flows naturally in the column */
-  .page-view .pages {
-    position: static;
-  }
-
-  /* Remove manual left-offset; center pagination within the full content width */
-  .pagination-row {
-    padding-left: 0;
-    width: 100%;
-    justify-content: center;
-  }
-
   /* --- Table --- */
 
   /* overflow goes on .table-border — not .table-wrapper — because table.css sets
@@ -341,9 +257,11 @@ Run History Media Queries
 }
 
 
-/* ============================================================
-   874px — Collapse sidebar, reflow content
-   ============================================================ */
+/* 
+============================================================
+874px — Collapse sidebar, reflow content
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Subheader --- */
@@ -377,9 +295,11 @@ Run History Media Queries
 }
 
 
-/* ============================================================
-   514px — Small phones
-   ============================================================ */
+/* 
+============================================================
+514px — Small phones
+============================================================ 
+*/
 @media (max-width: 514px) {
 
   /* --- Page content --- */
@@ -424,17 +344,5 @@ Run History Media Queries
   /* Match select height so all controls are uniform */
   .input-group input {
     min-height: 44px;
-  }
-
-  /* --- Pagination --- */
-
-  /* Tighten the gap between page-number chips */
-  .pagination-row {
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-  }
-
-  .page-numbers {
-    gap: var(--space-xs);
   }
 }

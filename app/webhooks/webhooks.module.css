@@ -338,11 +338,13 @@ Webhook Media Queries
 */
 
 
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the content area
-   gains room. Widen the search input to compensate.
-   ============================================================ */
+/* 
+============================================================
+1195px — Small laptops
+  Halve the heavy horizontal page padding so the content area
+  gains room. Widen the search input to compensate.
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
   :global(.page-content) {
@@ -357,12 +359,14 @@ Webhook Media Queries
 
 
 
-/* ============================================================
-   1024px — Filter bar wrapping
-   With sidebar (300px) + reduced padding (120px) consuming 420px,
-   the three-item filter bar starts overflowing around ~1050px.
-   Allow wrapping so each control stays usable.
-   ============================================================ */
+/* 
+============================================================
+1024px — Filter bar wrapping
+  With sidebar (300px) + reduced padding (120px) consuming 420px,
+  the three-item filter bar starts overflowing around ~1050px.
+  Allow wrapping so each control stays usable.
+============================================================ 
+*/
 @media (max-width: 1024px) {
 
   .filters-bar {
@@ -401,10 +405,12 @@ Webhook Media Queries
 }
 
 
-/* ============================================================
-   874px — Collapse sidebar, reflow content
-   Matches the breakpoint used across all other pages.
-   ============================================================ */
+/* 
+============================================================
+874px — Collapse sidebar, reflow content
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Subheader --- */
@@ -452,11 +458,13 @@ Webhook Media Queries
 }
 
 
-/* ============================================================
-   768px — Tablets
-   Sidebar is already off-screen (874px rule). Refine card layout,
-   widen the search bar, and trim secondary metadata.
-   ============================================================ */
+/* 
+============================================================
+768px — Tablets
+  Sidebar is already off-screen (874px rule). Refine card layout,
+  widen the search bar, and trim secondary metadata.
+============================================================ 
+*/
 @media (max-width: 768px) {
 
   /* At ~750px content width, 25% = ~190px for the search bar —
@@ -529,9 +537,11 @@ Webhook Media Queries
 }
 
 
-/* ============================================================
-   480px — Small phones
-   ============================================================ */
+/* 
+============================================================
+480px — Small phones
+============================================================ 
+*/
 @media (max-width: 480px) {
 
   /* --- Page content --- */

@@ -258,12 +258,14 @@ Webhook Event Media Queries
 */
 
 
-/* ============================================================
-   1408px — Enable table horizontal scroll
-   The webhook events table overflows its container at this width.
-   overflow: auto on .table-border (not .table-wrapper) so the
-   scrollbar isn't clipped by table.css's overflow: hidden.
-   ============================================================ */
+/* 
+============================================================
+1408px — Enable table horizontal scroll
+  The webhook events table overflows its container at this width.
+  overflow: auto on .table-border (not .table-wrapper) so the
+  scrollbar isn't clipped by table.css's overflow: hidden.
+============================================================ 
+*/
 @media (max-width: 1408px) {
 
   .table-border {
@@ -272,30 +274,15 @@ Webhook Event Media Queries
 }
 
 
-/* ============================================================
-   1350px — Pagination overlap fix
-   The absolute-positioned "Showing X of Y" label starts
-   colliding with the centered pagination row at this width.
-   Switch .page-view to space-between so both ends are clear.
-   ============================================================ */
+/* 
+============================================================
+1350px — Pagination overlap fix
+  The absolute-positioned "Showing X of Y" label starts
+  colliding with the centered pagination row at this width.
+  Switch .page-view to space-between so both ends are clear.
+============================================================ 
+*/
 @media (max-width: 1350px) {
-
-  .page-view {
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  /* Pull the label out of absolute flow so space-between can place it */
-  .page-view .pages {
-    position: static;
-    white-space: nowrap;
-  }
-
-  /* The 150px left offset was only needed when centering manually */
-  .pagination-row {
-    padding-left: 0;
-  }
-
   /* --- Table --- */
 
   /* The secrets table overflows at ~1276px (content = 676px) and again at ~1097px
@@ -310,12 +297,14 @@ Webhook Event Media Queries
 }
 
 
-/* ============================================================
-   1345px — Drop "Most recent" to row 2
-   Five filter items can't share a row with the sidebar + 150px
-   padding consuming so much space. Push the last filter below
-   so the search input stays at a readable width.
-   ============================================================ */
+/* 
+============================================================
+1345px — Drop "Most recent" to row 2
+  Five filter items can't share a row with the sidebar + 150px
+  padding consuming so much space. Push the last filter below
+  so the search input stays at a readable width.
+============================================================ 
+*/
 @media (max-width: 1345px) {
 
   .filters-bar {
@@ -330,20 +319,17 @@ Webhook Event Media Queries
 }
 
 
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the content area
-   has more room without leaving the sidebar empty.
-   ============================================================ */
+/* 
+============================================================
+1195px — Small laptops
+  Halve the heavy horizontal page padding so the content area
+  has more room without leaving the sidebar empty.
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* Match the reduced right-padding offset used for pagination alignment */
-  .page-view {
-    padding: 50px 60px 50px 0;
   }
 
   /* Widen the search input slightly to compensate for less available width */
@@ -405,14 +391,16 @@ Webhook Event Media Queries
 }
 
 
-/* ============================================================
-   1050px — Cards: 2-column grid
-   With the sidebar occupying 300px + 120px of padding, the
-   content area at 1050px is only ~630px. Four equal-flex cards
-   each land at ~157px — too narrow for "PIPELINE BINDINGS" in
-   JetBrains Mono without awkward wrapping. Reflow to 2×2 so
-   each card has ~315px of breathing room.
-   ============================================================ */
+/* 
+============================================================
+1050px — Cards: 2-column grid
+  With the sidebar occupying 300px + 120px of padding, the
+  content area at 1050px is only ~630px. Four equal-flex cards
+  each land at ~157px — too narrow for "PIPELINE BINDINGS" in
+  JetBrains Mono without awkward wrapping. Reflow to 2×2 so
+  each card has ~315px of breathing room.
+============================================================ 
+*/
 @media (max-width: 1050px) {
 
   .cards-row {
@@ -434,37 +422,11 @@ Webhook Event Media Queries
   }
 }
 
-/* ============================================================
-   1017px — Stack pagination; enable table scroll
-   Horizontal space gets too tight for the label + pagination
-   to sit side-by-side. Stack them vertically instead.
-   ============================================================ */
-@media (max-width: 1017px) {
-
-  .page-view {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-xl) 0;
-  }
-
-  /* Remove absolute positioning so the label flows naturally in the column */
-  .page-view .pages {
-    position: static;
-  }
-
-  /* Remove manual left-offset; center pagination within the full content width */
-  .pagination-row {
-    padding-left: 0;
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-
-/* ============================================================
-   874px — Collapse sidebar, reflow content
-   ============================================================ */
+/*
+============================================================
+874px — Collapse sidebar, reflow content
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Subheader --- */
@@ -518,9 +480,11 @@ Webhook Event Media Queries
 }
 
 
-/* ============================================================
-   514px — Small phones
-   ============================================================ */
+/* 
+============================================================
+514px — Small phones
+============================================================ 
+*/
 @media (max-width: 514px) {
 
   /* --- Page content --- */
@@ -566,27 +530,17 @@ Webhook Event Media Queries
   .webhook-event-input-group input {
     min-height: 44px;
   }
-
-  /* --- Pagination --- */
-
-  /* Tighten the gap between page-number chips */
-  .pagination-row {
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-  }
-
-  .page-numbers {
-    gap: var(--space-xs);
-  }
 }
 
 
-/* ============================================================
-   400px — Cards: single column
-   At very narrow viewports 50% per card (~185px) leaves almost
-   no room for the icon + text. Stack all four cards vertically
-   with a bottom divider between each instead.
-   ============================================================ */
+/*
+============================================================
+400px — Cards: single column
+  At very narrow viewports 50% per card (~185px) leaves almost
+  no room for the icon + text. Stack all four cards vertically
+  with a bottom divider between each instead.
+============================================================ 
+*/
 @media (max-width: 400px) {
 
   .card {
