@@ -96,10 +96,10 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             <ion-icon name="menu-outline"></ion-icon>
           </button>
       
-          <a href="run-history.html" className={styles['back-link']}>
+          <Link href="/runs" className={styles['back-link']}>
             <ion-icon name="arrow-back-outline"></ion-icon>
             Run History
-          </a>
+          </Link>
         </div>
       ) :
         <button className={styles['sidebar-toggle']} id="sidebarToggle">
