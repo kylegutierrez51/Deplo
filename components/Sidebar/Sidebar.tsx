@@ -14,7 +14,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeItem, showToggle = true, open, onToggle }: SidebarProps) {
-  const activePage = (item: ActiveItem) => activeItem === item ? styles['nav-item-activePage'] : undefined;
+  const activePage = (item: ActiveItem) => activeItem === item ? styles['nav-item-active'] : undefined;
 
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
@@ -101,7 +101,7 @@ export default function Sidebar({ activeItem, showToggle = true, open, onToggle 
         </div>
       </div>
 
-      {activePage('run-detail') ? (
+      {activeItem === 'run-detail' ? (
         <div className={styles.topbar}>
           <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={handleToggle}>
             <ion-icon name="menu-outline"></ion-icon>
