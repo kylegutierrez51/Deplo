@@ -42,6 +42,8 @@ The app uses the App Router with file-based routing under `app/`. Each route dir
 | `styles/media/*.module.css` | Responsive breakpoints per page |
 | `styles/modals/*.module.css` | Modal-specific layout |
 
+If styling, DO NOT use ANY .module.css files in @/styles/. Those are styles used for the raw HTML files in @/pages/. The styles have been duplicated throughout app/ in each page's respective directory. Go there to edit styles.
+
 Pages that need multiple style modules merge them into a single `styles` object:
 
 ```tsx

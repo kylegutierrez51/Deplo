@@ -54,3 +54,17 @@ REGEX to convert classes to 'className' in .tsx files:
 
 ===================================================================================================================================
 
+Sidebar Component
+
+if "open" is True (from Pipeline Editor page), then the Sidebar component knows that the Pipeline Editor has its own useState function for toggling a sidebar and uses that instead of its own useState (internalOpen, setInternalOpen) to determine whether Pipeline Editor opened the sidebar or not.
+
+
+
+Adding this media query to globals.css has no effect because of load order. globals.css loads first, page CSS modules load after. So we move this into sidebar.module.css and use :global(), and since the sidebar component's CSS loads after globals.css, it wins the cascade fight
+
+          @media (max-width: 874px) {
+            :global(.page-content) {
+              margin-left: 0;
+              padding: 60px var(--space-xl) 0;
+            }
+          }

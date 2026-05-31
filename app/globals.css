@@ -25,6 +25,27 @@ a {
   white-space: nowrap;
 }
 
+/*
+==========================================================================
+Page Content (layout when sidebar present -- excluding pipeline editor)
+==========================================================================
+*/
+.page-content {
+  margin-top: var(--space-2xl);
+  margin-left: 300px;
+  padding: 0 150px;
+  transition: margin-left 0.3s ease;
+}
+
+/* max-width and width are used for the Webhooks page for centering */
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  max-width: var(--width-xl);
+  width: 100%;
+}
+
 :root {
   /* Colors */
   --background-clr: #191919;
@@ -202,6 +223,8 @@ a {
   --pill-pull-request-bg: #c084fc1a;
   --pill-pull-request-border: #c084fc4d;
 }
+
+
 
 /*
 ============================================================

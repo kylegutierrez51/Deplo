@@ -34,11 +34,3 @@ export default function Subheader( {title, subtitle, badge, children }: Subheade
     </div>
   )
 }
-
-              <div className={styles['title-row']}>
-                <h1>Run History</h1>
-                <div className={styles['active-badge']}>
-                  <span className={styles['active-dot']}></span>
-                  <span>3 active</span>
-                </div>
-              </div>
