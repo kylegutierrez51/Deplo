@@ -263,6 +263,15 @@ Profile
   color: var(--red-dark-text);
 }
 
+/*
+===============================
+Pipeline Editor Header
+===============================
+*/
+
+.sidebar.closed ~ :global(header) {
+  left: 0;
+}
 
 
 /*
@@ -321,3 +330,17 @@ Run Detail Topbar
 Sidebar Media Queries
 ========================================
 */
+
+@media (max-width: 874px) {
+  .sidebar {
+    transform: translateX(-300px);
+  }
+
+  .sidebar-toggle {
+    left: 20px;
+  }
+
+  .topbar {
+    left: 20px;
+  }
+}
