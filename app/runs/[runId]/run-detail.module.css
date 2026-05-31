@@ -230,13 +230,13 @@ Overview
 */
 
 /* Fix height chain so .overview scrolls instead of the whole page */
-.page-content {
+:global(.page-content) {
   height: calc(100vh - 40px); /* 40px matches page-content margin-top in sidebar.css*/
   overflow: hidden;
   /* this makes page itself not grow beyond viewport */
 }
 
-.page-layout {
+:global(.page-layout) {
   height: 100%;
   overflow: hidden;
 }
@@ -721,7 +721,7 @@ Run Detail Media Queries
    ============================================================ */
 @media (max-width: 1195px) {
 
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
   }
 }
@@ -787,7 +787,7 @@ Run Detail Media Queries
      only .pipeline scrolls internally. On mobile the card stacks
      vertically and gets taller — remove the constraint so the whole
      page scrolls naturally instead. */
-  .page-content {
+  :global(.page-content) {
     height: auto;
     overflow: visible;
   }
@@ -796,7 +796,7 @@ Run Detail Media Queries
 
   /* Same reason: lift the height: 100% / overflow: hidden chain so
      children can grow to their natural content height. */
-  .page-layout {
+  :global(.page-layout) {
     height: auto;
     overflow: visible;
   }
@@ -901,7 +901,7 @@ Run Detail Media Queries
 
   /* Tighten horizontal padding; 60px top clearance for the
      hamburger button is preserved from the 874px rule. */
-  .page-content {
+  :global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 

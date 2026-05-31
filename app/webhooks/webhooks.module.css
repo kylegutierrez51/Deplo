@@ -345,7 +345,7 @@ Webhook Media Queries
    ============================================================ */
 @media (max-width: 1195px) {
 
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
   }
 
@@ -538,7 +538,7 @@ Webhook Media Queries
 
   /* Tighter horizontal padding; preserve vertical clearance for
      the hamburger button established at 874px. */
-  .page-content {
+  :global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 

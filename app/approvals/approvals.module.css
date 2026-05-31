@@ -136,7 +136,7 @@ Pagination overrides for centered layout
  -- this makes the pagination centered at the rightmost side
 ============================================================
 */
-.page-layout .page-view {
+:global(.page-layout) .page-view {
   padding: var(--space-xl) 0;
   justify-content: space-between;
 }
@@ -147,11 +147,11 @@ This one is tricky:
  - That means if you don't override it back to "position: static" (the default position)
  - Then the .pagination-row will just go all the way to the left because "justify-content: space-betewen" from above will not account for an element with position: absolute
 */
-.page-layout .page-view .pages {
+:global(.page-layout) .page-view .pages {
   position: static;
 }
 
-.page-layout .pagination-row {
+:global(.page-layout) .pagination-row {
   padding-left: 0;
   gap: var(--space-md);
 }
@@ -480,7 +480,7 @@ Pagination
 }
 
 @media (max-width: 1195px) {
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
   }
 
@@ -606,7 +606,7 @@ Pagination
 }
 
 @media (max-width: 480px) {
-  .page-content {
+  :global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 
@@ -643,17 +643,17 @@ Pagination
     justify-content: center;
   }
 
-  .page-layout .page-view {
+  :global(.page-layout) .page-view {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-md);
   }
 
-  .page-layout .pagination-container {
+  :global(.page-layout) .pagination-container {
     width: 100%;
   }
 
-  .page-layout .pagination-row {
+  :global(.page-layout) .pagination-row {
     width: 100%;
     justify-content: center;
     gap: var(--space-sm);

@@ -337,7 +337,7 @@ Webhook Event Media Queries
    ============================================================ */
 @media (max-width: 1195px) {
 
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
   }
 
@@ -527,7 +527,7 @@ Webhook Event Media Queries
 
   /* Tighter horizontal padding on very narrow screens; preserve top clearance
      for the hamburger toggle button (set at 874px) */
-  .page-content {
+  :global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 

@@ -251,11 +251,11 @@ Pipeline List Media Queries
 @media (max-width: 1195px) {
 
   /* Halve the heavy horizontal padding so content has more breathing room */
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
   }
 
-  /* Match the reduced page-content padding */
+  /* Match the reduced .page-content padding */
   .page-view {
     padding: 50px 60px 50px 0;
   }
@@ -326,7 +326,7 @@ Pipeline List Media Queries
   /* --- Page content --- */
 
   /* Tighter horizontal padding on narrow screens */
-  .page-content {
+  :global(.page-content) {
     padding: 0 var(--space-md);
     padding-top: 40px;
   }
