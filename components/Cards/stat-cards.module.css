@@ -1,0 +1,122 @@
+/*
+======================================================================================
+Cards
+======================================================================================
+*/
+
+.cards-row {
+  display: flex;
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-2xl);
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-gap-md) 16px;
+  flex: 1;
+  border-right: 1px solid var(--light-gray-clr);
+}
+
+.card:last-child {
+  border-right: none;
+}
+
+.card-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-detail .card-total {
+  font-weight: bold;
+  color: var(--blue-clr);
+}
+
+.card-detail .card-name {
+  font-family: "JetBrains Mono";
+}
+
+/* Approvals */
+.card-detail .card-total.wait-time {
+  color: var(--red-text);
+}
+
+/* Webhook Events */
+.card-detail .card-total.processed {
+  color: var(--pill-succeeded-text);
+}
+
+.card-detail .card-total.ignored {
+  color: var(--pill-ignored-text);
+}
+
+.card-detail .card-total.failed {
+  color: var(--pill-failed-text);
+}
+
+/*
+======================================================================================
+Media Queries
+======================================================================================
+*/
+
+/*
+  Breakpoints:
+    1050px
+     400px
+*/
+
+/*
+============================================================
+1050px — Cards: 2-column grid
+  With the sidebar occupying 300px + 120px of padding, the
+  content area at 1050px is only ~630px. Four equal-flex cards
+  each land at ~157px — too narrow for "PIPELINE BINDINGS" in
+  JetBrains Mono without awkward wrapping. Reflow to 2×2 so
+  each card has ~315px of breathing room.
+============================================================ 
+*/
+@media (max-width: 1050px) {
+
+  .responsive.cards-row {
+    flex-wrap: wrap;
+  }
+
+  .responsive .card {
+    flex: 0 0 50%;
+  }
+
+  /* Top-row cards (1 and 2) need a bottom border to divide the two rows */
+  .responsive .card:nth-child(-n+2) {
+    border-bottom: 1px solid var(--light-gray-clr);
+  }
+
+  /* Right-column cards (even) sit flush against the container edge — no right border */
+  .responsive .card:nth-child(2n) {
+    border-right: none;
+  }
+}
+
+/*
+============================================================
+400px — Cards: single column
+  At very narrow viewports 50% per card (~185px) leaves almost
+  no room for the icon + text. Stack all four cards vertically
+  with a bottom divider between each instead.
+============================================================ 
+*/
+@media (max-width: 400px) {
+
+  .responsive .card {
+    flex: 0 0 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--light-gray-clr);
+  }
+
+  .responsive .card:last-child {
+    border-bottom: none;
+  }
+}
