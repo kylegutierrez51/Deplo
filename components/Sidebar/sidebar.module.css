@@ -20,29 +20,8 @@
   transform: translateX(-300px);
 }
 
-
-/*
-==========================================================================
-Page Content (layout when sidebar present -- excluding pipeline editor)
-==========================================================================
-*/
-.page-content {
-  margin-top: var(--space-2xl);
-  margin-left: 300px;
-  padding: 0 150px;
-  transition: margin-left 0.3s ease;
-}
-
-/* max-width and width are used for the Webhooks page for centering */
-.page-layout {
-  display: flex;
-  flex-direction: column;
-  margin: 0 auto; /* centers entire container */
-  max-width: var(--width-xl);
-  width: 100%;
-}
-
-.sidebar.closed ~ .page-content {
+/* Targets global .page-content (in globals.css) */
+.sidebar.closed ~ :global(.page-content) {
   margin-left: 0;
 }
 
