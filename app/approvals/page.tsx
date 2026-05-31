@@ -86,8 +86,8 @@ export default function Approvals() {
         <ion-icon name="menu-outline"></ion-icon>
       </button>
 
-      <main className={styles['page-content']}>
-        <div className={styles['page-layout']}>
+      <main className="page-content">
+        <div className="page-layout">
 
 
           <Subheader 

@@ -88,8 +88,8 @@ export default function Webhooks() {
       </button>
 
 
-      <main className={styles['page-content']}>
-        <div className={styles['page-layout']}>
+      <main className="page-content">
+        <div className="page-layout">
 
           <Subheader 
             title="GitHub Webhooks"

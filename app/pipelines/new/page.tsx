@@ -134,7 +134,7 @@ export default function PipelineEditor() {
         </div>
       </header>
 
-      <main className={styles['page-content']}>
+      <main className="page-content">
         <button id="stageSidebarToggle" className={styles['toggle-stage-sidebar']}>Open Stage Sidebar</button>
       </main>
 

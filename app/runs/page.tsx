@@ -86,7 +86,7 @@ export default function RunHistory() {
         <ion-icon name="menu-outline"></ion-icon>
       </button>
 
-      <main className={styles['page-content']}>
+      <main className="page-content">
 
         <Subheader 
           title="Run History"

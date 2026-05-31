@@ -94,8 +94,8 @@ export default function RunDetail() {
       </div>
 
 
-      <main className={styles['page-content']}>
-        <div className={styles['page-layout']}>
+      <main className="page-content">
+        <div className="page-layout">
 
           <section className={styles['run-detail-card']}>
             <div className={styles['rdc-inner']}>
