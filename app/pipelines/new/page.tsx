@@ -1,16 +1,21 @@
+"use client"
+
 import styles from "./pipeline-editor.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar"
+import { useState } from "react"
 
 export default function PipelineEditor() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <>
-      <Sidebar activeItem="pipelines"></Sidebar>
+      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)}></Sidebar>
 
       <header className={styles["editor-header"]}>
         <div className={styles['header-flex']}>
 
           <div className={styles['left-side']}>
-            <button className={styles['sidebar-toggle']} id="sidebarToggle">
+            <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setSidebarOpen(o => !o)}>
               <ion-icon name="menu-outline"></ion-icon>
             </button>
             <div className={styles.divider}></div>
@@ -29,9 +34,9 @@ export default function PipelineEditor() {
               </select>
             </div>
             <div className={styles['nodes-edges']}>
-              <div className={styles.nowrap}>7 stages</div>
-              <div>&bull;</div>
-              <div className={styles.nowrap}>6 connections</div>
+              <span className="nowrap">7 stages</span>
+              <span>&bull;</span>
+              <span className="nowrap">6 connections</span>
             </div>
           </div>
 

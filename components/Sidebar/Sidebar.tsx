@@ -7,17 +7,23 @@ import { useState } from 'react';
 type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'audit';
 
 interface SidebarProps {
-  activeItem?: ActiveItem;  
+  activeItem?: ActiveItem;
+  showToggle?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }
 
-export default function Sidebar({ activeItem }: SidebarProps) {
+export default function Sidebar({ activeItem, showToggle = true, open, onToggle }: SidebarProps) {
   const activePage = (item: ActiveItem) => activeItem === item ? styles['nav-item-activePage'] : undefined;
 
-  const [active, setActive] = useState(true);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const handleToggle = isControlled ? onToggle : () => setInternalOpen(o => !o);
 
   return (
     <>
-      <aside className={`${styles.sidebar} ${active ? ` ${styles.closed}` : ''}`}>
+      <aside className={`${styles.sidebar} ${!isOpen ? ` ${styles.closed}` : ''}`}>
 
         <nav className={styles['sidebar-nav']} aria-label="Main">
           <div className={styles['sidebar-content']}>
@@ -97,20 +103,20 @@ export default function Sidebar({ activeItem }: SidebarProps) {
 
       {activePage('run-detail') ? (
         <div className={styles.topbar}>
-          <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setActive(active => !active)}>
+          <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={handleToggle}>
             <ion-icon name="menu-outline"></ion-icon>
           </button>
-      
+
           <Link href="/runs" className={styles['back-link']}>
             <ion-icon name="arrow-back-outline"></ion-icon>
             Run History
           </Link>
         </div>
-      ) :
-        <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setActive(active => !active)}>
+      ) : showToggle && (
+        <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={handleToggle}>
           <ion-icon name="menu-outline"></ion-icon>
-        </button>   
-      }
+        </button>
+      )}
     </>
   )
 }
