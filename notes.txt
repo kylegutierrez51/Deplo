@@ -54,3 +54,6 @@ REGEX to convert classes to 'className' in .tsx files:
 
 ===================================================================================================================================
 
+Sidebar Component
+
+if "open" is True (from Pipeline Editor page), then the Sidebar component knows that the Pipeline Editor has its own useState function for toggling a sidebar and uses that instead of its own useState (internalOpen, setInternalOpen) to determine whether Pipeline Editor opened the sidebar or not.
