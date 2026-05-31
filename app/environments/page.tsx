@@ -1,6 +1,7 @@
 import styles from './env.module.css';
 import Sidebar from "@/components/Sidebar/Sidebar"
 import Subheader from "@/components/Subheader";
+import StatCards from '@/components/Cards/StatCards';
 import Pagination from '@/components/Pagination';
 
 export default function Environments() {
@@ -19,38 +20,16 @@ export default function Environments() {
           </button>
         </Subheader>
 
-        <div className={styles.cards}>
-          <div className={styles['cards-row']}>
-            <div className={styles.card}>
-              <ion-icon name="settings-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={styles['card-total']}>5</span>
-                <span className={styles['card-name']}>ENVIRONMENTS</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="key-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={styles['card-total']}>5</span>
-                <span className={styles['card-name']}>TOTAL SECRETS</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="shield-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={styles['card-total']}>1</span>
-                <span className={styles['card-name']}>PROTECTED</span>
-              </div>
-            </div>
-            <div className={styles.card}>
-              <ion-icon name="git-branch-outline"></ion-icon>
-              <div className={styles['card-detail']}>
-                <span className={styles['card-total']}>11</span>
-                <span className={styles['card-name']}>PIPELINE BINDINGS</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCards
+          cards={
+          [
+            { icon: "settings-outline", total: 5, label: "ENVIRONMENTS" },
+            { icon: "key-outline", total: 5, label: "TOTAL SECRETS" },
+            { icon: "shield-outline", total: 1, label: "PROTECTED" },
+            { icon: "git-branch-outline", total: 11, label: "PIPELINE BINDINGS" },
+          ]
+        }>
+        </StatCards>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
