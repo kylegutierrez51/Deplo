@@ -425,10 +425,3 @@ Pill Base + Variants
 /* Event Types */
 .pill--push          { color: var(--pill-push-text);          background: var(--pill-push-bg);          border-color: var(--pill-push-border); }
 .pill--pull-request  { color: var(--pill-pull-request-text);  background: var(--pill-pull-request-bg);  border-color: var(--pill-pull-request-border); }
-
-@media (max-width: 874px) {
-  .page-content {
-    margin-left: 0;
-    padding: 60px var(--space-xl) 0;
-  }
-}
