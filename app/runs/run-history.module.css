@@ -123,11 +123,7 @@ Run History Media Queries
 */
 
 /*
-  run-history.css — Responsive media queries for run-history.html
-  Strategy: desktop-first (max-width), matching the existing codebase convention.
-
   Breakpoints:
-    1350px — pagination overlap fix
     1345px — drop "Most recent" filter to row 2
     1195px — reduce heavy horizontal padding
     1100px — drop "All environment types" filter to row 2
@@ -137,38 +133,14 @@ Run History Media Queries
 */
 
 
-/* ============================================================
-   1350px — Pagination overlap fix
-   The absolute-positioned "Showing X of Y" label starts
-   colliding with the centered pagination row at this width.
-   Switch .page-view to space-between so both ends are clear.
-   ============================================================ */
-@media (max-width: 1350px) {
-
-  .page-view {
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  /* Pull the label out of absolute flow so space-between can place it */
-  .page-view .pages {
-    position: static;
-    white-space: nowrap;
-  }
-
-  /* The 150px left offset was only needed when centering manually */
-  .pagination-row {
-    padding-left: 0;
-  }
-}
-
-
-/* ============================================================
+/* 
+============================================================
    1345px — Drop "Most recent" to row 2
    Five filter items can't share a row with the sidebar + 150px
    padding consuming so much space. Push the last filter below
    so the search input stays at a readable width.
-   ============================================================ */
+============================================================ 
+*/
 @media (max-width: 1345px) {
 
   .filters-bar {
