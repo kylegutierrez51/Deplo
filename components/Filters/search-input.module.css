@@ -1,0 +1,19 @@
+.input-group {
+  position: relative;
+  width: 25%;
+}
+
+.input-group ion-icon, .webhook-event-input-group ion-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--icon-clr);
+  pointer-events: none; /* clicks go through the search icon */
+  font-size: 16px;
+}
+
+/* offset text so it doesn't overlap the search icon */
+.input-group input {
+  padding-left: 34px;
+}

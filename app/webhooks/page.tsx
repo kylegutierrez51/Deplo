@@ -1,6 +1,9 @@
 import styles from "./webhooks.module.css"
 import Subheader from "@/components/Subheader"
 import Sidebar from "@/components/Sidebar/Sidebar"
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination"
 
 
@@ -20,7 +23,27 @@ export default function Webhooks() {
               Add Webhook
             </button>
           </Subheader>
-      
+
+          <FiltersBar>
+            <SearchInput placeholder={"Search webhooks..."}/>
+            <FilterSelect 
+              id={"active"} name={"active"} 
+              options={
+                [
+                  { value : "active", label: "Active" },
+                  { value : "inactive", label: "Inactive" }
+                ]
+              }/>
+            <FilterSelect 
+              id={"recency"} name={"recency"} 
+              options={
+                [
+                  { value : "most-recent", label: "Most recently registered" },
+                  { value : "least-recent", label: "Least recently registered" }
+                ]
+              }/>
+          </FiltersBar>
+          
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
               <div className={styles['input-group']}>
@@ -35,8 +58,8 @@ export default function Webhooks() {
               </div>
               <div className={styles['select-group']}>
                 <select id="recency" name="recency">
-                  <option value="recent">Most recently registered</option>
-                  <option value="production">Least recently registered</option>
+                  <option value="most-recent">Most recently registered</option>
+                  <option value="least-recent">Least recently registered</option>
                 </select>
               </div>
             </div>
