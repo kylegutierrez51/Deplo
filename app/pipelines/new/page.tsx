@@ -27,7 +27,7 @@ export default function PipelineEditor() {
               <div className={styles.nowrap}>deploy-api</div>
             </div>
             <FilterSelect 
-              id={"environment"} name={"environment"} 
+              id={"environment"} name={"environment"} responsive={false}
               options={
                 [
                   { value : "production", label: "Production" },
