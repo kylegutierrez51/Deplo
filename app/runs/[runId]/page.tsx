@@ -3,6 +3,8 @@
 import { useState } from "react"
 import styles from "./run-detail.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 
 type Tab = 'overview' | 'logs'
 
@@ -228,25 +230,26 @@ export default function RunDetail() {
 
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
-                <div className={styles['select-group']}>
-                  <select id="status" name="status">
-                    <option value="all">install deps - succeeded</option>
-                    <option value="succeeded">lint - succeeded</option>
-                    <option value="failed">unit-tests - succeeded</option>
-                    <option value="running">build - succeeded</option>
-                    <option value="queued">deploy-staging - running</option>
-                    <option value="cancelled">smoke-tests - pending</option>
-                    <option value="cancelled">manual-approval - pending</option>
-                    <option value="cancelled">deploy-production - pending</option>
-                  </select>
-                </div>
-                <div className={styles['input-group']}>
-                  <ion-icon name="search-outline"></ion-icon>
-                  <input type="text" placeholder="Search logs..." />
-                </div>
+                <FilterSelect
+                  id={"status"} name={"status"}
+                  styles={styles}
+                  options={
+                    [
+                      { value: "stage", label: "install deps - succeeded" },
+                      { value: "stage", label: "lint - succeeded" },
+                      { value: "stage", label: "unit-tests - succeeded" },
+                      { value: "stage", label: "build - succeeded" },
+                      { value: "stage", label: "deploy-staging - running" },
+                      { value: "stage", label: "smoke-tests - pending" },
+                      { value: "stage", label: "manual-approval - pending" },
+                      { value: "stage", label: "deploy-production - pending" },
+                    ]
+                  } />
+                <SearchInput
+                  placeholder={"Search logs..."}
+                  styles={styles} />
               </div>
             </div>
-
 
             <div className={styles['log-viewer']}>
 
