@@ -1,7 +1,7 @@
 /*
-======================================================================================
+=====================================================================================
 Filters
-======================================================================================
+=====================================================================================
 */
 
 .filters {
@@ -12,6 +12,7 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
@@ -55,9 +56,9 @@ Filters
 }
 
 /*
-======================================================================================
+=====================================================================================
 Table
-======================================================================================
+=====================================================================================
 */
 
 .table-border {
@@ -106,17 +107,15 @@ td .audit-action {
 }
 
 /*
-======================================================================================
+=====================================================================================
 Audit Log Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1350px
-    1345px — drop "Most recent" filter to row 2
     1195px — reduce heavy horizontal padding
-     874px — collapse sidebar, reflow content
      514px — phone optimizations
 */
 
@@ -141,28 +140,6 @@ Audit Log Media Queries
   }
 }
 
-
-/* 
-==============================================================
-1345px — Drop "Most recent" to row 2
-  Five filter items can't share a row with the sidebar + 150px
-  padding consuming so much space. Push the last filter below
-  so the search input stays at a readable width.
-============================================================== 
-*/
-@media (max-width: 1345px) {
-
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  /* Prevent the search input from shrinking below a usable width
-     regardless of how many items are on its row */
-  .input-group {
-    min-width: 180px;
-  }
-}
-
 /* 
 ============================================================
 1195px — Small laptops
@@ -174,11 +151,6 @@ Audit Log Media Queries
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* Widen the search input slightly to compensate for less available width */
-  .input-group {
-    width: 35%;
   }
 
   /* When "Environment Type" wraps to two lines the row grows taller, but the flex
@@ -195,35 +167,6 @@ Audit Log Media Queries
   }
 }
 
-
-/* 
-============================================================
-874px — Collapse sidebar, reflow content
-============================================================ 
-*/
-@media (max-width: 874px) {
-
-  /* --- Subheader --- */
-
-  /* Stack the title group above the action button */
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  /* Ensure comfortable touch target for the Run Pipeline button */
-  .subheader button {
-    min-height: 44px;
-  }
-
-  /* Restore the base 25% width (overrides the 35% set at 1195px);
-     the content area is now full-width so 25% is already generous */
-  .input-group {
-    width: 25%;
-  }
-}
-
-
 /* 
 ============================================================
 514px — Small phones
@@ -237,41 +180,5 @@ Audit Log Media Queries
      for the hamburger toggle button (set at 874px) */
   :global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Subheader --- */
-
-  /* Scale the page heading down so it doesn't overflow */
-  .subheader-inner h1 {
-    font-size: 22px;
-  }
-
-  /* Full-width touch-friendly button */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
-  /* --- Filters --- */
-
-  /* Search input spans the full row */
-  .input-group {
-    width: 100%;
-  }
-
-  /* Dropdowns stretch to fill the row for easy tapping */
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  /* Match select height so all controls are uniform */
-  .input-group input {
-    min-height: 44px;
   }
 }

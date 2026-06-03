@@ -1,7 +1,7 @@
 /*
-======================================================================================
+=====================================================================================
 Filters
-======================================================================================
+=====================================================================================
 */
 
 .filters {
@@ -12,6 +12,7 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
@@ -55,9 +56,9 @@ Filters
 }
 
 /*
-======================================================================================
+=====================================================================================
 Webhooks
-======================================================================================
+=====================================================================================
 */
 
 /*
@@ -247,9 +248,9 @@ This one is tricky:
 }
 
 /*
-======================================================================================
+=====================================================================================
 Pagination
-======================================================================================
+=====================================================================================
 */
 
 .page-view {
@@ -310,15 +311,14 @@ Pagination
 }
 
 /*
-======================================================================================
+=====================================================================================
 Webhook Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1195px
-    1024px
      961px
      874px
      768px
@@ -338,33 +338,6 @@ Webhook Media Queries
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  .input-group {
-    width: 35%;
-  }
-}
-
-
-
-
-/* 
-============================================================
-1024px — Filter bar wrapping
-  With sidebar (300px) + reduced padding (120px) consuming 420px,
-  the three-item filter bar starts overflowing around ~1050px.
-  Allow wrapping so each control stays usable.
-============================================================ 
-*/
-@media (max-width: 1024px) {
-
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  /* Prevent the search input shrinking below a comfortable width. */
-  .input-group {
-    min-width: 180px;
   }
 }
 
@@ -401,28 +374,6 @@ Webhook Media Queries
 ============================================================ 
 */
 @media (max-width: 874px) {
-
-  /* --- Subheader --- */
-
-  /* Stack the title group above the action button. */
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  /* Comfortable touch target for the Add Webhook button. */
-  .subheader button {
-    min-height: 44px;
-  }
-
-  /* --- Filters --- */
-
-  /* Restore the 25% base width; content is now full-width so
-     25% provides a reasonable search bar without dominating the row. */
-  .input-group {
-    width: 25%;
-  }
-
   /* --- Webhook cards --- */
 
   /* Remove the hard 536px floor; without the sidebar consuming
@@ -455,13 +406,6 @@ Webhook Media Queries
 ============================================================ 
 */
 @media (max-width: 768px) {
-
-  /* At ~750px content width, 25% = ~190px for the search bar —
-     tight for typing. Bump to 40% for better usability. */
-  .input-group {
-    width: 40%;
-  }
-
   /* Reduce horizontal card padding from var(--space-xl) 20px
      to var(--space-md) 15px per side for tighter content fit. */
   .webhook-container {
@@ -471,36 +415,6 @@ Webhook Media Queries
 }
 
 @media(max-width: 598px) {
-
-  /* Full-width touch-friendly button */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-  
-  /* --- Filters --- */
-
-  /* Search input spans the full row */
-  .input-group {
-    width: 100%;
-  }
-
-  /* Dropdowns stretch to fill the row for easy tapping */
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  /* Match select height so all controls are uniform */
-  .input-group input {
-    min-height: 44px;
-  }
-
   /* --- Pagination --- */
 
   /* Stack the "Showing X of Y" label above the pagination controls */
@@ -539,41 +453,6 @@ Webhook Media Queries
      the hamburger button established at 874px. */
   :global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Subheader --- */
-
-  /* Scale the heading down so it doesn't overflow narrow screens. */
-  .subheader-inner h1 {
-    font-size: 22px;
-  }
-
-  /* Full-width, touch-friendly Add Webhook button. */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
-  /* --- Filters --- */
-
-  /* All three controls go full-width and stack vertically.
-     flex-wrap: wrap is already active from the 1024px rule. */
-  .input-group {
-    width: 100%;
-  }
-
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  .input-group input {
-    min-height: 44px;
   }
 
   /* --- Webhook cards --- */
