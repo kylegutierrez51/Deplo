@@ -17,10 +17,10 @@ Filters
 
 .input-group {
   position: relative;
-  width: 25%;
+  width: 30%;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -54,23 +54,6 @@ Filters
   pointer-events: none;
 }
 
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
-}
-
-/*
-================================
-Filters
-================================
-*/
-
 /*
 ============================================================
 Pagination overrides for centered layout
@@ -95,16 +78,6 @@ This one is tricky:
 :global(.page-layout) .pagination-row {
   padding-left: 0;
   gap: var(--space-md);
-}
-
-/* 
-======================
-Input Size Override
-======================
-*/
-.approvals-input-group {
-  position: relative;
-  width: 30%;
 }
 
 /*
@@ -442,7 +415,7 @@ Audit Log Media Queries
     padding: 0 60px;
   }
 
-  .approvals-input-group {
+  .input-group {
     width: 40%;
   }
 }
@@ -452,7 +425,7 @@ Audit Log Media Queries
     flex-wrap: wrap;
   }
 
-  .approvals-input-group {
+  .input-group {
     min-width: 180px;
   }
 }
@@ -479,7 +452,7 @@ Audit Log Media Queries
 }
 
 @media (max-width: 768px) {
-  .approvals-input-group {
+  .input-group {
     width: 40%;
   }
 
@@ -526,7 +499,7 @@ Audit Log Media Queries
 }
 
 @media (max-width: 598px) {
-  .approvals-input-group {
+  .input-group {
     width: 100%;
   }
 
@@ -539,7 +512,7 @@ Audit Log Media Queries
     min-height: 44px;
   }
 
-  .approvals-input {
+  .input-group input {
     min-height: 44px;
   }
 }

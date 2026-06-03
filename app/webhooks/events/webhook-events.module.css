@@ -17,10 +17,10 @@ Filters
 
 .input-group {
   position: relative;
-  width: 25%;
+  width: 30%;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -54,16 +54,6 @@ Filters
   pointer-events: none;
 }
 
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
-}
 
 /*
 ======================================================================================
@@ -254,7 +244,7 @@ Webhook Event Media Queries
 
   /* Prevent the search input from shrinking below a usable width
      regardless of how many items are on its row */
-  .webhook-event-input-group {
+  .input-group {
     min-width: 180px;
   }
 }
@@ -274,7 +264,7 @@ Webhook Event Media Queries
   }
 
   /* Widen the search input slightly to compensate for less available width */
-  .webhook-event-input-group {
+  .input-group {
     width: 35%;
   }
 
@@ -385,7 +375,7 @@ Webhook Event Media Queries
 
   /* Restore the base 25% width (overrides the 35% set at 1195px);
      the content area is now full-width so 25% is already generous */
-  .webhook-event-input-group {
+  .input-group {
     width: 25%;
   }
 
@@ -453,7 +443,7 @@ Webhook Event Media Queries
   /* --- Filters --- */
 
   /* Search input spans the full row */
-  .webhook-event-input-group {
+  .input-group {
     width: 100%;
   }
 
@@ -468,7 +458,7 @@ Webhook Event Media Queries
   }
 
   /* Match select height so all controls are uniform */
-  .webhook-event-input-group input {
+  .input-group input {
     min-height: 44px;
   }
 }
