@@ -15,7 +15,7 @@ export default function Webhooks() {
       <main className="page-content">
         <div className="page-layout">
 
-          <Subheader 
+          <Subheader
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
             <button>
@@ -24,26 +24,30 @@ export default function Webhooks() {
             </button>
           </Subheader>
 
-          <FiltersBar>
-            <SearchInput placeholder={"Search webhooks..."}/>
-            <FilterSelect 
-              id={"active"} name={"active"} 
-              options={
-                [
-                  { value : "active", label: "Active" },
-                  { value : "inactive", label: "Inactive" }
-                ]
-              }/>
-            <FilterSelect 
-              id={"recency"} name={"recency"} 
-              options={
-                [
-                  { value : "most-recent", label: "Most recently registered" },
-                  { value : "least-recent", label: "Least recently registered" }
-                ]
-              }/>
-          </FiltersBar>
-          
+          <div className={styles.filters}>
+            <div className={styles['filters-bar']}>
+
+
+              <SearchInput placeholder={"Search webhooks..."} />
+              <FilterSelect
+                id={"active"} name={"active"}
+                options={
+                  [
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" }
+                  ]
+                } />
+              <FilterSelect
+                id={"recency"} name={"recency"}
+                options={
+                  [
+                    { value: "most-recent", label: "Most recently registered" },
+                    { value: "least-recent", label: "Least recently registered" }
+                  ]
+                } />
+            </div>
+          </div>
+
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
               <div className={styles['input-group']}>

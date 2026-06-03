@@ -68,3 +68,12 @@ Adding this media query to globals.css has no effect because of load order. glob
               padding: 60px var(--space-xl) 0;
             }
           }
+
+===================================================================================================================================
+
+Run Detail -- Active Overiew/Logs
+
+<section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
+
+style={{ display: undefined }} -- React omits the property entirely from the inline style. The element ends up with no display in its style attribute, so the stylesheet's .overview rule  (which sets display: flex) takes effect normally.
+ -- "undefined" basically means "let CSS handle this".

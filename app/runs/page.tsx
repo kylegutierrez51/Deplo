@@ -23,52 +23,54 @@ export default function RunHistory() {
           </button>
         </Subheader>
 
-        <FiltersBar>
-          <SearchInput
-            placeholder={"Search pipelines, commits..."} />
-          <FilterSelect
-            id={"status"} name={"status"}
-            options={
-              [
-                { value: "all", label: "All statuses" },
-                { value: "queued", label: "Queued" },
-                { value: "running", label: "Running" },
-                { value: "succeeded", label: "Succeeded" },
-                { value: "failed", label: "Failed" },
-                { value: "cancelled", label: "Cancelled" },
-              ]
-            }/>
-          <FilterSelect
-            id={"trigger"} name={"trigger"}
-            options={
-              [
-                { value: "all", label: "All triggers" },
-                { value: "webhook", label: "Webhook" },
-                { value: "manual", label: "Manual" },
-                { value: "api", label: "API" },
-              ]
-            }/>
-          <FilterSelect 
-            id={"environment"} name={"environment"} 
-            options={
-              [
-                { value : "all", label: "All environment types" },
-                { value : "production", label: "Production" },
-                { value : "staging", label: "Staging" },
-                { value : "development", label: "Development" },
-                { value : "preview", label: "Preview" },
-                { value : "custom", label: "Custom" },
-              ]
-            }/>
-          <FilterSelect 
-            id={"recency"} name={"recency"} 
-            options={
-              [
-                { value : "most-recent", label: "Most recent" },
-                { value : "least-recent", label: "Least recent" }
-              ]
-            }/>
-        </FiltersBar>
+        <div className={styles.filters}>
+          <div className={styles['filters-bar']}>
+            <SearchInput
+              placeholder={"Search pipelines, commits..."} />
+            <FilterSelect
+              id={"status"} name={"status"}
+              options={
+                [
+                  { value: "all", label: "All statuses" },
+                  { value: "queued", label: "Queued" },
+                  { value: "running", label: "Running" },
+                  { value: "succeeded", label: "Succeeded" },
+                  { value: "failed", label: "Failed" },
+                  { value: "cancelled", label: "Cancelled" },
+                ]
+              } />
+            <FilterSelect
+              id={"trigger"} name={"trigger"}
+              options={
+                [
+                  { value: "all", label: "All triggers" },
+                  { value: "webhook", label: "Webhook" },
+                  { value: "manual", label: "Manual" },
+                  { value: "api", label: "API" },
+                ]
+              } />
+            <FilterSelect
+              id={"environment"} name={"environment"}
+              options={
+                [
+                  { value: "all", label: "All environment types" },
+                  { value: "production", label: "Production" },
+                  { value: "staging", label: "Staging" },
+                  { value: "development", label: "Development" },
+                  { value: "preview", label: "Preview" },
+                  { value: "custom", label: "Custom" },
+                ]
+              } />
+            <FilterSelect
+              id={"recency"} name={"recency"}
+              options={
+                [
+                  { value: "most-recent", label: "Most recent" },
+                  { value: "least-recent", label: "Least recent" }
+                ]
+              } />
+          </div>
+        </div>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>

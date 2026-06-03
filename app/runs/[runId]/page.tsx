@@ -1,8 +1,13 @@
+"use client"
+
+import { useState } from "react"
 import styles from "./run-detail.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar"
 
+type Tab = 'overview' | 'logs'
 
 export default function RunDetail() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
   return (
     <>
       <Sidebar activeItem="run-detail"></Sidebar>
@@ -76,18 +81,24 @@ export default function RunDetail() {
 
           <div className={styles.sections}>
             <div className={styles['tabs-row']}>
-              <button className={`${styles.section} ${styles['active']}`} data-section="overview">
+              <button
+                className={`${styles.section} ${activeTab === 'overview' ? styles.active : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
                 <ion-icon name="layers-outline"></ion-icon>
                 <span>Overview</span>
               </button>
-              <button className={styles.section} data-section="logs">
+              <button
+                className={`${styles.section} ${activeTab === 'logs' ? styles.active : ''}`}
+                onClick={() => setActiveTab('logs')}
+              >
                 <ion-icon name="receipt-outline"></ion-icon>
                 <span>Logs</span>
               </button>
             </div>
           </div>
 
-          <section className={styles.overview} id="section-overview">
+          <section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
             <div className={styles['job-statuses']}>
               <div className="pill pill--total">8 Total</div>
               <div className="pill pill--succeeded">4 Succeeded</div>
@@ -213,7 +224,7 @@ export default function RunDetail() {
             </div>
           </section>
 
-          <section className={styles.logs} id="section-logs" style={{ display: "none" }}>
+          <section className={styles.logs} id="section-logs" style={{ display: activeTab === 'logs' ? undefined : 'none' }}>
 
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>

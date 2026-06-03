@@ -13,7 +13,7 @@ export default function PipelineList() {
       <Sidebar activeItem="pipelines"></Sidebar>
 
       <main className="page-content">
-        <Subheader 
+        <Subheader
           title="Pipelines"
           subtitle={<><span id="subtitle-count">8</span> pipelines across your repositories</>}>
           <div className={styles['button-group']}>
@@ -28,34 +28,37 @@ export default function PipelineList() {
           </div>
         </Subheader>
 
-        <FiltersBar>
-          <SearchInput
-            placeholder={"Search pipelines..."} />
-          <FilterSelect
-            id={"status"} name={"status"}
-            options={
-              [
-                { value: "all", label: "All statuses" },
-                { value: "queued", label: "Queued" },
-                { value: "running", label: "Running" },
-                { value: "succeeded", label: "Succeeded" },
-                { value: "failed", label: "Failed" },
-                { value: "cancelled", label: "Cancelled" },
-              ]
-            }/>
-          <FilterSelect 
-            id={"environment"} name={"environment"} 
-            options={
-              [
-                { value : "all", label: "All environment types" },
-                { value : "production", label: "Production" },
-                { value : "staging", label: "Staging" },
-                { value : "development", label: "Development" },
-                { value : "preview", label: "Preview" },
-                { value : "custom", label: "Custom" },
-              ]
-            }/>
-        </FiltersBar>
+        <div className={styles.filters}>
+          <div className={styles['filters-bar']}>
+            <SearchInput
+              placeholder={"Search pipelines..."} />
+            <FilterSelect
+              id={"status"} name={"status"}
+              options={
+                [
+                  { value: "all", label: "All statuses" },
+                  { value: "queued", label: "Queued" },
+                  { value: "running", label: "Running" },
+                  { value: "succeeded", label: "Succeeded" },
+                  { value: "failed", label: "Failed" },
+                  { value: "cancelled", label: "Cancelled" },
+                ]
+              } />
+            <FilterSelect
+              id={"environment"} name={"environment"}
+              options={
+                [
+                  { value: "all", label: "All environment types" },
+                  { value: "production", label: "Production" },
+                  { value: "staging", label: "Staging" },
+                  { value: "development", label: "Development" },
+                  { value: "preview", label: "Preview" },
+                  { value: "custom", label: "Custom" },
+                ]
+              } />
+          </div>
+        </div>
+
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
             <div className={styles['input-group']}>

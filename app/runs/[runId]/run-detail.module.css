@@ -596,7 +596,7 @@ Filters
   width: 25%;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -628,17 +628,6 @@ Filters
   border-right: 4px solid transparent;
   border-top: 5px solid var(--icon-clr);
   pointer-events: none;
-}
-
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
 }
 
 /*

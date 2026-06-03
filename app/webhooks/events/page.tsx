@@ -14,7 +14,7 @@ export default function Webhooks() {
 
       <main className="page-content">
 
-        <Subheader 
+        <Subheader
           title="Webhook Events"
           subtitle="Incoming webhook deliveries from GitHub.">
           <button>
@@ -25,41 +25,43 @@ export default function Webhooks() {
 
         <StatCards
           cards={
-          [
-            { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
-            { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
-            { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
-            { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
-          ]
-        }>
+            [
+              { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
+              { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
+              { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
+              { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
+            ]
+          }>
         </StatCards>
 
-          <FiltersBar>
+        <div className={styles.filters}>
+          <div className={styles['filters-bar']}>
             <SearchInput
               placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
-              styles={styles}/>
+              styles={styles} />
             <FilterSelect
               id={"status"} name={"status"}
               styles={styles}
               options={
                 [
-                  { value : "all", label: "All statuses" },
-                  { value : "succeeded", label: "Processed" },
-                  { value : "failed", label: "Ignored" },
-                  { value : "running", label: "Failed" },
+                  { value: "all", label: "All statuses" },
+                  { value: "succeeded", label: "Processed" },
+                  { value: "failed", label: "Ignored" },
+                  { value: "running", label: "Failed" },
                 ]
-              }/>
+              } />
             <FilterSelect
               id={"event-type"} name={"event-type"}
               styles={styles}
               options={
                 [
-                  { value : "all", label: "All event types" },
-                  { value : "today", label: "push" },
-                  { value : "7days", label: "pull_request" },
+                  { value: "all", label: "All event types" },
+                  { value: "today", label: "push" },
+                  { value: "7days", label: "pull_request" },
                 ]
-              }/>
-          </FiltersBar>
+              } />
+          </div>
+        </div>
 
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
@@ -81,7 +83,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--push">push</div></td>
                   <td>abcd/api-server</td>
                   <td>main</td>
-                  <td>a1b2c3d<br/><span>feat: add retry logic to webhook...</span></td>
+                  <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
                   <td>deploy-api</td>
                   <td>1h ago</td>
                 </tr>
@@ -90,7 +92,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--push">push</div></td>
                   <td>abcd/web-client</td>
                   <td>release/v2.4.0</td>
-                  <td>f4e5d6c<br/><span>feat: chore: bump dependencies to l...</span></td>
+                  <td>f4e5d6c<br /><span>feat: chore: bump dependencies to l...</span></td>
                   <td>build-frontend</td>
                   <td>2h ago</td>
                 </tr>
@@ -99,7 +101,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--pull-request">pull_request</div></td>
                   <td>abcd/web-client</td>
                   <td>feature/auth-flow</td>
-                  <td>7890abc<br/><span>feat: add user role migration for...</span></td>
+                  <td>7890abc<br /><span>feat: add user role migration for...</span></td>
                   <td>db-migrate</td>
                   <td>3h ago</td>
                 </tr>

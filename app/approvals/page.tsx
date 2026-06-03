@@ -16,7 +16,7 @@ export default function Approvals() {
         <div className="page-layout">
 
 
-          <Subheader 
+          <Subheader
             title="Approvals"
             subtitle="Pipeline runs waiting for manual approval before proceeding.">
           </Subheader>
@@ -31,34 +31,36 @@ export default function Approvals() {
             }
             responsive={false}>
           </StatCards>
-
-        <FiltersBar>
-          <SearchInput
-            placeholder={"Search by pipeline, repo, branch, user..."}
-            styles={styles} />
-          <FilterSelect
-            id={"environment"} name={"environment"}
-            styles={styles}
-            options={
-              [
-                { value : "all", label: "All environment types" },
-                { value : "production", label: "Production" },
-                { value : "staging", label: "Staging" },
-                { value : "development", label: "Development" },
-                { value : "preview", label: "Preview" },
-                { value : "custom", label: "Custom" },
-              ]
-            }/>
-          <FilterSelect
-            id={"recency"} name={"recency"}
-            styles={styles}
-            options={
-              [
-                { value : "most-recent", label: "Most recent" },
-                { value : "least-recent", label: "Least recent" }
-              ]
-            }/>
-        </FiltersBar>
+          
+          <div className={styles.filters}>
+            <div className={styles['filters-bar']}>
+              <SearchInput
+                placeholder={"Search by pipeline, repo, branch, user..."}
+                styles={styles} />
+              <FilterSelect
+                id={"environment"} name={"environment"}
+                styles={styles}
+                options={
+                  [
+                    { value: "all", label: "All environment types" },
+                    { value: "production", label: "Production" },
+                    { value: "staging", label: "Staging" },
+                    { value: "development", label: "Development" },
+                    { value: "preview", label: "Preview" },
+                    { value: "custom", label: "Custom" },
+                  ]
+                } />
+              <FilterSelect
+                id={"recency"} name={"recency"}
+                styles={styles}
+                options={
+                  [
+                    { value: "most-recent", label: "Most recent" },
+                    { value: "least-recent", label: "Least recent" }
+                  ]
+                } />
+            </div>
+          </div>
 
           <div className={styles['approvals-layout']}>
             <div className={styles['approval-card']}>

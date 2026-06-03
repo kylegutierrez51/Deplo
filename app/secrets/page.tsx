@@ -22,22 +22,24 @@ export default function Secrets() {
           </button>
         </Subheader>
 
-        <FiltersBar>
-          <SearchInput 
-            placeholder={"Filter by key or notes..."}/>
-          <FilterSelect 
-            id={"environment"} name={"environment"} 
-            options={
-              [
-                { value : "all", label: "All environment types" },
-                { value : "production", label: "Production" },
-                { value : "staging", label: "Staging" },
-                { value : "development", label: "Development" },
-                { value : "preview", label: "Preview" },
-                { value : "custom", label: "Custom" },
-              ]
-            }/>
-        </FiltersBar>
+        <div className={styles.filters}>
+          <div className={styles['filters-bar']}>
+            <SearchInput
+              placeholder={"Filter by key or notes..."} />
+            <FilterSelect
+              id={"environment"} name={"environment"}
+              options={
+                [
+                  { value: "all", label: "All environment types" },
+                  { value: "production", label: "Production" },
+                  { value: "staging", label: "Staging" },
+                  { value: "development", label: "Development" },
+                  { value: "preview", label: "Preview" },
+                  { value: "custom", label: "Custom" },
+                ]
+              } />
+          </div>
+        </div>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
@@ -132,7 +134,7 @@ export default function Secrets() {
         </div>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
-        
+
       </main>
     </>
   )
