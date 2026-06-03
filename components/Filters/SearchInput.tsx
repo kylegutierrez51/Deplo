@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 interface SearchInputProps {
   placeholder: string;
-  styles?: Record<string, string>
+  styles?: Record<string, string> // Approvals, Webhooks, Run Detail  //
 }
 
 
