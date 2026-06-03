@@ -16,3 +16,21 @@
   border-top: 5px solid var(--icon-clr);
   pointer-events: none;
 }
+
+/*
+=====================================================================================
+Select Filters Media Queries
+=====================================================================================
+*/
+
+@media (max-width: 570px) {
+  /* Dropdowns stretch to fill the row for easy tapping */
+  .responsive.select-group {
+    width: 100%;
+  }
+
+  .responsive.select-group select {
+    width: 100%;
+    min-height: 44px;
+  }
+}
