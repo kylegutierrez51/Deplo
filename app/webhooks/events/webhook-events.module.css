@@ -1,7 +1,7 @@
 /*
-======================================================================================
+=====================================================================================
 Filters
-======================================================================================
+=====================================================================================
 */
 
 .filters {
@@ -12,12 +12,14 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
 .input-group {
   position: relative;
   width: 30%;
+  min-width: 365px;
 }
 
 .input-group ion-icon {
@@ -56,9 +58,9 @@ Filters
 
 
 /*
-======================================================================================
+=====================================================================================
 Table
-======================================================================================
+=====================================================================================
 */
 
 .table-border {
@@ -107,16 +109,16 @@ td .audit-action {
 }
 
 /*
-======================================================================================
+=====================================================================================
 Pagination
-======================================================================================
+=====================================================================================
 */
 
 .page-view {
   padding: 75px 150px 75px 0;
   position: relative;
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
   /* since .pages is position: absolute, it isn't moved to to the center. It does gain the benefits of align-items though */
 }
@@ -170,20 +172,19 @@ Pagination
 }
 
 /*
-======================================================================================
+=====================================================================================
 Webhook Event Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1408px
     1350px
-    1345px
     1195px
     1050px
-    1017px
      874px
+     570px
      514px
      400px
 */
@@ -227,29 +228,6 @@ Webhook Event Media Queries
   }
 }
 
-
-/* 
-============================================================
-1345px — Drop "Most recent" to row 2
-  Five filter items can't share a row with the sidebar + 150px
-  padding consuming so much space. Push the last filter below
-  so the search input stays at a readable width.
-============================================================ 
-*/
-@media (max-width: 1345px) {
-
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  /* Prevent the search input from shrinking below a usable width
-     regardless of how many items are on its row */
-  .input-group {
-    min-width: 180px;
-  }
-}
-
-
 /* 
 ============================================================
 1195px — Small laptops
@@ -261,11 +239,6 @@ Webhook Event Media Queries
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* Widen the search input slightly to compensate for less available width */
-  .input-group {
-    width: 35%;
   }
 
   /* When "Environment Type" wraps to two lines the row grows taller, but the flex
@@ -359,26 +332,6 @@ Webhook Event Media Queries
 ============================================================ 
 */
 @media (max-width: 874px) {
-
-  /* --- Subheader --- */
-
-  /* Stack the title group above the action button */
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  /* Ensure comfortable touch target for the Run Pipeline button */
-  .subheader button {
-    min-height: 44px;
-  }
-
-  /* Restore the base 25% width (overrides the 35% set at 1195px);
-     the content area is now full-width so 25% is already generous */
-  .input-group {
-    width: 25%;
-  }
-
   /* --- Table --- */
 
   /* Sidebar gone; content area jumps to ~860px — all 7 columns fit naturally.
@@ -410,36 +363,12 @@ Webhook Event Media Queries
   }
 }
 
-
 /* 
 ============================================================
-514px — Small phones
+570px - Vertically Stack Filters
 ============================================================ 
 */
-@media (max-width: 514px) {
-
-  /* --- Page content --- */
-
-  /* Tighter horizontal padding on very narrow screens; preserve top clearance
-     for the hamburger toggle button (set at 874px) */
-  :global(.page-content) {
-    padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Subheader --- */
-
-  /* Scale the page heading down so it doesn't overflow */
-  .subheader-inner h1 {
-    font-size: 22px;
-  }
-
-  /* Full-width touch-friendly button */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
+@media (max-width: 570px) {
   /* --- Filters --- */
 
   /* Search input spans the full row */
@@ -463,6 +392,22 @@ Webhook Event Media Queries
   }
 }
 
+
+/* 
+============================================================
+514px — Small phones
+============================================================ 
+*/
+@media (max-width: 514px) {
+
+  /* --- Page content --- */
+
+  /* Tighter horizontal padding on very narrow screens; preserve top clearance
+     for the hamburger toggle button (set at 874px) */
+  :global(.page-content) {
+    padding: 60px var(--space-md) 0;
+  }
+}
 
 /*
 ============================================================

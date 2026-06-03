@@ -12,12 +12,14 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
 .input-group {
   position: relative;
   width: 30%;
+  min-width: 300px;
 }
 
 .input-group ion-icon {
@@ -368,22 +370,20 @@ Pagination
 
 
 /*
-======================================================================================
+=====================================================================================
 Audit Log Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1530px
     1195px
-    1024px
-    961px
-    874px
-    768px
-    610px
-    598px
-    480px
+     874px
+     768px
+     610px
+     598px
+     480px
 */
 
 @media (max-width: 1530px) {
@@ -414,28 +414,9 @@ Audit Log Media Queries
   :global(.page-content) {
     padding: 0 60px;
   }
-
-  .input-group {
-    width: 40%;
-  }
-}
-
-@media (max-width: 1024px) {
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  .input-group {
-    min-width: 180px;
-  }
 }
 
 @media (max-width: 874px) {
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
   .approval-card {
     min-width: 0;
   }
@@ -452,10 +433,6 @@ Audit Log Media Queries
 }
 
 @media (max-width: 768px) {
-  .input-group {
-    width: 40%;
-  }
-
   .approval-card-row {
     display: flex;
     flex-direction: column;
@@ -520,10 +497,6 @@ Audit Log Media Queries
 @media (max-width: 480px) {
   :global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  .subheader-inner h1 {
-    font-size: 22px;
   }
 
   .approval-card {
