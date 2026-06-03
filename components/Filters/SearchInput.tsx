@@ -1,14 +1,15 @@
 "use client"
 
-import styles from './search-input.module.css'
+import defaultStyles from './search-input.module.css'
 import { useState } from 'react';
 
 interface SearchInputProps {
   placeholder: string;
+  styles?: Record<string, string>
 }
 
 
-export default function SearchInput({ placeholder }: SearchInputProps) {
+export default function SearchInput({ placeholder, styles=defaultStyles }: SearchInputProps) {
   const [text, setText] = useState<string>('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

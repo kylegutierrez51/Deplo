@@ -1,4 +1,4 @@
-import styles from './filter-select.module.css'
+import defaultStyles from './filter-select.module.css'
 
 
 interface FilterSelectProps {
@@ -6,10 +6,11 @@ interface FilterSelectProps {
   name: string;
   options: { value: string; label: string }[];
   defaultValue?: string
+  styles?: Record<string, string>
 }
 
 
-export default function FilterSelect({ id, name, options, defaultValue }: FilterSelectProps) {
+export default function FilterSelect({ id, name, options, defaultValue, styles=defaultStyles }: FilterSelectProps) {
   return (
     <div className={styles['select-group']}>
       <select id={id} name={name} defaultValue={defaultValue}>
