@@ -281,7 +281,7 @@ Run Detail Topbar
 */
 
 .topbar {
-  position: fixed;
+  position: absolute;
   top: 20px;
   left: 310px;
   display: flex;
