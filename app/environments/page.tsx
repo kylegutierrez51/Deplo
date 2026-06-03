@@ -2,7 +2,6 @@ import styles from './env.module.css';
 import Sidebar from "@/components/Sidebar/Sidebar"
 import Subheader from "@/components/Subheader";
 import StatCards from '@/components/Cards/StatCards';
-import FiltersBar from "@/components/Filters/FiltersBar"
 import FilterSelect from "@/components/Filters/FilterSelect"
 import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from '@/components/Pagination';

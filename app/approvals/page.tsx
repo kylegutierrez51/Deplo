@@ -2,7 +2,6 @@ import styles from "./approvals.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
 import StatCards from "@/components/Cards/StatCards";
-import FiltersBar from "@/components/Filters/FiltersBar"
 import FilterSelect from "@/components/Filters/FilterSelect"
 import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
@@ -31,7 +30,7 @@ export default function Approvals() {
             }
             responsive={false}>
           </StatCards>
-          
+
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
               <SearchInput

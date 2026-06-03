@@ -1,7 +1,6 @@
 import styles from "./run-history.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import FiltersBar from "@/components/Filters/FiltersBar"
 import FilterSelect from "@/components/Filters/FilterSelect"
 import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";

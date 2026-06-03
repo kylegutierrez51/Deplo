@@ -2,7 +2,6 @@ import styles from "./webhook-events.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import StatCards from "@/components/Cards/StatCards";
-import FiltersBar from "@/components/Filters/FiltersBar"
 import FilterSelect from "@/components/Filters/FilterSelect"
 import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
