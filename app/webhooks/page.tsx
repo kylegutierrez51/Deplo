@@ -1,6 +1,8 @@
 import styles from "./webhooks.module.css"
 import Subheader from "@/components/Subheader"
 import Sidebar from "@/components/Sidebar/Sidebar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination"
 
 
@@ -12,7 +14,7 @@ export default function Webhooks() {
       <main className="page-content">
         <div className="page-layout">
 
-          <Subheader 
+          <Subheader
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
             <button>
@@ -20,25 +22,26 @@ export default function Webhooks() {
               Add Webhook
             </button>
           </Subheader>
-      
+
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
-              <div className={styles['input-group']}>
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" placeholder="Search webhooks..." />
-              </div>
-              <div className={styles['select-group']}>
-                <select id="active" name="active">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className={styles['select-group']}>
-                <select id="recency" name="recency">
-                  <option value="recent">Most recently registered</option>
-                  <option value="production">Least recently registered</option>
-                </select>
-              </div>
+              <SearchInput placeholder={"Search webhooks..."} />
+              <FilterSelect
+                id={"active"} name={"active"}
+                options={
+                  [
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" }
+                  ]
+                } />
+              <FilterSelect
+                id={"recency"} name={"recency"}
+                options={
+                  [
+                    { value: "most-recent", label: "Most recently registered" },
+                    { value: "least-recent", label: "Least recently registered" }
+                  ]
+                } />
             </div>
           </div>
 

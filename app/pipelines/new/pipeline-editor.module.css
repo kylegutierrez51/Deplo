@@ -37,9 +37,9 @@ Pipeline Editor Sidebar Toggle Button
 }
 
 /*
-======================================================================================
+=====================================================================================
 Header
-======================================================================================
+=====================================================================================
 */
 
 .editor-header {
@@ -124,6 +124,8 @@ Header Buttons
   font-size: var(--font-size-lg);
   font-weight: bold;
   cursor: pointer;
+  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
+  white-space: nowrap; /* keep button text on one line regardless of container width */
 }
 
 .right-side button ion-icon {
@@ -155,9 +157,9 @@ Header Buttons
 }
 
 /*
-======================================================================================
+=====================================================================================
 Stage Sidebar
-======================================================================================
+=====================================================================================
 */
 
 .stage-sidebar label {
@@ -464,15 +466,12 @@ Stage Sidebar
 }
 
 /*
-======================================================================================
+=====================================================================================
 Pipeline Editor Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
-  pipeline-editor.css — Responsive media queries for pipeline-editor.html
-  Strategy: desktop-first (max-width), matching the existing codebase convention.
-
   Breakpoints:
     1024px — hide decorative header stats
      874px — collapse sidebar; full-width header and content
@@ -481,12 +480,14 @@ Pipeline Editor Media Queries
 */
 
 
-/* ============================================================
-   1024px — Small laptops / landscape tablets
-   The .nodes-edges counter ("7 stages • 6 connections") is pure
-   decoration and is the first element to sacrifice when the
-   header gets tight.
-   ============================================================ */
+/* 
+============================================================
+1024px — Small laptops / landscape tablets
+  The .nodes-edges counter ("7 stages • 6 connections") is 
+  pure decoration and is the first element to sacrifice when 
+  the header gets tight.
+============================================================ 
+*/
 @media (max-width: 1024px) {
 
   .nodes-edges {
@@ -495,10 +496,12 @@ Pipeline Editor Media Queries
 }
 
 
-/* ============================================================
-   874px — Collapse sidebar, full-width header and content
-   Matches the breakpoint used across all other pages.
-   ============================================================ */
+/* 
+============================================================
+874px — Collapse sidebar, full-width header and content
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Header --- */
@@ -518,12 +521,14 @@ Pipeline Editor Media Queries
 }
 
 
-/* ============================================================
-   768px — Tablets and large phones
-   The journal icon and its flanking dividers consume space
-   without adding information at this width. Drop them and
-   tighten the header's outer margins.
-   ============================================================ */
+/* 
+============================================================
+768px — Tablets and large phones
+  The journal icon and its flanking dividers consume space
+  without adding information at this width. Drop them and
+  tighten the header's outer margins.
+============================================================ 
+*/
 @media (max-width: 768px) {
 
   /* Decorative icon — serves no interaction at this breakpoint. */
@@ -553,11 +558,13 @@ Pipeline Editor Media Queries
 }
 
 
-/* ============================================================
-   480px — Small phones
-   Compact the header to icon-only buttons and expand the stage
-   sidebar to fill the full viewport so it doesn't slice the screen.
-   ============================================================ */
+/* 
+===================================================================
+480px — Small phones
+  Compact the header to icon-only buttons and expand the stage
+  sidebar to fill the full viewport so it doesn't slice the screen.
+===================================================================
+*/
 @media (max-width: 480px) {
 
   /* --- Header buttons: icon-only --- */

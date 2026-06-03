@@ -1,6 +1,8 @@
 import styles from "./secrets.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function Secrets() {
@@ -21,20 +23,20 @@ export default function Secrets() {
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Filter by key or notes..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All environment types</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
-              </select>
-            </div>
+            <SearchInput
+              placeholder={"Filter by key or notes..."} />
+            <FilterSelect
+              id={"environment"} name={"environment"}
+              options={
+                [
+                  { value: "all", label: "All environment types" },
+                  { value: "production", label: "Production" },
+                  { value: "staging", label: "Staging" },
+                  { value: "development", label: "Development" },
+                  { value: "preview", label: "Preview" },
+                  { value: "custom", label: "Custom" },
+                ]
+              } />
           </div>
         </div>
 
@@ -112,7 +114,7 @@ export default function Secrets() {
         </div>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
-        
+
       </main>
     </>
   )

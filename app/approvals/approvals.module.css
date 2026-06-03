@@ -12,15 +12,17 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
 .input-group {
   position: relative;
-  width: 25%;
+  width: 30%;
+  min-width: 300px;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -54,23 +56,6 @@ Filters
   pointer-events: none;
 }
 
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
-}
-
-/*
-================================
-Filters
-================================
-*/
-
 /*
 ============================================================
 Pagination overrides for centered layout
@@ -95,16 +80,6 @@ This one is tricky:
 :global(.page-layout) .pagination-row {
   padding-left: 0;
   gap: var(--space-md);
-}
-
-/* 
-======================
-Input Size Override
-======================
-*/
-.approvals-input-group {
-  position: relative;
-  width: 30%;
 }
 
 /*
@@ -395,22 +370,20 @@ Pagination
 
 
 /*
-======================================================================================
+=====================================================================================
 Audit Log Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1530px
     1195px
-    1024px
-    961px
-    874px
-    768px
-    610px
-    598px
-    480px
+     874px
+     768px
+     610px
+     598px
+     480px
 */
 
 @media (max-width: 1530px) {
@@ -441,28 +414,9 @@ Audit Log Media Queries
   :global(.page-content) {
     padding: 0 60px;
   }
-
-  .approvals-input-group {
-    width: 40%;
-  }
-}
-
-@media (max-width: 1024px) {
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  .approvals-input-group {
-    min-width: 180px;
-  }
 }
 
 @media (max-width: 874px) {
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
   .approval-card {
     min-width: 0;
   }
@@ -479,10 +433,6 @@ Audit Log Media Queries
 }
 
 @media (max-width: 768px) {
-  .approvals-input-group {
-    width: 40%;
-  }
-
   .approval-card-row {
     display: flex;
     flex-direction: column;
@@ -526,7 +476,7 @@ Audit Log Media Queries
 }
 
 @media (max-width: 598px) {
-  .approvals-input-group {
+  .input-group {
     width: 100%;
   }
 
@@ -539,7 +489,7 @@ Audit Log Media Queries
     min-height: 44px;
   }
 
-  .approvals-input {
+  .input-group input {
     min-height: 44px;
   }
 }
@@ -547,10 +497,6 @@ Audit Log Media Queries
 @media (max-width: 480px) {
   :global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  .subheader-inner h1 {
-    font-size: 22px;
   }
 
   .approval-card {

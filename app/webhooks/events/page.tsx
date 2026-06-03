@@ -2,6 +2,8 @@ import styles from "./webhook-events.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import StatCards from "@/components/Cards/StatCards";
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function Webhooks() {
@@ -11,7 +13,7 @@ export default function Webhooks() {
 
       <main className="page-content">
 
-        <Subheader 
+        <Subheader
           title="Webhook Events"
           subtitle="Incoming webhook deliveries from GitHub.">
           <button>
@@ -22,36 +24,41 @@ export default function Webhooks() {
 
         <StatCards
           cards={
-          [
-            { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
-            { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
-            { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
-            { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
-          ]
-        }>
+            [
+              { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
+              { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
+              { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
+              { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
+            ]
+          }>
         </StatCards>
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
-            <div className={styles['webhook-event-input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search repo, branch, commit, pipeline, delivery ID..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All statuses</option>
-                <option value="succeeded">Processed</option>
-                <option value="failed">Ignored</option>
-                <option value="running">Failed</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="event-type" name="event-type">
-                <option value="all">All event types</option>
-                <option value="today">push</option>
-                <option value="7days">pull_request</option>
-              </select>
-            </div>
+            <SearchInput
+              placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
+              styles={styles} />
+            <FilterSelect
+              id={"status"} name={"status"}
+              styles={styles}
+              options={
+                [
+                  { value: "all", label: "All statuses" },
+                  { value: "succeeded", label: "Processed" },
+                  { value: "failed", label: "Ignored" },
+                  { value: "running", label: "Failed" },
+                ]
+              } />
+            <FilterSelect
+              id={"event-type"} name={"event-type"}
+              styles={styles}
+              options={
+                [
+                  { value: "all", label: "All event types" },
+                  { value: "today", label: "push" },
+                  { value: "7days", label: "pull_request" },
+                ]
+              } />
           </div>
         </div>
 
@@ -75,7 +82,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--push">push</div></td>
                   <td>abcd/api-server</td>
                   <td>main</td>
-                  <td>a1b2c3d<br/><span>feat: add retry logic to webhook...</span></td>
+                  <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
                   <td>deploy-api</td>
                   <td>1h ago</td>
                 </tr>
@@ -84,7 +91,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--push">push</div></td>
                   <td>abcd/web-client</td>
                   <td>release/v2.4.0</td>
-                  <td>f4e5d6c<br/><span>feat: chore: bump dependencies to l...</span></td>
+                  <td>f4e5d6c<br /><span>feat: chore: bump dependencies to l...</span></td>
                   <td>build-frontend</td>
                   <td>2h ago</td>
                 </tr>
@@ -93,7 +100,7 @@ export default function Webhooks() {
                   <td><div className="pill pill--pull-request">pull_request</div></td>
                   <td>abcd/web-client</td>
                   <td>feature/auth-flow</td>
-                  <td>7890abc<br/><span>feat: add user role migration for...</span></td>
+                  <td>7890abc<br /><span>feat: add user role migration for...</span></td>
                   <td>db-migrate</td>
                   <td>3h ago</td>
                 </tr>

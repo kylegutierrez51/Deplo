@@ -1,6 +1,8 @@
 import styles from "./run-history.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function RunHistory() {
@@ -10,10 +12,10 @@ export default function RunHistory() {
 
       <main className="page-content">
 
-        <Subheader 
+        <Subheader
           title="Run History"
           subtitle="All pipeline executions across your projects."
-          badge={{ count: 3, label: 'Active'}}>
+          badge={{ count: 3, label: 'Active' }}>
           <button>
             <ion-icon name="caret-forward-outline"></ion-icon>
             Run Pipeline
@@ -22,44 +24,50 @@ export default function RunHistory() {
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search pipelines, commits..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All statuses</option>
-                <option value="succeeded">Queued</option>
-                <option value="failed">Running</option>
-                <option value="running">Succeeded</option>
-                <option value="queued">Failed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="trigger" name="trigger">
-                <option value="all">All triggers</option>
-                <option value="production">Webhook</option>
-                <option value="staging">Manual</option>
-                <option value="development">API</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All environment types</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="recency" name="recency">
-                <option value="recent">Most recent</option>
-                <option value="production">Least recent</option>
-              </select>
-            </div>
+            <SearchInput
+              placeholder={"Search pipelines, commits..."} />
+            <FilterSelect
+              id={"status"} name={"status"}
+              options={
+                [
+                  { value: "all", label: "All statuses" },
+                  { value: "queued", label: "Queued" },
+                  { value: "running", label: "Running" },
+                  { value: "succeeded", label: "Succeeded" },
+                  { value: "failed", label: "Failed" },
+                  { value: "cancelled", label: "Cancelled" },
+                ]
+              } />
+            <FilterSelect
+              id={"trigger"} name={"trigger"}
+              options={
+                [
+                  { value: "all", label: "All triggers" },
+                  { value: "webhook", label: "Webhook" },
+                  { value: "manual", label: "Manual" },
+                  { value: "api", label: "API" },
+                ]
+              } />
+            <FilterSelect
+              id={"environment"} name={"environment"}
+              options={
+                [
+                  { value: "all", label: "All environment types" },
+                  { value: "production", label: "Production" },
+                  { value: "staging", label: "Staging" },
+                  { value: "development", label: "Development" },
+                  { value: "preview", label: "Preview" },
+                  { value: "custom", label: "Custom" },
+                ]
+              } />
+            <FilterSelect
+              id={"recency"} name={"recency"}
+              options={
+                [
+                  { value: "most-recent", label: "Most recent" },
+                  { value: "least-recent", label: "Least recent" }
+                ]
+              } />
           </div>
         </div>
 

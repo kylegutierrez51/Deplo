@@ -2,6 +2,8 @@ import styles from "./approvals.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
 import StatCards from "@/components/Cards/StatCards";
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function Approvals() {
@@ -13,7 +15,7 @@ export default function Approvals() {
         <div className="page-layout">
 
 
-          <Subheader 
+          <Subheader
             title="Approvals"
             subtitle="Pipeline runs waiting for manual approval before proceeding.">
           </Subheader>
@@ -31,26 +33,31 @@ export default function Approvals() {
 
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
-              <div className={`${styles['input-group']} ${styles['approvals-input-group']}`}>
-                <ion-icon name="search-outline"></ion-icon>
-                <input className={styles['approvals-input']} type="text" placeholder="Search by pipeline, repo, branch, user..." />
-              </div>
-              <div className={styles['select-group']}>
-                <select id="environment" name="environment">
-                  <option value="all">All environment types</option>
-                  <option value="production">Production</option>
-                  <option value="staging">Staging</option>
-                  <option value="development">Development</option>
-                  <option value="preview">Preview</option>
-                  <option value="preview">Custom</option>
-                </select>
-              </div>
-              <div className={styles['select-group']}>
-                <select id="recency" name="recency">
-                  <option value="oldest">Oldest first</option>
-                  <option value="newest">Newest first</option>
-                </select>
-              </div>
+              <SearchInput
+                placeholder={"Search by pipeline, repo, branch, user..."}
+                styles={styles} />
+              <FilterSelect
+                id={"environment"} name={"environment"}
+                styles={styles}
+                options={
+                  [
+                    { value: "all", label: "All environment types" },
+                    { value: "production", label: "Production" },
+                    { value: "staging", label: "Staging" },
+                    { value: "development", label: "Development" },
+                    { value: "preview", label: "Preview" },
+                    { value: "custom", label: "Custom" },
+                  ]
+                } />
+              <FilterSelect
+                id={"recency"} name={"recency"}
+                styles={styles}
+                options={
+                  [
+                    { value: "most-recent", label: "Most recent" },
+                    { value: "least-recent", label: "Least recent" }
+                  ]
+                } />
             </div>
           </div>
 

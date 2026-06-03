@@ -1,7 +1,7 @@
 /*
-======================================================================================
+====================================================================================
 Run Detail
-======================================================================================
+====================================================================================
 */
 
 /*
@@ -575,9 +575,9 @@ Log Viewer
 }
 
 /*
-======================================================================================
+====================================================================================
 Filters
-======================================================================================
+====================================================================================
 */
 
 .filters {
@@ -588,15 +588,17 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
 .input-group {
   position: relative;
   width: 25%;
+  min-width: 350px;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -630,27 +632,13 @@ Filters
   pointer-events: none;
 }
 
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
-}
-
 /*
-======================================================================================
+====================================================================================
 Run Detail Media Queries
-======================================================================================
+====================================================================================
 */
 
 /*
-  run-detail.css — Responsive media queries for run-detail.html
-  Strategy: desktop-first (max-width), matching the existing codebase convention.
-
   Breakpoints:
     1450px — stack run-detail card (info above buttons); wrap commit row
     1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
@@ -700,12 +688,14 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   1300px — Job status pills wrap
-   At this width "0 Awaiting Approval" gets clipped against the
-   card edge. Allow the pill row to wrap so it drops to a second
-   line rather than overflow.
-   ============================================================ */
+/* 
+============================================================
+1300px — Job status pills wrap
+  At this width "0 Awaiting Approval" gets clipped against the
+  card edge. Allow the pill row to wrap so it drops to a second
+  line rather than overflow.
+============================================================ 
+*/
 @media (max-width: 1300px) {
 
   .job-statuses {
@@ -714,11 +704,13 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the pipeline graph
-   and run-detail card have room without the sidebar eating width.
-   ============================================================ */
+/* 
+============================================================
+1195px — Small laptops
+  Halve the heavy horizontal page padding so the pipeline graph
+  and run-detail card have room without the sidebar eating width.
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
   :global(.page-content) {
@@ -727,13 +719,15 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   1024px — Landscape tablets / small laptops
-   With sidebar (300px) + padding (120px) consuming 420px, the
-   pipeline graph (540px) starts to overflow below ~960px.
-   Shrink job cards to 200px so the graph (200+40+200 = 440px)
-   fits all the way down to the 874px sidebar-collapse breakpoint.
-   ============================================================ */
+/* 
+============================================================
+1024px — Landscape tablets / small laptops
+  With sidebar (300px) + padding (120px) consuming 420px, the
+  pipeline graph (540px) starts to overflow below ~960px.
+  Shrink job cards to 200px so the graph (200+40+200 = 440px)
+  fits all the way down to the 874px sidebar-collapse breakpoint. 
+============================================================ 
+*/
 @media (max-width: 1024px) {
 
   /* --- Pipeline graph --- */
@@ -757,11 +751,13 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   930px — Trigger row wrap (sidebar still present)
-   Same fix as 579px: the trigger description claims the full
-   first line so the two timing items drop to a second line.
-   ============================================================ */
+/* 
+============================================================
+930px — Trigger row wrap (sidebar still present)
+  Same fix as 579px: the trigger description claims the full
+  first line so the two timing items drop to a second line.
+============================================================ 
+*/
 @media (max-width: 930px) {
 
   .rdc-trigger-row {
@@ -775,10 +771,12 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   874px — Collapse sidebar, remove height constraint, reflow
-   Matches the breakpoint used across all other pages.
-   ============================================================ */
+/* 
+============================================================
+874px — Collapse sidebar, remove height constraint, reflow
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
 @media (max-width: 874px) {
 
   /* --- Page content --- */
@@ -826,11 +824,13 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   768px — Tablets
-   Sidebar is already off-screen (874px rule). Stack the run-detail
-   card so info and action buttons don't fight for horizontal space.
-   ============================================================ */
+/* 
+============================================================
+768px — Tablets
+  Sidebar is already off-screen (874px rule). Stack the run-detail
+  card so info and action buttons don't fight for horizontal space.
+============================================================ 
+*/
 @media (max-width: 768px) {
 
   /* --- Run detail card --- */
@@ -867,16 +867,19 @@ Run Detail Media Queries
   /* Widen the search input now that the sidebar is gone. */
   .input-group {
     width: 40%;
+    min-width: 200px;
   }
 }
 
 
-/* ============================================================
-   579px — Trigger row wrap
-   At this width "7m ago" gets clipped. Push the two timing items
-   (duration + relative time) to a second line while keeping
-   "Triggered by webhook" alone on line 1.
-   ============================================================ */
+/* 
+============================================================
+579px — Trigger row wrap
+  At this width "7m ago" gets clipped. Push the two timing items
+  (duration + relative time) to a second line while keeping
+  "Triggered by webhook" alone on line 1.
+============================================================ 
+*/
 @media (max-width: 579px) {
 
   .rdc-trigger-row {
@@ -892,9 +895,11 @@ Run Detail Media Queries
 }
 
 
-/* ============================================================
-   480px — Small phones
-   ============================================================ */
+/* 
+============================================================
+480px — Small phones
+============================================================ 
+*/
 @media (max-width: 480px) {
 
   /* --- Page content --- */
