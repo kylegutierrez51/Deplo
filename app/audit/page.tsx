@@ -60,41 +60,6 @@ export default function AuditLog() {
           </div>
         </div>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search events, users, resources..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All actions</option>
-                <option value="production">Pipeline</option>
-                <option value="staging">Runs</option>
-                <option value="development">Approvals</option>
-                <option value="preview">Secrets</option>
-                <option value="preview">Webhooks</option>
-                <option value="preview">Settings</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All time</option>
-                <option value="succeeded">Today</option>
-                <option value="failed">Last 7 days</option>
-                <option value="running">Last 30 days</option>
-                <option value="queued">Last 90 days</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="recency" name="recency">
-                <option value="recent">Most recent</option>
-                <option value="production">Least recent</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
             <table>

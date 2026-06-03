@@ -25,8 +25,6 @@ export default function Webhooks() {
 
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
-
-
               <SearchInput placeholder={"Search webhooks..."} />
               <FilterSelect
                 id={"active"} name={"active"}
@@ -44,27 +42,6 @@ export default function Webhooks() {
                     { value: "least-recent", label: "Least recently registered" }
                   ]
                 } />
-            </div>
-          </div>
-
-          <div className={styles.filters}>
-            <div className={styles['filters-bar']}>
-              <div className={styles['input-group']}>
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" placeholder="Search webhooks..." />
-              </div>
-              <div className={styles['select-group']}>
-                <select id="active" name="active">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className={styles['select-group']}>
-                <select id="recency" name="recency">
-                  <option value="most-recent">Most recently registered</option>
-                  <option value="least-recent">Least recently registered</option>
-                </select>
-              </div>
             </div>
           </div>
 

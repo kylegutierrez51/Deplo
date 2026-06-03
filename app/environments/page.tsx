@@ -63,34 +63,6 @@ export default function Environments() {
           </div>
         </div>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search environments..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All environment types</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All time</option>
-                <option value="today">Today</option>
-                <option value="7days">Last 7 days</option>
-                <option value="30days">Last 30 days</option>
-                <option value="90days">Last 90 days</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
             <table>

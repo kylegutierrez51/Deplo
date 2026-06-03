@@ -58,35 +58,6 @@ export default function PipelineList() {
           </div>
         </div>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search pipelines..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All statuses</option>
-                <option value="succeeded">Queued</option>
-                <option value="failed">Running</option>
-                <option value="running">Succeeded</option>
-                <option value="queued">Failed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All environment types</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
             <table>

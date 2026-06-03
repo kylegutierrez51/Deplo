@@ -40,25 +40,6 @@ export default function Secrets() {
           </div>
         </div>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <div className={styles['input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Filter by key or notes..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="all">All environment types</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
             <table>
