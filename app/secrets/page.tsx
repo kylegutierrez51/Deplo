@@ -1,6 +1,9 @@
 import styles from "./secrets.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function Secrets() {
@@ -19,6 +22,23 @@ export default function Secrets() {
           </button>
         </Subheader>
 
+        <FiltersBar>
+          <SearchInput 
+            placeholder={"Filter by key or notes..."}/>
+          <FilterSelect 
+            id={"environment"} name={"environment"} 
+            options={
+              [
+                { value : "all", label: "All environment types" },
+                { value : "production", label: "Production" },
+                { value : "staging", label: "Staging" },
+                { value : "development", label: "Development" },
+                { value : "preview", label: "Preview" },
+                { value : "custom", label: "Custom" },
+              ]
+            }/>
+        </FiltersBar>
+
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
             <div className={styles['input-group']}>
@@ -32,7 +52,7 @@ export default function Secrets() {
                 <option value="staging">Staging</option>
                 <option value="development">Development</option>
                 <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
+                <option value="custom">Custom</option>
               </select>
             </div>
           </div>

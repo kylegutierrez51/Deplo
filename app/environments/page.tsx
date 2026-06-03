@@ -2,6 +2,9 @@ import styles from './env.module.css';
 import Sidebar from "@/components/Sidebar/Sidebar"
 import Subheader from "@/components/Subheader";
 import StatCards from '@/components/Cards/StatCards';
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from '@/components/Pagination';
 
 export default function Environments() {
@@ -31,6 +34,34 @@ export default function Environments() {
         }>
         </StatCards>
 
+        <FiltersBar>
+          <SearchInput
+            placeholder={"Search environments..."} />
+          <FilterSelect 
+            id={"environment"} name={"environment"} 
+            options={
+              [
+                { value : "all", label: "All environment types" },
+                { value : "production", label: "Production" },
+                { value : "staging", label: "Staging" },
+                { value : "development", label: "Development" },
+                { value : "preview", label: "Preview" },
+                { value : "custom", label: "Custom" },
+              ]
+            }/>
+          <FilterSelect
+            id={"status"} name={"status"}
+            options={
+              [
+                { value: "all", label: "All time" },
+                { value: "today", label: "Today" },
+                { value: "7days", label: "Last 7 days" },
+                { value: "30days", label: "Last 30 days" },
+                { value: "90days", label: "Last 90 days" },
+              ]
+            }/>
+        </FiltersBar>
+        
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
             <div className={styles['input-group']}>

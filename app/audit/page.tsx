@@ -1,6 +1,9 @@
 import styles from "./audit.module.css";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function AuditLog() {
@@ -19,6 +22,43 @@ export default function AuditLog() {
           </button>
         </Subheader>
 
+        <FiltersBar>
+          <SearchInput
+            placeholder={"Search events, users, resources..."} />
+          <FilterSelect 
+            id={"actions"} name={"actions"} 
+            options={
+              [
+                { value : "all", label: "All actions" },
+                { value : "pipeline", label: "Pipeline" },
+                { value : "run", label: "Runs" },
+                { value : "approval", label: "Approvals" },
+                { value : "secret", label: "Secrets" },
+                { value : "webhook", label: "Webhooks" },
+                { value : "settings", label: "Settings" },
+              ]
+            }/>
+          <FilterSelect
+            id={"status"} name={"status"}
+            options={
+              [
+                { value: "all", label: "All time" },
+                { value: "today", label: "Today" },
+                { value: "7days", label: "Last 7 days" },
+                { value: "30days", label: "Last 30 days" },
+                { value: "90days", label: "Last 90 days" },
+              ]
+            }/>
+          <FilterSelect 
+            id={"recency"} name={"recency"} 
+            options={
+              [
+                { value : "most-recent", label: "Most recent" },
+                { value : "least-recent", label: "Least recent" }
+              ]
+            }/>
+        </FiltersBar>
+        
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
             <div className={styles['input-group']}>

@@ -2,6 +2,8 @@
 
 import styles from "./pipeline-editor.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+
 import { useState } from "react"
 
 export default function PipelineEditor() {
@@ -24,15 +26,17 @@ export default function PipelineEditor() {
               <div>|</div>
               <div className={styles.nowrap}>deploy-api</div>
             </div>
-            <div className={styles['select-group']}>
-              <select id="environment" name="environment">
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-                <option value="preview">Preview</option>
-                <option value="preview">Custom</option>
-              </select>
-            </div>
+            <FilterSelect 
+              id={"environment"} name={"environment"} 
+              options={
+                [
+                  { value : "production", label: "Production" },
+                  { value : "staging", label: "Staging" },
+                  { value : "development", label: "Development" },
+                  { value : "preview", label: "Preview" },
+                  { value : "custom", label: "Custom" },
+                ]
+              }/>
             <div className={styles['nodes-edges']}>
               <span className="nowrap">7 stages</span>
               <span>&bull;</span>

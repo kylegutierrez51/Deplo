@@ -2,6 +2,9 @@ import styles from "./pipelines.module.css"
 
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function PipelineList() {
@@ -25,6 +28,34 @@ export default function PipelineList() {
           </div>
         </Subheader>
 
+        <FiltersBar>
+          <SearchInput
+            placeholder={"Search pipelines..."} />
+          <FilterSelect
+            id={"status"} name={"status"}
+            options={
+              [
+                { value: "all", label: "All statuses" },
+                { value: "queued", label: "Queued" },
+                { value: "running", label: "Running" },
+                { value: "succeeded", label: "Succeeded" },
+                { value: "failed", label: "Failed" },
+                { value: "cancelled", label: "Cancelled" },
+              ]
+            }/>
+          <FilterSelect 
+            id={"environment"} name={"environment"} 
+            options={
+              [
+                { value : "all", label: "All environment types" },
+                { value : "production", label: "Production" },
+                { value : "staging", label: "Staging" },
+                { value : "development", label: "Development" },
+                { value : "preview", label: "Preview" },
+                { value : "custom", label: "Custom" },
+              ]
+            }/>
+        </FiltersBar>
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
             <div className={styles['input-group']}>

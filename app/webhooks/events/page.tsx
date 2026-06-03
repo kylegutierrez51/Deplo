@@ -2,6 +2,9 @@ import styles from "./webhook-events.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import StatCards from "@/components/Cards/StatCards";
+import FiltersBar from "@/components/Filters/FiltersBar"
+import FilterSelect from "@/components/Filters/FilterSelect"
+import SearchInput from "@/components/Filters/SearchInput"
 import Pagination from "@/components/Pagination";
 
 export default function Webhooks() {
@@ -31,29 +34,32 @@ export default function Webhooks() {
         }>
         </StatCards>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <div className={styles['webhook-event-input-group']}>
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search repo, branch, commit, pipeline, delivery ID..." />
-            </div>
-            <div className={styles['select-group']}>
-              <select id="status" name="status">
-                <option value="all">All statuses</option>
-                <option value="succeeded">Processed</option>
-                <option value="failed">Ignored</option>
-                <option value="running">Failed</option>
-              </select>
-            </div>
-            <div className={styles['select-group']}>
-              <select id="event-type" name="event-type">
-                <option value="all">All event types</option>
-                <option value="today">push</option>
-                <option value="7days">pull_request</option>
-              </select>
-            </div>
-          </div>
-        </div>
+          <FiltersBar>
+            <SearchInput
+              placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
+              styles={styles}/>
+            <FilterSelect
+              id={"status"} name={"status"}
+              styles={styles}
+              options={
+                [
+                  { value : "all", label: "All statuses" },
+                  { value : "succeeded", label: "Processed" },
+                  { value : "failed", label: "Ignored" },
+                  { value : "running", label: "Failed" },
+                ]
+              }/>
+            <FilterSelect
+              id={"event-type"} name={"event-type"}
+              styles={styles}
+              options={
+                [
+                  { value : "all", label: "All event types" },
+                  { value : "today", label: "push" },
+                  { value : "7days", label: "pull_request" },
+                ]
+              }/>
+          </FiltersBar>
 
         <div className={styles['table-wrapper']}>
           <div className={styles['table-border']}>
