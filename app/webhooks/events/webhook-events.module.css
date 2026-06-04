@@ -63,16 +63,6 @@ Table
 =====================================================================================
 */
 
-.table-border {
-  border-left: 1px solid var(--color-border-mid);
-  border-right: 1px solid var(--color-border-mid);
-  border-bottom: 1px solid var(--color-border-mid);
-  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-sm);
-  overflow: hidden;
-}
-
-/* Table element base styles live in general.css */
-
 /* below 3 are needed to center the .filter class to the center of its row */
 table tbody td.filter {
   /* these 2 styles (display, vertical-align) handle vertical centering (the cell stretches to match the tallest sibling cell in the row) */
@@ -89,23 +79,6 @@ table tbody td.filter ion-icon {
   /* The margin: 0 4px on ion-icon creates horizontal spacing on both sides of text and ion-icon. For plain HTML and CSS, it's not needed. */
   vertical-align: middle;
   margin: 0 4px;
-}
-
-
-/* Secrets */
-td.filter ion-icon[name="eye-outline"] {
-  cursor: pointer;
-}
-
-td.filter ion-icon[name="copy-outline"] {
-  cursor: pointer;
-}
-
-/* Audit Log */
-td .audit-action {
-  margin-left: var(--space-sm);
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-body);
 }
 
 /*
@@ -179,8 +152,6 @@ Webhook Event Media Queries
 
 /*
   Breakpoints:
-    1408px
-    1350px
     1195px
     1050px
      874px
@@ -188,45 +159,6 @@ Webhook Event Media Queries
      514px
      400px
 */
-
-
-/* 
-============================================================
-1408px — Enable table horizontal scroll
-  The webhook events table overflows its container at this width.
-  overflow: auto on .table-border (not .table-wrapper) so the
-  scrollbar isn't clipped by table.css's overflow: hidden.
-============================================================ 
-*/
-@media (max-width: 1408px) {
-
-  .table-border {
-    overflow: auto;
-  }
-}
-
-
-/* 
-============================================================
-1350px — Pagination overlap fix
-  The absolute-positioned "Showing X of Y" label starts
-  colliding with the centered pagination row at this width.
-  Switch .page-view to space-between so both ends are clear.
-============================================================ 
-*/
-@media (max-width: 1350px) {
-  /* --- Table --- */
-
-  /* The secrets table overflows at ~1276px (content = 676px) and again at ~1097px
-     (content = 677px after padding drops at 1195px). overflow: auto only renders a
-     scrollbar when there is actual overflow, so setting it here is safe at all widths
-     below 1350px. Placed on .table-border rather than .table-wrapper because
-     table.css sets overflow: hidden on .table-border, clipping the table before
-     .table-wrapper can scroll it. */
-  .table-border {
-    overflow: auto;
-  }
-}
 
 /* 
 ============================================================
@@ -239,15 +171,6 @@ Webhook Event Media Queries
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* When "Environment Type" wraps to two lines the row grows taller, but the flex
-     container on th.filter doesn't fill that height — so align-items: center has
-     nothing to center against and the content drifts to the top.
-     height: 1px on the tr is a CSS table trick that enables height: 100% on cells;
-     without it, percentage heights on table cells are treated as auto. */
-  :global(table thead tr) {
-    height: 1px;
   }
 
   table thead th.filter {
@@ -333,13 +256,6 @@ Webhook Event Media Queries
 */
 @media (max-width: 874px) {
   /* --- Table --- */
-
-  /* Sidebar gone; content area jumps to ~860px — all 7 columns fit naturally.
-     Undo the column caps and restore pills to their standard size. */
-  :global(table th),
-  :global(table td) {
-    padding: var(--space-gap-md) var(--space-sm);
-  }
 
   table .pill {
     padding: 2px var(--space-sm);

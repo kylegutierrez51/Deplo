@@ -2,8 +2,9 @@ import styles from "./pipelines.module.css"
 
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
+import FilterSelect from "@/components/Filters/FilterSelect";
+import SearchInput from "@/components/Filters/SearchInput";
+import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 
 export default function PipelineList() {
@@ -58,52 +59,39 @@ export default function PipelineList() {
           </div>
         </div>
 
-        <div className={styles['table-wrapper']}>
-          <div className={styles['table-border']}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Pipeline</th>
-                  <th>Repository</th>
-                  <th>Environment Type</th>
-                  <th>Last Run</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><div className="pill pill--running">Running</div> build-frontend <br /><span className="nowrap">79 runs</span></td>
-                  <td>abcd/web-client<br /><span>f4e5d6c feat: add retry logic to webhook...</span></td>
-                  <td><div className="pill pill--staging">Staging</div></td>
-                  <td className="nowrap">1h ago <br /><span className="nowrap">2m 14s</span></td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span className="nowrap">182 runs</span></td>
-                  <td>abcd/api-server<br /><span>a1b2c3d fix: resolve connection pool exh...</span></td>
-                  <td><div className="pill pill--production">Production</div></td>
-                  <td className="nowrap">1h ago <br /><span className="nowrap">7m 7s</span></td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--failed">Failed</div> release-mobile <br /><span className="nowrap">68 runs</span></td>
-                  <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className="pill pill--custom">Custom</div></td>
-                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--queued">Queued</div> release-mobile <br /><span className="nowrap">54 runs</span></td>
-                  <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className="pill pill--preview">Preview</div></td>
-                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--cancelled">Cancelled</div> release-mobile <br /><span className="nowrap">22 runs</span></td>
-                  <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
-                  <td><div className="pill pill--development">Development</div></td>
-                  <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          columns={["Pipeline", "Repository", "Environment Type", "Last Run"]}>
+          <tr>
+            <td><div className="pill pill--running">Running</div> build-frontend <br /><span className="nowrap">79 runs</span></td>
+            <td>abcd/web-client<br /><span>f4e5d6c feat: add retry logic to webhook...</span></td>
+            <td><div className="pill pill--staging">Staging</div></td>
+            <td className="nowrap">1h ago <br /><span className="nowrap">2m 14s</span></td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span className="nowrap">182 runs</span></td>
+            <td>abcd/api-server<br /><span>a1b2c3d fix: resolve connection pool exh...</span></td>
+            <td><div className="pill pill--production">Production</div></td>
+            <td className="nowrap">1h ago <br /><span className="nowrap">7m 7s</span></td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--failed">Failed</div> release-mobile <br /><span className="nowrap">68 runs</span></td>
+            <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
+            <td><div className="pill pill--custom">Custom</div></td>
+            <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--queued">Queued</div> release-mobile <br /><span className="nowrap">54 runs</span></td>
+            <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
+            <td><div className="pill pill--preview">Preview</div></td>
+            <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--cancelled">Cancelled</div> release-mobile <br /><span className="nowrap">22 runs</span></td>
+            <td>abcd/mobile-app<br /><span>7890abc chore: bump dependencies to l...</span></td>
+            <td><div className="pill pill--development">Development</div></td>
+            <td className="nowrap">2h ago <br /><span className="nowrap">5m 12s</span></td>
+          </tr>
+        </DataTable>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
