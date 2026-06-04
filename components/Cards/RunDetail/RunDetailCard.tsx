@@ -1,5 +1,3 @@
-"use client"
-
 import styles from './run-detail-card.module.css'
 import RunDetailActions from './RunDetailActions';
 
