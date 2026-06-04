@@ -1,8 +1,9 @@
 import styles from "./audit.module.css";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
+import FilterSelect from "@/components/Filters/FilterSelect";
+import SearchInput from "@/components/Filters/SearchInput";
+import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 
 export default function AuditLog() {
@@ -60,40 +61,27 @@ export default function AuditLog() {
           </div>
         </div>
 
-        <div className={styles['table-wrapper']}>
-          <div className={styles['table-border']}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Resource</th>
-                  <th>Actor</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Run Completed</td>
-                  <td>deploy-api #482 <span className={styles['audit-action']}>[PipelineRun]</span></td>
-                  <td>system</td>
-                  <td className={styles.nowrap}>10d ago</td>
-                </tr>
-                <tr>
-                  <td>Pipeline Triggered</td>
-                  <td>deploy-api #482 <span className={styles['audit-action']}>[Pipeline]</span></td>
-                  <td>sarah.chen</td>
-                  <td className={styles.nowrap}>10d ago</td>
-                </tr>
-                <tr>
-                  <td>Webhook Received</td>
-                  <td>push → acme/api-server <span className={styles['audit-action']}>[WebhookEvent]</span></td>
-                  <td>github</td>
-                  <td className={styles.nowrap}>11d ago</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          columns={["Action", "Resource", "Actor", "Time"]}>
+          <tr>
+            <td>Run Completed</td>
+            <td>deploy-api #482 <span className={styles['audit-action']}>[PipelineRun]</span></td>
+            <td>system</td>
+            <td className={styles.nowrap}>10d ago</td>
+          </tr>
+          <tr>
+            <td>Pipeline Triggered</td>
+            <td>deploy-api #482 <span className={styles['audit-action']}>[Pipeline]</span></td>
+            <td>sarah.chen</td>
+            <td className={styles.nowrap}>10d ago</td>
+          </tr>
+          <tr>
+            <td>Webhook Received</td>
+            <td>push → acme/api-server <span className={styles['audit-action']}>[WebhookEvent]</span></td>
+            <td>github</td>
+            <td className={styles.nowrap}>11d ago</td>
+          </tr>
+        </DataTable>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 

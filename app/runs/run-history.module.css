@@ -61,16 +61,6 @@ Table
 =====================================================================================
 */
 
-.table-border {
-  border-left: 1px solid var(--color-border-mid);
-  border-right: 1px solid var(--color-border-mid);
-  border-bottom: 1px solid var(--color-border-mid);
-  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-sm);
-  overflow: hidden;
-}
-
-/* Table element base styles live in general.css */
-
 /* below 3 are needed to center the .filter class to the center of its row */
 table tbody td.filter {
   /* these 2 styles (display, vertical-align) handle vertical centering (the cell stretches to match the tallest sibling cell in the row) */
@@ -87,23 +77,6 @@ table tbody td.filter ion-icon {
   /* The margin: 0 4px on ion-icon creates horizontal spacing on both sides of text and ion-icon. For plain HTML and CSS, it's not needed. */
   vertical-align: middle;
   margin: 0 4px;
-}
-
-
-/* Secrets */
-td.filter ion-icon[name="eye-outline"] {
-  cursor: pointer;
-}
-
-td.filter ion-icon[name="copy-outline"] {
-  cursor: pointer;
-}
-
-/* Audit Log */
-td .audit-action {
-  margin-left: var(--space-sm);
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-body);
 }
 
 /*
@@ -145,24 +118,6 @@ Run History Media Queries
 
   table thead th.filter {
     height: 100%;
-  }
-}
-
-/* 
-============================================================
-1017px
-============================================================ 
-*/
-@media (max-width: 1017px) {
-  /* --- Table --- */
-
-  /* overflow goes on .table-border — not .table-wrapper — because table.css sets
-     overflow: hidden on .table-border, which clips the table before .table-wrapper
-     ever sees an overflow to scroll. overflow: auto (shorthand) fully overrides
-     the hidden shorthand from table.css; overflow-x: auto (longhand) can lose
-     to the shorthand in some browsers. */
-  .table-border {
-    overflow: auto;
   }
 }
 

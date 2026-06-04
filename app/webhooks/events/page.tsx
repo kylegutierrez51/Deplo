@@ -2,8 +2,9 @@ import styles from "./webhook-events.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import StatCards from "@/components/Cards/StatCards";
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
+import FilterSelect from "@/components/Filters/FilterSelect";
+import SearchInput from "@/components/Filters/SearchInput";
+import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 
 export default function Webhooks() {
@@ -62,52 +63,36 @@ export default function Webhooks() {
           </div>
         </div>
 
-        <div className={styles['table-wrapper']}>
-          <div className={styles['table-border']}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Event</th>
-                  <th>Repository</th>
-                  <th>Branch</th>
-                  <th>Commit</th>
-                  <th>Pipeline</th>
-                  <th>Received</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><div className="pill pill--processed">Processed</div></td>
-                  <td><div className="pill pill--push">push</div></td>
-                  <td>abcd/api-server</td>
-                  <td>main</td>
-                  <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
-                  <td>deploy-api</td>
-                  <td>1h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--ignored">Ignored</div></td>
-                  <td><div className="pill pill--push">push</div></td>
-                  <td>abcd/web-client</td>
-                  <td>release/v2.4.0</td>
-                  <td>f4e5d6c<br /><span>feat: chore: bump dependencies to l...</span></td>
-                  <td>build-frontend</td>
-                  <td>2h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--failed">Failed</div></td>
-                  <td><div className="pill pill--pull-request">pull_request</div></td>
-                  <td>abcd/web-client</td>
-                  <td>feature/auth-flow</td>
-                  <td>7890abc<br /><span>feat: add user role migration for...</span></td>
-                  <td>db-migrate</td>
-                  <td>3h ago</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
+          <tr>
+            <td><div className="pill pill--processed">Processed</div></td>
+            <td><div className="pill pill--push">push</div></td>
+            <td>abcd/api-server</td>
+            <td>main</td>
+            <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
+            <td>deploy-api</td>
+            <td>1h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--ignored">Ignored</div></td>
+            <td><div className="pill pill--push">push</div></td>
+            <td>abcd/web-client</td>
+            <td>release/v2.4.0</td>
+            <td>f4e5d6c<br /><span>feat: chore: bump dependencies to l...</span></td>
+            <td>build-frontend</td>
+            <td>2h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--failed">Failed</div></td>
+            <td><div className="pill pill--pull-request">pull_request</div></td>
+            <td>abcd/web-client</td>
+            <td>feature/auth-flow</td>
+            <td>7890abc<br /><span>feat: add user role migration for...</span></td>
+            <td>db-migrate</td>
+            <td>3h ago</td>
+          </tr>
+        </DataTable>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 

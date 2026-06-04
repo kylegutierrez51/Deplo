@@ -1,8 +1,9 @@
 import styles from "./run-history.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
+import FilterSelect from "@/components/Filters/FilterSelect";
+import SearchInput from "@/components/Filters/SearchInput";
+import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 
 export default function RunHistory() {
@@ -70,74 +71,60 @@ export default function RunHistory() {
               } />
           </div>
         </div>
-
-        <div className={styles['table-wrapper']}>
-          <div className={styles['table-border']}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Pipeline</th>
-                  <th>Environment Type</th>
-                  <th>Trigger</th>
-                  <th>Duration</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><div className="pill pill--queued">Queued</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
-                  <td><div className="pill pill--production">Production</div></td>
-                  <td><div className="pill pill--webhook">Webhook</div></td>
-                  <td className={styles.filter}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className="nowrap">-</div>
-                  </td>
-                  <td className="nowrap">6h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--running">Running</div> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
-                  <td><div className="pill pill--staging">Staging</div></td>
-                  <td><div className="pill pill--manual">Manual</div></td>
-                  <td className={styles.filter}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className="nowrap">6h 1m</div>
-                  </td>
-                  <td className="nowrap">6h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className="pill pill--development">Development</div></td>
-                  <td><div className="pill pill--api">API</div></td>
-                  <td className={styles.filter}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className="nowrap">8m 0s</div>
-                  </td>
-                  <td className="nowrap">11h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--failed">Failed</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className="pill pill--preview">Preview</div></td>
-                  <td><div className="pill pill--webhook">Webhook</div></td>
-                  <td className={styles.filter}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className="nowrap">8m 0s</div>
-                  </td>
-                  <td className="nowrap">11h ago</td>
-                </tr>
-                <tr>
-                  <td><div className="pill pill--cancelled">Cancelled</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-                  <td><div className="pill pill--custom">Custom</div></td>
-                  <td><div className="pill pill--manual">Manual</div></td>
-                  <td className={styles.filter}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <div className="nowrap">8m 0s</div>
-                  </td>
-                  <td className="nowrap">11h ago</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        
+        <DataTable
+          columns={["Pipeline", "Environment Type", "Trigger", "Duration", "Time"]}>
+          <tr>
+            <td><div className="pill pill--queued">Queued</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
+            <td><div className="pill pill--production">Production</div></td>
+            <td><div className="pill pill--webhook">Webhook</div></td>
+            <td className={styles.filter}>
+              <ion-icon name="stopwatch-outline"></ion-icon>
+              <div className="nowrap">-</div>
+            </td>
+            <td className="nowrap">6h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--running">Running</div> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
+            <td><div className="pill pill--staging">Staging</div></td>
+            <td><div className="pill pill--manual">Manual</div></td>
+            <td className={styles.filter}>
+              <ion-icon name="stopwatch-outline"></ion-icon>
+              <div className="nowrap">6h 1m</div>
+            </td>
+            <td className="nowrap">6h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><div className="pill pill--development">Development</div></td>
+            <td><div className="pill pill--api">API</div></td>
+            <td className={styles.filter}>
+              <ion-icon name="stopwatch-outline"></ion-icon>
+              <div className="nowrap">8m 0s</div>
+            </td>
+            <td className="nowrap">11h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--failed">Failed</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><div className="pill pill--preview">Preview</div></td>
+            <td><div className="pill pill--webhook">Webhook</div></td>
+            <td className={styles.filter}>
+              <ion-icon name="stopwatch-outline"></ion-icon>
+              <div className="nowrap">8m 0s</div>
+            </td>
+            <td className="nowrap">11h ago</td>
+          </tr>
+          <tr>
+            <td><div className="pill pill--cancelled">Cancelled</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><div className="pill pill--custom">Custom</div></td>
+            <td><div className="pill pill--manual">Manual</div></td>
+            <td className={styles.filter}>
+              <ion-icon name="stopwatch-outline"></ion-icon>
+              <div className="nowrap">8m 0s</div>
+            </td>
+            <td className="nowrap">11h ago</td>
+          </tr>
+        </DataTable>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 

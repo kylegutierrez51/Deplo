@@ -61,16 +61,6 @@ Table
 =====================================================================================
 */
 
-.table-border {
-  border-left: 1px solid var(--color-border-mid);
-  border-right: 1px solid var(--color-border-mid);
-  border-bottom: 1px solid var(--color-border-mid);
-  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-sm);
-  overflow: hidden;
-}
-
-/* Table element base styles live in general.css */
-
 /* below 3 are needed to center the .filter class to the center of its row */
 table tbody td.filter {
   /* these 2 styles (display, vertical-align) handle vertical centering (the cell stretches to match the tallest sibling cell in the row) */
@@ -89,16 +79,6 @@ table tbody td.filter ion-icon {
   margin: 0 4px;
 }
 
-
-/* Secrets */
-td.filter ion-icon[name="eye-outline"] {
-  cursor: pointer;
-}
-
-td.filter ion-icon[name="copy-outline"] {
-  cursor: pointer;
-}
-
 /* Audit Log */
 td .audit-action {
   margin-left: var(--space-sm);
@@ -114,31 +94,9 @@ Audit Log Media Queries
 
 /*
   Breakpoints:
-    1350px
     1195px — reduce heavy horizontal padding
      514px — phone optimizations
 */
-
-
-/* 
-============================================================
-1350px
-============================================================ 
-*/
-@media (max-width: 1350px) {
-
-  /* --- Table --- */
-
-  /* The secrets table overflows at ~1276px (content = 676px) and again at ~1097px
-     (content = 677px after padding drops at 1195px). overflow: auto only renders a
-     scrollbar when there is actual overflow, so setting it here is safe at all widths
-     below 1350px. Placed on .table-border rather than .table-wrapper because
-     table.css sets overflow: hidden on .table-border, clipping the table before
-     .table-wrapper can scroll it. */
-  .table-border {
-    overflow: auto;
-  }
-}
 
 /* 
 ============================================================
@@ -151,15 +109,6 @@ Audit Log Media Queries
 
   :global(.page-content) {
     padding: 0 60px;
-  }
-
-  /* When "Environment Type" wraps to two lines the row grows taller, but the flex
-     container on th.filter doesn't fill that height — so align-items: center has
-     nothing to center against and the content drifts to the top.
-     height: 1px on the tr is a CSS table trick that enables height: 100% on cells;
-     without it, percentage heights on table cells are treated as auto. */
-  :global(table thead tr) {
-    height: 1px;
   }
 
   table thead th.filter {
