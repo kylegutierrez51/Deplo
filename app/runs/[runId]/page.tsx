@@ -1,16 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import styles from "./run-detail.module.css"
-import Sidebar from "@/components/Sidebar/Sidebar"
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
-import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard"
+import { useState } from "react";
+import styles from "./run-detail.module.css";
+import Sidebar from "@/components/Sidebar/Sidebar";
+import TabsRow from "@/components/RunDetail/TabsRow";
+import FilterSelect from "@/components/Filters/FilterSelect";
+import SearchInput from "@/components/Filters/SearchInput";
+import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard";
 
 type Tab = 'overview' | 'logs'
 
 export default function RunDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const toggleOverview = () => setActiveTab('overview')
+  const toggleLogs = () => setActiveTab('logs')
   return (
     <>
       <Sidebar activeItem="run-detail" />
@@ -33,24 +36,11 @@ export default function RunDetail() {
             timeAgo={"7m"}
           />
 
-          <div className={styles.sections}>
-            <div className={styles['tabs-row']}>
-              <button
-                className={`${styles.section} ${activeTab === 'overview' ? styles.active : ''}`}
-                onClick={() => setActiveTab('overview')}
-              >
-                <ion-icon name="layers-outline"></ion-icon>
-                <span>Overview</span>
-              </button>
-              <button
-                className={`${styles.section} ${activeTab === 'logs' ? styles.active : ''}`}
-                onClick={() => setActiveTab('logs')}
-              >
-                <ion-icon name="receipt-outline"></ion-icon>
-                <span>Logs</span>
-              </button>
-            </div>
-          </div>
+          <TabsRow 
+            activeTab={activeTab}
+            toggleOverview={toggleOverview}
+            toggleLogs={toggleLogs}
+          />
 
           <section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
             <div className={styles['job-statuses']}>
