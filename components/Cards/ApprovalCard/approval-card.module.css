@@ -1,0 +1,175 @@
+/*
+===================================
+Approval Cards
+===================================
+*/
+
+.approval-card ion-icon {
+  font-size: 19px;
+  color: var(--icon-clr);
+}
+
+.approval-card {
+  width: 100%;
+  min-width: 536px;
+  max-width: var(--width-xl);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-md);
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
+  border: 1px solid var(--light-gray-clr);
+  background: var(--dark-clr-2);
+}
+
+.approval-card:first-of-type {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.approval-card:last-of-type {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.approvals-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.approval-card-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  justify-content: space-between;
+  row-gap: var(--space-sm);
+}
+
+.pipeline-name-type {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.pipeline-name-type span {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.feature-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.feature-info .feature-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.feature-info .feature-id span {
+  color: var(--blue-clr);
+}
+
+.feature-info .feature {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-body);
+}
+
+.stage-view {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.stage-view > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.stage-view > div:hover {
+  cursor: pointer;
+}
+
+/* Stages */
+.stages {
+  border-top: var(--border-width-md) solid var(--light-gray-clr);
+  padding-top: var(--space-sm);
+  overflow-x: auto;
+  padding-bottom: var(--space-md);
+}
+
+.stages::-webkit-scrollbar {
+  height: 5px;
+}
+
+.stages-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/*
+=====================================================================================
+Approval Card Media Queries
+=====================================================================================
+*/
+
+/*
+  Breakpoints:
+    1530px
+     874px
+     768px
+     480px
+*/
+
+@media (max-width: 1530px) {
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 874px) {
+  .approval-card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .approval-card {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .pipeline-name-type {
+    flex-wrap: wrap;
+  }
+
+  .feature-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+}

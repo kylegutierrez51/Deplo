@@ -1,0 +1,319 @@
+/*
+===================================
+Approval Cards
+===================================
+*/
+
+.approvals-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.approval-card ion-icon {
+  font-size: 19px;
+  color: var(--icon-clr);
+}
+
+.approval-card {
+  width: 100%;
+  min-width: 536px;
+  max-width: var(--width-xl);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-md);
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
+  border: 1px solid var(--light-gray-clr);
+  background: var(--dark-clr-2);
+}
+
+.approval-card:first-of-type {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.approval-card:last-of-type {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.approvals-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.approval-card-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  justify-content: space-between;
+  row-gap: var(--space-sm);
+}
+
+.pipeline-name-type {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.pipeline-name-type span {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.feature-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.feature-info .feature-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.feature-info .feature-id span {
+  color: var(--blue-clr);
+}
+
+.feature-info .feature {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-body);
+}
+
+.extra-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+}
+
+.meta-row .waiting-time {
+  color: var(--red-text);
+  white-space: nowrap;
+}
+
+.stage-view {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.stage-view > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.stage-view > div:hover {
+  cursor: pointer;
+}
+
+.btn-group {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.reject-btn, .approve-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: none;
+  font-weight: bold;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.reject-btn {
+  color: var(--red-text);
+  background-color: var(--red-btn-clr);
+  border: 1px solid var(--red-btn-border-clr);
+}
+
+.reject-btn:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+.approve-btn {
+  color: var(--green-text);
+  background-color: var(--green-clr);
+  border: 1px solid var(--green-border-clr);
+}
+
+.approve-btn:hover {
+  background-color: var(--green-hover-clr);
+}
+
+.view-run-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--blue-btn-border-clr);
+  background-color: var(--blue-btn-clr);
+  color: var(--blue-text);
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.view-run-btn:hover {
+  background-color: var(--blue-btn-hover-clr);
+}
+
+.view-run-btn,
+.reject-btn,
+.approve-btn {
+  white-space: nowrap;
+}
+
+/* Stages */
+.stages {
+  border-top: var(--border-width-md) solid var(--light-gray-clr);
+  padding-top: var(--space-sm);
+  overflow-x: auto;
+  padding-bottom: var(--space-md);
+}
+
+.stages::-webkit-scrollbar {
+  height: 5px;
+}
+
+.stages-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.stages-row .stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+}
+
+.stages-row .stage span {
+  font-weight: bold;
+}
+
+.stages-row .approval {
+  background-color: #94471a;
+}
+
+/*
+=====================================================================================
+Approvals Media Queries
+=====================================================================================
+*/
+
+/*
+  Breakpoints:
+    1530px
+    1195px
+     874px
+     768px
+     610px
+     598px
+     480px
+*/
+
+@media (max-width: 1530px) {
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .btn-group {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .extra-info {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 874px) {
+  .approval-card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .btn-group {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .extra-info {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .approval-card {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .pipeline-name-type {
+    flex-wrap: wrap;
+  }
+
+  .feature-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+    gap: var(--space-sm);
+  }
+
+  .reject-btn,
+  .approve-btn,
+  .view-run-btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
