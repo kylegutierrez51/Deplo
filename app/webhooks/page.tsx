@@ -2,7 +2,8 @@ import styles from "./webhooks.module.css"
 import Subheader from "@/components/Subheader"
 import Sidebar from "@/components/Sidebar/Sidebar"
 import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
+import SearchInput from "@/components/Filters/SearchInput";
+import WebhookCard from "@/components/Cards/WebhookCard";
 import Pagination from "@/components/Pagination"
 
 
@@ -46,121 +47,35 @@ export default function Webhooks() {
           </div>
 
           <div className={styles['webhook-layout']}>
-            <div className={styles['webhook-container']}>
-              <div className={styles['webhook-row']}>
-                <div className={styles['webhook-detail']}>
-                  <div className={styles['git-icon']}>
-                    <ion-icon name="git-branch-outline"></ion-icon>
-                  </div>
-                  <div className={styles['pipeline-info']}>
-                    <div className={styles['name-status']}>
-                      <div className={styles.name}>abcd/infra</div>
-                      <div className={styles.inactive}>Inactive</div>
-                    </div>
-                    <div className={styles.events}>
-                      <div className={styles['event-type']}>push</div>
-                    </div>
-                    <div className={styles.secret}>
-                      <span>Secret:</span>
-                      <span className={styles['secret-val']}>whsec_••••••••••••••••</span>
-                      <ion-icon name="eye-outline"></ion-icon>
-                      <ion-icon name="copy-outline"></ion-icon>
-                    </div>
-                    <div className={styles.time}>
-                      <div className={styles['last-delivery']}>
-                        <ion-icon name="checkmark-circle-outline"></ion-icon>
-                        <span>10d ago</span>
-                      </div>
-                      <span>&bull;</span>
-                      <span className={styles.registered}>Registered 63d ago</span>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.options}>
-                  <ion-icon name="sync-outline"></ion-icon>
-                  <ion-icon name="trash-outline"></ion-icon>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles['webhook-container']}>
-              <div className={styles['webhook-row']}>
-                <div className={styles['webhook-detail']}>
-                  <div className={styles['git-icon']}>
-                    <ion-icon name="git-branch-outline"></ion-icon>
-                  </div>
-                  <div className={styles['pipeline-info']}>
-                    <div className={styles['name-status']}>
-                      <div className={styles.name}>abcd/api-server</div>
-                      <div className={styles.active}>Active</div>
-                    </div>
-                    <div className={styles.events}>
-                      <div className={styles['event-type']}>pull_request</div>
-                    </div>
-                    <div className={styles.secret}>
-                      <span>Secret:</span>
-                      <span className={styles['secret-val']}>whsec_••••••••••••••••</span>
-                      <ion-icon name="eye-outline"></ion-icon>
-                      <ion-icon name="copy-outline"></ion-icon>
-                    </div>
-                    <div className={styles.time}>
-                      <div className={styles['last-delivery']}>
-                        <ion-icon name="checkmark-circle-outline"></ion-icon>
-                        <span>10d ago</span>
-                      </div>
-                      <span>&bull;</span>
-                      <span className={styles.registered}>Registered 63d ago</span>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.options}>
-                  <ion-icon name="sync-outline"></ion-icon>
-                  <ion-icon name="trash-outline"></ion-icon>
-                </div>
-              </div>
-            </div>
-
-
-            <div className={styles['webhook-container']}>
-              <div className={styles['webhook-row']}>
-                <div className={styles['webhook-detail']}>
-                  <div className={styles['git-icon']}>
-                    <ion-icon name="git-branch-outline"></ion-icon>
-                  </div>
-                  <div className={styles['pipeline-info']}>
-                    <div className={styles['name-status']}>
-                      <div className={styles.name}>abcd/api-server</div>
-                      <div className={styles.active}>Active</div>
-                    </div>
-                    <div className={styles.events}>
-                      <div className={styles['event-type']}>push</div>
-                      <div className={styles['event-type']}>pull_request</div>
-                    </div>
-                    <div className={styles.secret}>
-                      <span>Secret:</span>
-                      <span className={styles['secret-val']}>whsec_••••••••••••••••</span>
-                      <ion-icon name="eye-outline"></ion-icon>
-                      <ion-icon name="copy-outline"></ion-icon>
-                    </div>
-                    <div className={styles.time}>
-                      <div className={styles['last-delivery']}>
-                        <ion-icon name="checkmark-circle-outline"></ion-icon>
-                        <span>10d ago</span>
-                      </div>
-                      <span>&bull;</span>
-                      <span className={styles.registered}>Registered 63d ago</span>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.options}>
-                  <ion-icon name="sync-outline"></ion-icon>
-                  <ion-icon name="trash-outline"></ion-icon>
-                </div>
-              </div>
-            </div>
+            <WebhookCard
+              repo={"abcd/infra"}
+              status={"Inactive"}
+              events={["push", "pull_request"]}
+              secretPreview={"whsec_••••••••••••••••"}
+              lastDelivery={"10d"}
+              registeredAgo={"63d"}>
+            </WebhookCard>
+                
+            <WebhookCard
+              repo={"abcd/infra"}
+              status={"Active"}
+              events={["push"]}
+              secretPreview={"whsec_••••••••••••••••"}
+              lastDelivery={"10d"}
+              registeredAgo={"63d"}>
+            </WebhookCard>
+          
+            <WebhookCard
+              repo={"abcd/api-server"}
+              status={"Active"}
+              events={["pull_request"]}
+              secretPreview={"whsec_••••••••••••••••"}
+              lastDelivery={"10d"}
+              registeredAgo={"63d"}>
+            </WebhookCard>
           </div>
-
-          <Pagination showing="1-5 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+          
+          <Pagination showing="1-3 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
         </div>
       </main>
     </>
