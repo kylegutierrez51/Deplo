@@ -1,0 +1,294 @@
+.run-detail-card {
+  width: 100%;
+  max-width: var(--width-xl);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-xl);
+  padding: 22px 28px;
+  margin-top: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.rdc-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.rdc-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Row 1: title */
+.rdc-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+}
+
+.rdc-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white-clr);
+}
+
+.rdc-num {
+  font-size: var(--font-size-lg);
+  color: var(--subtitle-clr);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.rdc-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-gap-md);
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.rdc-status.running ion-icon {
+  font-size: var(--font-size-body);
+  animation: rdc-spin 1.2s linear infinite;
+}
+
+@keyframes rdc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Row 2: commit */
+.rdc-commit-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 16px;
+}
+
+.rdc-commit-ref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.rdc-commit-ref ion-icon {
+  font-size: var(--font-size-lg);
+  color: var(--icon-clr);
+}
+
+.rdc-commit-hash {
+  color: var(--blue-clr);
+  font-family: "JetBrains Mono", monospace;
+  font-size: inherit;
+}
+
+.rdc-commit-msg {
+  font-size: var(--font-size-body);
+  color: var(--subtitle-clr);
+  white-space: nowrap;
+}
+
+/* Row 3: trigger */
+.rdc-trigger-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+/* Shared meta item */
+.rdc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 16px;
+  color: var(--subtitle-clr);
+}
+
+.rdc-meta-item ion-icon {
+  font-size: 19px;
+  color: var(--icon-clr);
+}
+
+.rdc-meta-item span {
+  white-space: nowrap;
+}
+.rdc-link span {
+  color: var(--blue-clr);
+}
+
+.rdc-user {
+  color: var(--blue-clr);
+}
+
+/*
+====================================================================================
+Run Detail Media Queries
+====================================================================================
+*/
+
+/*
+  Breakpoints:
+    1450px — stack run-detail card (info above buttons); wrap commit row
+    1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
+    1195px — reduce heavy horizontal padding
+    1024px — shrink pipeline job cards so the graph fits with the sidebar present
+     930px — wrap trigger row so timing items fall to a second line (sidebar present)
+     874px — collapse sidebar; remove viewport-height constraint; reflow content
+     768px — tablet refinements; wrap job-status pills
+     579px — wrap trigger row so timing items fall to a second line (sidebar gone)
+     480px — small phones: tighter padding, stacked buttons, further reduced pipeline
+*/
+
+
+/*
+  Base correction (no media query)
+  .log-viewer uses overflow: hidden for border-radius clipping, which also
+  clips long log lines at any viewport width. Override only the x-axis so
+  lines scroll horizontally instead of being cut off. Vertical overflow and
+  border-radius corner clipping are unaffected.
+*/
+
+@media (max-width: 1450px) {
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+}
+
+/* 
+============================================================
+930px — Trigger row wrap (sidebar still present)
+  Same fix as 579px: the trigger description claims the full
+  first line so the two timing items drop to a second line.
+============================================================ 
+*/
+@media (max-width: 930px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+/* 
+============================================================
+874px — Collapse sidebar, remove height constraint, reflow
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
+@media (max-width: 874px) {
+  /* Remove the top margin that created double-spacing once
+     padding-top: 60px is already accounting for topbar clearance. */
+  .run-detail-card {
+    margin-top: 0;
+  }
+}
+
+
+/* 
+============================================================
+768px — Tablets
+  Sidebar is already off-screen (874px rule). Stack the run-detail
+  card so info and action buttons don't fight for horizontal space.
+============================================================ 
+*/
+@media (max-width: 768px) {
+
+  /* --- Run detail card --- */
+
+  /* Stack run info above action buttons. */
+  .rdc-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  /* Allow the commit row (hash, message, branch, repo) to wrap
+     rather than overflow at this width. */
+  .rdc-commit-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+}
+
+
+/* 
+============================================================
+579px — Trigger row wrap
+  At this width "7m ago" gets clipped. Push the two timing items
+  (duration + relative time) to a second line while keeping
+  "Triggered by webhook" alone on line 1.
+============================================================ 
+*/
+@media (max-width: 579px) {
+
+  .rdc-trigger-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  /* Force the trigger description to claim the full first line,
+     which pushes the stopwatch and clock items down to line 2. */
+  .rdc-trigger-row .rdc-meta-item:first-child {
+    width: 100%;
+  }
+}
+
+
+/* 
+============================================================
+480px — Small phones
+============================================================ 
+*/
+@media (max-width: 480px) {
+  /* Reduce card padding so the interior content has more room. */
+  .run-detail-card {
+    padding: var(--space-md);
+  }
+
+  /* Scale the pipeline name down slightly. */
+  .rdc-name {
+    font-size: 16px;
+  }
+
+  /* Allow the title row (name, run#, status pill, env pill) to wrap
+     onto a second line if the pills don't all fit in one row. */
+  .rdc-title-row {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  /* Stack commit row items vertically so the long commit message
+     doesn't force a horizontal overflow. */
+  .rdc-commit-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  /* Stack the trigger/timing metadata items vertically. */
+  .rdc-trigger-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+}
