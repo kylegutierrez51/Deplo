@@ -1,0 +1,196 @@
+.webhook-card {
+  width: 100%;
+  min-width: 536px;
+  max-width: var(--width-xl);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-md);
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
+  border: 1px solid var(--light-gray-clr);
+  background: var(--dark-clr-2);
+}
+
+.webhook-card:first-of-type {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.webhook-card:last-of-type {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.webhook-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.webhook-detail {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.webhook-detail .git-icon ion-icon {
+  background-color: var(--color-border-dark);
+  padding: var(--space-sm);
+  border-radius: var(--radius-lg);
+}
+
+.pipeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.webhook-detail .name-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.webhook-detail .name-status .active {
+  background-color: var(--header-clr);
+  color: var(--blue-clr);
+  padding: 3px var(--space-sm);
+  border-radius: var(--radius-pill);
+  border: 1px solid #1e4a72;
+  font-size: var(--font-size-body);
+}
+
+.webhook-detail .name-status .inactive {
+  border: 1px solid var(--light-gray-clr);
+  color: var(--subtitle-clr);
+  padding: 3px var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-body);
+}
+
+.webhook-detail .name-status .name {
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.pipeline-info .events {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.pipeline-info .event-type {
+  font-size: var(--font-size-sm);
+  background-color: var(--color-border-dark);
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #3a3a3a;
+  color: var(--subtitle-clr);
+}
+
+.pipeline-info .secret {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+  margin-bottom: var(--space-sm);
+}
+
+.pipeline-info .secret-val {
+  color: var(--subtitle-clr);
+}
+
+.pipeline-info .secret ion-icon {
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.pipeline-info .time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pipeline-info .last-delivery {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pipeline-info .registered {
+  color: var(--subtitle-clr);
+}
+
+.webhook-row .options {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.webhook-row .options > ion-icon {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.webhook-row .options > ion-icon:first-child:hover {
+  color: var(--white-clr);
+}
+
+.webhook-row .options > ion-icon:last-child:hover {
+  color: #e05555;
+}
+
+
+/*
+=====================================================================================
+Webhook Card Media Queries
+=====================================================================================
+*/
+
+/*
+  Breakpoints:
+     874px
+     768px
+     480px
+*/
+
+
+/* 
+============================================================
+874px
+============================================================ 
+*/
+@media (max-width: 874px) {
+  /* Remove the hard 536px floor; without the sidebar consuming
+     300px the content fits naturally at any viewport width. */
+  .webhook-card {
+    min-width: 0;
+  }
+}
+
+
+/* 
+============================================================
+768px
+============================================================ 
+*/
+@media (max-width: 768px) {
+  /* Reduce horizontal card padding from var(--space-xl) 20px
+     to var(--space-md) 15px per side for tighter content fit. */
+  .webhook-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+/* 
+============================================================
+480px
+============================================================ 
+*/
+@media (max-width: 480px) {
+  /* Further tighten card padding to maximise interior space. */
+  .webhook-card {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  /* Reduce the gap between the git icon and pipeline info column. */
+  .webhook-detail {
+    gap: var(--space-sm);
+  }
+}
