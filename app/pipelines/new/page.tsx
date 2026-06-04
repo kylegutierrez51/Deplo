@@ -1,73 +1,26 @@
 "use client"
 
 import styles from "./pipeline-editor.module.css"
+import PipelineEditorHeader from "@/components/PipelineEditor/PipelineEditorHeader"
 import Sidebar from "@/components/Sidebar/Sidebar"
-import FilterSelect from "@/components/Filters/FilterSelect"
 
 import { useState } from "react"
 
 export default function PipelineEditor() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const toggle = () => setSidebarOpen(o => !o);
 
   return (
     <>
-      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)}></Sidebar>
+      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={toggle}></Sidebar>
 
-      <header className={styles["editor-header"]}>
-        <div className={styles['header-flex']}>
+      <PipelineEditorHeader 
+        pipelineName={"deploy-api"}
+        stageCount={7}
+        connectionCount={6}
+        onSidebarToggle={toggle} />
 
-          <div className={styles['left-side']}>
-            <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={() => setSidebarOpen(o => !o)}>
-              <ion-icon name="menu-outline"></ion-icon>
-            </button>
-            <div className={styles.divider}></div>
-            <div className={styles['pipeline-title']}>
-              <a href="pipeline-list.html">Pipelines</a>
-              <div>|</div>
-              <div className={styles.nowrap}>deploy-api</div>
-            </div>
-            <FilterSelect 
-              id={"environment"} name={"environment"} responsive={false}
-              options={
-                [
-                  { value : "production", label: "Production" },
-                  { value : "staging", label: "Staging" },
-                  { value : "development", label: "Development" },
-                  { value : "preview", label: "Preview" },
-                  { value : "custom", label: "Custom" },
-                ]
-              }/>
-            <div className={styles['nodes-edges']}>
-              <span className="nowrap">7 stages</span>
-              <span>&bull;</span>
-              <span className="nowrap">6 connections</span>
-            </div>
-          </div>
-
-          <div className={styles['right-side']}>
-            <button className={styles['add-stage-btn']}>
-              <ion-icon name="add-outline"></ion-icon>
-              Add Stage
-            </button>
-            <div className={styles.divider}></div>
-            <div className={styles['sidebar-icon']}>
-              <ion-icon name="journal-outline"></ion-icon>
-            </div>
-            <div className={styles.divider}></div>
-            <button className={styles['save-btn']}>
-              <ion-icon name="save-outline"></ion-icon>
-              Save Draft
-            </button>
-            <button className={styles['run-btn']}>
-              <ion-icon name="caret-forward-outline"></ion-icon>
-              Run Pipeline
-            </button>
-          </div>
-
-        </div>
-      </header>
-
-      <main className="page-content">
+      <main className={`page-content ${styles['editor-main']}`}>
         <button id="stageSidebarToggle" className={styles['toggle-stage-sidebar']}>Open Stage Sidebar</button>
       </main>
 

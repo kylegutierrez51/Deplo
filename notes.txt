@@ -77,3 +77,27 @@ Run Detail -- Active Overiew/Logs
 
 style={{ display: undefined }} -- React omits the property entirely from the inline style. The element ends up with no display in its style attribute, so the stylesheet's .overview rule  (which sets display: flex) takes effect normally.
  -- "undefined" basically means "let CSS handle this".
+
+===================================================================================================================================
+
+Bug Fix:.page-content override 
+
+app/pipelines/new (CSS):
+
+      :global(.page-content) {
+        margin-top: var(--size-topbar-height);
+        padding: 0;
+      }
+
+the :global(.page-content) rule gets injected into the browser when you're on pipelines/new/page.tsx. When you click a link from the pipelines/new/page.tsx page back to app/pipelines, it will inherit the editor's padding: 0 override and mess up the .page-content styling of the page UNLESS you specifically type in "/pipelines" in the URL. 
+
+This happens because you use ":global()" for the .page-content
+
+The fix is to scope it like this:
+
+      .editor-main {
+        margin-top: var(--size-topbar-height);
+        padding: 0;
+      }
+
+So that it the changes to .page-content (now .editor-main) apply only to app/pipelines/new/page.tsx and NOT app/pipelines/page.tsx when you click a link back.

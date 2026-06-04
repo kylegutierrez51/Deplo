@@ -1,0 +1,262 @@
+/*
+=====================================================================================
+Header
+=====================================================================================
+*/
+
+.editor-header {
+  position: fixed;
+  top: 0;
+  left: 300px;
+  right: 0;
+  z-index: var(--z-header);
+  height: var(--size-topbar-height);
+  background-color: var(--dark-clr-1);
+  transition: left 0.3s ease;
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+  margin-left: var(--space-lg);
+}
+
+.divider {
+  width: 1px;
+  height: 30px;
+  background-color: var(--gray-clr);
+}
+
+.editor-header .left-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.editor-header .left-side .sidebar-toggle {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--gray-clr);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.editor-header .left-side .sidebar-toggle:hover {
+  background-color: var(--gray-clr);
+}
+
+.editor-header .left-side .sidebar-toggle ion-icon {
+  font-size: 20px;
+}
+
+.editor-header .left-side .pipeline-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.editor-header .left-side .nodes-edges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.editor-header .right-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-right: var(--space-lg);
+}
+
+.right-side .sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.right-side .sidebar-icon ion-icon {
+  margin-right: 0;
+}
+
+
+
+/* 
+Header Buttons
+*/
+.right-side button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
+  white-space: nowrap; /* keep button text on one line regardless of container width */
+}
+
+.right-side button ion-icon {
+  margin-right: var(--space-xs);
+}
+
+.add-stage-btn {
+  background-color: #1e293b;
+}
+
+.add-stage-btn:hover {
+  background-color: #162032;
+}
+
+.save-btn {
+  background-color: var(--draft-btn-clr);
+}
+
+.save-btn:hover {
+  background-color: var(--draft-btn-hover-clr);
+}
+
+.run-btn {
+  background-color: #14532d;
+}
+
+.run-btn:hover {
+  background-color: #0f3d22;
+}
+
+/*
+=====================================================================================
+Pipeline Editor Header Media Queries
+=====================================================================================
+*/
+
+
+/*
+  Breakpoints:
+     1024px
+     874px
+     768px
+     480px
+*/
+
+/* 
+============================================================
+1024px — Small laptops / landscape tablets
+  The .nodes-edges counter ("7 stages • 6 connections") is 
+  pure decoration and is the first element to sacrifice when 
+  the header gets tight.
+============================================================ 
+*/
+@media (max-width: 1024px) {
+
+  .nodes-edges {
+    display: none;
+  }
+}
+
+/* 
+============================================================
+874px — Collapse sidebar, full-width header and content
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
+@media (max-width: 874px) {
+
+  /* --- Header --- */
+
+  /* Sidebar is off-screen; header now spans the full viewport. */
+  .editor-header {
+    left: 0;
+  }
+}
+
+/* 
+============================================================
+768px — Tablets and large phones
+  The journal icon and its flanking dividers consume space
+  without adding information at this width. Drop them and
+  tighten the header's outer margins.
+============================================================ 
+*/
+@media (max-width: 768px) {
+
+  /* Decorative icon — serves no interaction at this breakpoint. */
+  .sidebar-icon {
+    display: none;
+  }
+
+  /* Both right-side dividers become adjacent once the icon is
+     hidden; remove all of them and let gap handle spacing. */
+  .right-side .divider {
+    display: none;
+  }
+
+  /* Also drop the divider between the hamburger and pipeline title. */
+  .left-side .divider {
+    display: none;
+  }
+
+  /* Tighten outer margins so remaining flex items gain more room. */
+  .header-flex {
+    margin-left: var(--space-sm);
+  }
+
+  .right-side {
+    margin-right: var(--space-sm);
+  }
+}
+
+/* 
+===================================================================
+480px — Small phones
+  Compact the header to icon-only buttons and expand the stage
+  sidebar to fill the full viewport so it doesn't slice the screen.
+===================================================================
+*/
+@media (max-width: 480px) {
+
+  /* --- Header buttons: icon-only --- */
+
+  /* font-size: 0 hides the text node without a wrapper element.
+     ion-icon manages its own font-size so it is unaffected. */
+  .add-stage-btn,
+  .save-btn {
+    font-size: 0;
+    padding: var(--space-sm);
+  }
+
+  /* Restore the icon's visual size and remove the margin that was
+     separating it from the now-hidden button label. */
+  .add-stage-btn ion-icon,
+  .save-btn ion-icon {
+    font-size: 20px;
+    margin-right: 0;
+  }
+
+  /* --- Touch targets --- */
+
+  /* All tappable header buttons must clear the 44px minimum. */
+  .editor-header button {
+    min-height: 44px;
+  }
+
+  /* --- Header spacing --- */
+
+  /* Reduce left-side and right-side gaps so remaining elements
+     have more room on narrow viewports. */
+  .left-side {
+    gap: var(--space-sm);
+  }
+
+  .right-side {
+    gap: var(--space-sm);
+  }
+}

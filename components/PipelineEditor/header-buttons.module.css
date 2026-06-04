@@ -1,0 +1,141 @@
+.right-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-right: var(--space-lg);
+}
+
+.right-side .sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.right-side .sidebar-icon ion-icon {
+  margin-right: 0;
+}
+
+
+
+/* 
+Header Buttons
+*/
+.right-side button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
+  white-space: nowrap; /* keep button text on one line regardless of container width */
+}
+
+.right-side button ion-icon {
+  margin-right: var(--space-xs);
+}
+
+.add-stage-btn {
+  background-color: #1e293b;
+}
+
+.add-stage-btn:hover {
+  background-color: #162032;
+}
+
+.save-btn {
+  background-color: var(--draft-btn-clr);
+}
+
+.save-btn:hover {
+  background-color: var(--draft-btn-hover-clr);
+}
+
+.run-btn {
+  background-color: #14532d;
+}
+
+.run-btn:hover {
+  background-color: #0f3d22;
+}
+
+/*
+=====================================================================================
+Header Button Media Queries
+=====================================================================================
+*/
+
+/*
+  Breakpoints:
+     768px
+     480px
+*/
+
+/* 
+============================================================
+768px
+  The journal icon and its flanking dividers consume space
+  without adding information at this width. Drop them.
+============================================================ 
+*/
+@media (max-width: 768px) {
+
+  /* Decorative icon — serves no interaction at this breakpoint. */
+  .sidebar-icon {
+    display: none;
+  }
+
+  /* Both right-side dividers become adjacent once the icon is
+     hidden; remove all of them and let gap handle spacing. */
+  .right-side .divider {
+    display: none;
+  }
+
+  .right-side {
+    margin-right: var(--space-sm);
+  }
+}
+
+/* 
+===================================================================
+480px
+  Compact the header to icon-only buttons and expand the stage
+  sidebar to fill the full viewport so it doesn't slice the screen.
+===================================================================
+*/
+@media (max-width: 480px) {
+
+  /* --- Header buttons: icon-only --- */
+
+  /* font-size: 0 hides the text node without a wrapper element.
+     ion-icon manages its own font-size so it is unaffected. */
+  .add-stage-btn,
+  .save-btn {
+    font-size: 0;
+    padding: var(--space-sm);
+  }
+
+  /* Restore the icon's visual size and remove the margin that was
+     separating it from the now-hidden button label. */
+  .add-stage-btn ion-icon,
+  .save-btn ion-icon {
+    font-size: 20px;
+    margin-right: 0;
+  }
+
+  /* --- Touch targets --- */
+
+  /* All tappable header buttons must clear the 44px minimum. */
+  .right-side button {
+    min-height: 44px;
+  }
+  /* Reduce right-side gaps so remaining elements
+     have more room on narrow viewports. */
+  .right-side {
+    gap: var(--space-sm);
+  }
+}
