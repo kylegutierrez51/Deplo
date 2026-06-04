@@ -5,6 +5,7 @@ import styles from "./run-detail.module.css"
 import Sidebar from "@/components/Sidebar/Sidebar"
 import FilterSelect from "@/components/Filters/FilterSelect"
 import SearchInput from "@/components/Filters/SearchInput"
+import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard"
 
 type Tab = 'overview' | 'logs'
 
@@ -12,74 +13,25 @@ export default function RunDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   return (
     <>
-      <Sidebar activeItem="run-detail"></Sidebar>
+      <Sidebar activeItem="run-detail" />
 
       <main className="page-content">
         <div className="page-layout">
 
-          <section className={styles['run-detail-card']}>
-            <div className={styles['rdc-inner']}>
-
-              <div className={styles['rdc-info']}>
-                {/* Row 1: name, run number, status, environment */}
-                <div className={styles['rdc-title-row']}>
-                  <span className={styles['rdc-name']}>deploy-api</span>
-                  <span className={styles['rdc-num']}>#47</span>
-                  <div className={`${styles['rdc-status']} ${styles.running} pill pill--running`}>
-                    <ion-icon name="sync-outline"></ion-icon>
-                    Running
-                  </div>
-                  <div className="pill pill--production">Production</div>
-                </div>
-
-                {/* Row 2: commit info */}
-                <div className={styles['rdc-commit-row']}>
-                  <div className={styles['rdc-commit-ref']}>
-                    <ion-icon name="git-commit-outline"></ion-icon>
-                    <span className={styles['rdc-commit-hash']}>a1b2c3d</span>
-                  </div>
-                  <span className={styles['rdc-commit-msg']}>fix: resolve connection pool e...</span> {/*30 chars should fit */}
-                  <div className={styles['rdc-meta-item']}>
-                    <ion-icon name="git-branch-outline"></ion-icon>
-                    <span>main</span>
-                  </div>
-                  <div className={`${styles['rdc-meta-item']} ${styles['rdc-link']}`}>
-                    <ion-icon name="open-outline"></ion-icon>
-                    <span>acme/api-server</span>
-                  </div>
-                </div>
-
-                {/* Row 3: trigger info */}
-                <div className={styles['rdc-trigger-row']}>
-                  <div className={styles['rdc-meta-item']}>
-                    <ion-icon name="flash-outline"></ion-icon>
-                    <span>Triggered by webhook <span className={styles['rdc-user']}>(sarah.chen)</span></span>
-                  </div>
-                  <div className={styles['rdc-meta-item']}>
-                    <ion-icon name="stopwatch-outline"></ion-icon>
-                    <span>7m 12s</span>
-                  </div>
-                  <div className={styles['rdc-meta-item']}>
-                    <ion-icon name="time-outline"></ion-icon>
-                    <span>7m ago</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className={styles['rdc-actions']}>
-                <button className={styles['rdc-btn-cancel']}>
-                  <ion-icon name="ban-outline"></ion-icon>
-                  Cancel Run
-                </button>
-                <button className={styles['rdc-btn-rerun']}>
-                  <ion-icon name="refresh-outline"></ion-icon>
-                  Re-run
-                </button>
-              </div>
-
-            </div>
-          </section>
+          <RunDetailCard
+            pipelineName={"deploy-api"}
+            runNumber={47}
+            status={"Running"}
+            environment={"Production"}
+            commitHash={"a1b2c3d"}
+            commitMessage={"fix: resolve connection pool e..."}
+            branch={"main"}
+            repo={"acme/api-server"}
+            trigger={"webhook"}
+            triggeredBy={"sarah.chen"}
+            duration={"7m 12s"}
+            timeAgo={"7m"}
+          />
 
           <div className={styles.sections}>
             <div className={styles['tabs-row']}>
