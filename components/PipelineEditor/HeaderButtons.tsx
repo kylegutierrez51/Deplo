@@ -8,7 +8,7 @@ onSaveDraft: () => void;
 onRunPipeline: () => void;
 */
 
-export default function PipelineEditorHeader() {
+export default function HeaderButtons() {
   return (
     <div className={styles['right-side']}>
       <button className={styles['add-stage-btn']}>
