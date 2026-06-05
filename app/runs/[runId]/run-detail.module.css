@@ -36,180 +36,6 @@ Overview
 
 
 /*
-===============
-Pipeline
-===============
-*/
-.pipeline {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  margin-top: var(--space-2xl);
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding-bottom: var(--space-2xl);
-  margin-bottom: var(--space-2xl);
-}
-
-.pipeline-inner {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
-
-.job {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  min-width: 250px;
-  max-width: 250px;
-  padding: var(--space-lg);
-  border: 1px solid var(--input-clr);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-}
-
-.job-name {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.job-name span {
-  font-weight: bold;
-}
-
-.job-name ion-icon[name="checkmark-circle-outline"] {
-  color: green;
-}
-
-.job-status-time {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-}
-
-.job-status-time span {
-  font-size: var(--font-size-sm);
-}
-
-.job-icon-running {
-  color: var(--blue-clr);
-  animation: rdc-spin 1.2s linear infinite;
-}
-
-.job-icon-pending {
-  color: var(--subtitle-clr);
-}
-
-/*
-===============================
-Pipeline Connectors
-===============================
-*/
-
-.parallel-row {
-  display: flex;
-  gap: var(--space-2xl);
-}
-
-/* Straight connector between sequential jobs */
-.connector-straight {
-  width: var(--border-width-md);
-  height: 36px;
-  background-color: var(--gray-clr);
-  position: relative;
-}
-
-.connector-straight::before,
-.connector-straight::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--gray-clr);
-  left: -3px;
-}
-
-.connector-straight::before { top: -4px; }
-.connector-straight::after  { bottom: -4px; }
-
-.connector-straight.active {
-  background-color: var(--blue-clr);
-}
-
-.connector-straight.active::before,
-.connector-straight.active::after {
-  background-color: var(--blue-clr);
-}
-
-/* Fork connector: one job splits into two parallel jobs */
-.connector-fork {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 540px; /* 250px job + 40px gap + 250px job */
-}
-
-.cf-stem {
-  width: var(--border-width-md);
-  height: 20px;
-  background-color: var(--gray-clr);
-}
-
-.cf-arms {
-  display: flex;
-  width: 100%;
-}
-
-.cf-spacer {
-  width: 125px; /* half of job width (250 / 2) — aligns arm edges to card centers */
-  flex-shrink: 0;
-}
-
-.cf-arm {
-  flex: 1;
-  height: 20px;
-}
-
-.cf-arm-left  { border-top: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
-.cf-arm-right { border-top: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
-
-/* Merge connector: two parallel jobs converge into one */
-.connector-merge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 540px;
-}
-
-.cm-stem {
-  width: var(--border-width-md);
-  height: 20px;
-  background-color: var(--gray-clr);
-}
-
-.cm-arms {
-  display: flex;
-  width: 100%;
-}
-
-.cm-spacer {
-  width: 125px;
-  flex-shrink: 0;
-}
-
-.cm-arm {
-  flex: 1;
-  height: 20px;
-}
-
-.cm-arm-left  { border-bottom: var(--border-width-md) solid var(--gray-clr); border-left:  var(--border-width-md) solid var(--gray-clr); }
-.cm-arm-right { border-bottom: var(--border-width-md) solid var(--gray-clr); border-right: var(--border-width-md) solid var(--gray-clr); }
-
-/*
 ===============================
 Log Viewer
 ===============================
@@ -291,19 +117,15 @@ Run Detail Media Queries
   Breakpoints:
     1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
     1195px — reduce heavy horizontal padding
-    1024px — shrink pipeline job cards so the graph fits with the sidebar present
      874px — collapse sidebar; remove viewport-height constraint; reflow content
      768px — tablet refinements; wrap job-status pills
-     480px — small phones: tighter padding, stacked buttons, further reduced pipeline
+     480px — small phones: tighter padding, stacked buttons
 */
 
-/* 
+/*
 ============================================================
 1300px — Job status pills wrap
-  At this width "0 Awaiting Approval" gets clipped against the
-  card edge. Allow the pill row to wrap so it drops to a second
-  line rather than overflow.
-============================================================ 
+============================================================
 */
 @media (max-width: 1300px) {
 
@@ -313,12 +135,10 @@ Run Detail Media Queries
 }
 
 
-/* 
+/*
 ============================================================
 1195px — Small laptops
-  Halve the heavy horizontal page padding so the pipeline graph
-  and run-detail card have room without the sidebar eating width.
-============================================================ 
+============================================================
 */
 @media (max-width: 1195px) {
 
@@ -328,51 +148,15 @@ Run Detail Media Queries
 }
 
 
-/* 
-============================================================
-1024px — Landscape tablets / small laptops
-  With sidebar (300px) + padding (120px) consuming 420px, the
-  pipeline graph (540px) starts to overflow below ~960px.
-  Shrink job cards to 200px so the graph (200+40+200 = 440px)
-  fits all the way down to the 874px sidebar-collapse breakpoint. 
-============================================================ 
-*/
-@media (max-width: 1024px) {
-
-  /* --- Pipeline graph --- */
-
-  .job {
-    min-width: 200px;
-    max-width: 200px;
-  }
-
-  /* Fork/merge connector total = 200px job + 40px gap + 200px job */
-  .connector-fork,
-  .connector-merge {
-    width: 440px;
-  }
-
-  /* Spacer = half of job width (200 / 2) so arm edges align to card centres */
-  .cf-spacer,
-  .cm-spacer {
-    width: 100px;
-  }
-}
-
-/* 
+/*
 ============================================================
 874px — Collapse sidebar, remove height constraint, reflow
-  Matches the breakpoint used across all other pages.
-============================================================ 
+============================================================
 */
 @media (max-width: 874px) {
 
   /* --- Page content --- */
 
-  /* run-detail.css locks the page to 100vh with overflow: hidden so
-     only .pipeline scrolls internally. On mobile the card stacks
-     vertically and gets taller — remove the constraint so the whole
-     page scrolls naturally instead. */
   :global(.page-content) {
     height: auto;
     overflow: visible;
@@ -380,8 +164,6 @@ Run Detail Media Queries
 
   /* --- Layout containers --- */
 
-  /* Same reason: lift the height: 100% / overflow: hidden chain so
-     children can grow to their natural content height. */
   :global(.page-layout) {
     height: auto;
     overflow: visible;
@@ -394,27 +176,17 @@ Run Detail Media Queries
     overflow: visible;
     min-height: auto;
   }
-
-  /* .pipeline was the sole scroll area on desktop. With the page now
-     scrolling, let it expand to its natural height. */
-  .pipeline {
-    flex: none;
-    overflow-y: visible;
-  }
 }
 
 
-/* 
+/*
 ============================================================
 768px — Tablets
-  Sidebar is already off-screen (874px rule). Stack the run-detail
-  card so info and action buttons don't fight for horizontal space.
-============================================================ 
+============================================================
 */
 @media (max-width: 768px) {
   /* --- Job status pills --- */
 
-  /* Wrap the pill row so no pill is clipped. */
   .job-statuses {
     flex-wrap: wrap;
     gap: var(--space-sm);
@@ -422,61 +194,26 @@ Run Detail Media Queries
 
   /* --- Filters (Logs tab) --- */
 
-  /* Widen the search input now that the sidebar is gone. */
   .input-group {
     width: 40%;
     min-width: 200px;
   }
 }
 
-/* 
+/*
 ============================================================
 480px — Small phones
-============================================================ 
+============================================================
 */
 @media (max-width: 480px) {
   /* --- Page content --- */
 
-  /* Tighten horizontal padding; 60px top clearance for the
-     hamburger button is preserved from the 874px rule. */
   :global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 
-  /* --- Pipeline graph --- */
-
-  /* Reduce job cards further so the graph fits a ~450px viewport. */
-  .job {
-    min-width: 150px;
-    max-width: 150px;
-  }
-
-  /* Tighten the gap between the two parallel jobs. */
-  .parallel-row {
-    gap: var(--space-lg);
-  }
-
-  /* Fork/merge connector total = 150px job + 20px gap + 150px job */
-  .connector-fork,
-  .connector-merge {
-    width: 320px;
-  }
-
-  /* Spacer = half of job width (150 / 2) so arm edges align to card centres */
-  .cf-spacer,
-  .cm-spacer {
-    width: 75px;
-  }
-
-  /* If the pipeline graph still overflows (e.g. many parallel jobs
-     added later), let it scroll horizontally rather than clip. */
-  .pipeline {
-    overflow-x: auto;
-  }
-
   /* --- Filters (Logs tab) --- */
 
-  /* Stretch all filter controls to full width for easy tapping. */
   .input-group {
     width: 100%;
   }
