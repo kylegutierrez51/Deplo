@@ -28,12 +28,14 @@ export default function StageSidebar({ open, onClose, onDelete }: StageSidebarPr
   const [secretSearch, setSecretSearch] = useState('');
 
   const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
+
   const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
     setEnvVars(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
-  };
+  }; /* runs when you change key or value in an env variable via changing the input */
+
   const handleSecretToggle = (index: number) => {
     setSecrets(prev => prev.map((s, i) => i === index ? { ...s, checked: !s.checked } : s));
-  };
+  }; /* runs whenever you toggle a secret. Checks what secrets are toggled. */
 
   return (
     <aside className={`${styles['stage-sidebar']}${open ? ` ${styles.open}` : ''}`}>
