@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import DataTable from '@/components/DataTable';
+import Pill, { type PillVariant } from '@/components/Pill';
 import styles from './run-history.module.css';
 
 interface Run {
@@ -34,12 +35,12 @@ export default function RunsTable() {
         {runs.map((run) => (
           <tr key={run.id} onClick={() => setSelectedRun(run)} style={{ cursor: 'pointer' }}>
             <td>
-              <div className={`pill pill--${run.status}`}>{run.status.charAt(0).toUpperCase() + run.status.slice(1)}</div>
+              <Pill variant={run.status as PillVariant} label={run.status.charAt(0).toUpperCase() + run.status.slice(1)} />
               {' '}{run.pipeline}<br />
               <span>{run.repo}</span> &bull; {run.version}
             </td>
-            <td><div className={`pill pill--${run.environment}`}>{run.environment.charAt(0).toUpperCase() + run.environment.slice(1)}</div></td>
-            <td><div className={`pill pill--${run.trigger}`}>{run.trigger.charAt(0).toUpperCase() + run.trigger.slice(1)}</div></td>
+            <td><Pill variant={run.environment as PillVariant} label={run.environment.charAt(0).toUpperCase() + run.environment.slice(1)} /></td>
+            <td><Pill variant={run.trigger as PillVariant} label={run.trigger.charAt(0).toUpperCase() + run.trigger.slice(1)} /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">{run.duration}</div>
