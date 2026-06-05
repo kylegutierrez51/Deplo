@@ -6,6 +6,7 @@ import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
+import Pill from '@/components/Pill';
 
 export default function Webhooks() {
   return (
@@ -66,8 +67,8 @@ export default function Webhooks() {
         <DataTable
           columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
           <tr>
-            <td><div className="pill pill--processed">Processed</div></td>
-            <td><div className="pill pill--push">push</div></td>
+            <td><Pill variant="processed" label="Processed" /></td>
+            <td><Pill variant="push" label="push" /></td>
             <td>abcd/api-server</td>
             <td>main</td>
             <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
@@ -75,8 +76,8 @@ export default function Webhooks() {
             <td>1h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--ignored">Ignored</div></td>
-            <td><div className="pill pill--push">push</div></td>
+            <td><Pill variant="ignored" label="Ignored" /></td>
+            <td><Pill variant="push" label="push" /></td>
             <td>abcd/web-client</td>
             <td>release/v2.4.0</td>
             <td>f4e5d6c<br /><span>feat: chore: bump dependencies to l...</span></td>
@@ -84,8 +85,8 @@ export default function Webhooks() {
             <td>2h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--failed">Failed</div></td>
-            <td><div className="pill pill--pull-request">pull_request</div></td>
+            <td><Pill variant="failed" label="Failed" /></td>
+            <td><Pill variant="pull-request" label="pull_request" /></td>
             <td>abcd/web-client</td>
             <td>feature/auth-flow</td>
             <td>7890abc<br /><span>feat: add user role migration for...</span></td>
