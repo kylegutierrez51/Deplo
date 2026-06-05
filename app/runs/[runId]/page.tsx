@@ -3,10 +3,12 @@
 import { useState } from "react";
 import styles from "./run-detail.module.css";
 import Sidebar from "@/components/Sidebar/Sidebar";
+import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard";
 import TabsRow from "@/components/RunDetail/TabsRow";
 import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
-import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard";
+import LogViewer from "@/components/RunDetail/Logs/LogViewer";
+
 
 type Tab = 'overview' | 'logs'
 
@@ -193,50 +195,22 @@ export default function RunDetail() {
               </div>
             </div>
 
-            <div className={styles['log-viewer']}>
-
-              <div className={styles['log-header']}>
-                <div className={styles['log-header-left']}>
-                  <ion-icon name="checkmark-circle-outline" className={`${styles['log-job-icon']} ${styles.succeeded}`}></ion-icon>
-                  <span className={styles['log-job-name']}>install-deps</span>
-                  <span className={styles['log-job-cmd']}>npm ci --production=false</span>
-                </div>
-                <span className={styles['log-duration']}>42s</span>
-              </div>
-
-              <div className={styles['log-body']}>
-                <div className={styles['log-line']}>
-                  <span className={styles['log-num']}>1</span>
-                  <span className={styles['log-time']}>00:00.0</span>
-                  <span className={styles['log-content']}><span className={styles['log-prompt']}>$</span> npm ci --production=false</span>
-                </div>
-                <div className={styles['log-line']}>
-                  <span className={styles['log-num']}>2</span>
-                  <span className={styles['log-time']}>00:00.3</span>
-                  <span className={`${styles['log-content']} ${styles['log-warn']}`}>npm warn deprecated inflight@1.0.6: This module is not supported</span>
-                </div>
-                <div className={styles['log-line']}>
-                  <span className={styles['log-num']}>3</span>
-                  <span className={styles['log-time']}>00:02.1</span>
-                  <span className={styles['log-content']}>added 1,247 packages in 38s</span>
-                </div>
-                <div className={styles['log-line']}>
-                  <span className={styles['log-num']}>4</span>
-                  <span className={styles['log-time']}>00:02.2</span>
-                  <span className={styles['log-content']}>182 packages are looking for funding</span>
-                </div>
-                <div className={styles['log-line']}>
-                  <span className={styles['log-num']}>5</span>
-                  <span className={styles['log-time']}>00:42.0</span>
-                  <span className={`${styles['log-content']} ${styles['log-success']}`}>&#10003; Dependencies installed successfully</span>
-                </div>
-              </div>
-
-              <div className={styles['log-footer']}>
-                <span>Process exited with code 0</span>
-              </div>
-
-            </div>
+            <LogViewer
+              jobName={"install-deps"}
+              command={"npm ci --production=false"}
+              status={"running"}
+              duration={"42s"}
+              lines={
+                [
+                  {lineNumber: 1, timestamp: "00:00.0", content: "npm ci --production=false"},
+                  {lineNumber: 2, timestamp: "00:00.3", content: "npm warn deprecated inflight@1.0.6: This module is not supported"},
+                  {lineNumber: 3, timestamp: "00:02.1", content: "added 1,247 packages in 38s"},
+                  {lineNumber: 4, timestamp: "00:02.2", content: "182 packages are looking for funding"},
+                  {lineNumber: 5, timestamp: "00:42.0", content: "&#10003; Dependencies installed successfully"},
+                  
+                ]
+              }
+            />
           </section>
 
         </div>
