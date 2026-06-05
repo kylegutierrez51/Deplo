@@ -8,9 +8,30 @@ import TabsRow from "@/components/RunDetail/TabsRow";
 import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import LogViewer from "@/components/RunDetail/Logs/LogViewer";
+import PipelineGraph, { type PipelineNode } from "@/components/RunDetail/PipelineGraph/PipelineGraph";
 
 
 type Tab = 'overview' | 'logs'
+
+const pipelineNodes: PipelineNode[] = [
+  { type: 'job', name: 'install-deps', statusIcon: 'checkmark-circle-outline', status: 'succeeded', duration: '42s' },
+  { type: 'connector-fork' },
+  {
+    type: 'parallel',
+    jobs: [
+      { name: 'lint',       statusIcon: 'checkmark-circle-outline', status: 'succeeded', duration: '38s' },
+      { name: 'unit-tests', statusIcon: 'checkmark-circle-outline', status: 'succeeded', duration: '2m 13s' },
+    ],
+  },
+  { type: 'connector-merge' },
+  { type: 'job', name: 'build',          statusIcon: 'checkmark-circle-outline', status: 'succeeded', duration: '1m 25s' },
+  { type: 'connector-straight', active: true },
+  { type: 'job', name: 'deploy-staging', statusIcon: 'sync-outline',             status: 'running',   duration: '24m 4s' },
+  { type: 'connector-straight' },
+  { type: 'job', name: 'smoke-tests',    statusIcon: 'time-outline',             status: 'queued' },
+  { type: 'connector-straight' },
+  { type: 'job', name: 'manual-approval', statusIcon: 'time-outline',            status: 'queued' },
+];
 
 export default function RunDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -38,7 +59,7 @@ export default function RunDetail() {
             timeAgo={"7m"}
           />
 
-          <TabsRow 
+          <TabsRow
             activeTab={activeTab}
             toggleOverview={toggleOverview}
             toggleLogs={toggleLogs}
@@ -54,120 +75,7 @@ export default function RunDetail() {
               <div className="pill pill--approval">0 Awaiting Approval</div>
             </div>
 
-            <div className={styles.pipeline}>
-              <div className={styles['pipeline-inner']}>
-
-                {/* install-deps */}
-                <div className={styles.job}>
-                  <div className={styles['job-name']}>
-                    <span>install-deps</span>
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  </div>
-                  <div className={styles['job-status-time']}>
-                    <div className="pill pill--succeeded">Succeeded</div>
-                    <span>42s</span>
-                  </div>
-                </div>
-
-                {/* Fork: install-deps → lint + unit-tests */}
-                <div className={styles['connector-fork']}>
-                  <div className={styles['cf-stem']}></div>
-                  <div className={styles['cf-arms']}>
-                    <div className={styles['cf-spacer']}></div>
-                    <div className={`${styles['cf-arm']} ${styles['cf-arm-left']}`}></div>
-                    <div className={`${styles['cf-arm']} ${styles['cf-arm-right']}`}></div>
-                    <div className={styles['cf-spacer']}></div>
-                  </div>
-                </div>
-
-                {/* Parallel: lint + unit-tests */}
-                <div className={styles['parallel-row']}>
-                  <div className={styles.job}>
-                    <div className={styles['job-name']}>
-                      <span>lint</span>
-                      <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    </div>
-                    <div className={styles['job-status-time']}>
-                      <div className="pill pill--succeeded">Succeeded</div>
-                      <span>38s</span>
-                    </div>
-                  </div>
-                  <div className={styles.job}>
-                    <div className={styles['job-name']}>
-                      <span>unit-tests</span>
-                      <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    </div>
-                    <div className={styles['job-status-time']}>
-                      <div className="pill pill--succeeded">Succeeded</div>
-                      <span>2m 13s</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Merge: lint + unit-tests → build */}
-                <div className={styles['connector-merge']}>
-                  <div className={styles['cm-arms']}>
-                    <div className={styles['cm-spacer']}></div>
-                    <div className={`${styles['cm-arm']} ${styles['cm-arm-left']}`}></div>
-                    <div className={`${styles['cm-arm']} ${styles['cm-arm-right']}`}></div>
-                    <div className={styles['cm-spacer']}></div>
-                  </div>
-                  <div className={styles['cm-stem']}></div>
-                </div>
-
-                <div className={styles.job}>
-                  <div className={styles['job-name']}>
-                    <span>build</span>
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  </div>
-                  <div className={styles['job-status-time']}>
-                    <div className="pill pill--succeeded">Succeeded</div>
-                    <span>1m 25s</span>
-                  </div>
-                </div>
-
-                {/* Connector: build → deploy-staging (active) */}
-                <div className={`${styles['connector-straight']} ${styles.active}`}></div>
-
-                <div className={styles.job}>
-                  <div className={styles['job-name']}>
-                    <span>deploy-staging</span>
-                    <ion-icon name="sync-outline" className={styles['job-icon-running']}></ion-icon>
-                  </div>
-                  <div className={styles['job-status-time']}>
-                    <div className="pill pill--running">Running</div>
-                    <span>24m 4s</span>
-                  </div>
-                </div>
-
-                {/* Connector: deploy-staging → smoke-tests */}
-                <div className={styles['connector-straight']}></div>
-
-                <div className={styles.job}>
-                  <div className={styles['job-name']}>
-                    <span>smoke-tests</span>
-                    <ion-icon name="time-outline" className={styles['job-icon-pending']}></ion-icon>
-                  </div>
-                  <div className={styles['job-status-time']}>
-                    <div className="pill pill--queued">Queued</div>
-                  </div>
-                </div>
-
-                {/* Connector: smoke-tests → manual-approval */}
-                <div className={styles['connector-straight']}></div>
-
-                <div className={styles.job}>
-                  <div className={styles['job-name']}>
-                    <span>manual-approval</span>
-                    <ion-icon name="time-outline" className={styles['job-icon-pending']}></ion-icon>
-                  </div>
-                  <div className={styles['job-status-time']}>
-                    <div className="pill pill--queued">Queued</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <PipelineGraph nodes={pipelineNodes} />
           </section>
 
           <section className={styles.logs} id="section-logs" style={{ display: activeTab === 'logs' ? undefined : 'none' }}>
@@ -207,7 +115,7 @@ export default function RunDetail() {
                   {lineNumber: 3, timestamp: "00:02.1", content: "added 1,247 packages in 38s"},
                   {lineNumber: 4, timestamp: "00:02.2", content: "182 packages are looking for funding"},
                   {lineNumber: 5, timestamp: "00:42.0", content: "&#10003; Dependencies installed successfully"},
-                  
+
                 ]
               }
             />
