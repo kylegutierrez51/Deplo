@@ -190,6 +190,9 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-sm);
+  /* max-height and overflow-y add a scrollbar after more than 3 env vars */
+  max-height: 140px;
+  overflow-y: auto;
 }
 
 .env-container {
