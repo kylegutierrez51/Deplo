@@ -9,6 +9,7 @@ import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import LogViewer from "@/components/RunDetail/Logs/LogViewer";
 import PipelineGraph, { type PipelineNode } from "@/components/RunDetail/PipelineGraph/PipelineGraph";
+import Pill from '@/components/Pill';
 
 
 type Tab = 'overview' | 'logs'
@@ -67,12 +68,12 @@ export default function RunDetail() {
 
           <section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
             <div className={styles['job-statuses']}>
-              <div className="pill pill--total">8 Total</div>
-              <div className="pill pill--succeeded">4 Succeeded</div>
-              <div className="pill pill--running">1 Running</div>
-              <div className="pill pill--queued">3 Queued</div>
-              <div className="pill pill--failed"> 0 Failed</div>
-              <div className="pill pill--approval">0 Awaiting Approval</div>
+              <Pill variant="total" label="8 Total" />
+              <Pill variant="succeeded" label="4 Succeeded" />
+              <Pill variant="running" label="1 Running" />
+              <Pill variant="queued" label="3 Queued" />
+              <Pill variant="failed" label="0 Failed" />
+              <Pill variant="approval" label="0 Awaiting Approval" />
             </div>
 
             <PipelineGraph nodes={pipelineNodes} />
