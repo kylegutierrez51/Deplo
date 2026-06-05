@@ -104,10 +104,16 @@ So that it the changes to .page-content (now .editor-main) apply only to app/pip
 
 ===================================================================================================================================
 
+CLAUDE CODE PROMPTS FOR 2 COMPONENTS
+ - Note: Claude Code was used to create 3 of the main components (RunDetail/PipelineGraph/*, /PipelineEditor/StageSidebar/*, Pill)
+
+
+
+
 Claude Code Prompt for Creating the StageSidebar component and relevant subcomponents.
  - Claude Code uses th "superpowers:brainstorming" skill to plan out the implementation
 
-The following information contains a plan to implement Components and Subcomponents for the pipeline graph within @app/pipelines/new/page.tsx.
+The following information contains a plan to implement Components and Subcomponents for the stage sidebar within @app/pipelines/new/page.tsx.
 Tasks:
   1. Carefully read the HTML in the page.tsx and the CSS (pipeline-editor.module.css) and plan what HTML goes into what components
   2. Implement the component and each of its subcomponents using the props given
@@ -134,4 +140,28 @@ Tasks:
   - <SecretCheckboxRow> — { secretKey: string; env: string; checked: boolean; 
   onToggle: () => void } (each secret-container label, used within
   SecretsSection)
+</Information>
+
+====================
+
+Claude Code Prompt for Creating the Pill component
+
+The following information contains a plan to implement the Pill Component, which is used across nearly every page and some components.  Use the Superpowers brainstorming skill. Do not commit anything in docs/*.
+
+<Tasks>
+  1. For each component and each page.tsx, carefully read the HTML and see which pages and components use pills. In each page, pills are used in divs with the following structure example: "<div className="pill pill--development">Development</div>"
+  2. Implement the component using the props given in the information.
+</Tasks>
+
+<Information>
+  <Pill>
+
+  Used inline on every single page as <div className="pill 
+  pill--running">Running</div>. Worth making a component given the breadth of
+  variants.
+
+  Props: { variant: 'running' | 'succeeded' | 'failed' | 'queued' | 'cancelled' 
+  | 'production' | 'staging' | 'development' | 'preview' | 'custom' | 
+  'processed' | 'ignored' | 'push' | 'pull-request' | 'webhook' | 'manual' | 
+  'api' | 'total' | 'approval'; label: string }
 </Information>
