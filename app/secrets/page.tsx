@@ -5,6 +5,7 @@ import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
+import Pill from '@/components/Pill';
 
 export default function Secrets() {
   return (
@@ -50,7 +51,7 @@ export default function Secrets() {
               <ion-icon name="eye-outline"></ion-icon>
               <ion-icon name="copy-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--production">Production</div></td>
+            <td><Pill variant="production" label="Production" /></td>
             <td className="nowrap">11d ago</td>
             <td>sarah.chen</td>
           </tr>
@@ -61,7 +62,7 @@ export default function Secrets() {
               <ion-icon name="eye-outline"></ion-icon>
               <ion-icon name="copy-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--staging">Staging</div></td>
+            <td><Pill variant="staging" label="Staging" /></td>
             <td className="nowrap">13d ago</td>
             <td>sarah.chen</td>
           </tr>
@@ -72,7 +73,7 @@ export default function Secrets() {
               <ion-icon name="eye-outline"></ion-icon>
               <ion-icon name="copy-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--development">Development</div></td>
+            <td><Pill variant="development" label="Development" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
             <td>marcus.coco</td>
           </tr>
@@ -83,7 +84,7 @@ export default function Secrets() {
               <ion-icon name="eye-outline"></ion-icon>
               <ion-icon name="copy-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--preview">Preview</div></td>
+            <td><Pill variant="preview" label="Preview" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
             <td>marcus.coco</td>
           </tr>
@@ -94,7 +95,7 @@ export default function Secrets() {
               <ion-icon name="eye-outline"></ion-icon>
               <ion-icon name="copy-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--custom">Custom</div></td>
+            <td><Pill variant="custom" label="Custom" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
             <td>marcus.coco</td>
           </tr>

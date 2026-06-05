@@ -5,6 +5,7 @@ import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
+import Pill from '@/components/Pill';
 
 export default function RunHistory() {
   return (
@@ -75,9 +76,9 @@ export default function RunHistory() {
         <DataTable
           columns={["Pipeline", "Environment Type", "Trigger", "Duration", "Time"]}>
           <tr>
-            <td><div className="pill pill--queued">Queued</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
-            <td><div className="pill pill--production">Production</div></td>
-            <td><div className="pill pill--webhook">Webhook</div></td>
+            <td><Pill variant="queued" label="Queued" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
+            <td><Pill variant="production" label="Production" /></td>
+            <td><Pill variant="webhook" label="Webhook" /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">-</div>
@@ -85,9 +86,9 @@ export default function RunHistory() {
             <td className="nowrap">6h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--running">Running</div> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
-            <td><div className="pill pill--staging">Staging</div></td>
-            <td><div className="pill pill--manual">Manual</div></td>
+            <td><Pill variant="running" label="Running" /> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
+            <td><Pill variant="staging" label="Staging" /></td>
+            <td><Pill variant="manual" label="Manual" /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">6h 1m</div>
@@ -95,9 +96,9 @@ export default function RunHistory() {
             <td className="nowrap">6h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--succeeded">Succeeded</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-            <td><div className="pill pill--development">Development</div></td>
-            <td><div className="pill pill--api">API</div></td>
+            <td><Pill variant="succeeded" label="Succeeded" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="development" label="Development" /></td>
+            <td><Pill variant="api" label="API" /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">8m 0s</div>
@@ -105,9 +106,9 @@ export default function RunHistory() {
             <td className="nowrap">11h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--failed">Failed</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-            <td><div className="pill pill--preview">Preview</div></td>
-            <td><div className="pill pill--webhook">Webhook</div></td>
+            <td><Pill variant="failed" label="Failed" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="preview" label="Preview" /></td>
+            <td><Pill variant="webhook" label="Webhook" /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">8m 0s</div>
@@ -115,9 +116,9 @@ export default function RunHistory() {
             <td className="nowrap">11h ago</td>
           </tr>
           <tr>
-            <td><div className="pill pill--cancelled">Cancelled</div> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
-            <td><div className="pill pill--custom">Custom</div></td>
-            <td><div className="pill pill--manual">Manual</div></td>
+            <td><Pill variant="cancelled" label="Cancelled" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="custom" label="Custom" /></td>
+            <td><Pill variant="manual" label="Manual" /></td>
             <td className={styles.filter}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               <div className="nowrap">8m 0s</div>

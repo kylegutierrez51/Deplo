@@ -6,6 +6,7 @@ import FilterSelect from "@/components/Filters/FilterSelect";
 import SearchInput from "@/components/Filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from '@/components/Pagination';
+import Pill from '@/components/Pill';
 
 export default function Environments() {
   return (
@@ -71,7 +72,7 @@ export default function Environments() {
               <div>production</div>
               <ion-icon name="lock-closed-outline"></ion-icon>
             </td>
-            <td><div className="pill pill--development">Development</div></td>
+            <td><Pill variant="development" label="Development" /></td>
             <td className={styles.filter}>
               <ion-icon name="key-outline"></ion-icon>
               <div>14</div>
@@ -84,7 +85,7 @@ export default function Environments() {
             <td className={styles.filter}>
               <div>staging</div>
             </td>
-            <td><div className="pill pill--staging">Staging</div></td>
+            <td><Pill variant="staging" label="Staging" /></td>
             <td className={styles.filter}>
               <ion-icon name="key-outline"></ion-icon>
               <div>12</div>
@@ -97,7 +98,7 @@ export default function Environments() {
             <td className={styles.filter}>
               <div>development</div>
             </td>
-            <td><div className="pill pill--production">Production</div></td>
+            <td><Pill variant="production" label="Production" /></td>
             <td className={styles.filter}>
               <ion-icon name="key-outline"></ion-icon>
               <div>8</div>
@@ -110,7 +111,7 @@ export default function Environments() {
             <td className={styles.filter}>
               <div>development</div>
             </td>
-            <td><div className="pill pill--preview">Preview</div></td>
+            <td><Pill variant="preview" label="Preview" /></td>
             <td className={styles.filter}>
               <ion-icon name="key-outline"></ion-icon>
               <div>8</div>
@@ -123,7 +124,7 @@ export default function Environments() {
             <td className={styles.filter}>
               <div>development</div>
             </td>
-            <td><div className="pill pill--custom">Custom</div></td>
+            <td><Pill variant="custom" label="Custom" /></td>
             <td className={styles.filter}>
               <ion-icon name="key-outline"></ion-icon>
               <div>8</div>
