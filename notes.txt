@@ -101,3 +101,37 @@ The fix is to scope it like this:
       }
 
 So that it the changes to .page-content (now .editor-main) apply only to app/pipelines/new/page.tsx and NOT app/pipelines/page.tsx when you click a link back.
+
+===================================================================================================================================
+
+Claude Code Prompt for Creating the StageSidebar component and relevant subcomponents.
+ - Claude Code uses th "superpowers:brainstorming" skill to plan out the implementation
+
+The following information contains a plan to implement Components and Subcomponents for the pipeline graph within @app/pipelines/new/page.tsx.
+Tasks:
+  1. Carefully read the HTML in the page.tsx and the CSS (pipeline-editor.module.css) and plan what HTML goes into what components
+  2. Implement the component and each of its subcomponents using the props given
+
+<Information>
+  <StageSidebar> — app/pipelines/new/
+
+  The <aside class="stage-sidebar"> configuration panel.
+
+  Props: { onClose: () => void; onDelete: () => void } (form state TBD — likely
+  controlled by parent or a form library)
+
+  Subcomponents:
+  - <StageTypeGrid> — { selected?: string; onSelect: (type: string) => void }
+  (the icon-grid of Build/Test/Deploy/Approval/Script)
+  - <EnvVarsSection> — { vars: { key: string; value: string }[]; onAdd: () => 
+  void; onChange: (index: number, field: 'key' | 'value', value: string) => void
+   } (the env-vars block)
+  - <EnvVarRow> — { envKey: string; envValue: string; onChange: ... } (each
+  env-container KEY=VALUE pair, used within EnvVarsSection)
+  - <SecretsSection> — { secrets: { key: string; env: string; checked: boolean 
+  }[]; searchValue: string; onSearchChange: (v: string) => void; onToggle: 
+  (index: number) => void } (the secrets search input + secrets-list checkboxes)
+  - <SecretCheckboxRow> — { secretKey: string; env: string; checked: boolean; 
+  onToggle: () => void } (each secret-container label, used within
+  SecretsSection)
+</Information>
