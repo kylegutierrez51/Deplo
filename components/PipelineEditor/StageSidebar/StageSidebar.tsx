@@ -14,11 +14,11 @@ interface StageSidebarProps {
 
 const INITIAL_SECRETS = [
   { key: 'DATABASE_URL', env: 'production', checked: false },
-  { key: 'DATABASE_URL', env: 'production', checked: false },
-  { key: 'DATABASE_URL', env: 'production', checked: false },
-  { key: 'DATABASE_URL', env: 'production', checked: false },
-  { key: 'DATABASE_URL', env: 'production', checked: false },
-  { key: 'DATABASE_URL', env: 'production', checked: false },
+  { key: 'API_SECRET_KEY', env: 'production', checked: false },
+  { key: 'REDIS_URL', env: 'staging', checked: false },
+  { key: 'STRIPE_SECRET', env: 'production', checked: false },
+  { key: 'JWT_SECRET', env: 'staging', checked: false },
+  { key: 'S3_ACCESS_KEY', env: 'development', checked: false },
 ];
 
 export default function StageSidebar({ open, onClose, onDelete }: StageSidebarProps) {
@@ -49,7 +49,7 @@ export default function StageSidebar({ open, onClose, onDelete }: StageSidebarPr
         </button>
       </div>
 
-      <form id="post-form" method="POST">
+      <form id="post-form" method="POST" onSubmit={e => e.preventDefault()}>
         <div className={styles['stage-sidebar-nav']}>
 
           <div className={styles['stage-name']}>
