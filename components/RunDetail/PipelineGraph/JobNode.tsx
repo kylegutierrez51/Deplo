@@ -1,4 +1,5 @@
 import styles from './pipeline-graph.module.css'
+import Pill, { type PillVariant } from '@/components/Pill';
 
 export interface JobNodeProps {
   name: string;
@@ -21,9 +22,10 @@ export default function JobNode({ name, statusIcon, status, duration }: JobNodeP
         <ion-icon name={statusIcon} className={iconClass}></ion-icon>
       </div>
       <div className={styles['job-status-time']}>
-        <div className={`pill pill--${status}`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </div>
+        <Pill
+          variant={status as PillVariant}
+          label={status.charAt(0).toUpperCase() + status.slice(1)}
+        />
         {duration && <span>{duration}</span>}
       </div>
     </div>
