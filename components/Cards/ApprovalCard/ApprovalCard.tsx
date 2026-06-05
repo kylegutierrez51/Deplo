@@ -2,6 +2,7 @@ import styles from './approval-card.module.css'
 import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
 import StageNode from './StageNode';
+import Pill from '@/components/Pill';
 
 interface ApprovalCardProps {
   pipelineName: string;
@@ -26,8 +27,8 @@ export default function ApprovalCard({ pipelineName, environment, triggerType, c
         <div className={styles['approvals-detail']}>
           <div className={styles['pipeline-name-type']}>
             <span>{pipelineName}</span>
-            <div className="pill pill--production">{environment}</div>
-            <div className="pill pill--manual">{triggerType}</div>
+            <Pill variant="production" label={environment} />
+            <Pill variant="manual" label={triggerType} />
           </div>
           <div className={styles['feature-info']}>
             <div className={styles['feature-id']}>
