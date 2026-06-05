@@ -1,0 +1,51 @@
+.log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 2px 0;
+  line-height: 1.6;
+}
+
+.log-line:hover {
+  background-color: #161b22;
+}
+
+.log-num {
+  font-size: var(--font-size-sm);
+  color: #404040;
+  text-align: right;
+  min-width: 36px;
+  padding-right: 16px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.log-time {
+  font-size: var(--font-size-sm);
+  color: #3fb950;
+  min-width: 80px;
+  padding-right: var(--space-lg);
+  flex-shrink: 0;
+}
+
+.log-content {
+  font-size: var(--font-size-sm);
+  color: #c9d1d9;
+  white-space: pre;
+}
+
+.log-prompt {
+  color: #39c5cf;
+}
+
+.log-warn {
+  color: #7d8590;
+}
+
+.log-success {
+  color: #3fb950;
+}
+
+.log-failed {
+  color: var(--pill-failed-text);
+}

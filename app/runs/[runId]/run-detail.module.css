@@ -223,140 +223,14 @@ Log Viewer
   padding-bottom: var(--space-2xl);
 }
 
-.logs .filters {
-  margin-bottom: var(--space-md);
-}
-
-.log-viewer {
-  width: 100%;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 1px solid var(--color-border-dark);
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 400;
-}
-
-.log-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-gap-md) 18px;
-  background-color: #161b22;
-  border-bottom: 1px solid var(--color-border-dark);
-}
-
-.log-header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.log-job-icon {
-  font-size: 17px;
-  flex-shrink: 0;
-}
-
-.log-job-icon.succeeded {
-  color: #3fb950;
-}
-
-.log-job-icon.running {
-  color: var(--blue-clr);
-  animation: rdc-spin 1.2s linear infinite;
-}
-
-.log-job-name {
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  color: #e6edf3;
-  font-family: "JetBrains Mono", monospace;
-}
-
-.log-job-cmd {
-  font-size: var(--font-size-sm);
-  color: #7d8590;
-  font-family: "JetBrains Mono", monospace;
-}
-
-.log-duration {
-  font-size: var(--font-size-sm);
-  color: #7d8590;
-  font-family: "JetBrains Mono", monospace;
-}
-
-.log-body {
-  background-color: #0d1117;
-  padding: var(--space-sm) 0;
-}
-
-.log-line {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
-  padding: 2px 0;
-  line-height: 1.6;
-}
-
-.log-line:hover {
-  background-color: #161b22;
-}
-
-.log-num {
-  font-size: var(--font-size-sm);
-  color: #404040;
-  text-align: right;
-  min-width: 36px;
-  padding-right: 16px;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.log-time {
-  font-size: var(--font-size-sm);
-  color: #3fb950;
-  min-width: 80px;
-  padding-right: var(--space-lg);
-  flex-shrink: 0;
-}
-
-.log-content {
-  font-size: var(--font-size-sm);
-  color: #c9d1d9;
-  white-space: pre;
-}
-
-.log-prompt {
-  color: #39c5cf;
-}
-
-.log-warn {
-  color: #7d8590;
-}
-
-.log-success {
-  color: #3fb950;
-}
-
-.log-footer {
-  padding: var(--space-sm) 18px;
-  background-color: #0d1117;
-  border-top: 1px solid var(--color-border-dark);
-}
-
-.log-footer span {
-  font-size: var(--font-size-sm);
-  color: #3fb950;
-  font-family: "JetBrains Mono", monospace;
-}
-
 /*
 ====================================================================================
 Filters
 ====================================================================================
 */
 
-.filters {
-  margin-bottom: var(--space-2xl);
+.logs .filters {
+  margin-bottom: var(--space-md);
 }
 
 .filters-bar {
@@ -415,28 +289,13 @@ Run Detail Media Queries
 
 /*
   Breakpoints:
-    1450px — stack run-detail card (info above buttons); wrap commit row
     1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
     1195px — reduce heavy horizontal padding
     1024px — shrink pipeline job cards so the graph fits with the sidebar present
-     930px — wrap trigger row so timing items fall to a second line (sidebar present)
      874px — collapse sidebar; remove viewport-height constraint; reflow content
      768px — tablet refinements; wrap job-status pills
-     579px — wrap trigger row so timing items fall to a second line (sidebar gone)
      480px — small phones: tighter padding, stacked buttons, further reduced pipeline
 */
-
-
-/*
-  Base correction (no media query)
-  .log-viewer uses overflow: hidden for border-radius clipping, which also
-  clips long log lines at any viewport width. Override only the x-axis so
-  lines scroll horizontally instead of being cut off. Vertical overflow and
-  border-radius corner clipping are unaffected.
-*/
-.log-viewer {
-  overflow-x: auto;
-}
 
 /* 
 ============================================================
@@ -633,16 +492,5 @@ Run Detail Media Queries
 
   .input-group input {
     min-height: 44px;
-  }
-
-  /* --- Log viewer --- */
-
-  /* Prevent the log header command label from forcing the viewer wider
-     than the viewport — truncate with an ellipsis instead. */
-  .log-job-cmd {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 160px;
   }
 }
