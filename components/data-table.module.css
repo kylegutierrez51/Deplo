@@ -1,0 +1,94 @@
+/*
+========================================
+Table
+========================================
+*/
+
+.table-border {
+  border-left: 1px solid var(--color-border-mid);
+  border-right: 1px solid var(--color-border-mid);
+  border-bottom: 1px solid var(--color-border-mid);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Table element base styles live in globals.css */
+
+/*
+=====================================================================================
+Data Table Media Queries
+=====================================================================================
+*/
+
+/*
+  Breakpoints:
+    1408px
+    1195px
+     874px
+*/
+
+/* 
+============================================================
+1408px — Enable table horizontal scroll
+  The webhook events table overflows its container at this width.
+  overflow: auto on .table-border (not .table-wrapper) so the
+  scrollbar isn't clipped by table.css's overflow: hidden.
+============================================================ 
+*/
+
+/*
+In: Webhook Events
+Not In: Everything else
+*/
+@media (max-width: 1408px) {
+
+  .table-border {
+    overflow: auto;
+  }
+}
+
+/* 
+============================================================
+1195px
+============================================================ 
+*/
+
+/*
+In: Webhook Events
+Not In: Run History, Environments (Partially), Secrets (Partially), Audit Log (Partially), 
+*/
+@media (max-width: 1195px) {
+  /* When "Environment Type" wraps to two lines the row grows taller, but the flex
+     container on th.filter doesn't fill that height — so align-items: center has
+     nothing to center against and the content drifts to the top.
+     height: 1px on the tr is a CSS table trick that enables height: 100% on cells;
+     without it, percentage heights on table cells are treated as auto. */
+  :global(table thead tr) {
+    height: 1px;
+  }
+
+  /* With only ~500px of content width at this breakpoint (viewport − 300px sidebar −
+     120px padding), tighten horizontal cell padding so more columns fit on-screen. */
+  :global(table th), :global(table td) {
+    padding: var(--space-gap-md) 6px;
+  }
+}
+
+/*
+============================================================
+874px
+============================================================ 
+*/
+
+/*
+In: Webhook Events
+Not In: Run History, Environments, Secrets, Audit Log
+*/
+@media (max-width: 874px) {
+  /* Sidebar gone; content area jumps to ~860px — all 7 columns fit naturally.
+     Undo the column caps and restore pills to their standard size. */
+  :global(table th),
+  :global(table td) {
+    padding: var(--space-gap-md) var(--space-sm);
+  }
+}

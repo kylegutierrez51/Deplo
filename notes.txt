@@ -54,3 +54,114 @@ REGEX to convert classes to 'className' in .tsx files:
 
 ===================================================================================================================================
 
+Sidebar Component
+
+if "open" is True (from Pipeline Editor page), then the Sidebar component knows that the Pipeline Editor has its own useState function for toggling a sidebar and uses that instead of its own useState (internalOpen, setInternalOpen) to determine whether Pipeline Editor opened the sidebar or not.
+
+
+
+Adding this media query to globals.css has no effect because of load order. globals.css loads first, page CSS modules load after. So we move this into sidebar.module.css and use :global(), and since the sidebar component's CSS loads after globals.css, it wins the cascade fight
+
+          @media (max-width: 874px) {
+            :global(.page-content) {
+              margin-left: 0;
+              padding: 60px var(--space-xl) 0;
+            }
+          }
+
+===================================================================================================================================
+
+Run Detail -- Active Overiew/Logs
+
+<section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
+
+style={{ display: undefined }} -- React omits the property entirely from the inline style. The element ends up with no display in its style attribute, so the stylesheet's .overview rule  (which sets display: flex) takes effect normally.
+ -- "undefined" basically means "let CSS handle this".
+
+===================================================================================================================================
+
+Bug Fix:.page-content override 
+
+app/pipelines/new (CSS):
+
+      :global(.page-content) {
+        margin-top: var(--size-topbar-height);
+        padding: 0;
+      }
+
+the :global(.page-content) rule gets injected into the browser when you're on pipelines/new/page.tsx. When you click a link from the pipelines/new/page.tsx page back to app/pipelines, it will inherit the editor's padding: 0 override and mess up the .page-content styling of the page UNLESS you specifically type in "/pipelines" in the URL. 
+
+This happens because you use ":global()" for the .page-content
+
+The fix is to scope it like this:
+
+      .editor-main {
+        margin-top: var(--size-topbar-height);
+        padding: 0;
+      }
+
+So that it the changes to .page-content (now .editor-main) apply only to app/pipelines/new/page.tsx and NOT app/pipelines/page.tsx when you click a link back.
+
+===================================================================================================================================
+
+CLAUDE CODE PROMPTS FOR 2 COMPONENTS
+ - Note: Claude Code was used to create 3 of the main components (RunDetail/PipelineGraph/*, /PipelineEditor/StageSidebar/*, Pill)
+
+
+
+
+Claude Code Prompt for Creating the StageSidebar component and relevant subcomponents.
+ - Claude Code uses th "superpowers:brainstorming" skill to plan out the implementation
+
+The following information contains a plan to implement Components and Subcomponents for the stage sidebar within @app/pipelines/new/page.tsx.
+Tasks:
+  1. Carefully read the HTML in the page.tsx and the CSS (pipeline-editor.module.css) and plan what HTML goes into what components
+  2. Implement the component and each of its subcomponents using the props given
+
+<Information>
+  <StageSidebar> — app/pipelines/new/
+
+  The <aside class="stage-sidebar"> configuration panel.
+
+  Props: { onClose: () => void; onDelete: () => void } (form state TBD — likely
+  controlled by parent or a form library)
+
+  Subcomponents:
+  - <StageTypeGrid> — { selected?: string; onSelect: (type: string) => void }
+  (the icon-grid of Build/Test/Deploy/Approval/Script)
+  - <EnvVarsSection> — { vars: { key: string; value: string }[]; onAdd: () => 
+  void; onChange: (index: number, field: 'key' | 'value', value: string) => void
+   } (the env-vars block)
+  - <EnvVarRow> — { envKey: string; envValue: string; onChange: ... } (each
+  env-container KEY=VALUE pair, used within EnvVarsSection)
+  - <SecretsSection> — { secrets: { key: string; env: string; checked: boolean 
+  }[]; searchValue: string; onSearchChange: (v: string) => void; onToggle: 
+  (index: number) => void } (the secrets search input + secrets-list checkboxes)
+  - <SecretCheckboxRow> — { secretKey: string; env: string; checked: boolean; 
+  onToggle: () => void } (each secret-container label, used within
+  SecretsSection)
+</Information>
+
+====================
+
+Claude Code Prompt for Creating the Pill component
+
+The following information contains a plan to implement the Pill Component, which is used across nearly every page and some components.  Use the Superpowers brainstorming skill. Do not commit anything in docs/*.
+
+<Tasks>
+  1. For each component and each page.tsx, carefully read the HTML and see which pages and components use pills. In each page, pills are used in divs with the following structure example: "<div className="pill pill--development">Development</div>"
+  2. Implement the component using the props given in the information.
+</Tasks>
+
+<Information>
+  <Pill>
+
+  Used inline on every single page as <div className="pill 
+  pill--running">Running</div>. Worth making a component given the breadth of
+  variants.
+
+  Props: { variant: 'running' | 'succeeded' | 'failed' | 'queued' | 'cancelled' 
+  | 'production' | 'staging' | 'development' | 'preview' | 'custom' | 
+  'processed' | 'ignored' | 'push' | 'pull-request' | 'webhook' | 'manual' | 
+  'api' | 'total' | 'approval'; label: string }
+</Information>

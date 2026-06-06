@@ -153,6 +153,11 @@ Sidebar Content
   background-color: var(--gray-clr);
 }
 
+.nav-item-active {
+  background-color: var(--blue-btn-clr);
+  border-left: 2px solid var(--blue-clr);
+}
+
 .sidebar-content li .title {
   font-size: 18px;
 }

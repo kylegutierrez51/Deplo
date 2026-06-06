@@ -1,0 +1,17 @@
+.stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+}
+
+.stage span {
+  font-weight: bold;
+}
+
+.approval {
+  background-color: #94471a;
+}

@@ -1,0 +1,97 @@
+/* Action buttons */
+.rdc-actions {
+  display: flex;
+  gap: var(--space-gap-md);
+  flex-shrink: 0;
+}
+
+.rdc-btn-cancel,
+.rdc-btn-rerun {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-sm) 18px;
+  border-radius: 8px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rdc-btn-cancel {
+  color: var(--red-text);
+  border: 1.5px solid var(--red-btn-border-clr);
+  background-color: rgba(248, 113, 113, 0.06);
+}
+
+.rdc-btn-cancel:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+.rdc-btn-rerun {
+  color: var(--white-clr);
+  border: 1.5px solid var(--light-gray-clr);
+  background-color: transparent;
+}
+
+.rdc-btn-rerun:hover {
+  background-color: var(--gray-clr);
+}
+
+.rdc-btn-cancel ion-icon,
+.rdc-btn-rerun ion-icon {
+  font-size: 16px;
+}
+
+/*
+====================================================================================
+Run Detail Actions Media Queries
+====================================================================================
+*/
+
+/*
+  Breakpoints:
+    1450px
+     768px
+     480px
+*/
+
+@media (max-width: 1450px) {
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+}
+
+/* 
+============================================================
+768px — Tablets
+  Sidebar is already off-screen (874px rule). Stack the run-detail
+  card so info and action buttons don't fight for horizontal space.
+============================================================ 
+*/
+@media (max-width: 768px) {
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
+}
+
+/* 
+============================================================
+480px — Small phones
+============================================================ 
+*/
+@media (max-width: 480px) {
+  /* Stack action buttons vertically with 44px touch targets. */
+  .rdc-actions {
+    flex-direction: column;
+  }
+
+  .rdc-btn-cancel,
+  .rdc-btn-rerun {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}

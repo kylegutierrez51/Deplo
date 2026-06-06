@@ -1,400 +1,7 @@
 /*
-======================================================================================
-Sidebar
-======================================================================================
-*/
-
-.sidebar {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  top: 0;
-  width: 300px;
-  background-color: var(--dark-clr-1);
-  padding: var(--space-2xl) var(--space-xl);
-  padding-top: var(--space-xl);
-  border: 1px solid var(--gray-clr);
-  border-right: none;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease;
-  z-index: var(--z-sidebar);
-}
-
-.sidebar.closed {
-  transform: translateX(-300px);
-}
-
-
-/*
-=======================================================================
-Page Content (layout when sidebar present -- excluding pipeline editor)
-=======================================================================
-*/
-.page-content {
-  margin-top: var(--space-2xl);
-  margin-left: 300px;
-  padding: 0 150px;
-  transition: margin-left 0.3s ease;
-}
-
-/* max-width and width are used for the Webhooks page for centering */
-.page-layout {
-  display: flex;
-  flex-direction: column;
-  margin: 0 auto; /* centers entire container */
-  max-width: var(--width-xl);
-  width: 100%;
-}
-
-.sidebar.closed ~ .page-content {
-  margin-left: 0;
-}
-
-/*
-=====================
-Sidebar Toggle Button
-=====================
-*/
-.sidebar-toggle {
-  position: absolute;
-  top: var(--space-lg);
-  left: 310px;
-  z-index: var(--z-dropdown);
-  background: transparent;
-  border: 1px solid var(--gray-clr);
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  transition: left 0.3s ease, background-color 0.2s ease;
-}
-
-.sidebar-toggle:hover {
-  background-color: var(--gray-clr);
-}
-
-.sidebar-toggle ion-icon {
-  font-size: 20px;
-}
-
-.sidebar.closed ~ .sidebar-toggle {
-  left: 20px;
-}
-
-/*
-==============
-Sidebar Header
-==============
-*/
-
-.sidebar-flex .title {
-  font-size: 20px;
-}
-
-/*
-=============================
-Sidebar Nav (scrollable area)
-=============================
-*/
-
-.sidebar-nav {
-  flex: 1; /* this makes .sidebar-nav stretch to fill out its entire container, pushing .profile to the bottom of the screen. */
-  overflow-y: auto;
-  position: relative;
-  z-index: 0;
-
-  /* positions scrollbar at edge of sidebar */
-  margin-right: calc(-1 * var(--space-xl));
-  padding-right: var(--space-xl);
-}
-
-.sidebar-nav::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: var(--gray-clr);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-}
-
-/*
-===============
-Sidebar Content
-===============
-*/
-.sidebar-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  padding-top: 50px;
-  padding-bottom: var(--space-md);
-  border-bottom: var(--border-width-md) solid var(--gray-clr);
-}
-
-.sidebar .subtitle {
-  margin-left: var(--space-md);
-  font-family: "JetBrains Mono";
-  font-size: var(--font-size-body);
-}
-
-.sidebar-content li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-md);
-  border-radius: 7px;
-  margin-bottom: var(--space-xs);
-  cursor: pointer;
-}
-
-.sidebar-content li:hover {
-  background-color: var(--gray-clr);
-}
-
-.sidebar-content li .title {
-  font-size: 18px;
-}
-
-.sidebar-content :global(ion-icon) {
-  font-size: 25px;
-}
-
-
-/*
-=======
-Profile
-=======
-*/
-.profile {
-  position: relative;
-  z-index: 1;
-  margin-top: var(--space-lg);
-  padding: var(--space-sm) var(--space-sm);
-  background-color: var(--dark-clr-2);
-  border: 1px solid var(--gray-clr);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  cursor: pointer;
-}
-
-.profile:hover {
-  background-color: var(--gray-clr);
-}
-
-.profile-pic {
-  background-color: blue;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  flex-shrink: 0; /* prevents flex container from compressing the profile pic, keeping it a true 40x40 square */
-}
-
-.profile-details {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.user {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.profile .name {
-  font-weight: 600;
-}
-
-.profile .role {
-  font-family: "JetBrains Mono";
-  font-size: var(--font-size-lg);
-}
-
-.profile :global(ion-icon[name="chevron-up-outline"]) {
-  font-size: 20px;
-  margin-right: var(--space-xs);
-  justify-self: end;
-}
-
-.profile-options {
-  position: fixed;
-  z-index: var(--z-profile);
-  padding: var(--space-sm) var(--space-sm);
-  /* setting these colors makes this not go over .sidebar-content when you pull up DevTools because --gray-clr is 8% opacity white, menaing nav items show through it. Look at general.css for more info */
-  /* background-color: var(--gray-clr);
-  border: 1px solid var(--gray-clr); */
-
-  background-color: var(--dark-clr-2);
-  border: 1px solid var(--light-gray-clr);
-  border-radius: var(--radius-lg);
-  overflow-y: auto; /* scrollbar appears if you resize DevTools all the way up to the top */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.profile-options.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.profile-options::-webkit-scrollbar {
-  width: 4px;
-}
-
-.profile-options::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.profile-options::-webkit-scrollbar-thumb {
-  background: var(--gray-clr);
-  border-radius: var(--radius-xs);
-}
-
-.profile-menu {
-  display: flex;
-  flex-direction: column;
-}
-
-.profile-menu div {
-  font-weight: bold;
-  padding: var(--space-sm) var(--space-sm);
-  border-radius: 7px;
-}
-
-.profile-menu div:hover {
-  background-color: var(--gray-clr);
-  cursor: pointer;
-}
-
-.profile-menu .sign-out {
-  color: var(--red-dark-text);
-}
-
-
-/*
-======================================================================================
-Subheader
-======================================================================================
-*/
-
-.subheader {
-  margin-bottom: var(--space-lg);
-}
-
-.subheader-inner {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: var(--space-lg);
-}
-
-.subheader .title-group {
-  display: flex;
-  align-items: start;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.active-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #1a2e1a;
-  border: 1px solid #2d4d2d;
-  border-radius: var(--radius-pill);
-  padding: 3px var(--space-sm);
-  font-size: var(--font-size-sm);
-  color: var(--active-dot-clr);
-}
-
-.active-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--active-dot-clr);
-  flex-shrink: 0;
-  animation: dot-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--active-dot-clr) 40%, transparent); }
-  50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 4px transparent; }
-}
-
-.title-group .subtitle {
-  display: flex;
-  gap: var(--space-xs);
-  color: var(--subtitle-clr);
-}
-
-.subheader button, .subheader .new-pipeline-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  background-color: var(--btn-subheader-clr);
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  align-self: start;
-  cursor: pointer;
-  flex-shrink: 0;     /* prevent flexbox from compressing the button at narrow widths */
-  white-space: nowrap; /* keep button text on one line regardless of container width */
-}
-
-.subheader button:hover, .subheader .new-pipeline-btn:hover {
-  background-color: var(--btn-subheader-clr-hover);
-}
-
-.subheader ion-icon {
-  margin-right: var(--space-xs);
-  font-size: 20px;
-}
-
-
-/* Pipeline List */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.subheader .new-pipeline-btn {
-  align-self: auto;
-}
-
-.subheader .view-drafts-btn {
-  align-self: auto;
-  background-color: var(--draft-btn-clr);
-}
-
-.subheader .view-drafts-btn:hover {
-  background-color: var(--draft-btn-hover-clr);
-}
-
-/*
-======================================================================================
+=====================================================================================
 Filters
-======================================================================================
+=====================================================================================
 */
 
 .filters {
@@ -405,6 +12,7 @@ Filters
   display: flex;
   align-items: center;
   justify-content: start;
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
@@ -413,7 +21,7 @@ Filters
   width: 25%;
 }
 
-.input-group ion-icon, .webhook-event-input-group ion-icon {
+.input-group ion-icon {
   position: absolute;
   left: 10px;
   top: 50%;
@@ -447,21 +55,10 @@ Filters
   pointer-events: none;
 }
 
-
-/* input needs to be slightly bigger to hold the placeholder text */
-.webhook-event-input-group {
-  position: relative;
-  width: 30%;
-}
-
-.webhook-event-input-group input {
-  padding-left: 34px;
-}
-
 /*
-======================================================================================
+=====================================================================================
 Webhooks
-======================================================================================
+=====================================================================================
 */
 
 /*
@@ -485,144 +82,6 @@ Webhooks
   justify-content: center;
   align-items: center;
 }
-
-
-.webhook-container {
-  width: 100%;
-  min-width: 536px;
-  max-width: var(--width-xl);
-  padding-top: var(--space-lg);
-  padding-bottom: var(--space-md);
-  padding-left: var(--space-xl);
-  padding-right: var(--space-xl);
-  border: 1px solid var(--light-gray-clr);
-  background: var(--dark-clr-2);
-}
-
-.webhook-container:first-of-type {
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-}
-
-.webhook-container:last-of-type {
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-}
-
-.webhook-row {
-  display: flex;
-  justify-content: space-between;
-}
-
-.webhook-detail {
-  display: flex;
-  gap: var(--space-lg);
-}
-
-.webhook-detail .git-icon ion-icon {
-  background-color: var(--color-border-dark);
-  padding: var(--space-sm);
-  border-radius: var(--radius-lg);
-}
-
-.pipeline-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.webhook-detail .name-status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-}
-
-.webhook-detail .name-status .active {
-  background-color: var(--header-clr);
-  color: var(--blue-clr);
-  padding: 3px var(--space-sm);
-  border-radius: var(--radius-pill);
-  border: 1px solid #1e4a72;
-  font-size: var(--font-size-body);
-}
-
-.webhook-detail .name-status .inactive {
-  border: 1px solid var(--light-gray-clr);
-  color: var(--subtitle-clr);
-  padding: 3px var(--space-sm);
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-body);
-}
-
-.webhook-detail .name-status .name {
-  font-size: 17px;
-  font-weight: bold;
-}
-
-.pipeline-info .events {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-xs);
-}
-
-.pipeline-info .event-type {
-  font-size: var(--font-size-sm);
-  background-color: var(--color-border-dark);
-  padding: 7px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #3a3a3a;
-  color: var(--subtitle-clr);
-}
-
-.pipeline-info .secret {
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-md);
-  margin-bottom: var(--space-sm);
-}
-
-.pipeline-info .secret-val {
-  color: var(--subtitle-clr);
-}
-
-.pipeline-info .secret ion-icon {
-  font-size: 19px;
-  cursor: pointer;
-}
-
-.pipeline-info .time {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.pipeline-info .last-delivery {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.pipeline-info .registered {
-  color: var(--subtitle-clr);
-}
-
-.webhook-row .options {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.webhook-row .options > ion-icon {
-  cursor: pointer;
-  transition: color 0.15s;
-}
-
-.webhook-row .options > ion-icon:first-child:hover {
-  color: var(--white-clr);
-}
-
-.webhook-row .options > ion-icon:last-child:hover {
-  color: #e05555;
-}
-
 
 /*
 ============================================================
@@ -651,9 +110,9 @@ This one is tricky:
 }
 
 /*
-======================================================================================
+=====================================================================================
 Pagination
-======================================================================================
+=====================================================================================
 */
 
 .page-view {
@@ -714,15 +173,14 @@ Pagination
 }
 
 /*
-======================================================================================
+=====================================================================================
 Webhook Media Queries
-======================================================================================
+=====================================================================================
 */
 
 /*
   Breakpoints:
     1195px
-    1024px
      961px
      874px
      768px
@@ -731,40 +189,17 @@ Webhook Media Queries
 */
 
 
-/* ============================================================
-   1195px — Small laptops
-   Halve the heavy horizontal page padding so the content area
-   gains room. Widen the search input to compensate.
-   ============================================================ */
+/* 
+============================================================
+1195px — Small laptops
+  Halve the heavy horizontal page padding so the content area
+  gains room. Widen the search input to compensate.
+============================================================ 
+*/
 @media (max-width: 1195px) {
 
-  .page-content {
+  :global(.page-content) {
     padding: 0 60px;
-  }
-
-  .input-group {
-    width: 35%;
-  }
-}
-
-
-
-
-/* ============================================================
-   1024px — Filter bar wrapping
-   With sidebar (300px) + reduced padding (120px) consuming 420px,
-   the three-item filter bar starts overflowing around ~1050px.
-   Allow wrapping so each control stays usable.
-   ============================================================ */
-@media (max-width: 1024px) {
-
-  .filters-bar {
-    flex-wrap: wrap;
-  }
-
-  /* Prevent the search input shrinking below a comfortable width. */
-  .input-group {
-    min-width: 180px;
   }
 }
 
@@ -794,77 +229,13 @@ Webhook Media Queries
 }
 
 
-/* ============================================================
-   874px — Collapse sidebar, reflow content
-   Matches the breakpoint used across all other pages.
-   ============================================================ */
+/* 
+============================================================
+874px — Collapse sidebar, reflow content
+  Matches the breakpoint used across all other pages.
+============================================================ 
+*/
 @media (max-width: 874px) {
-
-  /* --- Sidebar --- */
-
-  /* Force the sidebar off-screen regardless of the desktop
-     .closed toggle state so the full viewport is available. */
-  .sidebar {
-    transform: translateX(-300px);
-  }
-
-  /* Hamburger button moves to the far-left collapsed position. */
-  .sidebar-toggle {
-    left: 20px;
-  }
-
-  /* toggleSidebar.js adds .open at mobile widths when the hamburger
-     is tapped. Solid background prevents page content from bleeding
-     through the near-transparent --dark-clr-1.
-     NOTE: toggleSidebar.js switches to .open-class mode at ≤768px.
-     Between 769px–874px the JS is still in desktop mode (.closed
-     toggle) so the sidebar won't open at those widths — a JS fix
-     extending MOBILE_BREAKPOINT to 874 is needed for full coverage. */
-  .sidebar.open {
-    transform: translateX(0);
-    background-color: var(--dark-clr-2);
-  }
-
-  .sidebar.open ~ .sidebar-toggle {
-    left: 310px;
-  }
-
-  /* --- Page content --- */
-
-  .page-content {
-    margin-left: 0;
-    padding: 60px var(--space-xl) 0;
-  }
-
-  /* --- Subheader --- */
-
-  /* Stack the title group above the action button. */
-  .subheader-inner {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  /* Comfortable touch target for the Add Webhook button. */
-  .subheader button {
-    min-height: 44px;
-  }
-
-  /* --- Filters --- */
-
-  /* Restore the 25% base width; content is now full-width so
-     25% provides a reasonable search bar without dominating the row. */
-  .input-group {
-    width: 25%;
-  }
-
-  /* --- Webhook cards --- */
-
-  /* Remove the hard 536px floor; without the sidebar consuming
-     300px the content fits naturally at any viewport width. */
-  .webhook-container {
-    min-width: 0;
-  }
-
   /* --- Pagination --- */
 
   /* The 961px block stacks the pagination vertically. Revert it
@@ -880,59 +251,7 @@ Webhook Media Queries
   }
 }
 
-
-/* ============================================================
-   768px — Tablets
-   Sidebar is already off-screen (874px rule). Refine card layout,
-   widen the search bar, and trim secondary metadata.
-   ============================================================ */
-@media (max-width: 768px) {
-
-  /* At ~750px content width, 25% = ~190px for the search bar —
-     tight for typing. Bump to 40% for better usability. */
-  .input-group {
-    width: 40%;
-  }
-
-  /* Reduce horizontal card padding from var(--space-xl) 20px
-     to var(--space-md) 15px per side for tighter content fit. */
-  .webhook-container {
-    padding-left: var(--space-md);
-    padding-right: var(--space-md);
-  }
-}
-
 @media(max-width: 598px) {
-
-  /* Full-width touch-friendly button */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-  
-  /* --- Filters --- */
-
-  /* Search input spans the full row */
-  .input-group {
-    width: 100%;
-  }
-
-  /* Dropdowns stretch to fill the row for easy tapping */
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  /* Match select height so all controls are uniform */
-  .input-group input {
-    min-height: 44px;
-  }
-
   /* --- Pagination --- */
 
   /* Stack the "Showing X of Y" label above the pagination controls */
@@ -958,65 +277,19 @@ Webhook Media Queries
 }
 
 
-/* ============================================================
-   480px — Small phones
-   ============================================================ */
+/* 
+============================================================
+480px — Small phones
+============================================================ 
+*/
 @media (max-width: 480px) {
 
   /* --- Page content --- */
 
   /* Tighter horizontal padding; preserve vertical clearance for
      the hamburger button established at 874px. */
-  .page-content {
+  :global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Subheader --- */
-
-  /* Scale the heading down so it doesn't overflow narrow screens. */
-  .subheader-inner h1 {
-    font-size: 22px;
-  }
-
-  /* Full-width, touch-friendly Add Webhook button. */
-  .subheader button {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
-  /* --- Filters --- */
-
-  /* All three controls go full-width and stack vertically.
-     flex-wrap: wrap is already active from the 1024px rule. */
-  .input-group {
-    width: 100%;
-  }
-
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  .input-group input {
-    min-height: 44px;
-  }
-
-  /* --- Webhook cards --- */
-
-  /* Further tighten card padding to maximise interior space. */
-  .webhook-container {
-    padding-left: var(--space-sm);
-    padding-right: var(--space-sm);
-  }
-
-  /* Reduce the gap between the git icon and pipeline info column. */
-  .webhook-detail {
-    gap: var(--space-sm);
   }
 
   /* --- Pagination --- */

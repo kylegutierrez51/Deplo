@@ -1,0 +1,53 @@
+.input-group {
+  position: relative;
+  width: 25%;
+  min-width: 300px;
+}
+
+.input-group ion-icon, .webhook-event-input-group ion-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--icon-clr);
+  pointer-events: none; /* clicks go through the search icon */
+  font-size: 16px;
+}
+
+/* offset text so it doesn't overlap the search icon */
+.input-group input {
+  padding-left: 34px;
+}
+
+/*
+=====================================================================================
+Search Input Media Queries
+=====================================================================================
+*/
+
+@media (max-width: 1195px) {
+  .input-group {
+    width: 35%;
+  }
+}
+
+@media (max-width: 874px) {
+  /* Restore the 25% base width; content is now full-width so
+     25% provides a reasonable search bar without dominating the row. */
+  .input-group {
+    width: 25%;
+    min-width: 300px;
+  }
+}
+
+@media (max-width: 570px) {
+  /* Search input spans the full row */
+  .input-group {
+    width: 100%;
+  }
+
+  /* Match select height so all controls are uniform */
+  .input-group input {
+    min-height: 44px;
+  }
+}
