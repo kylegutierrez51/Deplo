@@ -1,9 +1,9 @@
 import styles from "./webhooks.module.css"
 import Subheader from "@/components/Subheader"
-import Sidebar from "@/components/Sidebar/Sidebar"
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput";
-import WebhookCard from "@/components/Cards/WebhookCard";
+import Sidebar from "@/components/Sidebar"
+import FilterSelect from "@/components/filters/FilterSelect"
+import SearchInput from "@/components/filters/SearchInput";
+import WebhookCard from "@/components/WebhookCard";
 import Pagination from "@/components/Pagination"
 
 

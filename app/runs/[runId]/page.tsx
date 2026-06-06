@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import styles from "./run-detail.module.css";
-import Sidebar from "@/components/Sidebar/Sidebar";
-import RunDetailCard from "@/components/Cards/RunDetail/RunDetailCard";
-import TabsRow from "@/components/RunDetail/TabsRow";
-import FilterSelect from "@/components/Filters/FilterSelect";
-import SearchInput from "@/components/Filters/SearchInput";
-import LogViewer from "@/components/RunDetail/Logs/LogViewer";
-import PipelineGraph, { type PipelineNode } from "@/components/RunDetail/PipelineGraph/PipelineGraph";
+import Sidebar from "@/components/Sidebar";
+import RunDetailCard from "@/components/run-detail/RunDetailCard";
+import TabsRow from "@/components/run-detail/TabsRow";
+import FilterSelect from "@/components/filters/FilterSelect";
+import SearchInput from "@/components/filters/SearchInput";
+import LogViewer from "@/components/run-detail/logs/LogViewer";
+import PipelineGraph, { type PipelineNode } from "@/components/run-detail/pipeline-graph/PipelineGraph";
 import Pill from '@/components/Pill';
 
 

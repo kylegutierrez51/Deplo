@@ -1,10 +1,10 @@
 import styles from "./approvals.module.css"
-import Sidebar from "@/components/Sidebar/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Subheader from "@/components/Subheader";
-import StatCards from "@/components/Cards/StatCards";
-import FilterSelect from "@/components/Filters/FilterSelect"
-import SearchInput from "@/components/Filters/SearchInput"
-import ApprovalCard from "@/components/Cards/ApprovalCard/ApprovalCard";
+import StatCards from "@/components/StatCards";
+import FilterSelect from "@/components/filters/FilterSelect"
+import SearchInput from "@/components/filters/SearchInput"
+import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/Pagination";
 
 export default function Approvals() {

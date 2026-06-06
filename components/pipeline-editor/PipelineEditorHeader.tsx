@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
-import FilterSelect from '../Filters/FilterSelect';
+import FilterSelect from '../filters/FilterSelect';
 import HeaderButtons from './HeaderButtons';
 
 interface PipelineEditorHeaderProps {
