@@ -1,9 +1,9 @@
 import styles from "./pipelines.module.css"
 
-import Sidebar from "@/components/Sidebar/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Subheader from "@/components/Subheader";
-import FilterSelect from "@/components/Filters/FilterSelect";
-import SearchInput from "@/components/Filters/SearchInput";
+import FilterSelect from "@/components/filters/FilterSelect";
+import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 import Pill from '@/components/Pill';
