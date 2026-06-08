@@ -1,0 +1,331 @@
+// ============================================================
+// Deplo — Prisma Schema
+// PostgreSQL database schema for the deployment automation platform
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTH: User / Session / Account
+// NextAuth.js requires these three tables plus
+// VerificationToken for the Prisma adapter.
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(MEMBER)
+
+  accounts      Account[]
+  sessions      Session[]
+
+  // Deplo relations
+  pipelines         Pipeline[]
+  pipelineRuns      PipelineRun[]
+  auditLogs         AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────────
+// PIPELINE DEFINITION
+// ─────────────────────────────────────────────
+
+model Pipeline {
+  id           String  @id @default(cuid())
+  name         String
+  description  String? @db.Text
+  repoUrl      String
+  branchFilter String  @default("main") // glob pattern, e.g. "main", "release/*"
+  isActive     Boolean @default(true)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  definitions  PipelineDefinition[]
+  runs         PipelineRun[]
+  webhookEvents WebhookEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repoUrl, branchFilter])
+  @@map("pipelines")
+}
+
+model PipelineDefinition {
+  id         String @id @default(cuid())
+  pipelineId String
+  version    Int
+
+  // React Flow serialization: { nodes: [...], edges: [...] }
+  graphJson  Json
+  // Per-stage config: commands, timeouts, retries, env bindings
+  configJson Json
+
+  pipeline Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Runs reference the exact definition version they executed
+  runs PipelineRun[]
+
+  @@unique([pipelineId, version])
+  @@map("pipeline_definitions")
+}
+
+// ─────────────────────────────────────────────
+// PIPELINE EXECUTION
+// ─────────────────────────────────────────────
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum RunTrigger {
+  WEBHOOK
+  MANUAL
+  API
+}
+
+model PipelineRun {
+  id           String     @id @default(cuid())
+  pipelineId   String
+  definitionId String
+  status       RunStatus  @default(QUEUED)
+  trigger      RunTrigger
+
+  // Git context — ties the run back to the exact commit
+  commitSha String?
+  branch    String?
+
+  triggeredById String?
+  triggeredBy   User?    @relation(fields: [triggeredById], references: [id])
+
+  // Environment this run targets
+  environmentId String?
+  environment   Environment? @relation(fields: [environmentId], references: [id])
+
+  pipeline   Pipeline           @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  definition PipelineDefinition @relation(fields: [definitionId], references: [id])
+
+  stages StageResult[]
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([status])
+  @@index([pipelineId, createdAt(sort: Desc)])
+  @@map("pipeline_runs")
+}
+
+enum StageStatus {
+  PENDING
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+  AWAITING_APPROVAL
+  CANCELLED
+}
+
+model StageResult {
+  id        String      @id @default(cuid())
+  runId     String
+  stageId   String      // matches the node ID from React Flow's graphJson
+  stageName String      // human-readable label, denormalized for fast display
+  status    StageStatus @default(PENDING)
+
+  // Execution details
+  exitCode   Int?
+  logSnippet String? @db.Text  // last ~50 lines; full logs in blob/file store
+  command    String? @db.Text
+
+  // Retry tracking
+  attempt    Int @default(1)
+  maxRetries Int @default(0)
+
+  // Approval metadata (only for manual-approval stages)
+  approvedById String?
+  approvedAt   DateTime?
+
+  run PipelineRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([runId, stageId, attempt])
+  @@index([runId])
+  @@map("stage_results")
+}
+
+// ─────────────────────────────────────────────
+// ENVIRONMENTS & SECRETS
+// ─────────────────────────────────────────────
+
+model Environment {
+  id   String @id @default(cuid())
+  name String @unique  // "staging", "production", etc.
+
+  secrets Secret[]
+  runs    PipelineRun[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("environments")
+}
+
+model Secret {
+  id            String @id @default(cuid())
+  environmentId String
+  key           String      // e.g. "DATABASE_URL", "API_KEY"
+
+  // AES-256-GCM encrypted payload
+  encryptedValue String @db.Text
+  iv             String // initialization vector (hex)
+  authTag        String // GCM authentication tag (hex)
+
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([environmentId, key])
+  @@map("secrets")
+}
+
+// ─────────────────────────────────────────────
+// WEBHOOK EVENTS
+// ─────────────────────────────────────────────
+
+model WebhookEvent {
+  id         String @id @default(cuid())
+  pipelineId String?
+  eventType  String   // "push", "pull_request"
+  source     String   @default("github")
+
+  // Raw payload for auditability and replay
+  payload    Json
+  headers    Json     // includes X-GitHub-Event, delivery ID, etc.
+
+  // Processing outcome
+  processed  Boolean @default(false)
+  runId      String? // if this webhook triggered a run
+
+  pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+
+  receivedAt DateTime @default(now())
+
+  @@index([pipelineId])
+  @@index([receivedAt(sort: Desc)])
+  @@map("webhook_events")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────
+
+enum AuditAction {
+  PIPELINE_CREATED
+  PIPELINE_UPDATED
+  PIPELINE_DELETED
+  PIPELINE_TRIGGERED
+  SECRET_CREATED
+  SECRET_UPDATED
+  SECRET_DELETED
+  APPROVAL_GRANTED
+  APPROVAL_REJECTED
+  RUN_CANCELLED
+  WEBHOOK_RECEIVED
+  ENVIRONMENT_CREATED
+  ENVIRONMENT_DELETED
+  USER_ROLE_CHANGED
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  userId       String?
+  action       AuditAction
+  resourceType String      // "Pipeline", "Secret", "PipelineRun", etc.
+  resourceId   String
+
+  // Arbitrary context — e.g. { "previousRole": "MEMBER", "newRole": "ADMIN" }
+  metadata Json?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  // Never delete rows from this table — append-only by policy
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
