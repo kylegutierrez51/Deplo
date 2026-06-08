@@ -39,6 +39,7 @@ model User {
   pipelines         Pipeline[]
   pipelineRuns      PipelineRun[]
   auditLogs         AuditLog[]
+  environments      Environment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,9 +230,21 @@ model StageResult {
 // ENVIRONMENTS & SECRETS
 // ─────────────────────────────────────────────
 
+enum EnvironmentType { 
+  PRODUCTION 
+  STAGING 
+  DEVELOPMENT 
+  PREVIEW 
+  CUSTOM 
+}
+
 model Environment {
   id   String @id @default(cuid())
-  name String @unique  // "staging", "production", etc.
+  name String @unique
+  type EnvironmentType @default(DEVELOPMENT)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
   secrets Secret[]
   runs    PipelineRun[]
