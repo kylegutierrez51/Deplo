@@ -17,16 +17,10 @@ export default function PipelineList() {
         <Subheader
           title="Pipelines"
           subtitle={<><span id="subtitle-count">8</span> pipelines across your repositories</>}>
-          <div className={styles['button-group']}>
-            <a href="pipeline-editor.html" className={styles['new-pipeline-btn']}>
-              <ion-icon name="add-outline"></ion-icon>
-              New Pipeline
-            </a>
-            <button className={styles['view-drafts-btn']}>
-              <ion-icon name="reader-outline"></ion-icon>
-              View Drafts
-            </button>
-          </div>
+          <button>
+            <ion-icon name="add-outline"></ion-icon>
+            New Pipeline
+          </button>
         </Subheader>
 
         <div className={styles.filters}>

@@ -1,30 +1,5 @@
 /*
 =====================================================================================
-Pipeline List Subheader Buttons
-=====================================================================================
-*/
-
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.button-group .new-pipeline-btn {
-  align-self: auto;
-}
-
-.button-group .view-drafts-btn {
-  align-self: auto;
-  background-color: var(--draft-btn-clr);
-}
-
-.button-group .view-drafts-btn:hover {
-  background-color: var(--draft-btn-hover-clr);
-}
-
-/*
-=====================================================================================
 Filters
 =====================================================================================
 */
