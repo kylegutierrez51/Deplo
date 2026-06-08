@@ -124,6 +124,11 @@ Select Wrapper (with prefix / suffix icons)
   border: 1px solid gray;
 }
 
+.select-wrapper select option {
+  background-color: rgb(48, 48, 48);
+  color: var(--white-clr);
+}
+
 .select-icon-left,
 .select-icon-right {
   position: absolute;

@@ -14,10 +14,10 @@
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
+
   <div class="modal-overlay">
     <div class="modal-container">
-
-      <!-- Header -->
+      
       <div class="modal-header">
         <div class="modal-header-left">
           <div class="modal-icon-box">
@@ -43,7 +43,8 @@
             <div class="select-wrapper">
               <ion-icon name="git-branch-outline" class="select-icon-left"></ion-icon>
               <select id="webhook-repo" name="repository">
-                <option value="" disabled selected>Select a repository...</option>
+                <option value="repo">Select a repository...</option>
+                <option value="repo">abcd/web-client</option>
               </select>
               <ion-icon name="chevron-down-outline" class="select-icon-right"></ion-icon>
             </div>
@@ -55,7 +56,8 @@
             <div class="select-wrapper">
               <ion-icon name="link-outline" class="select-icon-left"></ion-icon>
               <select id="webhook-pipeline" name="pipeline">
-                <option value="" disabled selected>Select a pipeline...</option>
+                <option value="pipeline">Select a pipeline...</option>
+                <option value="pipeline">build-frontend</option>
               </select>
               <ion-icon name="chevron-down-outline" class="select-icon-right"></ion-icon>
             </div>
