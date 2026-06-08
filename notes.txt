@@ -171,14 +171,7 @@ The following information contains a plan to implement the Pill Component, which
 PRISMA TO DO LIST
 
 
-
-Findings that mirror your example (UI references data the schema can't back)
- - app/environments/page.tsx:69,82,95,... — "Created By" column shows coco. Environment has no createdById/user relation.
-
- - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
-
- - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
-
+UI data that the schema doesn't have
  - app/pipelines/page.tsx:64,68,74,80,86,92 — the pipelines list also has an "Environment Type" column attached to each pipeline row. But Pipeline has no relation to Environment at all (only PipelineRun.environmentId does). Either this column belongs on the runs view instead, or Pipeline needs some notion of a target/default environment.
 
  - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
@@ -224,3 +217,16 @@ Type/shape mismatches
 
 Derived values (not gaps — just noting they're computed, not missing columns)
  - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
+
+
+
+
+
+Finished Tasks:
+
+UI data that the schema doesn't have
+ - app/environments/page.tsx:69,82,95,... — "Created By" column shows coco. Environment has no createdById/user relation.
+
+ - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
+
+ - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
