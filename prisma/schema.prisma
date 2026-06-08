@@ -97,7 +97,7 @@ model Pipeline {
   name         String
   description  String? @db.Text
   repoUrl      String
-  branchFilter String  @default("main") // glob pattern, e.g. "main", "release/*"
+  branchFilters String[] @default(["main"]) // glob pattern, e.g. "main", "release/*"
   isActive     Boolean @default(true)
 
   createdById String
@@ -110,7 +110,6 @@ model Pipeline {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([repoUrl, branchFilter])
   @@map("pipelines")
 }
 
