@@ -14,18 +14,26 @@
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
+
   <div class="modal-overlay">
     <div class="modal-container">
+
       <div class="modal-header">
-        <h3>New Environment</h3>
-        <button class="close-btn" id="close-btn"><ion-icon name="close-outline"></ion-icon></button>
+        <div class="modal-header-left">
+          <div class="modal-title-group">
+            <h3>Add Environment</h3>
+          </div>
+        </div>
+        <button class="close-btn" type="button" id="close-btn">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
       </div>
 
       <form class="modal-form" method="POST">
         <div class="form-items">
           <div class="item">
             <label>Name</label>
-            <input name="secret_key" placeholder="e.g. staging, qa-integration">
+            <input name="env_name" placeholder="e.g. staging, qa-integration">
             <span>Lowercase letters, numbers, and hyphens only. This is the key used to scope secrets and pipeline targets.</span>
           </div>
 
