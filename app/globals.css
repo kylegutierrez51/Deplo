@@ -329,6 +329,10 @@ table tbody tr {
   border-bottom: 1px solid var(--light-gray-clr);
 }
 
+table tbody tr:hover {
+  background-color: var(--dark-clr-1);
+}
+
 table tbody tr:first-of-type {
   border-top: 1px solid var(--light-gray-clr);
 }
