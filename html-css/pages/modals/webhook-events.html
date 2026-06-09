@@ -69,11 +69,11 @@
               name="branch_filter"
               placeholder="e.g. main, release/*, feature/** — press Enter to add"
             >
-            <p class="field-hint">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              Glob pattern. Leave empty to trigger on all branches.
-            </p>
-            <div class="branch-pills" id="branch-pills"></div>
+            <div class="branch-pills" id="branch-pills">
+              <span class="branch-pill">main</span>
+              <span class="branch-pill">release/*</span>
+              <span class="branch-pill">hotfix/*</span>
+            </div>
           </div>
 
           <!-- Trigger events -->
