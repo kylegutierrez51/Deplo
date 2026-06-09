@@ -15,11 +15,11 @@ import EnvironmentModal from '@/components/modals/EnvironmentModal';
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 const ENVIRONMENTS: { name: string; type: EnvType; requireApproval?: boolean; createdBy: string }[] = [
-  { name: 'production',  type: 'development', requireApproval: true,  createdBy: 'coco' },
-  { name: 'staging',     type: 'staging', requireApproval: false, createdBy: 'coco' },
-  { name: 'development', type: 'production', requireApproval: false, createdBy: 'coco' },
-  { name: 'development', type: 'preview', requireApproval: false, createdBy: 'coco' },
-  { name: 'development', type: 'custom', requireApproval: false, createdBy: 'coco' },
+  { name: 'dev',  type: 'development', requireApproval: true,  createdBy: 'coco' },
+  { name: 'staging', type: 'staging', requireApproval: false, createdBy: 'coco' },
+  { name: 'prod', type: 'production', requireApproval: false, createdBy: 'coco' },
+  { name: 'prev', type: 'preview', requireApproval: false, createdBy: 'coco' },
+  { name: 'custom', type: 'custom', requireApproval: false, createdBy: 'coco' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create'} | null;
@@ -82,8 +82,7 @@ export default function Environments() {
         <DataTable columns={["Name", "Environment Type", "Secrets", "Pipelines", "Last Updated"]}>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td className={styles.filter}>
-              <div>production</div>
-              <ion-icon name="lock-closed-outline"></ion-icon>
+              <div>dev</div>
             </td>
             <td><Pill variant="development" label="Development" /></td>
             <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>14</div></td>
@@ -98,21 +97,23 @@ export default function Environments() {
             <td>4d ago</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
-            <td className={styles.filter}><div>development</div></td>
+            <td className={styles.filter}><div>prod</div>
+              <ion-icon name="lock-closed-outline"></ion-icon>
+            </td>
             <td><Pill variant="production" label="Production" /></td>
             <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
             <td>3</td>
             <td>8d ago</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 3 })}>
-            <td className={styles.filter}><div>development</div></td>
+            <td className={styles.filter}><div>prev</div></td>
             <td><Pill variant="preview" label="Preview" /></td>
             <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
             <td>3</td>
             <td>8d ago</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 4 })}>
-            <td className={styles.filter}><div>development</div></td>
+            <td className={styles.filter}><div>custom</div></td>
             <td><Pill variant="custom" label="Custom" /></td>
             <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
             <td>3</td>

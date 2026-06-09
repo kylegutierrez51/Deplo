@@ -60,55 +60,30 @@ export default function Secrets() {
           </div>
         </div>
 
-        <DataTable columns={["Key", "Value", "Environment Type", "Updated"]}>
+        <DataTable columns={["Key", "Environment Name", "Updated"]}>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td>DATABASE_URL<br /><span>Primary Postgres connection -- pool...</span></td>
-            <td className={styles.filter}>
-              <div>••••••••••••••••••••••••</div>
-              <ion-icon name="eye-outline"></ion-icon>
-              <ion-icon name="copy-outline"></ion-icon>
-            </td>
-            <td><Pill variant="production" label="Production" /></td>
+            <td><Pill variant="production" label="prod" /></td>
             <td className="nowrap">11d ago</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 1 })}>
             <td>DATABASE_URL<br /></td>
-            <td className={styles.filter}>
-              <div>••••••••••••••••••••••••</div>
-              <ion-icon name="eye-outline"></ion-icon>
-              <ion-icon name="copy-outline"></ion-icon>
-            </td>
-            <td><Pill variant="staging" label="Staging" /></td>
+            <td><Pill variant="staging" label="staging" /></td>
             <td className="nowrap">13d ago</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
-            <td className={styles.filter}>
-              <div>••••••••••••••••••••••••</div>
-              <ion-icon name="eye-outline"></ion-icon>
-              <ion-icon name="copy-outline"></ion-icon>
-            </td>
-            <td><Pill variant="development" label="Development" /></td>
+            <td><Pill variant="development" label="dev" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 3 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
-            <td className={styles.filter}>
-              <div>••••••••••••••••••••••••</div>
-              <ion-icon name="eye-outline"></ion-icon>
-              <ion-icon name="copy-outline"></ion-icon>
-            </td>
-            <td><Pill variant="preview" label="Preview" /></td>
+            <td><Pill variant="preview" label="prev" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 4 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
-            <td className={styles.filter}>
-              <div>••••••••••••••••••••••••</div>
-              <ion-icon name="eye-outline"></ion-icon>
-              <ion-icon name="copy-outline"></ion-icon>
-            </td>
-            <td><Pill variant="custom" label="Custom" /></td>
+            <td><Pill variant="custom" label="custom" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
           </tr>
         </DataTable>
