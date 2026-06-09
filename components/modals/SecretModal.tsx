@@ -45,7 +45,7 @@ export default function SecretModal({
   const [envType, setEnvType] = useState<EnvType>(environmentType);
   const [valueVisible, setValueVisible] = useState(false);
 
-  const title = mode === 'view' ? 'Secret' : (secretKey ? 'Edit Secret' : 'Add Secret');
+  const title = mode === 'view' ? 'Secret' : ((mode === 'create' ? 'Add Secret' : 'Edit Secret'));
 
   const footer = mode === 'view' ? (
     <>

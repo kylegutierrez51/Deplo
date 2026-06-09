@@ -43,7 +43,7 @@ export default function PipelineModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
-  const title = mode === 'view' ? 'Pipeline' : (name ? 'Edit Pipeline' : 'Add Pipeline');
+  const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
 
   const footer = mode === 'view' ? (
     <>
