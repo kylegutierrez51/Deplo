@@ -1,0 +1,29 @@
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item input,
+.item textarea {
+  padding-left: 10px;
+  border-radius: var(--radius-lg);
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+}
+
+.item textarea {
+  height: 90px;
+  padding-top: 10px;
+  resize: vertical;
+}
