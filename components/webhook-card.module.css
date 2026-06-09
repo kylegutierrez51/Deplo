@@ -68,14 +68,14 @@
   font-weight: bold;
 }
 
-.pipeline-info .events {
+.pipeline-info .triggers {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   margin-bottom: var(--space-xs);
 }
 
-.pipeline-info .event-type {
+.pipeline-info .trigger-type {
   font-size: var(--font-size-sm);
   background-color: var(--color-border-dark);
   padding: 7px;
