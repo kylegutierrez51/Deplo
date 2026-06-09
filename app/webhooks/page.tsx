@@ -60,7 +60,7 @@ export default function Webhooks() {
           </div>
 
           <div className={styles['webhook-layout']}>
-            <div style={{ cursor: 'pointer', width: '100%' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
+            <div className={styles['webhook-card-wrapper']} onClick={() => setModal({ mode: 'view', row: 0 })}>
               <WebhookCard
                 repo={"abcd/infra"}
                 status={"Inactive"}
@@ -70,7 +70,7 @@ export default function Webhooks() {
                 branchFilters={['main/*', 'release/*']} />
             </div>
 
-            <div style={{ cursor: 'pointer', width: '100%' }} onClick={() => setModal({ mode: 'view', row: 1 })}>
+            <div className={styles['webhook-card-wrapper']} onClick={() => setModal({ mode: 'view', row: 1 })}>
               <WebhookCard
                 repo={"abcd/infra"}
                 status={"Active"}
@@ -80,7 +80,7 @@ export default function Webhooks() {
                 branchFilters={['main/*', 'release/*', 'hotfix/*']} />
             </div>
 
-            <div style={{ cursor: 'pointer', width: '100%' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
+            <div className={styles['webhook-card-wrapper']} onClick={() => setModal({ mode: 'view', row: 2 })}>
               <WebhookCard
                 repo={"abcd/api-server"}
                 status={"Active"}
