@@ -112,12 +112,87 @@ Modal Footer
   background-color: #103a64;
 }
 
+.modal-footer .edit-btn {
+  color: var(--blue-text);
+  border: 1.5px solid var(--blue-btn-border-clr);
+  background-color: var(--blue-btn-clr);
+}
+
+.modal-footer .edit-btn:hover {
+  background-color: var(--blue-btn-hover-clr);
+}
+
 .modal-footer .cancel-btn {
   color: var(--white-clr);
-  border: 1.5px solid var(--light-gray-clr) !important;
-  background-color: transparent !important;
+  border: 1.5px solid var(--light-gray-clr);
+  background-color: transparent;
 }
 
 .modal-footer .cancel-btn:hover {
-  background-color: var(--gray-clr) !important;
+  background-color: var(--gray-clr);
+}
+
+.modal-footer .delete-btn {
+  color: var(--red-text);
+  border: 1.5px solid var(--red-btn-border-clr);
+  background-color: transparent
+}
+
+.modal-footer .delete-btn:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+
+.optional-badge {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgb(204, 204, 204);
+  text-transform: none;
+  letter-spacing: 0;
+  background-color: rgb(65, 65, 65);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+
+.field-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: rgb(204, 204, 204);
+}
+
+.field-hint ion-icon {
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  flex-shrink: 0;
+}
+
+/*
+============================================================
+Branch Filters
+============================================================
+*/
+
+.branch-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.branch-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--blue-btn-border-clr);
+  background: var(--blue-btn-clr);
+  color: var(--blue-text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.6;
 }

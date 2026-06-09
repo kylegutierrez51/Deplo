@@ -48,31 +48,3 @@ Body
   height: 90px;
   padding-top: 10px;
 }
-
-/*
-============================================================
-Branch Filters
-============================================================
-*/
-
-.branch-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
-
-.branch-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--blue-btn-border-clr);
-  background: var(--blue-btn-clr);
-  color: var(--blue-text);
-  font-family: "JetBrains Mono", monospace;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  white-space: nowrap;
-  line-height: 1.6;
-}
