@@ -68,18 +68,18 @@ export default function PipelineModal({
         <>
           <div className={styles.item}>
             <label>Name</label>
-            <span className={styles.value}>{name}</span>
+            <span>{name}</span>
           </div>
 
           <div className={styles.item}>
             <label>Repo URL</label>
-            <span className={styles.value}>{repoUrl}</span>
+            <span>{repoUrl}</span>
           </div>
 
           {description && (
             <div className={styles.item}>
               <label>Description <span className={styles.optionalBadge}>optional</span></label>
-              <span className={styles.value}>{description}</span>
+              <span>{description}</span>
             </div>
           )}
 
@@ -92,7 +92,7 @@ export default function PipelineModal({
 
           <div className={styles.item}>
             <label>Created By</label>
-            <span className={styles.value}>{createdBy}</span>
+            <span>{createdBy}</span>
           </div>
         </>
       ) : (
