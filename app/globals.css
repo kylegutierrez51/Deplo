@@ -373,8 +373,6 @@ Modal Overlay
   background-color: rgba(0, 0, 0, 0.5);
   border: none;
   z-index: var(--z-modal);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px); /* supports Safari */
 
   display: flex;
   justify-content: center;

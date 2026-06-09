@@ -230,3 +230,12 @@ UI data that the schema doesn't have
  - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
 
  - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
+
+
+===================================================================================================================================
+
+Modal Backdrop Filter Issue:
+
+"<div className="modal-overlay" style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={onClose}>"
+
+The backdrop-filter and -webkit-backdrop-filter had to be added inline to the .modal-overlay div and not in the globals.css file. When put only in .modal-overlay in globals.css, Next.js's default PostCSS pipeline replaced backdrop-filter with -webkit-backdrop-filter, making 'backdrop-filter' not work. This screwed over those two attributes.
