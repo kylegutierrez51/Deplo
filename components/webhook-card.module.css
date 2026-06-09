@@ -43,15 +43,16 @@
 .webhook-detail .name-status {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xs);
 }
 
 .webhook-detail .name-status .active {
-  background-color: var(--header-clr);
-  color: var(--blue-clr);
+  background-color: var(--green-clr);
+  color: var(--green-text);
   padding: 3px var(--space-sm);
   border-radius: var(--radius-pill);
-  border: 1px solid #1e4a72;
+  border: 1px solid var(--green-border-clr);
   font-size: var(--font-size-body);
 }
 
@@ -68,14 +69,14 @@
   font-weight: bold;
 }
 
-.pipeline-info .triggers {
+.triggers {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   margin-bottom: var(--space-xs);
 }
 
-.pipeline-info .trigger-type {
+.trigger-type {
   font-size: var(--font-size-sm);
   background-color: var(--color-border-dark);
   padding: 7px;
@@ -84,37 +85,53 @@
   color: var(--subtitle-clr);
 }
 
-.pipeline-info .secret {
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-md);
-  margin-bottom: var(--space-sm);
-}
-
-.pipeline-info .secret-val {
-  color: var(--subtitle-clr);
-}
-
-.pipeline-info .secret ion-icon {
-  font-size: 19px;
-  cursor: pointer;
-}
-
-.pipeline-info .time {
+.time {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
 }
 
-.pipeline-info .last-delivery {
+.last-delivery {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.pipeline-info .registered {
+.registered {
   color: var(--subtitle-clr);
 }
+
+.branchFilters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.branchPills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.branchPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--blue-btn-border-clr);
+  background: var(--blue-btn-clr);
+  color: var(--blue-text);
+  font-family: var(--font-jetbrains-mono), sans-serif;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+
 
 .webhook-row .options {
   display: flex;
@@ -122,6 +139,7 @@
 }
 
 .webhook-row .options > ion-icon {
+  font-size: 19px;
   cursor: pointer;
   transition: color 0.15s;
 }

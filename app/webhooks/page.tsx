@@ -46,6 +46,7 @@ export default function Webhooks() {
               <FilterSelect
                 id={"active"} name={"active"}
                 options={[
+                  { value: "all", label: "All Statuses" },
                   { value: "active", label: "Active" },
                   { value: "inactive", label: "Inactive" }
                 ]} />
@@ -64,9 +65,9 @@ export default function Webhooks() {
                 repo={"abcd/infra"}
                 status={"Inactive"}
                 triggers={["push", "pull_request"]}
-                secretPreview={"whsec_••••••••••••••••"}
                 lastDelivery={"10d"}
-                registeredAgo={"63d"} />
+                registeredAgo={"63d"}
+                branchFilters={['main/*', 'release/*']} />
             </div>
 
             <div style={{ cursor: 'pointer', width: '100%' }} onClick={() => setModal({ mode: 'view', row: 1 })}>
@@ -74,9 +75,9 @@ export default function Webhooks() {
                 repo={"abcd/infra"}
                 status={"Active"}
                 triggers={["push"]}
-                secretPreview={"whsec_••••••••••••••••"}
                 lastDelivery={"10d"}
-                registeredAgo={"63d"} />
+                registeredAgo={"63d"}
+                branchFilters={['main/*', 'release/*', 'hotfix/*']} />
             </div>
 
             <div style={{ cursor: 'pointer', width: '100%' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
@@ -84,9 +85,9 @@ export default function Webhooks() {
                 repo={"abcd/api-server"}
                 status={"Active"}
                 triggers={["pull_request"]}
-                secretPreview={"whsec_••••••••••••••••"}
                 lastDelivery={"10d"}
-                registeredAgo={"63d"} />
+                registeredAgo={"63d"}
+                branchFilters={['hotfix/*']} />
             </div>
           </div>
 

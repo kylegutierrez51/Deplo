@@ -36,7 +36,7 @@ export default function WebhookModal({
   onSave,
 }: WebhookModalProps) {
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
-  const [pills, setPills] = useState<string[]>(branchFilters);
+  const [filters, setBranchFilters] = useState<string[]>(branchFilters);
   const [selectedTriggers, setSelectedTriggers] = useState<WebhookTriggers>(triggers);
   const [secretVisible, setSecretVisible] = useState(false);
   const [secret, setSecret] = useState(webhookSecret);
@@ -48,7 +48,7 @@ export default function WebhookModal({
     e.preventDefault();
     const value = branchInputRef.current?.value.trim();
     if (!value) return;
-    setPills(prev => [...prev, value]);
+    setBranchFilters(prev => [...prev, value]);
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
@@ -114,11 +114,11 @@ export default function WebhookModal({
             </div>
           </div>
 
-          {pills.length > 0 && (
+          {filters.length > 0 && (
             <div className={styles.fieldGroup}>
               <label>Branch filters <span className={styles.optionalBadge}>optional</span></label>
               <div className={styles.branchPills}>
-                {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+                {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
               </div>
             </div>
           )}
@@ -202,7 +202,7 @@ export default function WebhookModal({
               onKeyDown={handleBranchKeyDown}
             />
             <div className={styles.branchPills}>
-              {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+              {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
             </div>
           </div>
 
