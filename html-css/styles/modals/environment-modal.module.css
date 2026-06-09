@@ -1,60 +1,94 @@
+/*
+============================================================
+Header
+============================================================
+*/
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background-color: rgb(35, 35, 35);
+  border: 1px solid rgb(65, 65, 65);
+  flex-shrink: 0;
+}
+
+.modal-icon-box ion-icon {
+  font-size: 22px;
+  color: var(--white-clr);
+}
+
+.modal-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.modal-title-group h3 {
+  font-weight: 600;
+  color: var(--white-clr);
+}
+
+.modal-title-group p {
+  font-size: 13px;
+  color: rgb(160, 160, 160);
+  line-height: 1.5;
+}
+
+/*
+============================================================
+Body
+============================================================
+*/
+
 .item {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.form-items label {
+.item label {
   font-size: 14px;
   color: rgb(160, 160, 160);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.form-items div > span {
+.item span:not(.view-mode) {
   font-size: 14px;
   color: rgb(204, 204, 204);
 }
 
-.form-items label span {
+.item label span {
   text-transform: none;
   font-size: 12px;
   color: rgb(204, 204, 204);
 }
 
-.value-input-wrapper {
-  position: relative;
-}
 
-.form-items textarea[name="secret_value"] {
-  width: 100%;
-  height: 100px;
-  resize: none;
-  padding-top: 10px;
-  padding-right: 36px;
-}
-
-.value-toggle-icon {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: var(--input-clr);
-  font-size: 18px;
-  pointer-events: none;
-}
-
-.form-items input::placeholder {
+.item input::placeholder {
   color: var(--input-clr);
   text-align: left;
 }
 
-.form-items .button-group {
+.item .button-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
-.form-items .button-group button {
+.item .button-group button {
   background-color: var(--light-gray-clr);
   padding: 5px 10px;
   border: 1.5px solid transparent;
@@ -62,7 +96,7 @@
   cursor: pointer;
 }
 
-.form-items input, .form-items textarea {
+.item input {
   padding-left: 10px;
   border-radius: var(--radius-lg);
   background-color: rgb(48, 48, 48);
