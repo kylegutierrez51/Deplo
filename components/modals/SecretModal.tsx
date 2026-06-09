@@ -23,11 +23,11 @@ interface SecretModalProps {
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
-  { key: 'production',  label: 'Production',  baseClass: styles.typeBtnProduction,  activeClass: styles.typeBtnProductionActive  },
-  { key: 'staging',     label: 'Staging',     baseClass: styles.typeBtnStaging,     activeClass: styles.typeBtnStagingActive     },
+  { key: 'production', label: 'Production', baseClass: styles.typeBtnProduction, activeClass: styles.typeBtnProductionActive },
+  { key: 'staging', label: 'Staging', baseClass: styles.typeBtnStaging, activeClass: styles.typeBtnStagingActive },
   { key: 'development', label: 'Development', baseClass: styles.typeBtnDevelopment, activeClass: styles.typeBtnDevelopmentActive },
-  { key: 'preview',     label: 'Preview',     baseClass: styles.typeBtnPreview,     activeClass: styles.typeBtnPreviewActive     },
-  { key: 'custom',      label: 'Custom',      baseClass: styles.typeBtnCustom,      activeClass: styles.typeBtnCustomActive      },
+  { key: 'preview', label: 'Preview', baseClass: styles.typeBtnPreview, activeClass: styles.typeBtnPreviewActive },
+  { key: 'custom', label: 'Custom', baseClass: styles.typeBtnCustom, activeClass: styles.typeBtnCustomActive },
 ];
 
 export default function SecretModal({
@@ -44,6 +44,17 @@ export default function SecretModal({
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [envType, setEnvType] = useState<EnvType>(environmentType);
   const [valueVisible, setValueVisible] = useState(false);
+  const [secretVisible, setSecretVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (value) {
+      navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+
+  };
 
   const title = mode === 'view' ? 'Secret' : ((mode === 'create' ? 'Add Secret' : 'Edit Secret'));
 
@@ -74,14 +85,25 @@ export default function SecretModal({
           </div>
 
           <div className={styles.item}>
-            <label>Value</label>
-            <div className={styles.valueInputWrapper}>
-              <div className={styles.secretWrapper}>
-                <span>{valueVisible ? value : '••••••••••••••••••••••••'}</span>
-                <ion-icon
-                  name={valueVisible ? 'eye-off-outline' : 'eye-outline'}
-                  onClick={() => setValueVisible(v => !v)}
-                ></ion-icon>
+            <div className={styles.fieldLabelRow}>
+              <label htmlFor="secret-value">Value</label>
+            </div>
+            <div className={styles.secretInputWrapper}>
+              <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+              <input
+                type={secretVisible ? 'text' : 'password'}
+                value={value}
+                readOnly
+                className={styles.secretInput}
+              />
+              <div className={styles.secretActions}>
+                <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
+                  <ion-icon name={secretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
+                </button>
+                <span className={styles.secretDivider}></span>
+                <button type="button" className={styles.iconActionBtn} onClick={handleCopy}>
+                  <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
+                </button>
               </div>
             </div>
           </div>
@@ -115,16 +137,19 @@ export default function SecretModal({
           <div className={styles.item}>
             <label>Value</label>
             <div className={styles.valueInputWrapper}>
-              <textarea
+              <input
+                type={secretVisible ? 'text' : 'password'}
                 name="secret_value"
                 placeholder="Secret value - encrypted at rest with AES-256-GCM"
                 defaultValue={value}
-              ></textarea>
-              <ion-icon
-                name={valueVisible ? 'eye-off-outline' : 'eye-outline'}
-                className={styles.valueToggleIcon}
-                onClick={() => setValueVisible(v => !v)}
-              ></ion-icon>
+              ></input>
+              <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
+                <ion-icon
+                  name={secretVisible ? 'eye-off-outline' : 'eye-outline'}
+                  className={styles.valueToggleIcon}
+                ></ion-icon>
+              </button>
+
             </div>
           </div>
 
