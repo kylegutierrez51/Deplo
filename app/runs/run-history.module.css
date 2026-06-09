@@ -103,7 +103,7 @@ Run History Media Queries
 @media (max-width: 1195px) {
 
   :global(.page-content) {
-    padding: 0 60px;
+    padding: 50px 60px 0;
   }
 
 
