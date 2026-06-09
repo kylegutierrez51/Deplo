@@ -60,7 +60,7 @@ export default function Secrets() {
           </div>
         </div>
 
-        <DataTable columns={["Key", "Value", "Environment Type", "Updated", "Created By"]}>
+        <DataTable columns={["Key", "Value", "Environment Type", "Updated"]}>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td>DATABASE_URL<br /><span>Primary Postgres connection -- pool...</span></td>
             <td className={styles.filter}>
@@ -70,7 +70,6 @@ export default function Secrets() {
             </td>
             <td><Pill variant="production" label="Production" /></td>
             <td className="nowrap">11d ago</td>
-            <td>sarah.chen</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 1 })}>
             <td>DATABASE_URL<br /></td>
@@ -81,7 +80,6 @@ export default function Secrets() {
             </td>
             <td><Pill variant="staging" label="Staging" /></td>
             <td className="nowrap">13d ago</td>
-            <td>sarah.chen</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
@@ -92,7 +90,6 @@ export default function Secrets() {
             </td>
             <td><Pill variant="development" label="Development" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
-            <td>marcus.coco</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 3 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
@@ -103,7 +100,6 @@ export default function Secrets() {
             </td>
             <td><Pill variant="preview" label="Preview" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
-            <td>marcus.coco</td>
           </tr>
           <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 4 })}>
             <td>GITHUB_TOKEN<br /><span>Fine-grained PAT scoped to acme or...</span></td>
@@ -114,7 +110,6 @@ export default function Secrets() {
             </td>
             <td><Pill variant="custom" label="Custom" /></td>
             <td className="nowrap">12d ago <br /><span className="nowrap">5m 12s</span></td>
-            <td>marcus.coco</td>
           </tr>
         </DataTable>
 
