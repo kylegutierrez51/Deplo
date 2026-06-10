@@ -83,6 +83,21 @@ Webhooks
   align-items: center;
 }
 
+.webhook-card-wrapper {
+  width: 100%;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid var(--light-gray-clr);
+}
+
+.webhook-card-wrapper:first-of-type {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.webhook-card-wrapper:last-of-type {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
 /*
 ============================================================
 Pagination overrides for centered layout
@@ -199,7 +214,7 @@ Webhook Media Queries
 @media (max-width: 1195px) {
 
   :global(.page-content) {
-    padding: 0 60px;
+    padding: 50px 60px 0;
   }
 }
 

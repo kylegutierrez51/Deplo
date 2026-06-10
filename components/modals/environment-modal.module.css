@@ -1,0 +1,167 @@
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item input {
+  padding-left: 10px;
+  border-radius: var(--radius-lg);
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+}
+
+.item-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nameHint {
+  font-size: 13px;
+  color: rgb(160, 160, 160);
+}
+
+/*
+=======================
+Environment Type Buttons
+=======================
+*/
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.typeBtn {
+  background-color: var(--light-gray-clr);
+  padding: 5px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--white-clr);
+  font-size: var(--font-size-sm);
+}
+
+.typeBtnProduction:hover,
+.typeBtnProductionActive {
+  color: var(--pill-production-text);
+  background: var(--pill-production-bg);
+  border-color: var(--pill-production-border);
+}
+
+.typeBtnStaging:hover,
+.typeBtnStagingActive {
+  color: var(--pill-staging-text);
+  background: var(--pill-staging-bg);
+  border-color: var(--pill-staging-border);
+}
+
+.typeBtnDevelopment:hover,
+.typeBtnDevelopmentActive {
+  color: var(--pill-development-text);
+  background: var(--pill-development-bg);
+  border-color: var(--pill-development-border);
+}
+
+.typeBtnPreview:hover,
+.typeBtnPreviewActive {
+  color: var(--pill-preview-text);
+  background: var(--pill-preview-bg);
+  border-color: var(--pill-preview-border);
+}
+
+.typeBtnCustom:hover,
+.typeBtnCustomActive {
+  color: var(--pill-custom-text);
+  background: var(--pill-custom-bg);
+  border-color: var(--pill-custom-border);
+}
+
+/*
+=======================
+Approval Toggle
+=======================
+*/
+
+.approvalToggleBox {
+  border: 1px solid gray;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+}
+
+.toggleOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.toggleSwitch {
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  background-color: var(--light-gray-clr);
+  border-radius: var(--radius-pill);
+  position: relative;
+  margin-top: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.toggleSwitch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--white-clr);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggleSwitchOn {
+  background-color: var(--blue-clr);
+}
+
+.toggleSwitchOn::after {
+  transform: translateX(18px);
+}
+
+.toggleContent {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.toggleTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--white-clr);
+}
+
+.toggleTitle ion-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.toggleDescription {
+  font-size: var(--font-size-sm);
+  color: rgb(204, 204, 204);
+  line-height: 1.5;
+}

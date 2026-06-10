@@ -329,6 +329,10 @@ table tbody tr {
   border-bottom: 1px solid var(--light-gray-clr);
 }
 
+table tbody tr:hover {
+  background-color: var(--dark-clr-1);
+}
+
 table tbody tr:first-of-type {
   border-top: 1px solid var(--light-gray-clr);
 }
@@ -373,8 +377,6 @@ Modal Overlay
   background-color: rgba(0, 0, 0, 0.5);
   border: none;
   z-index: var(--z-modal);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px); /* supports Safari */
 
   display: flex;
   justify-content: center;

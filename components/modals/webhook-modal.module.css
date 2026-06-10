@@ -1,0 +1,244 @@
+/*
+==========================
+Field Group
+==========================
+*/
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldGroup > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fieldGroup > input {
+  padding-left: 10px;
+  border-radius: var(--radius-lg);
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+}
+
+/*
+==========================
+Select Wrapper
+==========================
+*/
+
+.selectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.selectWrapper select {
+  width: 100%;
+  padding-left: 34px;
+  padding-right: 34px;
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+}
+
+.selectWrapper select option {
+  background-color: rgb(48, 48, 48);
+  color: var(--white-clr);
+}
+
+.selectWrapper span {
+  padding-left: 34px;
+  color: rgb(204, 204, 204);
+}
+
+.selectIconLeft,
+.selectIconRight {
+  position: absolute;
+  font-size: 16px;
+  color: var(--input-clr);
+  pointer-events: none;
+}
+
+.selectIconLeft { left: 10px; }
+.selectIconRight { right: 10px; }
+
+/*
+==========================
+Trigger Event Cards
+==========================
+*/
+
+.eventCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.eventCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid gray;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.eventCard:hover {
+  background-color: rgb(55, 55, 55);
+}
+
+.eventCardChecked {
+  border-color: var(--blue-clr);
+  background-color: rgba(80, 165, 255, 0.06);
+}
+
+.eventCardCheckbox {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.eventCardCheckbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.customCheckbox {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid gray;
+  background-color: transparent;
+}
+
+.customCheckboxChecked {
+  background-color: var(--blue-clr);
+  border-color: var(--blue-clr);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23fff' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.eventCardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eventName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white-clr);
+}
+
+.eventDesc {
+  font-size: 13px;
+  color: rgb(160, 160, 160);
+  line-height: 1.5;
+}
+
+/*
+==========================
+Webhook Secret Input
+==========================
+*/
+
+.fieldLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fieldLabelRow label {
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.regenerateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(65, 65, 65);
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.regenerateBtn ion-icon {
+  font-size: 15px;
+  color: var(--white-clr);
+}
+
+.secretInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIconLeft {
+  position: absolute;
+  left: 10px;
+  font-size: 16px;
+  color: var(--input-clr);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.secretInput {
+  width: 100%;
+  padding-left: 34px;
+  padding-right: 76px;
+  border-radius: var(--radius-lg);
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+  letter-spacing: 0.06em;
+}
+
+.secretActions {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  border-left: 1px solid gray;
+}
+
+.secretDivider {
+  display: block;
+  width: 1px;
+  height: 16px;
+  background-color: gray;
+}
+
+.iconActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--input-clr);
+}
+
+.iconActionBtn:hover {
+  color: var(--white-clr);
+}
+
+.iconActionBtn ion-icon {
+  font-size: 16px;
+}

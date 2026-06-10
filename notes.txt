@@ -172,10 +172,6 @@ PRISMA TO DO LIST
 
 
 UI data that the schema doesn't have
- - app/pipelines/page.tsx:64,68,74,80,86,92 — the pipelines list also has an "Environment Type" column attached to each pipeline row. But Pipeline has no relation to Environment at all (only PipelineRun.environmentId does). Either this column belongs on the runs view instead, or Pipeline needs some notion of a target/default environment.
-
- - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
-
  - app/audit/page.tsx:67 — Action shown as "Run Completed". AuditAction has RUN_CANCELLED but nothing for a successful/completed run — no enum value maps to this label.
 
  - components/WebhookCard.tsx:5-11 (used in app/webhooks/page.tsx) — props are repo, status: 'Active'|'Inactive', secretPreview, lastDelivery, registeredAgo. None of these exist on WebhookEvent (which models individual delivery records, not the registered webhook). The schema seems to be missing a Webhook/registration model entirely — WebhookEvent alone can't supply this card's data.
@@ -188,8 +184,6 @@ Schema columns/relations with no UI yet
  - Pipeline.description, .isActive, .branchFilter, .createdAt/.updatedAt — never shown.
 
  - PipelineDefinition.version — never explicitly rendered (the "v12"/"v8" badges in app/runs/page.tsx are presumably this, but it's never shown by name in the editor).
-
- - Environment.createdAt — only updatedAt ("Last Updated") has a column.
 
  - WebhookEvent.source, .payload, .headers, .runId — source and the link to the triggered run never appear (payload/headers being hidden is reasonable).
 
@@ -230,3 +224,38 @@ UI data that the schema doesn't have
  - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
 
  - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
+
+ - app/pipelines/page.tsx:64,68,74,80,86,92 — the pipelines list also has an "Environment Type" column attached to each pipeline row. But Pipeline has no relation to Environment at all (only PipelineRun.environmentId does). Either this column belongs on the runs view instead, or Pipeline needs some notion of a target/default environment.
+
+ - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
+
+
+
+Schema columns/relations with no UI yet
+ - Environment.createdAt — only updatedAt ("Last Updated") has a column.
+
+===================================================================================================================================
+
+Modal Backdrop Filter Issue:
+
+"<div className="modal-overlay" style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={onClose}>"
+
+The backdrop-filter and -webkit-backdrop-filter had to be added inline to the .modal-overlay div and not in the globals.css file. When put only in .modal-overlay in globals.css, Next.js's default PostCSS pipeline replaced backdrop-filter with -webkit-backdrop-filter, making 'backdrop-filter' not work. This screwed over those two attributes.
+
+===================================================================================================================================
+
+selectedSecret TypeScript Issue:
+
+In the SecretModal component, if you leave these props as non-optional:
+
+        interface SecretModalProps {
+          ...
+          environmentName: string;
+          createdBy: string;
+          createdAt: string;
+          ...
+        }
+
+Then it causes a TypeScript error where if 'selectedSecret' in the Secrets page is undefined (for 'edit' or 'create' mode, meaning there's no row selected), then when you spread {...selectedSecret} into <SecretModal>, TS widens every spread property to T | undefined and optional, meaning that those props can be undefined even though they aren't. 
+
+The fix is to make them optional. It's applied across both the Environments and Pipelines pages too.
