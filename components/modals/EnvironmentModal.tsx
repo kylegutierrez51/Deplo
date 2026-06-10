@@ -16,6 +16,8 @@ interface EnvironmentModalProps {
   type?: EnvType;
   requireApproval?: boolean;
   createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
   onClose: () => void;
   onDelete?: () => void;
   onSave?: () => void;
@@ -35,6 +37,8 @@ export default function EnvironmentModal({
   type = 'production',
   requireApproval = false,
   createdBy,
+  createdAt,
+  updatedAt,
   onClose,
   onDelete,
   onSave,
@@ -96,10 +100,20 @@ export default function EnvironmentModal({
             </div>
           </div>
 
+        <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Created By</label>
-            <span>{createdBy}</span>
+            <span>{createdBy || 'Unknown User'}</span>
           </div>
+          <div className={styles.item}>
+            <label>Created At</label>
+            <span>{createdAt}</span>
+          </div>
+          <div className={styles.item}>
+            <label>Last Updated</label>
+            <span>{updatedAt}</span>
+          </div>
+        </div>
         </>
       ) : (
         <>

@@ -10,10 +10,13 @@ const styles = { ...modalStyles, ...pipelineStyles };
 interface PipelineModalProps {
   initialMode?: 'view' | 'edit' | 'create';
   name?: string;
+  lastRun?: string;
   repoUrl?: string;
   description?: string;
   branchFilters?: string[];
   createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
   onClose: () => void;
   onDelete?: () => void;
   onSave?: () => void;
@@ -22,10 +25,13 @@ interface PipelineModalProps {
 export default function PipelineModal({
   initialMode = 'view',
   name,
+  lastRun,
   repoUrl,
   description,
   branchFilters = [],
   createdBy,
+  createdAt,
+  updatedAt,
   onClose,
   onDelete,
   onSave,
@@ -66,10 +72,19 @@ export default function PipelineModal({
     <Modal title={title} onClose={onClose} footer={footer} mode={mode}>
       {mode === 'view' ? (
         <>
+        <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Name</label>
             <span>{name}</span>
           </div>
+          {lastRun &&
+          <div className={styles.item}>
+            <label>Last Run</label>
+            <span>{lastRun}</span>
+          </div>
+          }
+        </div>
+
 
           <div className={styles.item}>
             <label>Repo URL</label>
@@ -90,10 +105,21 @@ export default function PipelineModal({
             </div>
           </div>
 
+        <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Created By</label>
-            <span>{createdBy}</span>
+            <span>{createdBy || 'Unknown User'}</span>
           </div>
+          <div className={styles.item}>
+            <label>Created At</label>
+            <span>{createdAt}</span>
+          </div>
+          <div className={styles.item}>
+            <label>Last Updated</label>
+            <span>{updatedAt}</span>
+          </div>
+        </div>
+
         </>
       ) : (
         <>

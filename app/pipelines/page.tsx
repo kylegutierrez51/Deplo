@@ -13,11 +13,11 @@ import Pill from '@/components/Pill';
 import PipelineModal from '@/components/modals/PipelineModal';
 
 const PIPELINES = [
-  { name: 'build-frontend',  repoUrl: 'https://github.com/abcd/web-client',  description: 'Builds and deploys the web client on every push to main', branchFilters: ['main', 'release/*', 'hotfix/*'], createdBy: 'coco' },
-  { name: 'deploy-api',      repoUrl: 'https://github.com/abcd/api-server',   branchFilters: ['main'],                                                 createdBy: 'coco' },
-  { name: 'release-mobile',  repoUrl: 'https://github.com/abcd/mobile-app',   branchFilters: ['main', 'release/*'],                                    createdBy: 'coco' },
-  { name: 'release-mobile',  repoUrl: 'https://github.com/abcd/mobile-app',   branchFilters: ['main'],                                                 createdBy: 'coco' },
-  { name: 'release-mobile',  repoUrl: 'https://github.com/abcd/mobile-app',   branchFilters: [],                                                       createdBy: 'coco' },
+  { name: 'build-frontend', lastRun: '1h 2m 14s ago', repoUrl: 'https://github.com/abcd/web-client',  description: 'Builds and deploys the web client on every push to main', branchFilters: ['main', 'release/*', 'hotfix/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'deploy-api', lastRun: '1h 7m 7s ago', repoUrl: 'https://github.com/abcd/api-server', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile', repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main', 'release/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile', repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile',  repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: [], createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;

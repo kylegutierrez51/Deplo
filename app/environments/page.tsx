@@ -14,12 +14,12 @@ import EnvironmentModal from '@/components/modals/EnvironmentModal';
 
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
-const ENVIRONMENTS: { name: string; type: EnvType; requireApproval?: boolean; createdBy: string }[] = [
-  { name: 'dev',  type: 'development', requireApproval: true,  createdBy: 'coco' },
-  { name: 'staging', type: 'staging', requireApproval: false, createdBy: 'coco' },
-  { name: 'prod', type: 'production', requireApproval: false, createdBy: 'coco' },
-  { name: 'prev', type: 'preview', requireApproval: false, createdBy: 'coco' },
-  { name: 'custom', type: 'custom', requireApproval: false, createdBy: 'coco' },
+const ENVIRONMENTS: { name: string; type: EnvType; requireApproval?: boolean; createdBy: string, createdAt: string, updatedAt: string }[] = [
+  { name: 'dev',  type: 'development', requireApproval: true,  createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'staging', type: 'staging', requireApproval: false, createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'prod', type: 'production', requireApproval: false, createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'prev', type: 'preview', requireApproval: false, createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'custom', type: 'custom', requireApproval: false, createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create'} | null;

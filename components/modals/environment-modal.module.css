@@ -21,6 +21,12 @@
   border: 1px solid gray;
 }
 
+.item-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .nameHint {
   font-size: 13px;
   color: rgb(160, 160, 160);

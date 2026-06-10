@@ -14,9 +14,12 @@ interface SecretModalProps {
   initialMode?: 'view' | 'edit' | 'create';
   secretKey?: string;
   value?: string;
+  environmentName?: string;
   environmentType?: EnvType;
   notes?: string;
   createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
   onClose: () => void;
   onDelete?: () => void;
   onSave?: () => void;
@@ -34,16 +37,18 @@ export default function SecretModal({
   initialMode = 'view',
   secretKey,
   value,
+  environmentName,
   environmentType = 'production',
   notes,
   createdBy,
+  createdAt,
+  updatedAt,
   onClose,
   onDelete,
   onSave,
 }: SecretModalProps) {
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [envType, setEnvType] = useState<EnvType>(environmentType);
-  const [valueVisible, setValueVisible] = useState(false);
   const [secretVisible, setSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -109,9 +114,9 @@ export default function SecretModal({
           </div>
 
           <div className={styles.item}>
-            <label>Environment Type</label>
+            <label>Environment Name</label>
             <div className={styles.buttonGroup}>
-              <Pill variant={envType} label={envType.charAt(0).toUpperCase() + envType.slice(1)} />
+              <Pill variant={envType} label={environmentName ?? ''} />
             </div>
           </div>
 
@@ -122,10 +127,20 @@ export default function SecretModal({
             </div>
           )}
 
+        <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Created By</label>
-            <span>{createdBy}</span>
+            <span>{createdBy || 'Unknown User'}</span>
           </div>
+          <div className={styles.item}>
+            <label>Created At</label>
+            <span>{createdAt}</span>
+          </div>
+          <div className={styles.item}>
+            <label>Last Updated</label>
+            <span>{updatedAt}</span>
+          </div>
+        </div>
         </>
       ) : (
         <>
@@ -154,7 +169,7 @@ export default function SecretModal({
           </div>
 
           <div className={styles.item}>
-            <label>Environment Type</label>
+            <label>Environment Name</label>
             <div className={styles.buttonGroup}>
               {ENV_TYPES.map(({ key, label, baseClass, activeClass }) => (
                 <button
