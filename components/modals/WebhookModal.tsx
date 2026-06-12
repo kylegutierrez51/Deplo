@@ -7,7 +7,7 @@ import webhookStyles from './webhook-modal.module.css';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
-interface WebhookTriggers {
+interface WebhookEvents {
   push?: boolean;
   pullRequest?: boolean;
 }
@@ -17,7 +17,7 @@ interface WebhookModalProps {
   repository?: string;
   pipeline?: string;
   branchFilters?: string[];
-  triggers?: WebhookTriggers;
+  events?: WebhookEvents;
   webhookSecret?: string;
   onClose: () => void;
   onDelete?: () => void;
@@ -29,7 +29,7 @@ export default function WebhookModal({
   repository,
   pipeline,
   branchFilters = [],
-  triggers = {},
+  events = {},
   webhookSecret = '',
   onClose,
   onDelete,
@@ -37,7 +37,7 @@ export default function WebhookModal({
 }: WebhookModalProps) {
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
-  const [selectedTriggers, setSelectedTriggers] = useState<WebhookTriggers>(triggers);
+  const [selectedEvents, setSelectedEvents] = useState<WebhookEvents>(events);
   const [secretVisible, setSecretVisible] = useState(false);
   const [secret, setSecret] = useState(webhookSecret);
   const [copied, setCopied] = useState(false);
@@ -52,8 +52,8 @@ export default function WebhookModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
-  const toggleEvent = (key: keyof WebhookTriggers) => {
-    setSelectedTriggers(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleEvent = (key: keyof WebhookEvents) => {
+    setSelectedEvents(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleCopy = () => {
@@ -69,8 +69,8 @@ export default function WebhookModal({
   };
 
   const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
-  const subtitle = mode === 'edit' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
-  const icon = mode === 'edit' ? 'git-network-outline' : undefined;
+  const subtitle = mode === 'edit' || mode === 'create' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
+  const icon = mode === 'edit' || mode === 'create' ? 'git-network-outline' : undefined;
 
   const footer = mode === 'view' ? (
     <>
@@ -127,9 +127,9 @@ export default function WebhookModal({
             <label>Trigger events</label>
             <div className={styles.eventCards}>
               {EVENT_DEFS.map(({ key, label, desc }) => (
-                <div key={key} className={`${styles.eventCard} ${selectedTriggers[key] ? styles.eventCardChecked : ''}`}>
+                <div key={key} className={`${styles.eventCard} ${selectedEvents[key] ? styles.eventCardChecked : ''}`}>
                   <div className={styles.eventCardCheckbox}>
-                    <span className={`${styles.customCheckbox} ${selectedTriggers[key] ? styles.customCheckboxChecked : ''}`}></span>
+                    <span className={`${styles.customCheckbox} ${selectedEvents[key] ? styles.customCheckboxChecked : ''}`}></span>
                   </div>
                   <div className={styles.eventCardContent}>
                     <span className={styles.eventName}>{label}</span>
@@ -212,11 +212,11 @@ export default function WebhookModal({
               {EVENT_DEFS.map(({ key, label, desc }) => (
                 <label
                   key={key}
-                  className={`${styles.eventCard} ${selectedTriggers[key] ? styles.eventCardChecked : ''}`}
+                  className={`${styles.eventCard} ${selectedEvents[key] ? styles.eventCardChecked : ''}`}
                 >
                   <div className={styles.eventCardCheckbox}>
-                    <input type="checkbox" checked={!!selectedTriggers[key]} onChange={() => toggleEvent(key)} />
-                    <span className={`${styles.customCheckbox} ${selectedTriggers[key] ? styles.customCheckboxChecked : ''}`}></span>
+                    <input type="checkbox" checked={!!selectedEvents[key]} onChange={() => toggleEvent(key)} />
+                    <span className={`${styles.customCheckbox} ${selectedEvents[key] ? styles.customCheckboxChecked : ''}`}></span>
                   </div>
                   <div className={styles.eventCardContent}>
                     <span className={styles.eventName}>{label}</span>

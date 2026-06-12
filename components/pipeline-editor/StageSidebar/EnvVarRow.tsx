@@ -24,6 +24,7 @@ export default function EnvVarRow({ envKey, envValue, onChange }: EnvVarRowProps
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />
+      <ion-icon name="trash-outline"></ion-icon>
     </div>
   )
 }

@@ -22,7 +22,7 @@ export default function HeaderButtons() {
       <div className={styles.divider}></div>
       <button className={styles['save-btn']}>
         <ion-icon name="save-outline"></ion-icon>
-        Save Draft
+        Save
       </button>
       <button className={styles['run-btn']}>
         <ion-icon name="caret-forward-outline"></ion-icon>

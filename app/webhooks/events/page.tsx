@@ -27,7 +27,7 @@ export default function Webhooks() {
         <StatCards
           cards={
             [
-              { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
+              { icon: "time-outline", total: 1, label: "PENDING", valueClassName: 'pending' },
               { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
               { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
               { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
@@ -47,8 +47,9 @@ export default function Webhooks() {
                 [
                   { value: "all", label: "All statuses" },
                   { value: "succeeded", label: "Processed" },
+                  { value: "pending", label: "Pending" },
                   { value: "failed", label: "Ignored" },
-                  { value: "running", label: "Failed" },
+                  { value: "running", label: "Running" },
                 ]
               } />
             <FilterSelect
@@ -66,6 +67,15 @@ export default function Webhooks() {
 
         <DataTable
           columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
+          <tr>
+            <td><Pill variant="pending" label="Pending" /></td>
+            <td><Pill variant="pull-request" label="pull_request" /></td>
+            <td>abcd/api-server</td>
+            <td>main</td>
+            <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
+            <td>deploy-api</td>
+            <td>1h ago</td>
+          </tr>
           <tr>
             <td><Pill variant="processed" label="Processed" /></td>
             <td><Pill variant="push" label="push" /></td>

@@ -185,6 +185,10 @@
   color: var(--blue-clr);
 }
 
+.env-container ion-icon[name='trash-outline'] {
+  cursor: pointer;
+}
+
 .env-vars-list {
   display: flex;
   flex-direction: column;

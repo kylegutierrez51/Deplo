@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output = "../generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -32,15 +32,15 @@ model User {
   image         String?
   role          UserRole  @default(MEMBER)
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
 
   // Deplo relations
-  pipelines         Pipeline[]
-  pipelineRuns      PipelineRun[]
-  auditLogs         AuditLog[]
-  environments      Environment[]
-  secrets           Secret[]
+  pipelines    Pipeline[]
+  pipelineRuns PipelineRun[]
+  auditLogs    AuditLog[]
+  environments Environment[]
+  secrets      Secret[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,18 +93,17 @@ model VerificationToken {
 // ─────────────────────────────────────────────
 
 model Pipeline {
-  id           String  @id @default(cuid())
-  name         String
-  description  String? @db.Text
-  repoUrl      String
+  id            String   @id @default(cuid())
+  name          String
+  description   String?  @db.Text
+  repoUrl       String
   branchFilters String[] @default(["main"]) // glob pattern, e.g. "main", "release/*"
-  isActive     Boolean @default(true)
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
 
-  definitions  PipelineDefinition[]
-  runs         PipelineRun[]
+  definitions   PipelineDefinition[]
+  runs          PipelineRun[]
   webhookEvents WebhookEvent[]
 
   createdAt DateTime @default(now())
@@ -116,7 +115,7 @@ model Pipeline {
 model PipelineDefinition {
   id         String @id @default(cuid())
   pipelineId String
-  version    Int
+  version    Int // For now, this can represent the number of edits made to a pipeline
 
   // React Flow serialization: { nodes: [...], edges: [...] }
   graphJson  Json
@@ -164,7 +163,7 @@ model PipelineRun {
   branch    String?
 
   triggeredById String?
-  triggeredBy   User?    @relation(fields: [triggeredById], references: [id])
+  triggeredBy   User?   @relation(fields: [triggeredById], references: [id])
 
   // Environment this run targets
   environmentId String?
@@ -195,16 +194,25 @@ enum StageStatus {
   CANCELLED
 }
 
+enum StageType {
+  BUILD
+  TEST
+  DEPLOY
+  APPROVAL
+  SCRIPT
+}
+
 model StageResult {
   id        String      @id @default(cuid())
   runId     String
-  stageId   String      // matches the node ID from React Flow's graphJson
-  stageName String      // human-readable label, denormalized for fast display
+  stageId   String // matches the node ID from React Flow's graphJson
+  stageName String // human-readable label, denormalized for fast display
+  stageType StageType
   status    StageStatus @default(PENDING)
 
   // Execution details
   exitCode   Int?
-  logSnippet String? @db.Text  // last ~50 lines; full logs in blob/file store
+  logSnippet String? @db.Text // last ~50 lines; full logs in blob/file store
   command    String? @db.Text
 
   // Retry tracking
@@ -230,17 +238,17 @@ model StageResult {
 // ENVIRONMENTS & SECRETS
 // ─────────────────────────────────────────────
 
-enum EnvironmentType { 
-  PRODUCTION 
-  STAGING 
-  DEVELOPMENT 
-  PREVIEW 
-  CUSTOM 
+enum EnvironmentType {
+  PRODUCTION
+  STAGING
+  DEVELOPMENT
+  PREVIEW
+  CUSTOM
 }
 
 model Environment {
-  id   String @id @default(cuid())
-  name String @unique
+  id   String          @id @default(cuid())
+  name String          @unique
   type EnvironmentType @default(DEVELOPMENT)
 
   createdById String
@@ -258,7 +266,7 @@ model Environment {
 model Secret {
   id            String @id @default(cuid())
   environmentId String
-  key           String      // e.g. "DATABASE_URL", "API_KEY"
+  key           String // e.g. "DATABASE_URL", "API_KEY"
 
   // AES-256-GCM encrypted payload
   encryptedValue String @db.Text
@@ -281,19 +289,38 @@ model Secret {
 // WEBHOOK EVENTS
 // ─────────────────────────────────────────────
 
+model Webhook {
+  id            String   @id @default(cuid())
+  repo          String
+  isActive      Boolean  @default(false)
+  events        String[]
+  branchFilters String[] // glob pattern, e.g. "main", "release/*"
+  lastDelivery  String?
+  registedAgo   String
+
+  @@map("webhooks")
+}
+
+enum WebhookEventStatus {
+  PENDING
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
 model WebhookEvent {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   pipelineId String?
-  eventType  String   // "push", "pull_request"
-  source     String   @default("github")
+  eventType  String // "push", "pull_request"
+  source     String  @default("github")
 
   // Raw payload for auditability and replay
-  payload    Json
-  headers    Json     // includes X-GitHub-Event, delivery ID, etc.
+  payload Json
+  headers Json // includes X-GitHub-Event, delivery ID, etc.
 
   // Processing outcome
-  processed  Boolean @default(false)
-  runId      String? // if this webhook triggered a run
+  status WebhookEventStatus @default(PENDING)
+  runId  String? // if this webhook triggered a run
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
 
@@ -318,6 +345,7 @@ enum AuditAction {
   SECRET_DELETED
   APPROVAL_GRANTED
   APPROVAL_REJECTED
+  RUN_COMPLETED
   RUN_CANCELLED
   WEBHOOK_RECEIVED
   ENVIRONMENT_CREATED
@@ -329,11 +357,8 @@ model AuditLog {
   id           String      @id @default(cuid())
   userId       String?
   action       AuditAction
-  resourceType String      // "Pipeline", "Secret", "PipelineRun", etc.
+  resourceType String // "Pipeline", "Secret", "PipelineRun", etc.
   resourceId   String
-
-  // Arbitrary context — e.g. { "previousRole": "MEMBER", "newRole": "ADMIN" }
-  metadata Json?
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 

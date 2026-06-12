@@ -171,47 +171,20 @@ The following information contains a plan to implement the Pill Component, which
 PRISMA TO DO LIST
 
 
-UI data that the schema doesn't have
- - app/audit/page.tsx:67 — Action shown as "Run Completed". AuditAction has RUN_CANCELLED but nothing for a successful/completed run — no enum value maps to this label.
-
- - components/WebhookCard.tsx:5-11 (used in app/webhooks/page.tsx) — props are repo, status: 'Active'|'Inactive', secretPreview, lastDelivery, registeredAgo. None of these exist on WebhookEvent (which models individual delivery records, not the registered webhook). The schema seems to be missing a Webhook/registration model entirely — WebhookEvent alone can't supply this card's data.
-
- - app/webhooks/events/page.tsx:70,79,88 — "Status" column shows Processed/Ignored/Failed (3 states), but WebhookEvent.processed is just a two-state Boolean — Ignored and Failed have no schema representation.
-
-
 
 Schema columns/relations with no UI yet
- - Pipeline.description, .isActive, .branchFilter, .createdAt/.updatedAt — never shown.
-
- - PipelineDefinition.version — never explicitly rendered (the "v12"/"v8" badges in app/runs/page.tsx are presumably this, but it's never shown by name in the editor).
-
- - WebhookEvent.source, .payload, .headers, .runId — source and the link to the triggered run never appear (payload/headers being hidden is reasonable).
-
- - AuditLog.metadata (Json?) — never rendered, not even as expandable detail.
+ - AuditLog: metadata Json? — never rendered, not even as expandable detail.
 
  - StageResult.exitCode, .logSnippet, .command, .attempt, .maxRetries, .approvedById, .approvedAt — LogViewer.tsx hardcodes the command string instead of using command/logSnippet; retry tracking (attempt/maxRetries) and approval metadata never surface on stage/job views.
-
 
 
 Enum coverage gaps
  - StageStatus (8 values: PENDING, QUEUED, RUNNING, SUCCESS, FAILED, SKIPPED, AWAITING_APPROVAL, CANCELLED): LogViewer.tsx:6 only handles 3 (succeeded|failed|running), JobNode.tsx:14-16 only handles 5 (missing SKIPPED, AWAITING_APPROVAL, CANCELLED) — notable since AWAITING_APPROVAL is central to the approvals feature.
 
- - RunStatus/RunTrigger — fully covered, no gaps.
-
- - AuditAction — mostly fine, except "Run Completed" (see above).
-
 
 
 Type/shape mismatches
  - components/run-detail/RunDetailCard.tsx types triggeredBy and environment as plain strings ("sarah.chen", "Production"), but in the schema these are relations (PipelineRun.triggeredBy → User?, PipelineRun.environment → Environment?) requiring a join, not a flat display name.
-
- - components/pipeline-editor/StageSidebar/StageTypeGrid.tsx lets users pick a stage type (build/test/deploy/approval — confirmed by the "manual-approval" stage in app/runs/[runId]/page.tsx:34), but nothing in the schema records stage type — neither PipelineDefinition.configJson nor StageResult has a type/kind column or enum. Given StageStatus already defines AWAITING_APPROVAL, the schema seems to assume approval stages exist but has no column identifying which stages are which (today that'd be buried in opaque configJson).
-
-
-
-Derived values (not gaps — just noting they're computed, not missing columns)
- - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
-
 
 
 
@@ -229,10 +202,30 @@ UI data that the schema doesn't have
 
  - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
 
+ - app/audit/page.tsx:67 — Action shown as "Run Completed". AuditAction has RUN_CANCELLED but nothing for a successful/completed run — no enum value maps to this label.
+
+ - components/WebhookCard.tsx:5-11 (used in app/webhooks/page.tsx) — props are repo, status: 'Active'|'Inactive', triggers, lastDelivery, registeredAgo, and branchFilters. None of these exist on WebhookEvent (which models individual delivery records, not the registered webhook). The schema seems to be missing a Webhook/registration model entirely — WebhookEvent alone can't supply this card's data.
+
+
 
 
 Schema columns/relations with no UI yet
  - Environment.createdAt — only updatedAt ("Last Updated") has a column.
+
+ - Pipeline.description, .isActive, .branchFilter, .createdAt/.updatedAt — never shown.
+
+
+
+Type/shape mismatches
+ - components/pipeline-editor/StageSidebar/StageTypeGrid.tsx lets users pick a stage type (build/test/deploy/approval — confirmed by the "manual-approval" stage in app/runs/[runId]/page.tsx:34), but nothing in the schema records stage type — neither PipelineDefinition.configJson nor StageResult has a type/kind column or enum. Given StageStatus already defines AWAITING_APPROVAL, the schema seems to assume approval stages exist but has no column identifying which stages are which (today that'd be buried in opaque configJson).
+
+
+
+
+Info:
+
+      Derived values (not gaps — just noting they're computed, not missing columns)
+      - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
 
 ===================================================================================================================================
 
