@@ -115,7 +115,7 @@ model Pipeline {
 model PipelineDefinition {
   id         String @id @default(cuid())
   pipelineId String
-  version    Int
+  version    Int // For now, this can represent the number of edits made to a pipeline
 
   // React Flow serialization: { nodes: [...], edges: [...] }
   graphJson  Json

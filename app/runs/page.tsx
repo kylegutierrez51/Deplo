@@ -78,7 +78,7 @@ export default function RunHistory() {
         <DataTable
           columns={["Pipeline", "Environment Type", "Trigger", "Duration", "Time"]}>
           <tr className={styles["clickable-row"]}>
-            <td><Pill variant="queued" label="Queued" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v12</td>
+            <td><Pill variant="queued" label="Queued" /> deploy-api <br /><span>acbcd/api-server</span></td>
             <td><Pill variant="production" label="Production" /></td>
             <td><Pill variant="webhook" label="Webhook" /></td>
             <td className={styles.filter}>
@@ -88,7 +88,7 @@ export default function RunHistory() {
             <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>6h ago</Link></td>
           </tr>
           <tr className={styles["clickable-row"]}>
-            <td><Pill variant="running" label="Running" /> build-frontend <br /><span>acbcd/web-client</span> &bull; v8</td>
+            <td><Pill variant="running" label="Running" /> build-frontend <br /><span>acbcd/web-client</span></td>
             <td><Pill variant="staging" label="Staging" /></td>
             <td><Pill variant="manual" label="Manual" /></td>
             <td className={styles.filter}>
@@ -98,7 +98,7 @@ export default function RunHistory() {
             <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>6h ago</Link></td>
           </tr>
           <tr className={styles["clickable-row"]}>
-            <td><Pill variant="succeeded" label="Succeeded" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="succeeded" label="Succeeded" /> deploy-api <br /><span>acbcd/api-server</span></td>
             <td><Pill variant="development" label="Development" /></td>
             <td><Pill variant="api" label="API" /></td>
             <td className={styles.filter}>
@@ -108,7 +108,7 @@ export default function RunHistory() {
             <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>11h ago</Link></td>
           </tr>
           <tr className={styles["clickable-row"]}>
-            <td><Pill variant="failed" label="Failed" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="failed" label="Failed" /> deploy-api <br /><span>acbcd/api-server</span></td>
             <td><Pill variant="preview" label="Preview" /></td>
             <td><Pill variant="webhook" label="Webhook" /></td>
             <td className={styles.filter}>
@@ -118,7 +118,7 @@ export default function RunHistory() {
             <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>11h ago</Link></td>
           </tr>
           <tr className={styles["clickable-row"]}>
-            <td><Pill variant="cancelled" label="Cancelled" /> deploy-api <br /><span>acbcd/api-server</span> &bull; v14</td>
+            <td><Pill variant="cancelled" label="Cancelled" /> deploy-api <br /><span>acbcd/api-server</span></td>
             <td><Pill variant="custom" label="Custom" /></td>
             <td><Pill variant="manual" label="Manual" /></td>
             <td className={styles.filter}>

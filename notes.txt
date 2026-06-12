@@ -173,12 +173,9 @@ PRISMA TO DO LIST
 
 
 Schema columns/relations with no UI yet
- - PipelineDefinition.version — never explicitly rendered (the "v12"/"v8" badges in app/runs/page.tsx are presumably this, but it's never shown by name in the editor).
-
  - AuditLog: metadata Json? — never rendered, not even as expandable detail.
 
  - StageResult.exitCode, .logSnippet, .command, .attempt, .maxRetries, .approvedById, .approvedAt — LogViewer.tsx hardcodes the command string instead of using command/logSnippet; retry tracking (attempt/maxRetries) and approval metadata never surface on stage/job views.
-
 
 
 Enum coverage gaps
@@ -188,12 +185,6 @@ Enum coverage gaps
 
 Type/shape mismatches
  - components/run-detail/RunDetailCard.tsx types triggeredBy and environment as plain strings ("sarah.chen", "Production"), but in the schema these are relations (PipelineRun.triggeredBy → User?, PipelineRun.environment → Environment?) requiring a join, not a flat display name.
-
-
-
-Derived values (not gaps — just noting they're computed, not missing columns)
- - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
-
 
 
 
@@ -229,6 +220,12 @@ Type/shape mismatches
  - components/pipeline-editor/StageSidebar/StageTypeGrid.tsx lets users pick a stage type (build/test/deploy/approval — confirmed by the "manual-approval" stage in app/runs/[runId]/page.tsx:34), but nothing in the schema records stage type — neither PipelineDefinition.configJson nor StageResult has a type/kind column or enum. Given StageStatus already defines AWAITING_APPROVAL, the schema seems to assume approval stages exist but has no column identifying which stages are which (today that'd be buried in opaque configJson).
 
 
+
+
+Info:
+
+      Derived values (not gaps — just noting they're computed, not missing columns)
+      - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
 
 ===================================================================================================================================
 
