@@ -6,7 +6,7 @@ interface WebhookCardProps {
   repo: string;
   status: 'Active' | 'Inactive';
   events: string[];
-  lastDelivery: string;
+  lastDelivery?: string;
   registeredAgo: string;
   branchFilters?: string[];
 }
@@ -29,22 +29,26 @@ export default function WebhookCard({ repo, status, events, lastDelivery, regist
               ))}
             </div>
             <div className={styles.time}>
-              <div className={styles['last-delivery']}>
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                <span>{lastDelivery} ago</span>
-              </div>
-              <span>&bull;</span>
-              <span className={styles.registered}>{registeredAgo} ago</span>
+              {lastDelivery &&
+                <>
+                  <div className={styles['last-delivery']}>
+                    <ion-icon name="checkmark-circle-outline"></ion-icon>
+                    <span>{lastDelivery} ago</span>
+                  </div>
+                  <span>&bull;</span>
+                </>
+              }
+              <span className={styles.registered}>Registered {registeredAgo} ago</span>
             </div>
-            {branchFilters && 
-            <div className={styles.branchFilters}>
-              <span>Branch Filters:</span>
-              <div className={styles.branchPills}>
-                {branchFilters?.map((branchFilter, index) => (
-                  <span key={index} className={styles.branchPill}>{branchFilter}</span>
-                ))}
+            {branchFilters &&
+              <div className={styles.branchFilters}>
+                <span>Branch Filters:</span>
+                <div className={styles.branchPills}>
+                  {branchFilters?.map((branchFilter, index) => (
+                    <span key={index} className={styles.branchPill}>{branchFilter}</span>
+                  ))}
+                </div>
               </div>
-            </div>
             }
           </div>
         </div>
