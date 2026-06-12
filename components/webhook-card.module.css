@@ -60,14 +60,14 @@
   font-weight: bold;
 }
 
-.triggers {
+.events {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   margin-bottom: var(--space-xs);
 }
 
-.trigger-type {
+.event-type {
   font-size: var(--font-size-sm);
   background-color: var(--color-border-dark);
   padding: 7px;

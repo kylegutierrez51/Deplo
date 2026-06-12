@@ -5,12 +5,12 @@ import styles from './webhook-card.module.css'
 interface WebhookCardProps {
   repo: string;
   status: 'Active' | 'Inactive';
-  triggers: string[];
+  events: string[];
   lastDelivery: string;
   registeredAgo: string;
   branchFilters?: string[];
 }
-export default function WebhookCard({ repo, status, triggers, lastDelivery, registeredAgo, branchFilters }: WebhookCardProps) {
+export default function WebhookCard({ repo, status, events, lastDelivery, registeredAgo, branchFilters }: WebhookCardProps) {
   return (
     <div className={styles['webhook-card']}>
       <div className={styles['webhook-row']}>
@@ -23,9 +23,9 @@ export default function WebhookCard({ repo, status, triggers, lastDelivery, regi
               <div className={styles.name}>{repo}</div>
               <div className={`${status === 'Active' ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{status}</div>
             </div>
-            <div className={styles.triggers}>
-              {triggers.map((event, index) => (
-                <div className={styles['trigger-type']} key={index}>{event}</div>
+            <div className={styles.events}>
+              {events.map((event, index) => (
+                <div className={styles['event-type']} key={index}>{event}</div>
               ))}
             </div>
             <div className={styles.time}>

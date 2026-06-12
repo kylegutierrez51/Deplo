@@ -11,9 +11,9 @@ import Pagination from "@/components/Pagination"
 import WebhookModal from '@/components/modals/WebhookModal';
 
 const WEBHOOKS = [
-  { repository: 'abcd/infra', pipeline: 'deploy-infra', triggers: { push: true,  pullRequest: true  }, branchFilters: ['main/*', 'release/*', 'hotfix/*'], webhookSecret: 'whsec_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' },
-  { repository: 'abcd/infra', pipeline: 'deploy-infra', triggers: { push: true,  pullRequest: false }, webhookSecret: 'whsec_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5' },
-  { repository: 'abcd/api-server', pipeline: 'deploy-api', triggers: { push: false, pullRequest: true  }, webhookSecret: 'whsec_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6' },
+  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true,  pullRequest: true  }, branchFilters: ['main/*', 'release/*', 'hotfix/*'], webhookSecret: 'whsec_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' },
+  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true,  pullRequest: false }, webhookSecret: 'whsec_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5' },
+  { repository: 'abcd/api-server', pipeline: 'deploy-api', events: { push: false, pullRequest: true  }, webhookSecret: 'whsec_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;
@@ -64,7 +64,7 @@ export default function Webhooks() {
               <WebhookCard
                 repo={"abcd/infra"}
                 status={"Inactive"}
-                triggers={["push", "pull_request"]}
+                events={["push", "pull_request"]}
                 lastDelivery={"10d"}
                 registeredAgo={"63d"}
                 branchFilters={['main/*', 'release/*']} />
@@ -74,7 +74,7 @@ export default function Webhooks() {
               <WebhookCard
                 repo={"abcd/infra"}
                 status={"Active"}
-                triggers={["push"]}
+                events={["push"]}
                 lastDelivery={"10d"}
                 registeredAgo={"63d"}
                 branchFilters={['main/*', 'release/*', 'hotfix/*']} />
@@ -84,7 +84,7 @@ export default function Webhooks() {
               <WebhookCard
                 repo={"abcd/api-server"}
                 status={"Active"}
-                triggers={["pull_request"]}
+                events={["pull_request"]}
                 lastDelivery={"10d"}
                 registeredAgo={"63d"}
                 branchFilters={['hotfix/*']} />
