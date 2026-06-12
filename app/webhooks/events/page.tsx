@@ -27,7 +27,7 @@ export default function Webhooks() {
         <StatCards
           cards={
             [
-              { icon: "flash-outline", total: 7, label: "TOTAL EVENTS" },
+              { icon: "time-outline", total: 1, label: "PENDING", valueClassName: 'pending' },
               { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
               { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
               { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
@@ -47,8 +47,9 @@ export default function Webhooks() {
                 [
                   { value: "all", label: "All statuses" },
                   { value: "succeeded", label: "Processed" },
+                  { value: "pending", label: "Pending" },
                   { value: "failed", label: "Ignored" },
-                  { value: "running", label: "Failed" },
+                  { value: "running", label: "Running" },
                 ]
               } />
             <FilterSelect

@@ -49,6 +49,10 @@ Cards
   color: var(--pill-succeeded-text);
 }
 
+.card-detail .card-total.pending {
+  color: var(--pill-pending-text);
+}
+
 .card-detail .card-total.ignored {
   color: var(--pill-ignored-text);
 }
