@@ -171,7 +171,11 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --pill-approval-bg: #fb923c1a;
   --pill-approval-border: #fb923c4d;
 
-  /* Secret Statuses */
+  /* Webhook Statuses */
+  --pill-pending-text: #fb923c;
+  --pill-pending-bg: #fb923c1a;
+  --pill-pending-border: #fb923c4d;
+
   --pill-processed-text: #4ade80;
   --pill-processed-bg: #4ade801a;
   --pill-processed-border: #4ade804d;
@@ -409,6 +413,7 @@ Pill Base + Variants
 .pill--cancelled   { color: var(--pill-cancelled-text);   background: var(--pill-cancelled-bg);   border-color: var(--pill-cancelled-border); }
 .pill--total       { color: var(--pill-total-text);       background: var(--pill-total-bg);       border-color: var(--pill-total-border); }
 .pill--approval    { color: var(--pill-approval-text);    background: var(--pill-approval-bg);    border-color: var(--pill-approval-border); }
+.pill--pending     { color: var(--pill-pending-text);     background: var(--pill-pending-bg);     border-color: var(--pill-pending-border); }
 .pill--processed   { color: var(--pill-processed-text);   background: var(--pill-processed-bg);   border-color: var(--pill-processed-border); }
 .pill--ignored     { color: var(--pill-ignored-text);     background: var(--pill-ignored-bg);     border-color: var(--pill-ignored-border); }
 

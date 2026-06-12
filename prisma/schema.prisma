@@ -281,6 +281,13 @@ model Secret {
 // WEBHOOK EVENTS
 // ─────────────────────────────────────────────
 
+enum WebhookStatus { 
+  PENDING
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
 model WebhookEvent {
   id         String @id @default(cuid())
   pipelineId String?
@@ -292,7 +299,7 @@ model WebhookEvent {
   headers    Json     // includes X-GitHub-Event, delivery ID, etc.
 
   // Processing outcome
-  processed  Boolean @default(false)
+  status  WebhookStatus @default(PENDING)
   runId      String? // if this webhook triggered a run
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
@@ -318,6 +325,7 @@ enum AuditAction {
   SECRET_DELETED
   APPROVAL_GRANTED
   APPROVAL_REJECTED
+  RUN_COMPLETED
   RUN_CANCELLED
   WEBHOOK_RECEIVED
   ENVIRONMENT_CREATED

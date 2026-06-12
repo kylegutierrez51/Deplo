@@ -67,6 +67,15 @@ export default function Webhooks() {
         <DataTable
           columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
           <tr>
+            <td><Pill variant="pending" label="Pending" /></td>
+            <td><Pill variant="pull-request" label="pull_request" /></td>
+            <td>abcd/api-server</td>
+            <td>main</td>
+            <td>a1b2c3d<br /><span>feat: add retry logic to webhook...</span></td>
+            <td>deploy-api</td>
+            <td>1h ago</td>
+          </tr>
+          <tr>
             <td><Pill variant="processed" label="Processed" /></td>
             <td><Pill variant="push" label="push" /></td>
             <td>abcd/api-server</td>
