@@ -194,11 +194,20 @@ enum StageStatus {
   CANCELLED
 }
 
+enum StageType {
+  BUILD
+  TEST
+  DEPLOY
+  APPROVAL
+  SCRIPT
+}
+
 model StageResult {
   id        String      @id @default(cuid())
   runId     String
   stageId   String // matches the node ID from React Flow's graphJson
   stageName String // human-readable label, denormalized for fast display
+  stageType StageType
   status    StageStatus @default(PENDING)
 
   // Execution details
