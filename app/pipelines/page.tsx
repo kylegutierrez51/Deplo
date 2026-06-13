@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styles from "./pipelines.module.css"
 
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/components/sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";

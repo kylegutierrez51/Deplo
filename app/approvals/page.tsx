@@ -1,5 +1,5 @@
 import styles from "./approvals.module.css"
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/components/sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
 import StatCards from "@/components/StatCards";
 import FilterSelect from "@/components/filters/FilterSelect"

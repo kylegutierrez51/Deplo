@@ -4,7 +4,7 @@
   bottom: 0;
   top: 0;
   width: 300px;
-  background-color: var(--dark-clr-1);
+  background-color: var(--sidebar-clr);
   padding: var(--space-2xl) var(--space-xl);
   padding-top: var(--space-xl);
   border: 1px solid var(--gray-clr);
@@ -332,10 +332,6 @@ Sidebar Media Queries
 */
 
 @media (max-width: 874px) {
-  .sidebar:not(.closed) {
-    background-color: var(--dark-clr-2);
-  }
-
   :global(.page-content) {
     margin-left: 0;
     padding: 60px var(--space-xl) 0;
