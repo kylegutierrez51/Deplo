@@ -12,12 +12,14 @@ import Pagination from "@/components/Pagination";
 import Pill from '@/components/Pill';
 import PipelineModal from '@/components/modals/PipelineModal';
 
-const PIPELINES = [
-  { name: 'build-frontend', lastRun: '1h 2m 14s ago', repoUrl: 'https://github.com/abcd/web-client',  description: 'Builds and deploys the web client on every push to main', branchFilters: ['main', 'release/*', 'hotfix/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
-  { name: 'deploy-api', lastRun: '1h 7m 7s ago', repoUrl: 'https://github.com/abcd/api-server', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
-  { name: 'release-mobile', repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main', 'release/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
-  { name: 'release-mobile', repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
-  { name: 'release-mobile',  repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: [], createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+
+const PIPELINES: { name: string; status: PipelineStatus, lastRun?: string, repoUrl: string, description?: string, branchFilters: string[], createdBy?: string, createdAt: string, updatedAt: string }[] = [
+  { name: 'build-frontend', status: 'running', lastRun: '1h 2m 14s ago', repoUrl: 'https://github.com/abcd/web-client',  description: 'Builds and deploys the web client on every push to main', branchFilters: ['main', 'release/*', 'hotfix/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'deploy-api', status: 'succeeded', lastRun: '1h 7m 7s ago', repoUrl: 'https://github.com/abcd/api-server', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile', status: 'failed', repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main', 'release/*'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile', status: 'queued',  repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
+  { name: 'release-mobile', status: 'cancelled',  repoUrl: 'https://github.com/abcd/mobile-app', branchFilters: [], createdAt: '6/9/26 -- 21:27:34', updatedAt: '6/9/26 -- 21:27:34' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;

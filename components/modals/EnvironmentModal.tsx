@@ -77,7 +77,7 @@ export default function EnvironmentModal({
 
           <div className={styles.item}>
             <label>Type</label>
-            <div className={styles.buttonGroup}>
+            <div>
               <Pill variant={envType} label={envType.charAt(0).toUpperCase() + envType.slice(1)} />
             </div>
           </div>

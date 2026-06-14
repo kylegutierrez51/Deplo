@@ -4,12 +4,16 @@ import { useState, useRef } from 'react';
 import Modal from './Modal';
 import modalStyles from './modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
+import Pill from '../Pill';
 
 const styles = { ...modalStyles, ...pipelineStyles };
+
+type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 interface PipelineModalProps {
   initialMode?: 'view' | 'edit' | 'create';
   name?: string;
+  status?: PipelineStatus;
   lastRun?: string;
   repoUrl?: string;
   description?: string;
@@ -25,6 +29,7 @@ interface PipelineModalProps {
 export default function PipelineModal({
   initialMode = 'view',
   name,
+  status,
   lastRun,
   repoUrl,
   description,
@@ -77,6 +82,14 @@ export default function PipelineModal({
             <label>Name</label>
             <span>{name}</span>
           </div>
+
+          {status &&
+          <div className={styles.item}>
+            <label>Status</label>
+            <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
+          </div>
+          }
+
           {lastRun &&
           <div className={styles.item}>
             <label>Last Run</label>
@@ -105,7 +118,7 @@ export default function PipelineModal({
             </div>
           </div>
 
-        <div className={styles['item-flex']}>
+        <div className={styles['created-updated-flex']}>
           <div className={styles.item}>
             <label>Created By</label>
             <span>{createdBy || 'Unknown User'}</span>

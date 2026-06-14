@@ -31,5 +31,11 @@
 .item-flex {
   display: flex;
   align-items: center;
+  gap: 50px;
+}
+
+.created-updated-flex {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
 }
