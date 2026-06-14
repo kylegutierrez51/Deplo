@@ -19,6 +19,9 @@ interface WebhookModalProps {
   branchFilters?: string[];
   events?: WebhookEvents;
   webhookSecret?: string;
+  createdBy?: string;
+  lastDelivery?: string;
+  registeredAgo?: string;
   onClose: () => void;
   onDelete?: () => void;
   onSave?: () => void;
@@ -31,6 +34,9 @@ export default function WebhookModal({
   branchFilters = [],
   events = {},
   webhookSecret = '',
+  createdBy,
+  lastDelivery,
+  registeredAgo,
   onClose,
   onDelete,
   onSave,
@@ -161,6 +167,21 @@ export default function WebhookModal({
                   <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                 </button>
               </div>
+            </div>
+          </div>
+
+          <div className={styles['item-flex']}>
+            <div className={styles.fieldGroup}>
+              <label>Created By</label>
+              <span>{createdBy || 'Unknown User'}</span>
+            </div>
+            <div className={styles.fieldGroup}>
+              <label>Last Delivery</label>
+              <span>{lastDelivery}</span>
+            </div>
+            <div className={styles.fieldGroup}>
+              <label>Registered Ago</label>
+              <span>{registeredAgo}</span>
             </div>
           </div>
         </>
