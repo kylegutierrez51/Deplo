@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import styles from "./run-detail.module.css";
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/components/sidebar/Sidebar";
 import RunDetailCard from "@/components/run-detail/RunDetailCard";
 import TabsRow from "@/components/run-detail/TabsRow";
 import FilterSelect from "@/components/filters/FilterSelect";

@@ -252,3 +252,91 @@ In the SecretModal component, if you leave these props as non-optional:
 Then it causes a TypeScript error where if 'selectedSecret' in the Secrets page is undefined (for 'edit' or 'create' mode, meaning there's no row selected), then when you spread {...selectedSecret} into <SecretModal>, TS widens every spread property to T | undefined and optional, meaning that those props can be undefined even though they aren't. 
 
 The fix is to make them optional. It's applied across both the Environments and Pipelines pages too.
+
+===================================================================================================================================
+
+NEXAUTH SYSTEM
+
+=============================
+INDIVIDUAL FILES 
+
+auth.config.ts — Defines authConfig: the bare settings object (providers: [GitHub], session: { strategy: "jwt" }) with no database adapter. Then immediately builds a NextAuth instance from just that config and exports its auth, signIn, signOut. This file imports nothing from Prisma — it's the "safe everywhere" module.
+
+auth.ts — Imports authConfig from auth.config.ts, spreads it (...authConfig) into a second NextAuth() call, and adds adapter: PrismaAdapter(prisma). Exports handlers (used by the NextAuth API route) and its own auth. This is the "full" instance — same providers/session settings as auth.config.ts, plus the DB connection.
+
+proxy.ts — The request gatekeeper that runs on (almost) every request per its matcher. Imports auth from auth.config and uses it to check for a session cookie; if there's no session and the request isn't already for /, it redirects to /.
+
+app/providers.tsx — A one-line Client Component wrapper around SessionProvider from next-auth/react. Exists only because SessionProvider is a React Context provider and must run on the client, but the root layout is a Server Component and can't itself have "use client".
+
+app/layout.tsx — The root layout (Server Component). Renders <Providers>{children}</Providers>, so every page — and everything nested inside it — is inside the SessionProvider context tree.
+
+lib/actions/auth.ts — Defines two "use server" actions, login and logout, that Client Components can call directly. Imports signIn/signOut from auth.config (not auth.ts).
+
+=============================
+
+DEPENDENCY GRAPH
+
+
+auth.config.ts  (authConfig, auth, signIn, signOut — Prisma-free)
+   ├─ used by → proxy.ts            (auth)
+   ├─ used by → lib/actions/auth.ts (signIn, signOut)
+   └─ spread into → auth.ts
+
+auth.ts  (...authConfig + PrismaAdapter — Prisma-backed)
+   ├─ used by → app/api/auth/[...nextauth]/route.ts (handlers)
+   └─ used by → app/page.tsx (auth)
+
+app/providers.tsx (SessionProvider)
+   └─ used by → app/layout.tsx → wraps every page
+
+lib/actions/auth.ts (login, logout)
+   └─ used by → app/LoginButton.tsx, components/sidebar/Profile.tsx
+Two things tie this graph together:
+
+Shared authConfig → compatible cookies. auth.config.ts and auth.ts are two separate NextAuth() instances, but because auth.ts spreads authConfig (same providers, same session: { strategy: "jwt" }, same AUTH_SECRET from env), they encrypt/decrypt the exact same session cookie identically. This is why proxy.ts's auth() (from auth.config) can read a cookie that was issued by auth.ts's handlers during the OAuth callback — they're two doors into the same lock.
+
+A Prisma-safety boundary. auth.ts imports PrismaClient, which drags in a 21MB native binary that Turbopack can't bundle outside Server Components/Route Handlers. So:
+
+proxy.ts (compiled as one giant bundle) and lib/actions/auth.ts (reachable from Client Components like Sidebar/Profile) both import from auth.config — never auth.ts.
+auth.ts is only imported from app/page.tsx (a Server Component) and the API route (a Route Handler) — the two places where Prisma can be externalized safely.
+
+=============================
+
+The SessionProvider piece is a separate, parallel mechanism: it doesn't talk to proxy.ts/auth.config.ts/auth.ts directly at all. app/providers.tsx → app/layout.tsx just puts a React context in place so that useSession() (used in Profile.tsx) can do a client-side fetch("/api/auth/session") — which itself hits the API route backed by auth.ts's handlers, decrypts the same shared cookie, and returns the user's profile data to the browser.
+
+So at a glance: authConfig is the single source of truth for "what a valid session looks like", shared by both NextAuth instances; proxy.ts and lib/actions/auth.ts use the lightweight instance because of where Turbopack bundles them; app/page.tsx and the API route use the full instance because they're allowed to talk to Prisma; and providers.tsx/layout.tsx just make the cookie-backed session available to client-side useSession() calls anywhere in the tree.
+
+===================================================================================================================================
+
+LOGIN/LOGOUT
+
+=============================
+
+Login:
+
+1. GET / — proxy.ts calls auth() (from auth.config) → no cookie → session = null. Pathname is /, so the !== "/" guard is false → proxy passes through. app/page.tsx calls auth() (from auth.ts, fine here — Server Component) → also null → renders <LoginButton />.
+
+2. Click "Login" — LoginButton.tsx is <form action={login}>. Submitting POSTs to /, invoking the login server action in lib/actions/auth.ts.
+
+3. login() calls signIn("github", { redirectTo: "/pipelines" }) — now sourced from auth.config (Prisma-free, since this action is reachable from the client bundle via Sidebar → Profile → lib/actions/auth.ts). It sets CSRF/PKCE cookies and throws a redirect to GitHub's authorize URL. This is the POST / 303 you saw in the logs.
+
+4. GitHub redirects back to /api/auth/callback/github?code=.... This path matches api/auth, so the proxy's matcher excludes it entirely — proxy doesn't run.
+
+5. The request hits app/api/auth/[...nextauth]/route.ts, whose handlers come from auth.ts (full, Prisma-backed). Auth.js exchanges the code, fetches the GitHub profile, and PrismaAdapter writes User/Account rows. Because it's a Route Handler, Prisma externalizes normally — no bundling issue. Since session strategy is "jwt", no Session table row is created; instead Auth.js builds and encrypts a JWT and sets it as the session cookie. Responds with 302 → /pipelines.
+
+6. GET /pipelines — proxy.ts calls auth() (from auth.config) and successfully decrypts the fresh JWE cookie (same secret/strategy as the instance that issued it) → session is truthy → proxy passes through.
+
+7. /pipelines/page.tsx renders. Sidebar → Profile calls useSession() (next-auth/react). The SessionProvider wrapping the app (app/providers.tsx, wired into app/layout.tsx) fetches /api/auth/session client-side (also a Route Handler under auth.ts — Prisma-safe), decrypts the same cookie, and returns { user: { name, image } }, which Profile.tsx displays.
+
+
+=============================
+
+Logout:
+
+1. User clicks "Sign Out" in Profile.tsx → onClick={() => logout()}, calling the logout server action.
+
+2. logout() calls signOut({ redirectTo: "/" }) — again from auth.config. Since the session is JWT-based, there's no DB row to delete; signOut just clears the session cookie and redirects to /.
+
+3. GET / — proxy.ts's auth() finds no cookie → null, but pathname === "/" so no redirect. app/page.tsx's auth() (from auth.ts) also returns null → renders the login page again. SessionProvider on the client also re-fetches /api/auth/session, gets null, and useSession() reflects the logged-out state everywhere.
+
+4. The key invariant: anything imported by a "use client" component (directly or via a server action) must come from auth.config, never auth.ts — that's the line that keeps Prisma out of bundles where Turbopack can't handle it.

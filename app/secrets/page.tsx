@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styles from "./secrets.module.css";
 import Subheader from "@/components/Subheader";
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/components/sidebar/Sidebar";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
