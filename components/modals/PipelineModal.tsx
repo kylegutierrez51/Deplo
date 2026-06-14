@@ -79,26 +79,26 @@ export default function PipelineModal({
     <Modal title={title} onClose={onClose} footer={footer} mode={mode}>
       {mode === 'view' ? (
         <>
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Name</label>
-            <span>{name}</span>
-          </div>
+          <div className={styles['item-flex']}>
+            <div className={styles.item}>
+              <label>Name</label>
+              <span>{name}</span>
+            </div>
 
-          {status &&
-          <div className={styles.item}>
-            <label>Status</label>
-            <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
-          </div>
-          }
+            {status &&
+              <div className={styles.item}>
+                <label>Status</label>
+                <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
+              </div>
+            }
 
-          {lastRun &&
-          <div className={styles.item}>
-            <label>Last Run</label>
-            <span>{lastRun}</span>
+            {lastRun &&
+              <div className={styles.item}>
+                <label>Last Run</label>
+                <span>{lastRun}</span>
+              </div>
+            }
           </div>
-          }
-        </div>
 
 
           <div className={styles.item}>
@@ -113,28 +113,30 @@ export default function PipelineModal({
               <span>{description}</span>
             </div>
           )}
+          {branchFilters.length > 0 && (
+            <div className={styles.item}>
+              <label>Branch Filters</label>
+              <div className={styles.branchPills}>
+                {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+              </div>
+            </div>
+          )}
 
-          <div className={styles.item}>
-            <label>Branch Filters</label>
-            <div className={styles.branchPills}>
-              {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+
+          <div className={styles['created-updated-flex']}>
+            <div className={styles.item}>
+              <label>Created By</label>
+              <span>{createdBy || 'Unknown User'}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Created At</label>
+              <span>{createdAt}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Last Updated</label>
+              <span>{updatedAt}</span>
             </div>
           </div>
-
-        <div className={styles['created-updated-flex']}>
-          <div className={styles.item}>
-            <label>Created By</label>
-            <span>{createdBy || 'Unknown User'}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Created At</label>
-            <span>{createdAt}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Last Updated</label>
-            <span>{updatedAt}</span>
-          </div>
-        </div>
 
         </>
       ) : (
