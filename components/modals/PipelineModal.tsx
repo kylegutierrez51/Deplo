@@ -16,6 +16,7 @@ interface PipelineModalProps {
   status?: PipelineStatus;
   lastRun?: string;
   repoUrl?: string;
+  commitMessage?: string;
   description?: string;
   branchFilters?: string[];
   createdBy?: string;
@@ -32,6 +33,7 @@ export default function PipelineModal({
   status,
   lastRun,
   repoUrl,
+  commitMessage,
   description,
   branchFilters = [],
   createdBy,
@@ -102,6 +104,7 @@ export default function PipelineModal({
           <div className={styles.item}>
             <label>Repo URL</label>
             <span>{repoUrl}</span>
+            <span className={styles['commit-message']}>{commitMessage}</span>
           </div>
 
           {description && (

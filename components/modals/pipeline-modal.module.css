@@ -39,3 +39,8 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.commit-message {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}
