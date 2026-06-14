@@ -1,0 +1,55 @@
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item-flex {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+/*
+==========================
+Pipeline Detail
+==========================
+*/
+
+.pipeline-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.repo {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}
+
+/*
+==========================
+Duration
+==========================
+*/
+
+.duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.duration ion-icon {
+  font-size: var(--font-size-lg);
+  color: var(--icon-clr);
+}

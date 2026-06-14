@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from 'react';
 import styles from "./run-history.module.css";
 import Subheader from "@/components/Subheader";
 import Sidebar from "@/components/sidebar/Sidebar";
@@ -6,10 +9,31 @@ import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
 import Pill from '@/components/Pill';
+import type { PillVariant } from '@/components/Pill';
+import RunHistoryModal from "@/components/modals/RunHistoryModal";
 
-import Link from 'next/link';
+const RUNS: {
+  runId: number;
+  status: PillVariant; statusLabel: string;
+  pipeline: string; repo: string;
+  environment: PillVariant; environmentLabel: string;
+  trigger: PillVariant; triggerLabel: string;
+  duration: string; time: string;
+}[] = [
+  { runId: 1, status: 'queued', statusLabel: 'Queued', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'production', environmentLabel: 'Production', trigger: 'webhook', triggerLabel: 'Webhook', duration: '-', time: '6h ago' },
+  { runId: 2, status: 'running', statusLabel: 'Running', pipeline: 'build-frontend', repo: 'acbcd/web-client', environment: 'staging', environmentLabel: 'Staging', trigger: 'manual', triggerLabel: 'Manual', duration: '6h 1m', time: '6h ago' },
+  { runId: 3, status: 'succeeded', statusLabel: 'Succeeded', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'development', environmentLabel: 'Development', trigger: 'api', triggerLabel: 'API', duration: '8m 0s', time: '11h ago' },
+  { runId: 4, status: 'failed', statusLabel: 'Failed', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'preview', environmentLabel: 'Preview', trigger: 'webhook', triggerLabel: 'Webhook', duration: '8m 0s', time: '11h ago' },
+  { runId: 5, status: 'cancelled', statusLabel: 'Cancelled', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'custom', environmentLabel: 'Custom', trigger: 'manual', triggerLabel: 'Manual', duration: '8m 0s', time: '12h ago' },
+];
+
+type ModalState = { mode: 'view'; row: number } | null;
 
 export default function RunHistory() {
+  const [modal, setModal] = useState<ModalState>(null);
+
+  const selectedRun = modal?.mode === 'view' ? RUNS[modal.row] : undefined;
+
   return (
     <>
       <Sidebar activeItem="run-history"></Sidebar>
@@ -74,64 +98,34 @@ export default function RunHistory() {
               } />
           </div>
         </div>
-        
+
         <DataTable
           columns={["Pipeline", "Environment Type", "Trigger", "Duration", "Time"]}>
-          <tr className={styles["clickable-row"]}>
-            <td><Pill variant="queued" label="Queued" /> deploy-api <br /><span>acbcd/api-server</span></td>
-            <td><Pill variant="production" label="Production" /></td>
-            <td><Pill variant="webhook" label="Webhook" /></td>
-            <td className={styles.filter}>
-              <ion-icon name="stopwatch-outline"></ion-icon>
-              <div className="nowrap">-</div>
-            </td>
-            <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>6h ago</Link></td>
-          </tr>
-          <tr className={styles["clickable-row"]}>
-            <td><Pill variant="running" label="Running" /> build-frontend <br /><span>acbcd/web-client</span></td>
-            <td><Pill variant="staging" label="Staging" /></td>
-            <td><Pill variant="manual" label="Manual" /></td>
-            <td className={styles.filter}>
-              <ion-icon name="stopwatch-outline"></ion-icon>
-              <div className="nowrap">6h 1m</div>
-            </td>
-            <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>6h ago</Link></td>
-          </tr>
-          <tr className={styles["clickable-row"]}>
-            <td><Pill variant="succeeded" label="Succeeded" /> deploy-api <br /><span>acbcd/api-server</span></td>
-            <td><Pill variant="development" label="Development" /></td>
-            <td><Pill variant="api" label="API" /></td>
-            <td className={styles.filter}>
-              <ion-icon name="stopwatch-outline"></ion-icon>
-              <div className="nowrap">8m 0s</div>
-            </td>
-            <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>11h ago</Link></td>
-          </tr>
-          <tr className={styles["clickable-row"]}>
-            <td><Pill variant="failed" label="Failed" /> deploy-api <br /><span>acbcd/api-server</span></td>
-            <td><Pill variant="preview" label="Preview" /></td>
-            <td><Pill variant="webhook" label="Webhook" /></td>
-            <td className={styles.filter}>
-              <ion-icon name="stopwatch-outline"></ion-icon>
-              <div className="nowrap">8m 0s</div>
-            </td>
-            <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>11h ago</Link></td>
-          </tr>
-          <tr className={styles["clickable-row"]}>
-            <td><Pill variant="cancelled" label="Cancelled" /> deploy-api <br /><span>acbcd/api-server</span></td>
-            <td><Pill variant="custom" label="Custom" /></td>
-            <td><Pill variant="manual" label="Manual" /></td>
-            <td className={styles.filter}>
-              <ion-icon name="stopwatch-outline"></ion-icon>
-              <div className="nowrap">8m 0s</div>
-            </td>
-            <td><Link href="runs/1" className={`${styles['stretched-link']} ${'nowrap'}`}>12h ago</Link></td>
-          </tr>
+          {RUNS.map((run, i) => (
+            <tr key={i} className={styles["clickable-row"]} onClick={() => setModal({ mode: 'view', row: i })}>
+              <td><Pill variant={run.status} label={run.statusLabel} /> {run.pipeline} <br /><span>{run.repo}</span></td>
+              <td><Pill variant={run.environment} label={run.environmentLabel} /></td>
+              <td><Pill variant={run.trigger} label={run.triggerLabel} /></td>
+              <td className={styles.filter}>
+                <ion-icon name="stopwatch-outline"></ion-icon>
+                <div className="nowrap">{run.duration}</div>
+              </td>
+              <td className="nowrap">{run.time}</td>
+            </tr>
+          ))}
         </DataTable>
 
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
       </main>
+
+      {modal && (
+        <RunHistoryModal
+          initialMode={modal.mode}
+          {...selectedRun}
+          onClose={() => setModal(null)}
+        />
+      )}
     </>
   )
 }
