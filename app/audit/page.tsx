@@ -1,3 +1,5 @@
+"use client"
+
 import styles from "./audit.module.css";
 import Sidebar from "@/components/sidebar/Sidebar";
 import Subheader from "@/components/Subheader";
@@ -5,8 +7,23 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import Pagination from "@/components/Pagination";
+import AuditModal from "@/components/modals/AuditModal";
+import { useState } from 'react';
+
+
+const AUDITS: { action: string, resource: string, category?: string, actor: string, createdBy?: string, time: string}[] = [
+  { action: 'Run Completed', resource: 'deploy-api #482', category: "PipelineRun", actor: 'coco', time: '6/9/26, 21:27:34' },
+  { action: 'Pipeline Triggered', resource: 'deploy-api #482', actor: 'coco', time: '6/9/26, 21:27:34' },
+  { action: 'Webhook Received', resource: 'push → acme/api-server', actor: 'coco', time: '6/9/26, 21:27:34' },
+];
+
+type ModalState = { mode: 'view'; row: number } | null;
 
 export default function AuditLog() {
+  const [modal, setModal] = useState<ModalState>(null);
+
+  const selectedAudit = modal?.mode === 'view' ? AUDITS[modal.row] : undefined;
+
   return (
     <>
       <Sidebar activeItem="audit"></Sidebar>
@@ -63,19 +80,19 @@ export default function AuditLog() {
 
         <DataTable
           columns={["Action", "Resource", "Actor", "Time"]}>
-          <tr>
+          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td>Run Completed</td>
             <td>deploy-api #482 <span className={styles['audit-action']}>[PipelineRun]</span></td>
             <td>system</td>
             <td className={styles.nowrap}>10d ago</td>
           </tr>
-          <tr>
+          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td>Pipeline Triggered</td>
             <td>deploy-api #482 <span className={styles['audit-action']}>[Pipeline]</span></td>
             <td>sarah.chen</td>
             <td className={styles.nowrap}>10d ago</td>
           </tr>
-          <tr>
+          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
             <td>Webhook Received</td>
             <td>push → acme/api-server <span className={styles['audit-action']}>[WebhookEvent]</span></td>
             <td>github</td>
@@ -86,6 +103,14 @@ export default function AuditLog() {
         <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
       </main>
+  
+      {modal && (
+        <AuditModal
+          initialMode={modal.mode}
+          {...selectedAudit}
+          onClose={() => setModal(null)}
+        />
+      )}
     </>
   )
 }
