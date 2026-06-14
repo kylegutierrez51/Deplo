@@ -1,0 +1,51 @@
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item-flex {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+/*
+==========================
+Commit Detail
+==========================
+*/
+
+.commit-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.commit-hash {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  color: var(--blue-clr);
+}
+
+.commit-hash ion-icon {
+  font-size: var(--font-size-lg);
+  color: var(--icon-clr);
+}
+
+.commit-message {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}
