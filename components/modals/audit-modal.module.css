@@ -34,13 +34,8 @@
   gap: 50px;
 }
 
-.created-updated-flex {
+.time-flex {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.commit-message {
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-sm);
+  gap: 50px;
 }

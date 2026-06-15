@@ -14,6 +14,8 @@ interface EnvironmentModalProps {
   initialMode?: 'view' | 'edit' | 'create';
   name?: string;
   type?: EnvType;
+  secrets?: number;
+  pipelines?: number;
   requireApproval?: boolean;
   createdBy?: string;
   createdAt?: string;
@@ -24,17 +26,19 @@ interface EnvironmentModalProps {
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
-  { key: 'production',  label: 'Production',  baseClass: styles.typeBtnProduction,  activeClass: styles.typeBtnProductionActive  },
-  { key: 'staging',     label: 'Staging',     baseClass: styles.typeBtnStaging,     activeClass: styles.typeBtnStagingActive     },
+  { key: 'production', label: 'Production', baseClass: styles.typeBtnProduction, activeClass: styles.typeBtnProductionActive },
+  { key: 'staging', label: 'Staging', baseClass: styles.typeBtnStaging, activeClass: styles.typeBtnStagingActive },
   { key: 'development', label: 'Development', baseClass: styles.typeBtnDevelopment, activeClass: styles.typeBtnDevelopmentActive },
-  { key: 'preview',     label: 'Preview',     baseClass: styles.typeBtnPreview,     activeClass: styles.typeBtnPreviewActive     },
-  { key: 'custom',      label: 'Custom',      baseClass: styles.typeBtnCustom,      activeClass: styles.typeBtnCustomActive      },
+  { key: 'preview', label: 'Preview', baseClass: styles.typeBtnPreview, activeClass: styles.typeBtnPreviewActive },
+  { key: 'custom', label: 'Custom', baseClass: styles.typeBtnCustom, activeClass: styles.typeBtnCustomActive },
 ];
 
 export default function EnvironmentModal({
   initialMode = 'view',
   name,
   type = 'production',
+  secrets,
+  pipelines,
   requireApproval = false,
   createdBy,
   createdAt,
@@ -77,9 +81,27 @@ export default function EnvironmentModal({
 
           <div className={styles.item}>
             <label>Type</label>
-            <div className={styles.buttonGroup}>
+            <div>
               <Pill variant={envType} label={envType.charAt(0).toUpperCase() + envType.slice(1)} />
             </div>
+          </div>
+
+          <div className={styles['secrets-pipelines-flex']}>
+            {secrets &&
+              <div className={styles.item}>
+                <label>Secrets</label>
+                <span className={styles.secrets}>
+                  <ion-icon name="key-outline"></ion-icon>
+                  {secrets}
+                </span>
+              </div>
+            }
+            {pipelines &&
+              <div className={styles.item}>
+                <label>Pipelines</label>
+                <span>{pipelines}</span>
+              </div>
+            }
           </div>
 
           <div
@@ -100,20 +122,20 @@ export default function EnvironmentModal({
             </div>
           </div>
 
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Created By</label>
-            <span>{createdBy || 'Unknown User'}</span>
+          <div className={styles['item-flex']}>
+            <div className={styles.item}>
+              <label>Created By</label>
+              <span>{createdBy || 'Unknown User'}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Created At</label>
+              <span>{createdAt}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Last Updated</label>
+              <span>{updatedAt}</span>
+            </div>
           </div>
-          <div className={styles.item}>
-            <label>Created At</label>
-            <span>{createdAt}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Last Updated</label>
-            <span>{updatedAt}</span>
-          </div>
-        </div>
         </>
       ) : (
         <>

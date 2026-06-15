@@ -27,9 +27,21 @@
   justify-content: space-between;
 }
 
+.secrets-pipelines-flex {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
 .nameHint {
   font-size: 13px;
   color: rgb(160, 160, 160);
+}
+
+.secrets {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 /*

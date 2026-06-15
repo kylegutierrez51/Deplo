@@ -80,7 +80,7 @@ table tbody td.filter ion-icon {
 }
 
 /* Audit Log */
-td .audit-action {
+td .audit-category {
   margin-left: var(--space-sm);
   color: var(--subtitle-clr);
   font-size: var(--font-size-body);

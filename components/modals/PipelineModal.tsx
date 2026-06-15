@@ -4,14 +4,19 @@ import { useState, useRef } from 'react';
 import Modal from './Modal';
 import modalStyles from './modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
+import Pill from '../Pill';
 
 const styles = { ...modalStyles, ...pipelineStyles };
+
+type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 interface PipelineModalProps {
   initialMode?: 'view' | 'edit' | 'create';
   name?: string;
+  status?: PipelineStatus;
   lastRun?: string;
   repoUrl?: string;
+  commitMessage?: string;
   description?: string;
   branchFilters?: string[];
   createdBy?: string;
@@ -25,8 +30,10 @@ interface PipelineModalProps {
 export default function PipelineModal({
   initialMode = 'view',
   name,
+  status,
   lastRun,
   repoUrl,
+  commitMessage,
   description,
   branchFilters = [],
   createdBy,
@@ -72,23 +79,32 @@ export default function PipelineModal({
     <Modal title={title} onClose={onClose} footer={footer} mode={mode}>
       {mode === 'view' ? (
         <>
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Name</label>
-            <span>{name}</span>
+          <div className={styles['item-flex']}>
+            <div className={styles.item}>
+              <label>Name</label>
+              <span>{name}</span>
+            </div>
+
+            {status &&
+              <div className={styles.item}>
+                <label>Status</label>
+                <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
+              </div>
+            }
+
+            {lastRun &&
+              <div className={styles.item}>
+                <label>Last Run</label>
+                <span>{lastRun}</span>
+              </div>
+            }
           </div>
-          {lastRun &&
-          <div className={styles.item}>
-            <label>Last Run</label>
-            <span>{lastRun}</span>
-          </div>
-          }
-        </div>
 
 
           <div className={styles.item}>
             <label>Repo URL</label>
             <span>{repoUrl}</span>
+            <span className={styles['commit-message']}>{commitMessage}</span>
           </div>
 
           {description && (
@@ -97,28 +113,30 @@ export default function PipelineModal({
               <span>{description}</span>
             </div>
           )}
+          {branchFilters.length > 0 && (
+            <div className={styles.item}>
+              <label>Branch Filters</label>
+              <div className={styles.branchPills}>
+                {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+              </div>
+            </div>
+          )}
 
-          <div className={styles.item}>
-            <label>Branch Filters</label>
-            <div className={styles.branchPills}>
-              {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+
+          <div className={styles['created-updated-flex']}>
+            <div className={styles.item}>
+              <label>Created By</label>
+              <span>{createdBy || 'Unknown User'}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Created At</label>
+              <span>{createdAt}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Last Updated</label>
+              <span>{updatedAt}</span>
             </div>
           </div>
-
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Created By</label>
-            <span>{createdBy || 'Unknown User'}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Created At</label>
-            <span>{createdAt}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Last Updated</label>
-            <span>{updatedAt}</span>
-          </div>
-        </div>
 
         </>
       ) : (

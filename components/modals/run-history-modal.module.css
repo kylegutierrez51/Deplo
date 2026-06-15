@@ -14,33 +14,42 @@
   letter-spacing: 0.05em;
 }
 
-.item input,
-.item textarea {
-  padding-left: 10px;
-  border-radius: var(--radius-lg);
-  background-color: rgb(48, 48, 48);
-  border: 1px solid gray;
-}
-
-.item textarea {
-  height: 90px;
-  padding-top: 10px;
-  resize: vertical;
-}
-
 .item-flex {
   display: flex;
   align-items: center;
   gap: 50px;
 }
 
-.created-updated-flex {
+/*
+==========================
+Pipeline Detail
+==========================
+*/
+
+.pipeline-detail {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.commit-message {
+.repo {
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);
+}
+
+/*
+==========================
+Duration
+==========================
+*/
+
+.duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.duration ion-icon {
+  font-size: var(--font-size-lg);
+  color: var(--icon-clr);
 }
