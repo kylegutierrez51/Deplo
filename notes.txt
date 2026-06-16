@@ -340,3 +340,41 @@ Logout:
 3. GET / — proxy.ts's auth() finds no cookie → null, but pathname === "/" so no redirect. app/page.tsx's auth() (from auth.ts) also returns null → renders the login page again. SessionProvider on the client also re-fetches /api/auth/session, gets null, and useSession() reflects the logged-out state everywhere.
 
 4. The key invariant: anything imported by a "use client" component (directly or via a server action) must come from auth.config, never auth.ts — that's the line that keeps Prisma out of bundles where Turbopack can't handle it.
+
+===================================================================================================================================
+
+lib/prisma.ts
+
+Line 1 — Imports PrismaClient from the generated Prisma client. The @/generated/prisma/client path is where Prisma outputs the type-safe client after you run prisma generate.
+
+Line 2 — Imports PrismaPg, a Prisma adapter that lets Prisma talk to PostgreSQL using the pg driver instead of Prisma's built-in connection handling.
+
+Lines 4–6 — Casts the Node.js global object to a type that can hold a prisma property. This is the setup for the singleton pattern below — global persists across hot reloads in development.
+
+Lines 8–10 — Creates a PostgreSQL adapter instance using your DATABASE_URL environment variable
+
+Line 12 — The singleton: reuses the existing globalForPrisma.prisma instance if it exists, otherwise creates a new PrismaClient with the adapter. This prevents creating hundreds of DB connections during Next.js hot reloads in development.
+
+Line 14 — In development only, saves the prisma instance onto global so the next hot reload picks it up instead of creating a new one. Skipped in production because the server process never hot-reloads — a new PrismaClient per cold start is fine there.
+
+Line 16 — Exports the single prisma instance so all your lib/data/ files can import prisma from '@/lib/prisma' and share one connection pool.
+
+
+
+
+In depth explanation of line 14:
+
+
+      In production, Next.js runs as a long-lived server process that starts once and stays running. A new PrismaClient is created when the server boots, and that same instance handles all requests for the lifetime of the process — so there's no problem.
+
+      In development, next dev uses hot module replacement (HMR). Every time you save a file, Next.js re-evaluates the changed module from scratch, which would execute new PrismaClient(...) again — creating a brand new connection pool each time. Do that enough times and you exhaust your database's connection limit (Postgres has a hard cap, often 100).
+
+      global is the escape hatch because it sits outside the module system. HMR tears down and rebuilds modules, but it never touches global. So line 14 says: "in dev, stash the client on global after creating it." Then line 12 checks globalForPrisma.prisma first — if it's already there from a previous hot reload, reuse it instead of creating another one.
+
+      The !== "production" guard on line 14 exists purely to avoid the unnecessary write in production, where global would never be checked again anyway (no HMR, no re-evaluation of the module).
+
+
+Line 14 works because line 12 reassigns prisma to the global PrismaClient on reloads.
+
+===================================================================================================================================
+
