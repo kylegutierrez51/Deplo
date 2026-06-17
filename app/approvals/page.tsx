@@ -128,7 +128,7 @@ export default function Approvals() {
             />
           </div>
 
-          <Pagination showing="1-3 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+          <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
         </div>
       </main>
     </>

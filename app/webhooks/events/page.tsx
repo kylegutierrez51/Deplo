@@ -20,11 +20,11 @@ const WEBHOOK_EVENTS: {
   commitHash: string; commitMessage: string;
   pipeline: string; received: string;
 }[] = [
-  { status: 'pending', statusLabel: 'Pending', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-  { status: 'processed', statusLabel: 'Processed', eventType: 'push', eventLabel: 'push', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-  { status: 'ignored', statusLabel: 'Ignored', eventType: 'push', eventLabel: 'push', repository: 'abcd/web-client', branch: 'release/v2.4.0', commitHash: 'f4e5d6c', commitMessage: 'chore: bump dependencies to latest stable versions', pipeline: 'build-frontend', received: '2h ago' },
-  { status: 'failed', statusLabel: 'Failed', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/web-client', branch: 'feature/auth-flow', commitHash: '7890abc', commitMessage: 'feat: add user role migration for RBAC system', pipeline: 'db-migrate', received: '3h ago' },
-];
+    { status: 'pending', statusLabel: 'Pending', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
+    { status: 'processed', statusLabel: 'Processed', eventType: 'push', eventLabel: 'push', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
+    { status: 'ignored', statusLabel: 'Ignored', eventType: 'push', eventLabel: 'push', repository: 'abcd/web-client', branch: 'release/v2.4.0', commitHash: 'f4e5d6c', commitMessage: 'chore: bump dependencies to latest stable versions', pipeline: 'build-frontend', received: '2h ago' },
+    { status: 'failed', statusLabel: 'Failed', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/web-client', branch: 'feature/auth-flow', commitHash: '7890abc', commitMessage: 'feat: add user role migration for RBAC system', pipeline: 'db-migrate', received: '3h ago' },
+  ];
 
 type ModalState = { mode: 'view'; row: number } | null;
 
@@ -104,7 +104,7 @@ export default function Webhooks() {
           ))}
         </DataTable>
 
-        <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
       </main>
 

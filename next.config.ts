@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   
   images: {
-    remotePatterns: [new URL("avatars.githubusercontent.com")] // allows a github image to be available in the session (session.user.image)
+    remotePatterns: [{ protocol: 'https', hostname: 'avatars.githubusercontent.com' }]
   }
 };
 
