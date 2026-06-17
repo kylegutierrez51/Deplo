@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import styles from "./webhooks.module.css"
-import Subheader from "@/components/Subheader"
+import Subheader from "@/components/subheader/Subheader"
+import AddButton from '@/components/subheader/AddButton';
 import Sidebar from "@/components/sidebar/Sidebar"
 import FilterSelect from "@/components/filters/FilterSelect"
 import SearchInput from "@/components/filters/SearchInput";
@@ -26,7 +27,7 @@ export default function Webhooks() {
 
   return (
     <>
-      <Sidebar activeItem="webhooks"></Sidebar>
+      <Sidebar activeItem="webhooks" />
 
       <main className="page-content">
         <div className="page-layout">
@@ -34,10 +35,7 @@ export default function Webhooks() {
           <Subheader
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
-            <button onClick={() => setModal({ mode: 'create' })}>
-              <ion-icon name="add-outline"></ion-icon>
-              Add Webhook
-            </button>
+            <AddButton text={"Add Webhook"} url={"webhooks"} />
           </Subheader>
 
           <div className={styles.filters}>
@@ -91,7 +89,7 @@ export default function Webhooks() {
             </div>
           </div>
 
-          <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+          <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
         </div>
       </main>
 

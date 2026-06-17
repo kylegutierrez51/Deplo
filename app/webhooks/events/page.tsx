@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import styles from "./webhook-events.module.css";
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
+import RefreshButton from "@/components/subheader/RefreshButton";
 import Sidebar from "@/components/sidebar/Sidebar";
 import StatCards from "@/components/StatCards";
 import FilterSelect from "@/components/filters/FilterSelect";
@@ -35,17 +36,14 @@ export default function Webhooks() {
 
   return (
     <>
-      <Sidebar activeItem="webhooks"></Sidebar>
+      <Sidebar activeItem="webhooks" />
 
       <main className="page-content">
 
         <Subheader
           title="Webhook Events"
           subtitle="Incoming webhook deliveries from GitHub.">
-          <button>
-            <ion-icon name="refresh-outline"></ion-icon>
-            Refresh
-          </button>
+          <RefreshButton />
         </Subheader>
 
         <StatCards
@@ -56,8 +54,7 @@ export default function Webhooks() {
               { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
               { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
             ]
-          }>
-        </StatCards>
+          } />
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
@@ -104,7 +101,7 @@ export default function Webhooks() {
           ))}
         </DataTable>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
 
       </main>
 

@@ -1,6 +1,6 @@
 import styles from "./secrets.module.css";
-import Subheader from "@/components/Subheader";
-import AddSecretButton from '@/components/secrets/AddSecretButton';
+import Subheader from "@/components/subheader/Subheader";
+import AddButton from '@/components/subheader/AddButton';
 import Sidebar from "@/components/sidebar/Sidebar";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
@@ -33,7 +33,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
         <Subheader
           title="Secrets"
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
-          <AddSecretButton />
+          <AddButton text={"New Secret"} url={"secrets"} />
         </Subheader>
 
         <div className={styles.filters}>
@@ -71,6 +71,3 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
     </>
   )
 }
-
-
-

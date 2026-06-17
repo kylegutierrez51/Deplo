@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import styles from "./run-history.module.css";
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
 import Sidebar from "@/components/sidebar/Sidebar";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
@@ -36,7 +36,7 @@ export default function RunHistory() {
 
   return (
     <>
-      <Sidebar activeItem="run-history"></Sidebar>
+      <Sidebar activeItem="run-history" />
 
       <main className="page-content">
 
@@ -44,10 +44,6 @@ export default function RunHistory() {
           title="Run History"
           subtitle="All pipeline executions across your projects."
           badge={{ count: 3, label: 'Active' }}>
-          <button>
-            <ion-icon name="caret-forward-outline"></ion-icon>
-            Run Pipeline
-          </button>
         </Subheader>
 
         <div className={styles.filters}>
@@ -115,7 +111,7 @@ export default function RunHistory() {
           ))}
         </DataTable>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
 
       </main>
 

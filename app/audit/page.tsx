@@ -2,7 +2,8 @@
 
 import styles from "./audit.module.css";
 import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
+import ExportButton from "@/components/subheader/ExportButton";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
@@ -26,17 +27,14 @@ export default function AuditLog() {
 
   return (
     <>
-      <Sidebar activeItem="audit"></Sidebar>
+      <Sidebar activeItem="audit" />
 
       <main className="page-content">
 
         <Subheader
           title="Audit Log"
           subtitle="Immutable record of every action taken across your workspace.">
-          <button>
-            <ion-icon name="download-outline"></ion-icon>
-            Export
-          </button>
+            <ExportButton />
         </Subheader>
 
         <div className={styles.filters}>
@@ -90,7 +88,7 @@ export default function AuditLog() {
           ))}
         </DataTable>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
 
       </main>
   

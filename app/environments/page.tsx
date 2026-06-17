@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import styles from './env.module.css';
 import Sidebar from "@/components/sidebar/Sidebar"
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
+import AddButton from "@/components/subheader/AddButton";
 import StatCards from '@/components/StatCards';
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
@@ -15,14 +16,14 @@ import EnvironmentModal from '@/components/modals/EnvironmentModal';
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 const ENVIRONMENTS: { name: string, type: EnvType, secrets?: number, pipelines?: number, requireApproval?: boolean, createdBy: string, createdAt: string, updatedAt: string }[] = [
-  { name: 'dev',  type: 'development', secrets: 14, pipelines: 6, requireApproval: true,  createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
+  { name: 'dev', type: 'development', secrets: 14, pipelines: 6, requireApproval: true, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
   { name: 'staging', type: 'staging', secrets: 12, pipelines: 2, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
   { name: 'prod', type: 'production', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
   { name: 'prev', type: 'preview', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
   { name: 'custom', type: 'custom', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
 ];
 
-type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create'} | null;
+type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;
 
 export default function Environments() {
   const [modal, setModal] = useState<ModalState>(null);
@@ -39,10 +40,7 @@ export default function Environments() {
         <Subheader
           title="Environments"
           subtitle="Manage deploy targets and their secret scoping.">
-          <button onClick={() => setModal({ mode: 'create' })}>
-            <ion-icon name="add-outline"></ion-icon>
-            Create Environment
-          </button>
+          <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
 
         <StatCards
@@ -51,8 +49,7 @@ export default function Environments() {
             { icon: "key-outline", total: 5, label: "TOTAL SECRETS" },
             { icon: "shield-outline", total: 1, label: "PROTECTED" },
             { icon: "git-branch-outline", total: 11, label: "PIPELINE BINDINGS" },
-          ]}>
-        </StatCards>
+          ]} />
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
@@ -121,7 +118,7 @@ export default function Environments() {
           </tr>
         </DataTable>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
 
       </main>
 
@@ -134,7 +131,7 @@ export default function Environments() {
           onDelete={() => setModal(null)}
           onSave={() => {
             if (modal.mode === 'view') {
-              setModalKey(k => k + 1); 
+              setModalKey(k => k + 1);
             } else {
               setModal(null);
             }

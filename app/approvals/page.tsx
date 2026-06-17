@@ -1,6 +1,6 @@
 import styles from "./approvals.module.css"
 import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
 import StatCards from "@/components/StatCards";
 import FilterSelect from "@/components/filters/FilterSelect"
 import SearchInput from "@/components/filters/SearchInput"
