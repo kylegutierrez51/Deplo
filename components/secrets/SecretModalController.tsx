@@ -6,7 +6,7 @@ import SecretModal from "../modals/SecretModal";
 import type { Secret } from "@/lib/data/secrets";
 
 export default function SecretModalController({ mode, secret }: {
-  mode: "view" | "create";
+  mode: "view" | "create" | "edit";
   secret?: Secret;
 }) {
   const router = useRouter();
@@ -14,16 +14,21 @@ export default function SecretModalController({ mode, secret }: {
 
   const close = () => router.push('/secrets'); // clear modal query params
 
+  const edit = () => router.push(`/secrets?id=${secret?.id}&mode=edit`)
+
   return (
     <SecretModal
       key={modalKey}
-      initialMode={mode}
+      mode={mode}
       {...secret}
       onClose={close}
+      onCreate={close}
       onDelete={close}
+      onEdit={edit}
       onSave={() => {
-        if (mode === 'view') {
+        if (mode === 'edit') {
           setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode
+          router.push(`/secrets?id=${secret?.id}`)
           router.refresh();  // reruns server component (app/secrets/page.tsx) so the table reflects the edit
         } else {
           close();
