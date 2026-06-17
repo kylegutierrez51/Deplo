@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import styles from "./secrets.module.css";
 import Subheader from "@/components/Subheader";
+import AddSecretButton from '@/components/secrets/AddSecretButton';
 import Sidebar from "@/components/sidebar/Sidebar";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
@@ -38,10 +39,7 @@ export default function Secrets() {
         <Subheader
           title="Secrets"
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
-          <button onClick={() => setModal({ mode: 'create' })}>
-            <ion-icon name="add-outline"></ion-icon>
-            Add Secret
-          </button>
+            <AddSecretButton setModal={setModal} />
         </Subheader>
 
         <div className={styles.filters}>
@@ -88,7 +86,7 @@ export default function Secrets() {
           </tr>
         </DataTable>
 
-        <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
       </main>
 

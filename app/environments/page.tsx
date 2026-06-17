@@ -121,7 +121,7 @@ export default function Environments() {
           </tr>
         </DataTable>
 
-        <Pagination showing="1-10 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
 
       </main>
 

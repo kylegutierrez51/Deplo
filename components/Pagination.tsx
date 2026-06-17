@@ -4,15 +4,16 @@ import defaultStyles from './pagination.module.css'
 
 interface PaginationProps {
   showing: string,
+  totalRows: number,
   pages: (number | '...')[],
   currentPage: number,
   styles?: Record<string, string>,
 }
-export default function Pagination({ showing, pages, currentPage, styles = defaultStyles }: PaginationProps) {
+export default function Pagination({ showing, totalRows, pages, currentPage, styles = defaultStyles }: PaginationProps) {
   return (
     <div className={styles['page-view']}>
       <div className={styles.pages}>
-        Showing {showing}
+        Showing {showing} of {totalRows}
       </div>
 
       <div className={styles['pagination-container']}>

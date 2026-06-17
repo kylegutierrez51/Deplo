@@ -11,9 +11,9 @@ import Pagination from "@/components/Pagination"
 import WebhookModal from '@/components/modals/WebhookModal';
 
 const WEBHOOKS = [
-  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true,  pullRequest: true  }, branchFilters: ['main/*', 'release/*', 'hotfix/*'], webhookSecret: 'whsec_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', createdBy: 'coco', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
-  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true,  pullRequest: false }, webhookSecret: 'whsec_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
-  { repository: 'abcd/api-server', pipeline: 'deploy-api', events: { push: false, pullRequest: true  }, webhookSecret: 'whsec_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
+  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true, pullRequest: true }, branchFilters: ['main/*', 'release/*', 'hotfix/*'], webhookSecret: 'whsec_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', createdBy: 'coco', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
+  { repository: 'abcd/infra', pipeline: 'deploy-infra', events: { push: true, pullRequest: false }, webhookSecret: 'whsec_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
+  { repository: 'abcd/api-server', pipeline: 'deploy-api', events: { push: false, pullRequest: true }, webhookSecret: 'whsec_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6', lastDelivery: '6/9/26, 21:27:34', registeredAgo: '6/9/26, 21:27:34' },
 ];
 
 type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;
@@ -91,7 +91,7 @@ export default function Webhooks() {
             </div>
           </div>
 
-          <Pagination showing="1-3 of 20" pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+          <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
         </div>
       </main>
 
@@ -104,7 +104,7 @@ export default function Webhooks() {
           onDelete={() => setModal(null)}
           onSave={() => {
             if (modal.mode === 'view') {
-              setModalKey(k => k + 1); 
+              setModalKey(k => k + 1);
             } else {
               setModal(null);
             }
