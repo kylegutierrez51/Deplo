@@ -11,18 +11,19 @@ const styles = { ...modalStyles, ...secretStyles };
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 interface SecretModalProps {
-  initialMode?: 'view' | 'edit' | 'create';
+  mode: 'view' | 'edit' | 'create';
   secretKey?: string;
   value?: string;
-  environmentName?: string;
   environmentType?: EnvType;
   notes?: string;
-  createdBy?: string;
+  createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
   onClose: () => void;
-  onDelete?: () => void;
-  onSave?: () => void;
+  onCreate: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onSave: () => void;
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
@@ -34,20 +35,20 @@ const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: 
 ];
 
 export default function SecretModal({
-  initialMode = 'view',
+  mode = 'view',
   secretKey,
   value,
-  environmentName,
   environmentType = 'production',
   notes,
   createdBy,
   createdAt,
   updatedAt,
   onClose,
+  onCreate,
   onDelete,
+  onEdit,
   onSave,
 }: SecretModalProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [envType, setEnvType] = useState<EnvType>(environmentType);
   const [secretVisible, setSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -66,12 +67,12 @@ export default function SecretModal({
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={() => setMode('edit')}>Edit</button>
+      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
     </>
   ) :
     <>
@@ -114,9 +115,9 @@ export default function SecretModal({
           </div>
 
           <div className={styles.item}>
-            <label>Environment Name</label>
+            <label>Environment Type</label>
             <div className={styles.buttonGroup}>
-              <Pill variant={envType} label={environmentName ?? ''} />
+              <Pill variant={envType} label={environmentType ?? ''} />
             </div>
           </div>
 
@@ -169,7 +170,7 @@ export default function SecretModal({
           </div>
 
           <div className={styles.item}>
-            <label>Environment Name</label>
+            <label>Environment Type</label>
             <div className={styles.buttonGroup}>
               {ENV_TYPES.map(({ key, label, baseClass, activeClass }) => (
                 <button
