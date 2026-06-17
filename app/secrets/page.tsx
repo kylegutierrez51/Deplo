@@ -8,16 +8,21 @@ import DataTable from "@/components/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
 import Pagination from "@/components/Pagination";
 import SecretModalController from '@/components/secrets/SecretModalController';
-import { getSecret, getSecrets } from '@/lib/data/secrets';
+import { getSecretById, getSecrets } from '@/lib/data/secrets';
 
-type SearchParams = Promise<{ create?: string; key?: string; env?: string }>;
+type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
 export default async function Secrets({ searchParams }: { searchParams: SearchParams }) {
-  const { create, key, env } = await searchParams;
+  const { mode, id } = await searchParams;
   const secrets = await getSecrets();
 
-  const selectedRow = key && env ? await getSecret(key, env) : undefined;
-  const modalMode = create ? "create" : selectedRow ? "view" : null;
+  const record = id ? await getSecretById(Number(id)) : undefined;
+
+  const modal =
+    mode === "create" ? { mode: "create" as const } :
+      record && mode === "edit" ? { mode: "edit" as const, record } :
+        record ? { mode: "view" as const, record } :
+          null;
 
   return (
     <>
@@ -28,7 +33,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
         <Subheader
           title="Secrets"
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
-            <AddSecretButton />
+          <AddSecretButton />
         </Subheader>
 
         <div className={styles.filters}>
@@ -57,10 +62,10 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
 
       </main>
 
-      {modalMode && (
+      {modal && (
         <SecretModalController
-          mode={modalMode}
-          secret={selectedRow}
+          mode={modal.mode}
+          secret={modal.record}
         />
       )}
     </>
