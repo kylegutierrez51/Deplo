@@ -4,7 +4,8 @@ import { useState } from 'react';
 import styles from "./pipelines.module.css"
 
 import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/Subheader";
+import Subheader from "@/components/subheader/Subheader";
+import AddButton from '@/components/subheader/AddButton';
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
@@ -32,16 +33,13 @@ export default function PipelineList() {
 
   return (
     <>
-      <Sidebar activeItem="pipelines"></Sidebar>
+      <Sidebar activeItem="pipelines" />
 
       <main className="page-content">
         <Subheader
           title="Pipelines"
           subtitle={<><span id="subtitle-count">8</span> pipelines across your repositories</>}>
-          <button onClick={() => setModal({ mode: 'create' })}>
-            <ion-icon name="add-outline"></ion-icon>
-            New Pipeline
-          </button>
+            <AddButton text={"New Pipeline"} url={"pipelines"} />
         </Subheader>
 
         <div className={styles.filters}>
@@ -93,7 +91,7 @@ export default function PipelineList() {
           </tr>
         </DataTable>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9}></Pagination>
+        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
 
       </main>
 
