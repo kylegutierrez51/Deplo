@@ -1,6 +1,3 @@
-"use client"
-
-import { useState } from 'react';
 import styles from './env.module.css';
 import Sidebar from "@/components/sidebar/Sidebar"
 import Subheader from "@/components/subheader/Subheader";
@@ -9,31 +6,28 @@ import StatCards from '@/components/StatCards';
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
+import EnvironmentRow from '@/components/environments/EnvironmentRow';
 import Pagination from '@/components/Pagination';
-import Pill from '@/components/Pill';
-import EnvironmentModal from '@/components/modals/EnvironmentModal';
+import EnvModalController from '@/components/environments/EnvModalController';
+import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
 
-type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
+type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
-const ENVIRONMENTS: { name: string, type: EnvType, secrets?: number, pipelines?: number, requireApproval?: boolean, createdBy: string, createdAt: string, updatedAt: string }[] = [
-  { name: 'dev', type: 'development', secrets: 14, pipelines: 6, requireApproval: true, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { name: 'staging', type: 'staging', secrets: 12, pipelines: 2, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { name: 'prod', type: 'production', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { name: 'prev', type: 'preview', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { name: 'custom', type: 'custom', secrets: 8, pipelines: 3, requireApproval: false, createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-];
+export default async function Environments({ searchParams }: { searchParams: SearchParams }) {
+  const { mode, id } = await searchParams;
+  const environments = await getEnvironments();
 
-type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;
+  const record = id ? await getEnvironmentById(Number(id)) : undefined;
 
-export default function Environments() {
-  const [modal, setModal] = useState<ModalState>(null);
-  const [modalKey, setModalKey] = useState(0);
-
-  const selectedEnv = modal?.mode === 'view' ? ENVIRONMENTS[modal.row] : undefined;
+  const modal =
+    mode === "create" ? { mode: "create" as const } :
+      record && mode === "edit" ? { mode: "edit" as const, record } :
+        record ? { mode: "view" as const, record } :
+          null;
 
   return (
     <>
-      <Sidebar activeItem="environments"></Sidebar>
+      <Sidebar activeItem="environments" />
 
       <main className="page-content">
 
@@ -77,45 +71,9 @@ export default function Environments() {
         </div>
 
         <DataTable columns={["Name", "Environment Type", "Secrets", "Pipelines", "Last Updated"]}>
-          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
-            <td className={styles.filter}>
-              <div>dev</div>
-            </td>
-            <td><Pill variant="development" label="Development" /></td>
-            <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>14</div></td>
-            <td>6</td>
-            <td>4d ago</td>
-          </tr>
-          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 1 })}>
-            <td className={styles.filter}><div>staging</div></td>
-            <td><Pill variant="staging" label="Staging" /></td>
-            <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>12</div></td>
-            <td>2</td>
-            <td>4d ago</td>
-          </tr>
-          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 2 })}>
-            <td className={styles.filter}><div>prod</div>
-              <ion-icon name="lock-closed-outline"></ion-icon>
-            </td>
-            <td><Pill variant="production" label="Production" /></td>
-            <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
-            <td>3</td>
-            <td>8d ago</td>
-          </tr>
-          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 3 })}>
-            <td className={styles.filter}><div>prev</div></td>
-            <td><Pill variant="preview" label="Preview" /></td>
-            <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
-            <td>3</td>
-            <td>8d ago</td>
-          </tr>
-          <tr style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 4 })}>
-            <td className={styles.filter}><div>custom</div></td>
-            <td><Pill variant="custom" label="Custom" /></td>
-            <td className={styles.filter}><ion-icon name="key-outline"></ion-icon><div>8</div></td>
-            <td>3</td>
-            <td>8d ago</td>
-          </tr>
+          {environments.map((env, i) => (
+            <EnvironmentRow key={i} env={env} />
+          ))}
         </DataTable>
 
         <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
@@ -123,19 +81,9 @@ export default function Environments() {
       </main>
 
       {modal && (
-        <EnvironmentModal
-          key={modalKey}
-          initialMode={modal.mode}
-          {...selectedEnv}
-          onClose={() => setModal(null)}
-          onDelete={() => setModal(null)}
-          onSave={() => {
-            if (modal.mode === 'view') {
-              setModalKey(k => k + 1);
-            } else {
-              setModal(null);
-            }
-          }}
+        <EnvModalController
+          mode={modal.mode}
+          env={modal.record}
         />
       )}
     </>

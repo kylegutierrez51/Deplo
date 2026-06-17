@@ -11,7 +11,7 @@ const styles = { ...modalStyles, ...envStyles };
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 interface EnvironmentModalProps {
-  initialMode?: 'view' | 'edit' | 'create';
+  mode: 'view' | 'edit' | 'create';
   name?: string;
   type?: EnvType;
   secrets?: number;
@@ -21,8 +21,10 @@ interface EnvironmentModalProps {
   createdAt?: string;
   updatedAt?: string;
   onClose: () => void;
-  onDelete?: () => void;
-  onSave?: () => void;
+  onCreate: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onSave: () => void;
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
@@ -34,7 +36,7 @@ const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: 
 ];
 
 export default function EnvironmentModal({
-  initialMode = 'view',
+  mode = 'view',
   name,
   type = 'production',
   secrets,
@@ -44,10 +46,11 @@ export default function EnvironmentModal({
   createdAt,
   updatedAt,
   onClose,
+  onCreate,
   onDelete,
+  onEdit,
   onSave,
 }: EnvironmentModalProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [envType, setEnvType] = useState<EnvType>(type);
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
 
@@ -56,12 +59,12 @@ export default function EnvironmentModal({
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={() => setMode('edit')}>Edit</button>
+      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
     </>
   ) :
     <>
