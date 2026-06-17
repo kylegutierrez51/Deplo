@@ -11,7 +11,7 @@ const styles = { ...modalStyles, ...pipelineStyles };
 type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 interface PipelineModalProps {
-  initialMode?: 'view' | 'edit' | 'create';
+  mode: 'view' | 'edit' | 'create';
   name?: string;
   status?: PipelineStatus;
   lastRun?: string;
@@ -23,12 +23,14 @@ interface PipelineModalProps {
   createdAt?: string;
   updatedAt?: string;
   onClose: () => void;
-  onDelete?: () => void;
-  onSave?: () => void;
+  onCreate: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onSave: () => void;
 }
 
 export default function PipelineModal({
-  initialMode = 'view',
+  mode = 'view',
   name,
   status,
   lastRun,
@@ -40,10 +42,11 @@ export default function PipelineModal({
   createdAt,
   updatedAt,
   onClose,
+  onCreate,
   onDelete,
+  onEdit,
   onSave,
 }: PipelineModalProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [pills, setPills] = useState<string[]>(branchFilters);
   const branchInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,17 +59,17 @@ export default function PipelineModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
-  const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
+  const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Pipeline' : 'Edit Pipeline');
 
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={() => setMode('edit')}>Edit</button>
+      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
     </>
   ) :
     <>
