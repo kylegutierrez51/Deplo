@@ -99,8 +99,8 @@ model Pipeline {
   repoUrl       String
   branchFilters String[] @default(["main"]) // glob pattern, e.g. "main", "release/*"
 
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   definitions   PipelineDefinition[]
   runs          PipelineRun[]
@@ -251,8 +251,8 @@ model Environment {
   name String          @unique
   type EnvironmentType @default(DEVELOPMENT)
 
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   secrets Secret[]
   runs    PipelineRun[]
@@ -273,8 +273,8 @@ model Secret {
   iv             String // initialization vector (hex)
   authTag        String // GCM authentication tag (hex)
 
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
