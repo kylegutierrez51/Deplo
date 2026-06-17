@@ -1,10 +1,12 @@
 "use client"
 
-type ModalState = { mode: 'view'; row: number } | { mode: 'edit' } | { mode: 'create' } | null;
+import { useRouter } from "next/navigation";
 
-export default function AddSecretButton({ setModal }: { setModal: React.Dispatch<React.SetStateAction<ModalState>> }) {
+export default function AddSecretButton() {
+  const router = useRouter();
+
   return (
-    <button onClick={() => setModal({ mode: 'create' })}>
+    <button onClick={() => router.push("/secrets?create=1")}>
       <ion-icon name="add-outline"></ion-icon>
       Add Secret
     </button>
