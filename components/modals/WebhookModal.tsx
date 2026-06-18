@@ -13,22 +13,24 @@ interface WebhookEvents {
 }
 
 interface WebhookModalProps {
-  initialMode?: 'view' | 'edit' | 'create';
+  mode?: 'view' | 'edit' | 'create';
   repository?: string;
   pipeline?: string;
   branchFilters?: string[];
   events?: WebhookEvents;
   webhookSecret?: string;
-  createdBy?: string;
+  createdBy?: string | null;
   lastDelivery?: string;
   registeredAgo?: string;
   onClose: () => void;
+  onCreate: () => void;
   onDelete?: () => void;
+  onEdit: () => void;
   onSave?: () => void;
 }
 
 export default function WebhookModal({
-  initialMode = 'view',
+  mode = 'view',
   repository,
   pipeline,
   branchFilters = [],
@@ -38,10 +40,11 @@ export default function WebhookModal({
   lastDelivery,
   registeredAgo,
   onClose,
+  onCreate,
   onDelete,
+  onEdit,
   onSave,
 }: WebhookModalProps) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
   const [selectedEvents, setSelectedEvents] = useState<WebhookEvents>(events);
   const [secretVisible, setSecretVisible] = useState(false);
@@ -81,12 +84,12 @@ export default function WebhookModal({
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={() => setMode('edit')}>Edit</button>
+      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
     </>
   ) :
     <>
