@@ -27,6 +27,7 @@ interface PipelineModalProps {
   onCreate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onEditClose: () => void;
   onSave: () => void;
 }
 
@@ -46,6 +47,7 @@ export default function PipelineModal({
   onCreate,
   onDelete,
   onEdit,
+  onEditClose,
   onSave,
 }: PipelineModalProps) {
   const [pills, setPills] = useState<string[]>(branchFilters);
@@ -74,7 +76,7 @@ export default function PipelineModal({
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
       <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
     </>
   );

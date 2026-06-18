@@ -23,6 +23,7 @@ interface SecretModalProps {
   onCreate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onEditClose: () => void;
   onSave: () => void;
 }
 
@@ -47,6 +48,7 @@ export default function SecretModal({
   onCreate,
   onDelete,
   onEdit,
+  onEditClose,
   onSave,
 }: SecretModalProps) {
   const [envType, setEnvType] = useState<EnvType>(environmentType);
@@ -76,7 +78,7 @@ export default function SecretModal({
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
       <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
     </>
   );
