@@ -7,7 +7,7 @@ import auditStyles from './audit-modal.module.css';
 const styles = { ...modalStyles, ...auditStyles };
 
 interface AuditModalProps {
-  initialMode?: 'view' | 'edit' | 'create';
+  mode?: 'view' | 'edit' | 'create';
   action?: string;
   resource?: string;
   category?: string;
@@ -17,7 +17,7 @@ interface AuditModalProps {
 }
 
 export default function AuditModal({
-  initialMode = 'view',
+  mode = 'view',
   action,
   resource,
   category,
@@ -31,7 +31,7 @@ export default function AuditModal({
     </>
 
   return (
-    <Modal title={"Log"} onClose={onClose} footer={footer} mode={initialMode}>
+    <Modal title={"Log"} onClose={onClose} footer={footer} mode={mode}>
       <>
         <div className={styles['item-flex']}>
           <div className={styles.item}>
@@ -60,7 +60,6 @@ export default function AuditModal({
             <span>{time}</span>
           </div>
         </div>
-
       </>
     </Modal>
   );
