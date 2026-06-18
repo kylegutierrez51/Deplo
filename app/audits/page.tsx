@@ -1,5 +1,3 @@
-"use client"
-
 import styles from "./audit.module.css";
 import Sidebar from "@/components/sidebar/Sidebar";
 import Subheader from "@/components/subheader/Subheader";
@@ -7,23 +5,25 @@ import ExportButton from "@/components/subheader/ExportButton";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
+import AuditRow from "@/components/audits/AuditRow";
 import Pagination from "@/components/Pagination";
-import AuditModal from "@/components/modals/AuditModal";
-import { useState } from 'react';
+import AuditModalController from "@/components/audits/AuditModalController";
+import { getAudits, getAuditById } from '@/lib/data/audits';
 
+type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
-const AUDITS: { action: string, resource: string, category?: string, actor: string, createdBy?: string, time: string}[] = [
-  { action: 'Run Completed', resource: 'deploy-api #482', category: "Pipeline", actor: 'github', time: '6/9/26, 21:27:34' },
-  { action: 'Pipeline Triggered', resource: 'deploy-api #482', category: "Pipeline", actor: 'github', time: '6/9/26, 21:27:34' },
-  { action: 'Webhook Received', resource: 'push → acme/api-server', category: "Webhook", actor: 'github', time: '6/9/26, 21:27:34' },
-];
+export default async function AuditLog({ searchParams }: { searchParams: SearchParams }) {
+  const { mode, id } = await searchParams;
+  const audits = await getAudits();
 
-type ModalState = { mode: 'view'; row: number } | null;
+  const record = id ? await getAuditById(Number(id)) : undefined;
 
-export default function AuditLog() {
-  const [modal, setModal] = useState<ModalState>(null);
+  const modal =
+    mode === "create" ? { mode: "create" as const } :
+      record && mode === "edit" ? { mode: "edit" as const, record } :
+        record ? { mode: "view" as const, record } :
+          null;
 
-  const selectedAudit = modal?.mode === 'view' ? AUDITS[modal.row] : undefined;
 
   return (
     <>
@@ -78,13 +78,8 @@ export default function AuditLog() {
 
         <DataTable
           columns={["Action", "Resource", "Actor", "Time"]}>
-          {AUDITS.map((audit, i) => (
-            <tr key={i} style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: 0 })}>
-              <td>{audit.action}</td>
-              <td>push → acme/api-server <span className={styles['audit-category']}>[{audit.category}]</span></td>
-              <td>{audit.actor}</td>
-              <td className={styles.nowrap}>{audit.time}</td>
-            </tr>
+          {audits.map((audit, i) => (
+            <AuditRow key={i} audit={audit} />
           ))}
         </DataTable>
 
@@ -93,10 +88,9 @@ export default function AuditLog() {
       </main>
   
       {modal && (
-        <AuditModal
-          initialMode={modal.mode}
-          {...selectedAudit}
-          onClose={() => setModal(null)}
+        <AuditModalController
+          mode={modal.mode}
+          audit={modal.record}
         />
       )}
     </>
