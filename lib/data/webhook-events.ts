@@ -1,14 +1,16 @@
 export type WebhookStatus = 'processed' | 'pending' | 'ignored' | 'failed';
-export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 export type EventType = 'push' | 'pull-request'
 
 export type WebhookEvent = {
   id: number;
   status: WebhookStatus;
   eventType: EventType;
-  repository: string; branch: string;
-  commitHash: string; commitMessage: string;
-  pipeline: string; received: string;
+  repository: string; 
+  branch: string;
+  commitHash: string; 
+  commitMessage: string;
+  pipeline: string; 
+  received: string;
 };
 
 const WEBHOOK_EVENTS: WebhookEvent[] = [
