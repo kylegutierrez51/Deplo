@@ -6,6 +6,7 @@ import modalStyles from './modal.module.css';
 import runHistoryStyles from './run-modal.module.css';
 import Pill from '@/components/Pill';
 import type { PipelineStatus, EnvType, TriggerType } from '@/lib/data/runs';
+import { capitalize } from "@/lib/utils/string";
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
@@ -54,7 +55,7 @@ export default function RunModal({
           {status && (
             <div className={styles.item}>
               <label>Status</label>
-              <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
+              <span><Pill variant={status} label={capitalize(status)} /></span>
             </div>
           )}
         </div>
@@ -63,13 +64,13 @@ export default function RunModal({
           {environment && (
             <div className={styles.item}>
               <label>Environment</label>
-              <span><Pill variant={environment} label={environment.charAt(0).toUpperCase() + environment.slice(1)} /></span>
+              <span><Pill variant={environment} label={capitalize(environment)} /></span>
             </div>
           )}
           {trigger && (
             <div className={styles.item}>
               <label>Trigger</label>
-              <span><Pill variant={trigger} label={trigger === 'api' ? 'API' : trigger.charAt(0).toUpperCase() + trigger.slice(1)} /></span>
+              <span><Pill variant={trigger} label={trigger === 'api' ? 'API' : capitalize(trigger)} /></span>
             </div>
           )}
         </div>

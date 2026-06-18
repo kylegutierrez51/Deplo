@@ -1,5 +1,6 @@
 "use client"
 
+import { capitalize } from "@/lib/utils/string";
 import { useState, useRef } from 'react';
 import Modal from './Modal';
 import modalStyles from './modal.module.css';
@@ -91,7 +92,7 @@ export default function PipelineModal({
             {status &&
               <div className={styles.item}>
                 <label>Status</label>
-                <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
+                <span><Pill variant={status} label={capitalize(status)} /></span>
               </div>
             }
 
