@@ -4,7 +4,7 @@ import SyncButton from './SyncButton';
 interface WebhookCardProps {
   id: number;
   repo: string;
-  status: 'Active' | 'Inactive';
+  status: boolean;
   events: string[];
   lastDelivery?: string;
   registeredAgo: string;
@@ -21,7 +21,7 @@ export default function WebhookCard({ id, repo, status, events, lastDelivery, re
           <div className={styles['pipeline-info']}>
             <div className={styles['name-status']}>
               <div className={styles.name}>{repo}</div>
-              <div className={`${status === 'Active' ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{status}</div>
+              <div className={`${status ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{status ? 'Active' : 'Inactive' }</div>
             </div>
             <div className={styles.events}>
               {events.map((event, index) => (
@@ -38,7 +38,7 @@ export default function WebhookCard({ id, repo, status, events, lastDelivery, re
                   <span>&bull;</span>
                 </>
               }
-              <span className={styles.registered}>Registered {registeredAgo} ago</span>
+              <span className={styles.registered}>Registered: {registeredAgo} ago</span>
             </div>
             {branchFilters &&
               <div className={styles.branchFilters}>
