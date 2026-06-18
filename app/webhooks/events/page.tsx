@@ -1,6 +1,3 @@
-"use client"
-
-import { useState } from 'react';
 import styles from "./webhook-events.module.css";
 import Subheader from "@/components/subheader/Subheader";
 import RefreshButton from "@/components/subheader/RefreshButton";
@@ -9,30 +6,25 @@ import StatCards from "@/components/StatCards";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
+import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
 import Pagination from "@/components/Pagination";
-import Pill from '@/components/Pill';
-import type { PillVariant } from '@/components/Pill';
-import WebhookEventModal from "@/components/modals/WebhookEventModal";
+import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
+import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
 
-const WEBHOOK_EVENTS: {
-  status: PillVariant; statusLabel: string;
-  eventType: PillVariant; eventLabel: string;
-  repository: string; branch: string;
-  commitHash: string; commitMessage: string;
-  pipeline: string; received: string;
-}[] = [
-    { status: 'pending', statusLabel: 'Pending', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-    { status: 'processed', statusLabel: 'Processed', eventType: 'push', eventLabel: 'push', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-    { status: 'ignored', statusLabel: 'Ignored', eventType: 'push', eventLabel: 'push', repository: 'abcd/web-client', branch: 'release/v2.4.0', commitHash: 'f4e5d6c', commitMessage: 'chore: bump dependencies to latest stable versions', pipeline: 'build-frontend', received: '2h ago' },
-    { status: 'failed', statusLabel: 'Failed', eventType: 'pull-request', eventLabel: 'pull_request', repository: 'abcd/web-client', branch: 'feature/auth-flow', commitHash: '7890abc', commitMessage: 'feat: add user role migration for RBAC system', pipeline: 'db-migrate', received: '3h ago' },
-  ];
 
-type ModalState = { mode: 'view'; row: number } | null;
+type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
-export default function Webhooks() {
-  const [modal, setModal] = useState<ModalState>(null);
+export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
+  const { mode, id } = await searchParams;
+  const webhookEvents = await getWebhookEvents();
 
-  const selectedEvent = modal?.mode === 'view' ? WEBHOOK_EVENTS[modal.row] : undefined;
+  const record = id ? await getWebhookEventById(Number(id)) : undefined;
+
+  const modal =
+    mode === "create" ? { mode: "create" as const } :
+      record && mode === "edit" ? { mode: "edit" as const, record } :
+        record ? { mode: "view" as const, record } :
+          null;
 
   return (
     <>
@@ -67,10 +59,10 @@ export default function Webhooks() {
               options={
                 [
                   { value: "all", label: "All statuses" },
-                  { value: "succeeded", label: "Processed" },
+                  { value: "processed", label: "Processed" },
                   { value: "pending", label: "Pending" },
-                  { value: "failed", label: "Ignored" },
-                  { value: "running", label: "Running" },
+                  { value: "ignored", label: "Ignored" },
+                  { value: "failed", label: "Failed" },
                 ]
               } />
             <FilterSelect
@@ -79,8 +71,8 @@ export default function Webhooks() {
               options={
                 [
                   { value: "all", label: "All event types" },
-                  { value: "today", label: "push" },
-                  { value: "7days", label: "pull_request" },
+                  { value: "push", label: "Push" },
+                  { value: "pull_request", label: "Pull Request" },
                 ]
               } />
           </div>
@@ -88,16 +80,8 @@ export default function Webhooks() {
 
         <DataTable
           columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
-          {WEBHOOK_EVENTS.map((event, i) => (
-            <tr key={i} style={{ cursor: 'pointer' }} onClick={() => setModal({ mode: 'view', row: i })}>
-              <td><Pill variant={event.status} label={event.statusLabel} /></td>
-              <td><Pill variant={event.eventType} label={event.eventLabel} /></td>
-              <td>{event.repository}</td>
-              <td>{event.branch}</td>
-              <td>{event.commitHash}<br /><span>{event.commitMessage}</span></td>
-              <td>{event.pipeline}</td>
-              <td>{event.received}</td>
-            </tr>
+          {webhookEvents.map((event, i) => (
+            <WebhookEventRow key={i} event={event} />
           ))}
         </DataTable>
 
@@ -106,10 +90,9 @@ export default function Webhooks() {
       </main>
 
       {modal && (
-        <WebhookEventModal
-          initialMode={modal.mode}
-          {...selectedEvent}
-          onClose={() => setModal(null)}
+        <WebhookEventModalController
+          mode={modal.mode}
+          event={modal.record}
         />
       )}
     </>
