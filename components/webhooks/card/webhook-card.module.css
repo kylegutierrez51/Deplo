@@ -122,27 +122,42 @@
   line-height: 1.6;
 }
 
-
-
-.webhook-row .options {
+.webhook-row {
   display: flex;
   gap: var(--space-md);
 }
 
-.webhook-row .options > ion-icon {
-  font-size: 19px;
+.sync-btn {
+  display: inline-flex;
+  align-items: start;
+  justify-content: center;
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.webhook-row ion-icon[name="sync-outline"] {
+  font-size: 27px;
   cursor: pointer;
   transition: color 0.15s;
 }
 
-.webhook-row .options > ion-icon:first-child:hover {
-  color: var(--white-clr);
+.webhook-row ion-icon[name="sync-outline"]:hover {
+  color: var(--blue-clr);
 }
 
-.webhook-row .options > ion-icon:last-child:hover {
-  color: #e05555;
+.sync-btn.animate ion-icon[name="sync-outline"] {
+  animation: rdc-spin 1.2s linear infinite;
+  color: var(--blue-clr);
 }
 
+@keyframes rdc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /*
 =====================================================================================
