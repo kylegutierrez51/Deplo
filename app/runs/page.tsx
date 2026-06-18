@@ -1,38 +1,27 @@
-"use client"
-
-import { useState } from 'react';
-import styles from "./run-history.module.css";
+import styles from "./runs.module.css";
 import Subheader from "@/components/subheader/Subheader";
 import Sidebar from "@/components/sidebar/Sidebar";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
+import RunRow from "@/components/runs/RunRow";
 import Pagination from "@/components/Pagination";
-import Pill from '@/components/Pill';
-import type { PillVariant } from '@/components/Pill';
-import RunHistoryModal from "@/components/modals/RunHistoryModal";
+import RunModalController from "@/components/runs/RunModalController";
+import { getRuns, getRunById } from "@/lib/data/runs";
 
-const RUNS: {
-  runId: number;
-  status: PillVariant; statusLabel: string;
-  pipeline: string; repo: string;
-  environment: PillVariant; environmentLabel: string;
-  trigger: PillVariant; triggerLabel: string;
-  duration: string; time: string;
-}[] = [
-  { runId: 1, status: 'queued', statusLabel: 'Queued', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'production', environmentLabel: 'Production', trigger: 'webhook', triggerLabel: 'Webhook', duration: '-', time: '6h ago' },
-  { runId: 2, status: 'running', statusLabel: 'Running', pipeline: 'build-frontend', repo: 'acbcd/web-client', environment: 'staging', environmentLabel: 'Staging', trigger: 'manual', triggerLabel: 'Manual', duration: '6h 1m', time: '6h ago' },
-  { runId: 3, status: 'succeeded', statusLabel: 'Succeeded', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'development', environmentLabel: 'Development', trigger: 'api', triggerLabel: 'API', duration: '8m 0s', time: '11h ago' },
-  { runId: 4, status: 'failed', statusLabel: 'Failed', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'preview', environmentLabel: 'Preview', trigger: 'webhook', triggerLabel: 'Webhook', duration: '8m 0s', time: '11h ago' },
-  { runId: 5, status: 'cancelled', statusLabel: 'Cancelled', pipeline: 'deploy-api', repo: 'acbcd/api-server', environment: 'custom', environmentLabel: 'Custom', trigger: 'manual', triggerLabel: 'Manual', duration: '8m 0s', time: '12h ago' },
-];
+type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
-type ModalState = { mode: 'view'; row: number } | null;
+export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
+  const { mode, id } = await searchParams;
+  const runs = await getRuns();
 
-export default function RunHistory() {
-  const [modal, setModal] = useState<ModalState>(null);
+  const record = id ? await getRunById(Number(id)) : undefined;
 
-  const selectedRun = modal?.mode === 'view' ? RUNS[modal.row] : undefined;
+  const modal =
+    mode === "create" ? { mode: "create" as const } :
+      record && mode === "edit" ? { mode: "edit" as const, record } :
+        record ? { mode: "view" as const, record } :
+          null;
 
   return (
     <>
@@ -97,17 +86,8 @@ export default function RunHistory() {
 
         <DataTable
           columns={["Pipeline", "Environment Type", "Trigger", "Duration", "Time"]}>
-          {RUNS.map((run, i) => (
-            <tr key={i} className={styles["clickable-row"]} onClick={() => setModal({ mode: 'view', row: i })}>
-              <td><Pill variant={run.status} label={run.statusLabel} /> {run.pipeline} <br /><span>{run.repo}</span></td>
-              <td><Pill variant={run.environment} label={run.environmentLabel} /></td>
-              <td><Pill variant={run.trigger} label={run.triggerLabel} /></td>
-              <td className={styles.filter}>
-                <ion-icon name="stopwatch-outline"></ion-icon>
-                <div className="nowrap">{run.duration}</div>
-              </td>
-              <td className="nowrap">{run.time}</td>
-            </tr>
+          {runs.map((run, i) => (
+            <RunRow key={i} run={run}/>
           ))}
         </DataTable>
 
@@ -116,10 +96,9 @@ export default function RunHistory() {
       </main>
 
       {modal && (
-        <RunHistoryModal
-          initialMode={modal.mode}
-          {...selectedRun}
-          onClose={() => setModal(null)}
+        <RunModalController
+          mode={modal.mode}
+          run={modal.record}
         />
       )}
     </>

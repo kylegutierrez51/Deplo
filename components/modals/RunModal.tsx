@@ -3,51 +3,45 @@
 import Link from 'next/link';
 import Modal from './Modal';
 import modalStyles from './modal.module.css';
-import runHistoryStyles from './run-history-modal.module.css';
+import runHistoryStyles from './run-modal.module.css';
 import Pill from '@/components/Pill';
-import type { PillVariant } from '@/components/Pill';
+import type { PipelineStatus, EnvType, TriggerType } from '@/lib/data/runs';
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
-interface RunHistoryModalProps {
-  initialMode?: 'view';
-  runId?: string | number;
+interface RunModalProps {
+  mode: 'view' | 'edit' | 'create';
+  id?: number;
+  status?: PipelineStatus;
   pipeline?: string;
   repo?: string;
-  status?: PillVariant;
-  statusLabel?: string;
-  environment?: PillVariant;
-  environmentLabel?: string;
-  trigger?: PillVariant;
-  triggerLabel?: string;
+  environment?: EnvType;
+  trigger?: TriggerType;
   duration?: string;
   time?: string;
   onClose: () => void;
 }
 
-export default function RunHistoryModal({
-  initialMode = 'view',
-  runId,
+export default function RunModal({
+  mode = 'view',
+  id,
   pipeline,
   repo,
   status,
-  statusLabel,
   environment,
-  environmentLabel,
   trigger,
-  triggerLabel,
   duration,
   time,
   onClose,
-}: RunHistoryModalProps) {
+}: RunModalProps) {
   const footer =
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Close</button>
-      <Link href={`/runs/${runId}`} className={`${styles.footerBtn} ${styles.editBtn}`}>View Full Run</Link>
+      <Link href={`/runs/${id}`} className={`${styles.footerBtn} ${styles.editBtn}`}>View Full Run</Link>
     </>
 
   return (
-    <Modal title={"Run"} onClose={onClose} footer={footer} mode={initialMode}>
+    <Modal title={"Run"} onClose={onClose} footer={footer} mode={mode}>
       <>
         <div className={styles['item-flex']}>
           <div className={styles.item}>
@@ -60,7 +54,7 @@ export default function RunHistoryModal({
           {status && (
             <div className={styles.item}>
               <label>Status</label>
-              <span><Pill variant={status} label={statusLabel ?? status} /></span>
+              <span><Pill variant={status} label={status.charAt(0).toUpperCase() + status.slice(1)} /></span>
             </div>
           )}
         </div>
@@ -69,13 +63,13 @@ export default function RunHistoryModal({
           {environment && (
             <div className={styles.item}>
               <label>Environment</label>
-              <span><Pill variant={environment} label={environmentLabel ?? environment} /></span>
+              <span><Pill variant={environment} label={environment.charAt(0).toUpperCase() + environment.slice(1)} /></span>
             </div>
           )}
           {trigger && (
             <div className={styles.item}>
               <label>Trigger</label>
-              <span><Pill variant={trigger} label={triggerLabel ?? trigger} /></span>
+              <span><Pill variant={trigger} label={trigger === 'api' ? 'API' : trigger.charAt(0).toUpperCase() + trigger.slice(1)} /></span>
             </div>
           )}
         </div>
