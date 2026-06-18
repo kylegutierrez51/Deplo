@@ -79,23 +79,6 @@ table tbody td.filter ion-icon {
   margin: 0 4px;
 }
 
-.clickable-row {
-  position: relative;
-}
-
-.clickable-row:hover {
-  cursor: pointer;
-}
-
-.stretched-link::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  content: "";
-}
 /*
 =====================================================================================
 Run History Media Queries
