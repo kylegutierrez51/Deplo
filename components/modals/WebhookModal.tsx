@@ -21,6 +21,7 @@ interface WebhookModalProps {
   onCreate: () => void;
   onDelete?: () => void;
   onEdit: () => void;
+  onEditClose: () => void;
   onSave?: () => void;
 }
 
@@ -38,6 +39,7 @@ export default function WebhookModal({
   onCreate,
   onDelete,
   onEdit,
+  onEditClose,
   onSave,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
@@ -88,7 +90,7 @@ export default function WebhookModal({
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
       <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
     </>
   );

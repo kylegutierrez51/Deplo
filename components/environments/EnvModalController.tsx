@@ -14,7 +14,8 @@ export default function EnvModalController({ mode, env }: {
 
   const close = () => router.push('/environments'); // clear modal query params
 
-  const edit = () => router.push(`/environments?id=${env?.id}&mode=edit`)
+  const edit = () => router.push(`/environments?id=${env?.id}&mode=edit`);
+  const editClose = () => router.push(`/environments?id=${env?.id}`);
 
   return (
     <EnvironmentModal
@@ -25,6 +26,7 @@ export default function EnvModalController({ mode, env }: {
       onCreate={close}
       onDelete={close}
       onEdit={edit}
+      onEditClose={editClose}
       onSave={() => {
         if (mode === 'edit') {
           setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode

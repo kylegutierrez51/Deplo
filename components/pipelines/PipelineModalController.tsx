@@ -14,7 +14,8 @@ export default function EnvModalController({ mode, pipeline }: {
 
   const close = () => router.push('/pipelines'); // clear modal query params
 
-  const edit = () => router.push(`/pipelines?id=${pipeline?.id}&mode=edit`)
+  const edit = () => router.push(`/pipelines?id=${pipeline?.id}&mode=edit`);
+  const editClose = () => router.push(`/pipelines?id=${pipeline?.id}`);
 
   return (
     <PipelineModal
@@ -25,6 +26,7 @@ export default function EnvModalController({ mode, pipeline }: {
       onCreate={close}
       onDelete={close}
       onEdit={edit}
+      onEditClose={editClose}
       onSave={() => {
         if (mode === 'edit') {
           setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode

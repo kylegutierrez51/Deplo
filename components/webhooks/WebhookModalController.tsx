@@ -14,7 +14,8 @@ export default function WebhookModalController({ mode, webhook }: {
 
   const close = () => router.push('/webhooks'); // clear modal query params
 
-  const edit = () => router.push(`/webhooks?id=${webhook?.id}&mode=edit`)
+  const edit = () => router.push(`/webhooks?id=${webhook?.id}&mode=edit`);
+  const editClose = () => router.push(`/webhooks?id=${webhook?.id}`);
 
   return (
     <WebhookModal
@@ -25,6 +26,7 @@ export default function WebhookModalController({ mode, webhook }: {
       onCreate={close}
       onDelete={close}
       onEdit={edit}
+      onEditClose={editClose}
       onSave={() => {
         if (mode === 'edit') {
           setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode

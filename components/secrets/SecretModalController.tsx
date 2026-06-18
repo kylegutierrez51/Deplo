@@ -14,7 +14,8 @@ export default function SecretModalController({ mode, secret }: {
 
   const close = () => router.push('/secrets'); // clear modal query params
 
-  const edit = () => router.push(`/secrets?id=${secret?.id}&mode=edit`)
+  const edit = () => router.push(`/secrets?id=${secret?.id}&mode=edit`);
+  const editClose = () => router.push(`/secrets?id=${secret?.id}`);
 
   return (
     <SecretModal
@@ -25,6 +26,7 @@ export default function SecretModalController({ mode, secret }: {
       onCreate={close}
       onDelete={close}
       onEdit={edit}
+      onEditClose={editClose}
       onSave={() => {
         if (mode === 'edit') {
           setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode

@@ -27,6 +27,7 @@ interface EnvironmentModalProps {
   onCreate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onEditClose: () => void;
   onSave: () => void;
 }
 
@@ -52,6 +53,7 @@ export default function EnvironmentModal({
   onCreate,
   onDelete,
   onEdit,
+  onEditClose,
   onSave,
 }: EnvironmentModalProps) {
   const [envType, setEnvType] = useState<EnvType>(type);
@@ -71,7 +73,7 @@ export default function EnvironmentModal({
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
       <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
     </>
   );
