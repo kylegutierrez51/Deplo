@@ -5,15 +5,14 @@ import modalStyles from './modal.module.css';
 import webhookEventStyles from './webhook-event-modal.module.css';
 import Pill from '@/components/Pill';
 import type { PillVariant } from '@/components/Pill';
+import { capitalize } from '@/lib/utils/string';
 
 const styles = { ...modalStyles, ...webhookEventStyles };
 
 interface WebhookEventModalProps {
-  initialMode?: 'view';
+  mode?: 'view' | 'create' | 'edit';
   status?: PillVariant;
-  statusLabel?: string;
   eventType?: PillVariant;
-  eventLabel?: string;
   repository?: string;
   branch?: string;
   commitHash?: string;
@@ -24,11 +23,9 @@ interface WebhookEventModalProps {
 }
 
 export default function WebhookEventModal({
-  initialMode = 'view',
+  mode = 'view',
   status,
-  statusLabel,
   eventType,
-  eventLabel,
   repository,
   branch,
   commitHash,
@@ -43,19 +40,19 @@ export default function WebhookEventModal({
     </>
 
   return (
-    <Modal title={"Webhook Event"} onClose={onClose} footer={footer} mode={initialMode}>
+    <Modal title={"Webhook Event"} onClose={onClose} footer={footer} mode={mode}>
       <>
         <div className={styles['item-flex']}>
           {status && (
             <div className={styles.item}>
               <label>Status</label>
-              <span><Pill variant={status} label={statusLabel ?? status} /></span>
+              <span><Pill variant={status} label={capitalize(status)} /></span>
             </div>
           )}
           {eventType && (
             <div className={styles.item}>
               <label>Event</label>
-              <span><Pill variant={eventType} label={eventLabel ?? eventType} /></span>
+              <span><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></span>
             </div>
           )}
         </div>
