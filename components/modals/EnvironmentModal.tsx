@@ -1,17 +1,20 @@
 "use client"
 
+import { capitalize } from "@/lib/utils/string";
 import { useState } from 'react';
 import Modal from './Modal';
 import modalStyles from './modal.module.css';
 import envStyles from './environment-modal.module.css';
 import Pill from '@/components/Pill';
 
+
+
 const styles = { ...modalStyles, ...envStyles };
 
 type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 interface EnvironmentModalProps {
-  mode: 'view' | 'edit' | 'create';
+  initialMode?: 'view' | 'edit' | 'create';
   name?: string;
   type?: EnvType;
   secrets?: number;
@@ -21,10 +24,8 @@ interface EnvironmentModalProps {
   createdAt?: string;
   updatedAt?: string;
   onClose: () => void;
-  onCreate: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-  onSave: () => void;
+  onDelete?: () => void;
+  onSave?: () => void;
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
@@ -36,7 +37,7 @@ const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: 
 ];
 
 export default function EnvironmentModal({
-  mode = 'view',
+  initialMode = 'view',
   name,
   type = 'production',
   secrets,
@@ -46,11 +47,10 @@ export default function EnvironmentModal({
   createdAt,
   updatedAt,
   onClose,
-  onCreate,
   onDelete,
-  onEdit,
   onSave,
 }: EnvironmentModalProps) {
+  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [envType, setEnvType] = useState<EnvType>(type);
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
 
@@ -59,12 +59,12 @@ export default function EnvironmentModal({
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
+      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={() => setMode('edit')}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Create</button>
     </>
   ) :
     <>
@@ -85,7 +85,7 @@ export default function EnvironmentModal({
           <div className={styles.item}>
             <label>Type</label>
             <div>
-              <Pill variant={envType} label={envType.charAt(0).toUpperCase() + envType.slice(1)} />
+              <Pill variant={envType} label={capitalize(envType)} />
             </div>
           </div>
 

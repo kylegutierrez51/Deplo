@@ -1,5 +1,7 @@
 import styles from './pipeline-graph.module.css'
+import { capitalize } from "@/lib/utils/string";
 import Pill, { type PillVariant } from '@/components/Pill';
+
 
 export interface JobNodeProps {
   name: string;
@@ -24,7 +26,7 @@ export default function JobNode({ name, statusIcon, status, duration }: JobNodeP
       <div className={styles['job-status-time']}>
         <Pill
           variant={status as PillVariant}
-          label={status.charAt(0).toUpperCase() + status.slice(1)}
+          label={capitalize(status)}
         />
         {duration && <span>{duration}</span>}
       </div>
