@@ -61,12 +61,12 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
               <WebhookCardShell key={i} id={webhook.id}>
                 <WebhookCard
                   id={webhook.id}
-                  repo={"abcd/infra"}
-                  status={"Inactive"}
-                  events={["push", "pull_request"]}
-                  lastDelivery={"10d"}
-                  registeredAgo={"63d"}
-                  branchFilters={['main/*', 'release/*']} />
+                  repo={webhook.repository}
+                  status={webhook.status}
+                  events={webhook.events}
+                  lastDelivery={webhook.lastDelivery}
+                  registeredAgo={webhook.registeredAgo}
+                  branchFilters={webhook.branchFilters} />
               </WebhookCardShell>
             ))}
           </div>
