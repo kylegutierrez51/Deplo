@@ -7,17 +7,12 @@ import webhookStyles from './webhook-modal.module.css';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
-interface WebhookEvents {
-  push?: boolean;
-  pullRequest?: boolean;
-}
-
 interface WebhookModalProps {
   mode?: 'view' | 'edit' | 'create';
   repository?: string;
   pipeline?: string;
   branchFilters?: string[];
-  events?: WebhookEvents;
+  events?: string[];
   webhookSecret?: string;
   createdBy?: string | null;
   lastDelivery?: string;
@@ -34,7 +29,7 @@ export default function WebhookModal({
   repository,
   pipeline,
   branchFilters = [],
-  events = {},
+  events = [],
   webhookSecret = '',
   createdBy,
   lastDelivery,
@@ -46,7 +41,7 @@ export default function WebhookModal({
   onSave,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
-  const [selectedEvents, setSelectedEvents] = useState<WebhookEvents>(events);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(events);
   const [secretVisible, setSecretVisible] = useState(false);
   const [secret, setSecret] = useState(webhookSecret);
   const [copied, setCopied] = useState(false);
@@ -61,8 +56,8 @@ export default function WebhookModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
-  const toggleEvent = (key: keyof WebhookEvents) => {
-    setSelectedEvents(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleEvent = (key: string) => {
+    setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
 
   const handleCopy = () => {
@@ -99,8 +94,8 @@ export default function WebhookModal({
   );
 
   const EVENT_DEFS = [
-    { key: 'push' as const, label: 'Push', desc: 'Triggered when commits are pushed to a branch' },
-    { key: 'pullRequest' as const, label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
+    { key: 'push', label: 'Push', desc: 'Triggered when commits are pushed to a branch' },
+    { key: 'pull request', label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
   ];
 
   return (
@@ -136,9 +131,9 @@ export default function WebhookModal({
             <label>Trigger events</label>
             <div className={styles.eventCards}>
               {EVENT_DEFS.map(({ key, label, desc }) => (
-                <div key={key} className={`${styles.eventCard} ${selectedEvents[key] ? styles.eventCardChecked : ''}`}>
+                <div key={key} className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}>
                   <div className={styles.eventCardCheckbox}>
-                    <span className={`${styles.customCheckbox} ${selectedEvents[key] ? styles.customCheckboxChecked : ''}`}></span>
+                    <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
                   </div>
                   <div className={styles.eventCardContent}>
                     <span className={styles.eventName}>{label}</span>
@@ -236,11 +231,11 @@ export default function WebhookModal({
               {EVENT_DEFS.map(({ key, label, desc }) => (
                 <label
                   key={key}
-                  className={`${styles.eventCard} ${selectedEvents[key] ? styles.eventCardChecked : ''}`}
+                  className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}
                 >
                   <div className={styles.eventCardCheckbox}>
-                    <input type="checkbox" checked={!!selectedEvents[key]} onChange={() => toggleEvent(key)} />
-                    <span className={`${styles.customCheckbox} ${selectedEvents[key] ? styles.customCheckboxChecked : ''}`}></span>
+                    <input type="checkbox" checked={selectedEvents.includes(key)} onChange={() => toggleEvent(key)} />
+                    <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
                   </div>
                   <div className={styles.eventCardContent}>
                     <span className={styles.eventName}>{label}</span>
