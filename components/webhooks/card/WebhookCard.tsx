@@ -1,8 +1,8 @@
-"use client"
-
 import styles from './webhook-card.module.css'
+import SyncButton from './SyncButton';
 
 interface WebhookCardProps {
+  id: number;
   repo: string;
   status: 'Active' | 'Inactive';
   events: string[];
@@ -10,7 +10,7 @@ interface WebhookCardProps {
   registeredAgo: string;
   branchFilters?: string[];
 }
-export default function WebhookCard({ repo, status, events, lastDelivery, registeredAgo, branchFilters }: WebhookCardProps) {
+export default function WebhookCard({ id, repo, status, events, lastDelivery, registeredAgo, branchFilters }: WebhookCardProps) {
   return (
     <div className={styles['webhook-card']}>
       <div className={styles['webhook-row']}>
@@ -52,10 +52,7 @@ export default function WebhookCard({ repo, status, events, lastDelivery, regist
             }
           </div>
         </div>
-        <div className={styles.options}>
-          <ion-icon name="sync-outline"></ion-icon>
-          <ion-icon name="trash-outline"></ion-icon>
-        </div>
+        <SyncButton id={id} />
       </div>
     </div>
   )

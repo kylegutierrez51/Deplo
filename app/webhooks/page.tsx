@@ -5,7 +5,7 @@ import Sidebar from "@/components/sidebar/Sidebar"
 import FilterSelect from "@/components/filters/FilterSelect"
 import SearchInput from "@/components/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
-import WebhookCard from "@/components/webhooks/WebhookCard";
+import WebhookCard from "@/components/webhooks/card/WebhookCard";
 import Pagination from "@/components/Pagination"
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
@@ -60,6 +60,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
             {webhooks.map((webhook, i) => (
               <WebhookCardShell key={i} id={webhook.id}>
                 <WebhookCard
+                  id={webhook.id}
                   repo={"abcd/infra"}
                   status={"Inactive"}
                   events={["push", "pull_request"]}
