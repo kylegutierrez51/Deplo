@@ -378,3 +378,9 @@ Line 14 works because line 12 reassigns prisma to the global PrismaClient on rel
 
 ===================================================================================================================================
 
+PRISMA MIGRATIONS:
+
+1. npx prisma migrate dev --name <migration_name>
+2. npx prisma generate
+
+===================================================================================================================================

@@ -36,11 +36,13 @@ model User {
   sessions Session[]
 
   // Deplo relations
-  pipelines    Pipeline[]
-  pipelineRuns PipelineRun[]
-  auditLogs    AuditLog[]
-  environments Environment[]
-  secrets      Secret[]
+  pipelines           Pipeline[]
+  pipelineRuns        PipelineRun[]
+  pipelineDefinitions PipelineDefinition[]
+  auditLogs           AuditLog[]
+  environments        Environment[]
+  secrets             Secret[]
+  webhooks            Webhook[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,6 +127,9 @@ model PipelineDefinition {
   pipeline Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   // Runs reference the exact definition version they executed
   runs PipelineRun[]
@@ -297,6 +302,9 @@ model Webhook {
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  String?
   registedAgo   String
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@map("webhooks")
 }
