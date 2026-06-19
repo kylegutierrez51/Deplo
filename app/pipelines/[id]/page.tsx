@@ -14,7 +14,7 @@ export default function PipelineEditor() {
 
   return (
     <>
-      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={toggle}></Sidebar>
+      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={toggle} />
 
       <PipelineEditorHeader
         pipelineName={"deploy-api"}
