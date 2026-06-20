@@ -3,6 +3,7 @@ import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
 import StageNode from './StageNode';
 import Pill from '@/components/Pill';
+import HideStagesButton from './HideStagesButton';
 
 interface ApprovalCardProps {
   pipelineName: string;
@@ -20,7 +21,7 @@ interface ApprovalCardProps {
 
 export default function ApprovalCard({ pipelineName, environment, triggerType, commitHash, commitMessage, author, branch, waitingTime, stagesComplete, runHref, stages }: ApprovalCardProps) {
   return (
-    <div className={styles['approval-card']}>
+    <div className={styles['approval-card']} data-approval-card>
 
       <div className={styles['approval-card-row']}>
 
@@ -47,14 +48,11 @@ export default function ApprovalCard({ pipelineName, environment, triggerType, c
         <ApprovalActions runHref={runHref} />
 
         <div className={styles['stage-view']}>
-          <div>
-            <ion-icon name="chevron-down-outline"></ion-icon>
-            <span>Hide stages</span>
-          </div>
+          <HideStagesButton />
         </div>
       </div>
 
-      <div className={styles.stages}>
+      <div className={styles.stages} data-stages-row>
         <div className={styles['stages-row']}>
           {stages.map((stage, index) => (
             <StageNode

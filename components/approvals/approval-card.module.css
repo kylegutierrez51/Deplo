@@ -81,13 +81,13 @@ Approval Cards
   margin-bottom: var(--space-sm);
 }
 
-.stage-view > div {
+.stage-view > button {
   display: flex;
   align-items: center;
+  background: transparent;
+  border: none;
+  font-size: 16px;
   gap: var(--space-xs);
-}
-
-.stage-view > div:hover {
   cursor: pointer;
 }
 
@@ -101,6 +101,10 @@ Approval Cards
 
 .stages::-webkit-scrollbar {
   height: 5px;
+}
+
+.stages--hidden {
+  display: none;
 }
 
 .stages-row {
