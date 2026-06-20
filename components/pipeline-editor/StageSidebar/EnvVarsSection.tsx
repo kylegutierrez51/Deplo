@@ -7,9 +7,10 @@ interface EnvVarsSectionProps {
   vars: { key: string; value: string }[];
   onAdd: () => void;
   onChange: (index: number, field: 'key' | 'value', value: string) => void;
+  onDelete: (index: number) => void;
 }
 
-export default function EnvVarsSection({ vars, onAdd, onChange }: EnvVarsSectionProps) {
+export default function EnvVarsSection({ vars, onAdd, onChange, onDelete }: EnvVarsSectionProps) {
   return (
     <div className={styles['env-vars']}>
       <div className={styles['env-title-container']}>
@@ -29,6 +30,7 @@ export default function EnvVarsSection({ vars, onAdd, onChange }: EnvVarsSection
             envKey={v.key}
             envValue={v.value}
             onChange={(field, value) => onChange(i, field, value)}
+            onDelete={() => onDelete(i)}
           />
         ))}
       </div>

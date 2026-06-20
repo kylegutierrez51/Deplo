@@ -23,6 +23,10 @@ export default function StageConfigForm() {
 
   const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
 
+  const handleEnvDelete = (index: number) => {
+    setEnvVars(prev => prev.filter((v, i) => i !== index));
+  };
+
   const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
     setEnvVars(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
   }; /* runs when you change key or value in an env variable via changing the input */
@@ -56,7 +60,7 @@ export default function StageConfigForm() {
             <input id="retries" name="retries" defaultValue="0" />
           </div>
         </div>
-        <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} />
+        <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
         <SecretsSection
           secrets={secrets}
           searchValue={secretSearch}
