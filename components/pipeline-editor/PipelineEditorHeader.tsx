@@ -2,22 +2,21 @@ import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
 import FilterSelect from '../filters/FilterSelect';
 import HeaderButtons from './HeaderButtons';
+import { MainSidebarToggle } from './PipelineEditorChrome';
 
 interface PipelineEditorHeaderProps {
   pipelineName: string,
   stageCount: number,
   connectionCount: number;
-  onSidebarToggle: () => void;
 }
-export default function PipelineEditorHeader({ pipelineName, stageCount, connectionCount, onSidebarToggle }: PipelineEditorHeaderProps) {
+export default function PipelineEditorHeader({ pipelineName, stageCount, connectionCount }: PipelineEditorHeaderProps) {
   return (
     <header className={styles["editor-header"]}>
       <div className={styles['header-flex']}>
-
         <div className={styles['left-side']}>
-          <button className={styles['sidebar-toggle']} id="sidebarToggle" onClick={onSidebarToggle}>
+          <MainSidebarToggle className={styles['sidebar-toggle']}>
             <ion-icon name="menu-outline"></ion-icon>
-          </button>
+          </MainSidebarToggle>
           <div className={styles.divider}></div>
           <div className={styles['pipeline-title']}>
             <Link href="/pipelines">Pipelines</Link>
@@ -41,7 +40,6 @@ export default function PipelineEditorHeader({ pipelineName, stageCount, connect
             <span className="nowrap">{connectionCount} connections</span>
           </div>
         </div>
-
         <HeaderButtons />
       </div>
     </header>

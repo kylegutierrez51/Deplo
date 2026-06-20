@@ -6,9 +6,10 @@ interface EnvVarRowProps {
   envKey: string;
   envValue: string;
   onChange: (field: 'key' | 'value', value: string) => void;
+  onDelete: () => void;
 }
 
-export default function EnvVarRow({ envKey, envValue, onChange }: EnvVarRowProps) {
+export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvVarRowProps) {
   return (
     <div className={styles['env-container']}>
       <input
@@ -24,7 +25,9 @@ export default function EnvVarRow({ envKey, envValue, onChange }: EnvVarRowProps
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />
-      <ion-icon name="trash-outline"></ion-icon>
+      <button className={styles['delete-env-btn']} onClick={onDelete}>
+        <ion-icon name="trash-outline"></ion-icon>
+      </button>
     </div>
   )
 }

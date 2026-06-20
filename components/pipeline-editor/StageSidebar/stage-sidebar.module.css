@@ -185,8 +185,20 @@
   color: var(--blue-clr);
 }
 
-.env-container ion-icon[name='trash-outline'] {
+.env-container .delete-env-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 0;
   cursor: pointer;
+}
+
+.env-container ion-icon[name="trash-outline"] {
+  font-size: 17px;
+}
+
+.env-container ion-icon[name="trash-outline"]:hover {
+  color: var(--red-text);
 }
 
 .env-vars-list {
