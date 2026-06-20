@@ -25,7 +25,7 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />
-      <button onClick={onDelete}>
+      <button className={styles['delete-env-btn']} onClick={onDelete}>
         <ion-icon name="trash-outline"></ion-icon>
       </button>
     </div>
