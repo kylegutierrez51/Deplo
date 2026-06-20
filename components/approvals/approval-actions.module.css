@@ -224,7 +224,9 @@ Approvals Media Queries
 
 /*
   Breakpoints:
-    1530px
+     960px (sidebar closed)
+    1360px (sidebar open -- needs more room since the sidebar eats
+            into the available width)
     1195px
      874px
      768px
@@ -233,25 +235,49 @@ Approvals Media Queries
      480px
 */
 
-@media (max-width: 1530px) {
-  .approval-card-row {
+@media (max-width: 1360px) {
+  :global(.sidebar-open) ~ :global(.page-content) .approval-card-row {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-md);
   }
 
-  .btn-group {
+  :global(.sidebar-open) ~ :global(.page-content) .btn-group {
     flex-direction: row;
     align-items: center;
   }
 
-  .extra-info {
+  :global(.sidebar-open) ~ :global(.page-content) .extra-info {
     flex-wrap: wrap;
     gap: var(--space-sm);
   }
 
-  .approval-card {
+  :global(.sidebar-open) ~ :global(.page-content) .approval-card {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+@media (max-width: 960px) {
+  :global(.sidebar-closed) ~ :global(.page-content) .approval-card-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  :global(.sidebar-closed) ~ :global(.page-content) .btn-group {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  :global(.sidebar-closed) ~ :global(.page-content) .extra-info {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  :global(.sidebar-closed) ~ :global(.page-content) .approval-card {
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }

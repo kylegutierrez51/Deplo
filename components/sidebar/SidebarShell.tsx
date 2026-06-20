@@ -20,7 +20,7 @@ export default function SidebarShell({ children, activeItem, showToggle = true, 
 
   return (
     <>
-      <aside className={`${styles.sidebar} ${!isOpen ? ` ${styles.closed}` : ''}`}>
+      <aside className={`${styles.sidebar} ${isOpen ? 'sidebar-open' : `${styles.closed} sidebar-closed`}`}>
         {children}
       </aside>
 
