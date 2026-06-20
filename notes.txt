@@ -384,3 +384,29 @@ PRISMA MIGRATIONS:
 2. npx prisma generate
 
 ===================================================================================================================================
+
+PipelineEditorChrome SidebarSlot
+
+      export function SidebarSlot({ children }: { children: ReactNode }) {
+1.      const { sidebarOpen, toggleSidebar } = useChrome();
+2.      if (!isValidElement(children)) return null;
+3.      return cloneElement(children as ReactElement<any>, { open: sidebarOpen, onToggle: toggleSidebar });
+      }
+
+// page.tsx
+
+      <SidebarSlot>
+        <Sidebar activeItem="pipelines" showToggle={false} />
+      </SidebarSlot>
+
+
+Line 1:
+ - Pulls shared open/closed state and toggle function out of PipelineEditorChrome context 
+
+Line 2:
+ - isValidElement is a type guard/runtime check confirming that the {children} prop is a single React element
+
+Line 3:
+ - Returns a copy of the sidebar element and returns a copy of it with the 2 props put in (open, onToggle)
+
+This is all needed because otherwise the Sidebar can't get those 2 props, which Pipeline Editor relies on for the sidebar to work properly.
