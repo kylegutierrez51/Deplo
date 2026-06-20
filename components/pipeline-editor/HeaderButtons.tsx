@@ -15,11 +15,6 @@ export default function HeaderButtons() {
         <ion-icon name="add-outline"></ion-icon>
         Add Stage
       </button>
-      <div className={styles.divider}></div>
-      <div className={styles['sidebar-icon']}>
-        <ion-icon name="journal-outline"></ion-icon>
-      </div>
-      <div className={styles.divider}></div>
       <button className={styles['save-btn']}>
         <ion-icon name="save-outline"></ion-icon>
         Save
