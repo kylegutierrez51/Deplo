@@ -1,42 +1,41 @@
-"use client"
-
 import styles from "./pipeline-editor.module.css"
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader"
 import Sidebar from "@/components/sidebar/Sidebar"
 import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar"
+import { PipelineEditorChrome, SidebarSlot, StageSidebarSlot, StageSidebarToggle } from "@/components/pipeline-editor/PipelineEditorChrome";
 
-import { useState } from "react"
+interface EditorProps {
+  params: Promise<{ id: string }>;
+}
+export default async function PipelineEditor({ params }: EditorProps) {
+  const { id } = await params;
 
-export default function PipelineEditor() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [stageSidebarOpen, setStageSidebarOpen] = useState(false);
-  const toggle = () => setSidebarOpen(o => !o);
+  const pipeline = { name: "deploy-api" };
+  const stageCount = 7;
+  const connectionCount = 6;
 
   return (
-    <>
-      <Sidebar activeItem="pipelines" showToggle={false} open={sidebarOpen} onToggle={toggle} />
+    <PipelineEditorChrome>
+      <SidebarSlot>
+        <Sidebar activeItem="pipelines" showToggle={false} />
+      </SidebarSlot>
 
       <PipelineEditorHeader
-        pipelineName={"deploy-api"}
-        stageCount={7}
-        connectionCount={6}
-        onSidebarToggle={toggle} />
+        pipelineName={pipeline.name}
+        stageCount={stageCount}
+        connectionCount={connectionCount}
+      />
 
       <main className={`page-content ${styles['editor-main']}`}>
-        <button
-          id="stageSidebarToggle"
-          className={styles['toggle-stage-sidebar']}
-          onClick={() => setStageSidebarOpen(o => !o)}
-        >
+        <StageSidebarToggle className={styles["toggle-stage-sidebar"]}>
           Open Stage Sidebar
-        </button>
+        </StageSidebarToggle>
       </main>
 
-      <StageSidebar
-        open={stageSidebarOpen}
-        onClose={() => setStageSidebarOpen(false)}
-        onDelete={() => {}}
-      />
-    </>
+      <StageSidebarSlot>
+        <StageSidebar />
+      </StageSidebarSlot>
+
+    </PipelineEditorChrome>
   )
 }
