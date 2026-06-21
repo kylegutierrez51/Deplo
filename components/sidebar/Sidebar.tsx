@@ -66,7 +66,7 @@ export default function Sidebar({ activeItem, showToggle = true, open, onToggle 
               </Link>
             </li>
             <li className={activePage('audit')}>
-              <Link href="/audit">
+              <Link href="/audits">
                 <ion-icon name="reader-outline"></ion-icon>
                 <span className={styles.title}>Audit Log</span>
               </Link>
