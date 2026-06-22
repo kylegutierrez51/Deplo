@@ -9,7 +9,7 @@ interface StageTypeGridProps {
 
 const STAGE_TYPES = [
   { type: 'build', label: 'Build', icon: 'hammer-outline' },
-  { type: 'test', label: 'Test', icon: 'pencil-outline' },
+  { type: 'test', label: 'Test', icon: 'flask-outline' },
   { type: 'deploy', label: 'Deploy', icon: 'rocket-outline' },
   { type: 'approval', label: 'Approval', icon: 'shield-checkmark-outline' },
   { type: 'script', label: 'Script', icon: 'code-outline' },

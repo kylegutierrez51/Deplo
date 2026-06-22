@@ -1,18 +1,19 @@
 "use client"
 
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './approval-actions.module.css'
 
 
 // add OnApprove and OnReject: () => void;
 interface ApprovalActionsProps {
-  runHref: string;
+  runId: number
 }
 
-export default function ApprovalActions({ runHref }: ApprovalActionsProps) {
+export default function ApprovalActions({ runId }: ApprovalActionsProps) {
   return (
     <div className={styles['btn-group']}>
-      <Link href={runHref} className={styles['view-run-btn']}>
+      <Link href={`/runs/${runId}`} target="_blank" className={styles['view-run-btn']}>
         <ion-icon name="open-outline"></ion-icon>
         View Run
       </Link>

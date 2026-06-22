@@ -1,13 +1,20 @@
-import styles from "./approvals.module.css"
+import styles from "./approvals.module.css";
 import Sidebar from "@/components/sidebar/Sidebar";
 import Subheader from "@/components/subheader/Subheader";
 import StatCards from "@/components/StatCards";
-import FilterSelect from "@/components/filters/FilterSelect"
-import SearchInput from "@/components/filters/SearchInput"
+import FilterSelect from "@/components/filters/FilterSelect";
+import SearchInput from "@/components/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/Pagination";
+import { getApprovals } from "@/lib/data/approvals";
 
-export default function Approvals() {
+export default async function Approvals() {
+  const approvals = await getApprovals();
+
+  const totalPending = 3;
+  const totalProduction = 3;
+  const longestWait = "18h 17m";
+
   return (
     <>
       <Sidebar activeItem="approvals" />
@@ -23,12 +30,13 @@ export default function Approvals() {
           <StatCards
             cards={
               [
-                { icon: "alert-circle-outline", total: 4, label: "PENDING" },
-                { icon: "alert-circle-outline", total: 3, label: "PRODUCTION" },
-                { icon: "stopwatch-outline", total: "18h 17m", label: "LONGEST WAIT", valueClassName: "wait-time" },
+                { icon: "alert-circle-outline", total: totalPending, label: "PENDING" },
+                { icon: "alert-circle-outline", total: totalProduction, label: "PRODUCTION" },
+                { icon: "stopwatch-outline", total: longestWait, label: "LONGEST WAIT", valueClassName: "wait-time" },
               ]
             }
-            responsive={false} />
+            responsive={false}
+          />
 
           <div className={styles.filters}>
             <div className={styles['filters-bar']}>
@@ -61,74 +69,26 @@ export default function Approvals() {
           </div>
 
           <div className={styles['approvals-layout']}>
-            <ApprovalCard
-              pipelineName={"release-mobile"}
-              environment={"Producion"}
-              triggerType={"Manual"}
-              commitHash={"c3d435f"}
-              commitMessage={"fix: resolve deep link crash on Android 14"}
-              author={"alex.kim"}
-              branch={"main"}
-              waitingTime={"18h 17m"}
-              stagesComplete={"6/8"}
-              runHref={"/runs"}
-              stages={[
-                { icon: "cube-outline", name: "install-deps", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "cube-outline", name: "lint", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "flask-outline", name: "unit-tests", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "shield-outline", name: "release-approval", statusIcon: "alert-circle-outline", notLast: true, isApproval: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: false },
-              ]}
-            />
-
-            <ApprovalCard
-              pipelineName={"release-mobile"}
-              environment={"Producion"}
-              triggerType={"Manual"}
-              commitHash={"c3d435f"}
-              commitMessage={"fix: resolve deep link crash on Android 14"}
-              author={"alex.kim"}
-              branch={"main"}
-              waitingTime={"18h 17m"}
-              stagesComplete={"6/8"}
-              runHref={"/runs"}
-              stages={[
-                { icon: "cube-outline", name: "install-deps", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "cube-outline", name: "lint", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "flask-outline", name: "unit-tests", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "shield-outline", name: "release-approval", statusIcon: "alert-circle-outline", notLast: true, isApproval: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: false },
-              ]}
-            />
-
-            <ApprovalCard
-              pipelineName={"release-mobile"}
-              environment={"Producion"}
-              triggerType={"Manual"}
-              commitHash={"c3d435f"}
-              commitMessage={"fix: resolve deep link crash on Android 14"}
-              author={"alex.kim"}
-              branch={"main"}
-              waitingTime={"18h 17m"}
-              stagesComplete={"6/8"}
-              runHref={"/runs"}
-              stages={[
-                { icon: "cube-outline", name: "install-deps", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "cube-outline", name: "lint", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "flask-outline", name: "unit-tests", statusIcon: "checkmark-circle-outline", notLast: true },
-                { icon: "shield-outline", name: "release-approval", statusIcon: "alert-circle-outline", notLast: true, isApproval: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: true },
-                { icon: "rocket-outline", name: "publish-stores", statusIcon: "time-outline", notLast: false },
-              ]}
-            />
+            {approvals.map((a, i) => (
+              <div key={i} className={styles['approval-card-wrapper']}>
+                <ApprovalCard
+                  key={i}
+                  runId={a.runId}
+                  pipelineName={a.pipelineName}
+                  environment={a.environment}
+                  commitSha={a.commitSha}
+                  commitMessage={a.commitMessage}
+                  createdBy={a.createdBy}
+                  branch={a.branch}
+                  waitingTime={"18h 17m"}
+                  stages={a.stages}
+                />
+              </div>
+            ))}
           </div>
 
           <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+
         </div>
       </main>
     </>

@@ -95,28 +95,24 @@ Approval Cards
   align-items: center;
 }
 
-.approval-card ion-icon {
-  font-size: 19px;
-  color: var(--icon-clr);
-}
-
-.approval-card {
+.approval-cards {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  min-width: 536px;
-  max-width: var(--width-xl);
-  padding-top: var(--space-lg);
-  padding-bottom: var(--space-md);
-  padding-left: var(--space-xl);
-  padding-right: var(--space-xl);
-  border: 1px solid var(--light-gray-clr);
-  background: var(--dark-clr-2);
 }
 
-.approval-card:first-of-type {
+.approval-card-wrapper {
+  width: 100%;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid var(--light-gray-clr);
+}
+
+.approval-card-wrapper:first-of-type {
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
-.approval-card:last-of-type {
+.approval-card-wrapper:last-of-type {
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 

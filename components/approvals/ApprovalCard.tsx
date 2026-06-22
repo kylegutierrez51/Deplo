@@ -1,26 +1,29 @@
+import { Fragment } from 'react';
 import styles from './approval-card.module.css'
 import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
 import StageNode from './StageNode';
 import Pill from '@/components/Pill';
+import HideStagesButton from './HideStagesButton';
+import { Stage } from '@/lib/data/approvals';
 
 interface ApprovalCardProps {
+  runId: number;
   pipelineName: string;
   environment: string;
-  triggerType: string;
-  commitHash: string;
+  commitSha: string;
   commitMessage: string;
-  author: string;
+  createdBy: string | null;
   branch: string;
   waitingTime: string;
-  stagesComplete: string;
-  stages: { name: string, icon: string, statusIcon: string, notLast: boolean, isApproval?: boolean }[];
-  runHref: string;
+  stages: Stage[];
 }
 
-export default function ApprovalCard({ pipelineName, environment, triggerType, commitHash, commitMessage, author, branch, waitingTime, stagesComplete, runHref, stages }: ApprovalCardProps) {
+export default function ApprovalCard({ runId, pipelineName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stages }: ApprovalCardProps) {
+  const stagesComplete = String(stages.filter(stage => stage.status === "succeeded").length);
+
   return (
-    <div className={styles['approval-card']}>
+    <div className={styles['approval-card']} data-approval-card>
 
       <div className={styles['approval-card-row']}>
 
@@ -28,43 +31,40 @@ export default function ApprovalCard({ pipelineName, environment, triggerType, c
           <div className={styles['pipeline-name-type']}>
             <span>{pipelineName}</span>
             <Pill variant="production" label={environment} />
-            <Pill variant="manual" label={triggerType} />
           </div>
           <div className={styles['feature-info']}>
             <div className={styles['feature-id']}>
               <ion-icon name="git-commit-outline"></ion-icon>
-              <span>{commitHash}</span>
+              <span>{commitSha}</span>
             </div>
             <span className={styles.feature}>{commitMessage}</span>
           </div>
 
           <ApprovalMeta
-            author={author} branch={branch}
-            waitingTime={waitingTime} stagesComplete={stagesComplete}
+            createdBy={createdBy} branch={branch}
+            waitingTime={waitingTime} stagesComplete={stagesComplete + '/' + stages.length}
           />
         </div>
 
-        <ApprovalActions runHref={runHref} />
+        <ApprovalActions runId={runId} />
 
         <div className={styles['stage-view']}>
-          <div>
-            <ion-icon name="chevron-down-outline"></ion-icon>
-            <span>Hide stages</span>
-          </div>
+          <HideStagesButton />
         </div>
       </div>
 
-      <div className={styles.stages}>
+      <div className={styles.stages} data-stages-row>
         <div className={styles['stages-row']}>
-          {stages.map((stage, index) => (
-            <StageNode
-              icon={stage.icon}
-              name={stage.name}
-              statusIcon={stage.statusIcon}
-              notLast={stage.notLast}
-              isApproval={stage.isApproval}
-              key={index}
-             />
+          {stages.map((stage, i) => (
+            <Fragment key={stage.id}>
+              <StageNode
+                name={stage.name}
+                stageType={stage.stageType}
+                status={stage.status}
+                isApproval={stage.isApproval}
+              />
+              {i < stages.length - 1 && <span>→</span>}
+            </Fragment>
           ))}
         </div>
       </div>
