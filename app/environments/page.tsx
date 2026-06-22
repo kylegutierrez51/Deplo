@@ -41,9 +41,11 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           cards={[
             { icon: "settings-outline", total: 5, label: "ENVIRONMENTS" },
             { icon: "key-outline", total: 5, label: "TOTAL SECRETS" },
-            { icon: "shield-outline", total: 1, label: "PROTECTED" },
             { icon: "git-branch-outline", total: 11, label: "PIPELINE BINDINGS" },
-          ]} />
+
+          ]} 
+          responsive={false}
+        />
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
