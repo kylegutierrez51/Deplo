@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef } from 'react';
-import Modal from './Modal';
-import modalStyles from './modal.module.css';
+import Modal from '../modals/Modal';
+import modalStyles from '../modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
 
 const styles = { ...modalStyles, ...webhookStyles };

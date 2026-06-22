@@ -1,21 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import AuditModal from "../modals/AuditModal";
+import AuditModal from "./AuditModal";
+import ViewModalController from "../modals/ViewModalController";
 import type { Audit } from "@/lib/data/audits";
 
-export default function EnvModalController({ mode, audit }: {
+export default function AuditModalController({ mode, audit }: {
   mode: "view" | "create" | "edit";
   audit?: Audit;
 }) {
-  const router = useRouter();
-  const close = () => router.push('/audits'); // clear modal query params
-
-  return (
-    <AuditModal
-      mode={mode}
-      {...audit}
-      onClose={close}
-    />
-  )
+  return <ViewModalController mode={mode} record={audit} basePath={"/audits"} ModalComponent={AuditModal} />;
 }
