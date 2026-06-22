@@ -7,7 +7,7 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
 import { getPipelineById, getPipelines } from '@/lib/data/pipelines';
 

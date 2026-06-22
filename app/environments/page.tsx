@@ -7,7 +7,7 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import EnvironmentRow from '@/components/environments/EnvironmentRow';
-import Pagination from '@/components/Pagination';
+import Pagination from '@/components/pagination/Pagination';
 import EnvModalController from '@/components/environments/EnvModalController';
 import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
 
