@@ -7,6 +7,7 @@ import SearchInput from "@/components/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/Pagination";
 import { getApprovals } from "@/lib/data/approvals";
+
 export default async function Approvals() {
   const approvals = await getApprovals();
 
@@ -34,7 +35,7 @@ export default async function Approvals() {
                 { icon: "stopwatch-outline", total: longestWait, label: "LONGEST WAIT", valueClassName: "wait-time" },
               ]
             }
-            responsive={false} 
+            responsive={false}
           />
 
           <div className={styles.filters}>
@@ -69,22 +70,25 @@ export default async function Approvals() {
 
           <div className={styles['approvals-layout']}>
             {approvals.map((a, i) => (
-              <ApprovalCard
-                key={i}
-                runId={a.runId}
-                pipelineName={a.pipelineName}
-                environment={a.environment}
-                commitSha={a.commitSha}
-                commitMessage={a.commitMessage}
-                createdBy={a.createdBy}
-                branch={a.branch}
-                waitingTime={"18h 17m"}
-                stages={a.stages}
-              />
+              <div key={i} className={styles['approval-card-wrapper']}>
+                <ApprovalCard
+                  key={i}
+                  runId={a.runId}
+                  pipelineName={a.pipelineName}
+                  environment={a.environment}
+                  commitSha={a.commitSha}
+                  commitMessage={a.commitMessage}
+                  createdBy={a.createdBy}
+                  branch={a.branch}
+                  waitingTime={"18h 17m"}
+                  stages={a.stages}
+                />
+              </div>
             ))}
-
-            <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
           </div>
+
+          <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+
         </div>
       </main>
     </>

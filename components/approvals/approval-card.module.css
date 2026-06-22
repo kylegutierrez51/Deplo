@@ -17,16 +17,7 @@ Approval Cards
   padding-bottom: var(--space-md);
   padding-left: var(--space-xl);
   padding-right: var(--space-xl);
-  border: 1px solid var(--light-gray-clr);
   background: var(--dark-clr-2);
-}
-
-.approval-card:first-of-type {
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-}
-
-.approval-card:last-of-type {
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .approvals-detail {
