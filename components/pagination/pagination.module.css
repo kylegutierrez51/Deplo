@@ -36,6 +36,9 @@ Pagination
   border: 1px solid var(--color-border-mid);
   padding: var(--space-gap-md) var(--space-md);
   cursor: pointer;
+  background-color: transparent;
+  font: inherit;
+  color: inherit;
 }
 
 .view-option:hover {

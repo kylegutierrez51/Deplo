@@ -5,7 +5,7 @@ import StatCards from "@/components/StatCards";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import { getApprovals } from "@/lib/data/approvals";
 
 export default async function Approvals() {

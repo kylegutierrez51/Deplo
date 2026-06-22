@@ -5,14 +5,14 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import RunRow from "@/components/runs/RunRow";
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import RunModalController from "@/components/runs/RunModalController";
 import { getRuns, getRunById } from "@/lib/data/runs";
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
 export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
+  const { mode, id, } = await searchParams;
   const runs = await getRuns();
 
   const record = id ? await getRunById(Number(id)) : undefined;

@@ -6,7 +6,7 @@ import FilterSelect from "@/components/filters/FilterSelect"
 import SearchInput from "@/components/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/card/WebhookCard";
-import Pagination from "@/components/Pagination"
+import Pagination from "@/components/pagination/Pagination"
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
 

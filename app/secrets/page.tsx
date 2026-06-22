@@ -6,7 +6,7 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import SecretModalController from '@/components/secrets/SecretModalController';
 import { getSecretById, getSecrets } from '@/lib/data/secrets';
 

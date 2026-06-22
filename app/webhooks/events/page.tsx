@@ -7,7 +7,7 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
 

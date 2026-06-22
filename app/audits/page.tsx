@@ -6,7 +6,7 @@ import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
-import Pagination from "@/components/Pagination";
+import Pagination from "@/components/pagination/Pagination";
 import AuditModalController from "@/components/audits/AuditModalController";
 import { getAudits, getAuditById } from '@/lib/data/audits';
 
