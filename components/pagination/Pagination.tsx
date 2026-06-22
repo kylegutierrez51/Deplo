@@ -1,6 +1,5 @@
-"use client"
-
 import defaultStyles from './pagination.module.css'
+import PaginationButton from './PaginationButton';
 
 interface PaginationProps {
   showing: string,
@@ -19,25 +18,16 @@ export default function Pagination({ showing, totalRows, pages, currentPage, sty
       <div className={styles['pagination-container']}>
         <div className={styles['pagination-row']}>
 
-          <div className={styles['view-option']}>
-            <ion-icon name="chevron-back-outline"></ion-icon>
-            <div>Prev</div>
-          </div>
+          <PaginationButton direction='prev' page={currentPage - 1}/>
 
           <div className={styles['page-numbers']}>
             {pages.map((page, index) => (
               page === currentPage ?
                 <div className={styles['page-number']} key={index}><span>{page}</span></div>
-                :
-                <div className={styles['page-number']} key={index}>{page}</div>
+                : <div className={styles['page-number']} key={index}>{page}</div>
             ))}
           </div>
-
-          <div className={styles['view-option']}>
-            <div>Next</div>
-            <ion-icon name="chevron-forward-outline"></ion-icon>
-          </div>
-
+          <PaginationButton direction='next' page={currentPage + 1} />
         </div>
       </div>
     </div>
