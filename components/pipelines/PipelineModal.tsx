@@ -2,8 +2,8 @@
 
 import { capitalize } from "@/lib/utils/string";
 import { useState, useRef } from 'react';
-import Modal from './Modal';
-import modalStyles from './modal.module.css';
+import Modal from '../modals/Modal';
+import modalStyles from '../modals/modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
 import Pill from '../Pill';
 

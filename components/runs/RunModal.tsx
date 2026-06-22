@@ -1,8 +1,8 @@
 "use client"
 
 import Link from 'next/link';
-import Modal from './Modal';
-import modalStyles from './modal.module.css';
+import Modal from '../modals/Modal';
+import modalStyles from '../modals/modal.module.css';
 import runHistoryStyles from './run-modal.module.css';
 import Pill from '@/components/Pill';
 import type { PipelineStatus, EnvType, TriggerType } from '@/lib/data/runs';

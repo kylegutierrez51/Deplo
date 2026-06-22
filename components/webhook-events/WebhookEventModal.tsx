@@ -1,7 +1,7 @@
 "use client"
 
-import Modal from './Modal';
-import modalStyles from './modal.module.css';
+import Modal from '../modals/Modal';
+import modalStyles from '../modals/modal.module.css';
 import webhookEventStyles from './webhook-event-modal.module.css';
 import Pill from '@/components/Pill';
 import type { PillVariant } from '@/components/Pill';

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from 'react';
-import Modal from './Modal';
-import modalStyles from './modal.module.css';
+import Modal from '../modals/Modal';
+import modalStyles from '../modals/modal.module.css';
 import secretStyles from './secret-modal.module.css';
 import Pill from '@/components/Pill';
 
