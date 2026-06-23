@@ -11,13 +11,11 @@ export default async function Login() {
   }
 
   return (
-  <main>
     <div className={styles['login-container']}>
       <div className={styles['login-flex']}>
         <div className={styles.title}>Deplo</div>
         <LoginButton />
       </div>
     </div>
-  </main>
   );
 }
