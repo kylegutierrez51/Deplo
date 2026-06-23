@@ -1,18 +1,12 @@
-"use client"
-
-import { useState } from "react";
 import styles from "./run-detail.module.css";
 import Sidebar from "@/components/sidebar/Sidebar";
 import RunDetailCard from "@/components/run-detail/RunDetailCard";
-import TabsRow from "@/components/run-detail/TabsRow";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import LogViewer from "@/components/run-detail/logs/LogViewer";
 import PipelineGraph, { type PipelineNode } from "@/components/run-detail/pipeline-graph/PipelineGraph";
 import Pill from '@/components/Pill';
-
-
-type Tab = 'overview' | 'logs'
+import RunTabs from "./RunTabs";
 
 const pipelineNodes: PipelineNode[] = [
   { type: 'job', name: 'install-deps', statusIcon: 'checkmark-circle-outline', status: 'succeeded', duration: '42s' },
@@ -35,9 +29,6 @@ const pipelineNodes: PipelineNode[] = [
 ];
 
 export default function RunDetail() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
-  const toggleOverview = () => setActiveTab('overview')
-  const toggleLogs = () => setActiveTab('logs')
   return (
     <>
       <Sidebar activeItem="run-detail" />
@@ -60,67 +51,64 @@ export default function RunDetail() {
             timeAgo={"7m"}
           />
 
-          <TabsRow
-            activeTab={activeTab}
-            toggleOverview={toggleOverview}
-            toggleLogs={toggleLogs}
-          />
+          <RunTabs
+            overview={
+              <>
+                <div className={styles['job-statuses']}>
+                  <Pill variant="total" label="8 Total" />
+                  <Pill variant="succeeded" label="4 Succeeded" />
+                  <Pill variant="running" label="1 Running" />
+                  <Pill variant="queued" label="3 Queued" />
+                  <Pill variant="failed" label="0 Failed" />
+                  <Pill variant="approval" label="0 Awaiting Approval" />
+                </div>
+                <PipelineGraph nodes={pipelineNodes} />
+              </>
+            }
+            logs={
+              <>
+                <div className={styles.filters}>
+                  <div className={styles['filters-bar']}>
+                    <FilterSelect
+                      id={"status"} name={"status"}
+                      styles={styles}
+                      options={
+                        [
+                          { value: "stage", label: "install deps - succeeded" },
+                          { value: "stage", label: "lint - succeeded" },
+                          { value: "stage", label: "unit-tests - succeeded" },
+                          { value: "stage", label: "build - succeeded" },
+                          { value: "stage", label: "deploy-staging - running" },
+                          { value: "stage", label: "smoke-tests - pending" },
+                          { value: "stage", label: "manual-approval - pending" },
+                          { value: "stage", label: "deploy-production - pending" },
+                        ]
+                      } />
+                    <SearchInput
+                      placeholder={"Search logs..."}
+                      styles={styles} />
+                  </div>
+                </div>
 
-          <section className={styles.overview} id="section-overview" style={{ display: activeTab === 'overview' ? undefined : 'none' }}>
-            <div className={styles['job-statuses']}>
-              <Pill variant="total" label="8 Total" />
-              <Pill variant="succeeded" label="4 Succeeded" />
-              <Pill variant="running" label="1 Running" />
-              <Pill variant="queued" label="3 Queued" />
-              <Pill variant="failed" label="0 Failed" />
-              <Pill variant="approval" label="0 Awaiting Approval" />
-            </div>
-
-            <PipelineGraph nodes={pipelineNodes} />
-          </section>
-
-          <section className={styles.logs} id="section-logs" style={{ display: activeTab === 'logs' ? undefined : 'none' }}>
-
-            <div className={styles.filters}>
-              <div className={styles['filters-bar']}>
-                <FilterSelect
-                  id={"status"} name={"status"}
-                  styles={styles}
-                  options={
+                <LogViewer
+                  jobName={"install-deps"}
+                  command={"npm ci --production=false"}
+                  status={"running"}
+                  duration={"42s"}
+                  lines={
                     [
-                      { value: "stage", label: "install deps - succeeded" },
-                      { value: "stage", label: "lint - succeeded" },
-                      { value: "stage", label: "unit-tests - succeeded" },
-                      { value: "stage", label: "build - succeeded" },
-                      { value: "stage", label: "deploy-staging - running" },
-                      { value: "stage", label: "smoke-tests - pending" },
-                      { value: "stage", label: "manual-approval - pending" },
-                      { value: "stage", label: "deploy-production - pending" },
+                      {lineNumber: 1, timestamp: "00:00.0", content: "npm ci --production=false"},
+                      {lineNumber: 2, timestamp: "00:00.3", content: "npm warn deprecated inflight@1.0.6: This module is not supported"},
+                      {lineNumber: 3, timestamp: "00:02.1", content: "added 1,247 packages in 38s"},
+                      {lineNumber: 4, timestamp: "00:02.2", content: "182 packages are looking for funding"},
+                      {lineNumber: 5, timestamp: "00:42.0", content: "&#10003; Dependencies installed successfully"},
+
                     ]
-                  } />
-                <SearchInput
-                  placeholder={"Search logs..."}
-                  styles={styles} />
-              </div>
-            </div>
-
-            <LogViewer
-              jobName={"install-deps"}
-              command={"npm ci --production=false"}
-              status={"running"}
-              duration={"42s"}
-              lines={
-                [
-                  {lineNumber: 1, timestamp: "00:00.0", content: "npm ci --production=false"},
-                  {lineNumber: 2, timestamp: "00:00.3", content: "npm warn deprecated inflight@1.0.6: This module is not supported"},
-                  {lineNumber: 3, timestamp: "00:02.1", content: "added 1,247 packages in 38s"},
-                  {lineNumber: 4, timestamp: "00:02.2", content: "182 packages are looking for funding"},
-                  {lineNumber: 5, timestamp: "00:42.0", content: "&#10003; Dependencies installed successfully"},
-
-                ]
-              }
-            />
-          </section>
+                  }
+                />
+              </>
+            }
+          />
 
         </div>
       </main>
