@@ -12,10 +12,25 @@ Deplo is a CI/CD pipeline management UI. It has two coexisting layers:
 ## Commands
 
 ```bash
-npm run dev    # start Next.js dev server at localhost:3000
-npm run build  # production build
-npm run lint   # ESLint
+npm run dev      # start Next.js dev server at localhost:3000
+npm run build    # production build
+npm run lint     # ESLint
+npx prisma generate      # regenerate Prisma client into generated/prisma (also runs on postinstall)
+npx prisma migrate dev   # create/apply a migration after editing prisma/schema.prisma
+npx prisma studio        # browse the Postgres database
 ```
+
+There is no test suite configured in this repo.
+
+## Database & Auth
+
+- `prisma/schema.prisma` defines the full Postgres schema (pipelines, runs, stages, environments, secrets, webhooks, audit log, plus NextAuth's User/Account/Session tables). The generated client outputs to `generated/prisma` (import via `@/generated/prisma/client`), not the default `node_modules/.prisma`.
+- `lib/prisma.ts` exports the singleton `PrismaClient` (using `@prisma/adapter-pg`) — import this rather than instantiating a new client.
+- **`lib/data/*.ts` files are currently hardcoded mock arrays, not real Prisma queries**, even though the schema they model already exists in `prisma/schema.prisma`. When wiring a page to real data, replace the mock array/functions in the matching `lib/data/<page>.ts` file with Prisma calls — don't assume the data layer is already live.
+- Auth is split across two files because of the edge runtime constraint:
+  - `auth.config.ts` — providers + JWT session strategy only, no Prisma adapter. Used by `proxy.ts` and by server actions in `lib/actions/auth.ts` so auth state can be checked without pulling Prisma into the edge runtime.
+  - `auth.ts` — full NextAuth config with `PrismaAdapter`, used by the route handler at `app/api/auth/[...nextauth]/route.ts`.
+  - `proxy.ts` is this version of Next.js's replacement for `middleware.ts` — it redirects unauthenticated requests away from any route except `/`.
 
 ## Next.js App Architecture
 
@@ -25,32 +40,11 @@ The app uses the App Router with file-based routing under `app/`. Each route dir
 
 **Design tokens and global base styles** live in `app/globals.css` under `:root`. Never hardcode color values — always use a `var(--...)` reference. New design tokens go there.
 
-**Shared component modules** in `styles/*.module.css` are imported across multiple pages:
-
-| File | Covers |
-|---|---|
-| `styles/sidebar.module.css` | Sidebar layout, toggle, profile popup |
-| `styles/table.module.css` | Data tables |
-| `styles/subheader.module.css` | Page title + action button rows |
-| `styles/filters.module.css` | Search/filter bars |
-| `styles/cards.module.css` | Card components |
-| `styles/run-detail.module.css` | Run detail card, pipeline graph, log viewer |
-| `styles/approvals.module.css` | Approvals layout |
-| `styles/webhooks.module.css` | Webhooks layout |
-| `styles/pipeline-editor.module.css` | Pipeline editor layout |
-| `styles/pagination.module.css` | Pagination controls |
-| `styles/media/*.module.css` | Responsive breakpoints per page |
-| `styles/modals/*.module.css` | Modal-specific layout |
-
-If styling, DO NOT use ANY .module.css files in @/styles/. Those are styles used for the raw HTML files in @/pages/. The styles have been duplicated throughout app/ in each page's respective directory. Go there to edit styles.
-
 Pages that need multiple style modules merge them into a single `styles` object:
 
 ```tsx
 const styles = { ...sidebarStyles, ...tableStyles, ...pageStyles };
 ```
-
-This is resolved at build time (O(1) key lookups at runtime — no performance cost).
 
 **CSS Modules class naming**: hyphenated class names require bracket notation in TSX:
 
@@ -76,14 +70,6 @@ Loaded via `next/font/google` in `app/layout.tsx`: **Open Sans** (`--font-open-s
 ### React Compiler
 
 `reactCompiler: true` is set in `next.config.ts`. The React Compiler handles memoization automatically — do not add `useMemo`/`useCallback` manually.
-
-## Sidebar Pattern
-
-The sidebar JSX (`.sidebar`, `.profile-options`, `#sidebarToggle` button) is copy-pasted into every page — there is no shared component. When editing the sidebar (links, structure), update all pages. `pages/components/sidebar.html` is the canonical reference shape.
-
-## Static HTML Prototype (`pages/`)
-
-Open `.html` files directly in a browser — no dev server, no build step. The `utils/` JS files (`toggleSidebar.js`, `sidebar-profile.js`, `toggleStageSidebar.js`) are ES modules used only by these static pages, not the Next.js app.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
