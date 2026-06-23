@@ -1,5 +1,3 @@
-"use client"
-
 import styles from './log-line.module.css'
 
 interface LogLineProps {
