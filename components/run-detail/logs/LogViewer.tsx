@@ -1,5 +1,3 @@
-"use client"
-
 import styles from './log-viewer.module.css'
 import LogLine from './LogLine';
 
