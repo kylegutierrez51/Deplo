@@ -260,6 +260,8 @@ model Environment {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  requireApproval Boolean
+
   secrets Secret[]
   runs    PipelineRun[]
 
@@ -302,7 +304,7 @@ model Webhook {
   events        String[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  String?
-  registedAgo   String
+  registeredAgo   String
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
@@ -362,11 +364,22 @@ enum AuditAction {
   USER_ROLE_CHANGED
 }
 
+enum ResourceType {
+  PIPELINE
+  PIPELINE_RUN
+  APPROVAL
+  ENVIRONMENT
+  SECRET
+  WEBHOOK
+  STAGE_RESULT
+  SETTING
+}
+
 model AuditLog {
   id           String      @id @default(cuid())
   userId       String?
   action       AuditAction
-  resourceType String // "Pipeline", "Secret", "PipelineRun", etc.
+  resourceType ResourceType // "Pipeline", "Secret", "PipelineRun", etc.
   resourceId   String
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
