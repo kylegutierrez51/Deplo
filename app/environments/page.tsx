@@ -2,7 +2,6 @@ import styles from './env.module.css';
 import Sidebar from "@/components/sidebar/Sidebar"
 import Subheader from "@/components/subheader/Subheader";
 import AddButton from "@/components/subheader/AddButton";
-import StatCards from '@/components/StatCards';
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";

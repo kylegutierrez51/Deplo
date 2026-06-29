@@ -1,6 +1,6 @@
 "use client"
 
-import { capitalize } from "@/lib/utils/string";
+import { capitalize, formatDate } from "@/lib/utils/string";
 import { useState } from 'react';
 import Modal from '../modals/Modal';
 import modalStyles from '../modals/modal.module.css';
@@ -21,8 +21,8 @@ interface EnvironmentModalProps {
   pipelines?: number;
   requireApproval?: boolean;
   createdBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   onClose: () => void;
   onCreate: () => void;
   onDelete: () => void;
@@ -137,11 +137,11 @@ export default function EnvironmentModal({
             </div>
             <div className={styles.item}>
               <label>Created At</label>
-              <span>{createdAt}</span>
+              <span>{createdAt && formatDate(createdAt)}</span>
             </div>
             <div className={styles.item}>
               <label>Last Updated</label>
-              <span>{updatedAt}</span>
+              <span>{updatedAt && formatDate(updatedAt)}</span>
             </div>
           </div>
         </>
