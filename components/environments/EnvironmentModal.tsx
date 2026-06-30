@@ -69,13 +69,15 @@ export default function EnvironmentModal({
     if (editState.status === 'success') {
       onSave();
     }
-  }, [editState, onSave]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
+  }, [editState]);
 
   useEffect(() => {
     if (createState.status === 'success') {
       onCreate();
     }
-  }, [createState, onCreate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createState]);
 
   const handleDelete = () => startTransition(async () => {
     await deleteEnvironment(id);

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, } from "react";
 import type { ComponentType } from 'react';
+import { useToast } from '@/components/toast/ToastContext';
 
 interface CrudModalBaseProps {
   mode: "view" | "create" | "edit";
@@ -14,27 +15,40 @@ interface CrudModalBaseProps {
   onSave: () => void;
 }
 
-export default function CrudModalController<T extends { id: string }>({ mode, record, basePath, ModalComponent }: {
+export default function CrudModalController<T extends { id: string }>({ mode, record, basePath, recordLabel, ModalComponent }: {
   mode: "view" | "create" | "edit";
   record?: T;
   basePath: string;
+  recordLabel: string;
   ModalComponent: ComponentType<T & CrudModalBaseProps>;
 }) {
   const router = useRouter();
   const [modalKey, setModalKey] = useState(0);
+  const toast = useToast();
 
-  const close = () => router.push(basePath); // clear modal query params
+  const onClose = () => router.push(basePath); // clear modal query params
 
-  const edit = () => router.push(`${basePath}?id=${record?.id}&mode=edit`);
-  const editClose = () => router.push(`${basePath}?id=${record?.id}`);
+  const onCreate = () => {
+    toast.showToast("Created " + recordLabel, 'checkmark-circle-outline');
+    onClose();
+  }
 
-  const save = () => {
+  const onDelete = () => {
+    toast.showToast("Deleted " + recordLabel, 'trash-outline');
+    onClose();
+  }
+
+  const onEdit = () => router.push(`${basePath}?id=${record?.id}&mode=edit`);
+  const onEditClose = () => router.push(`${basePath}?id=${record?.id}`);
+
+  const onSave = () => {
     if (mode === 'edit') {
       setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode
-      router.push(`${basePath}?id=${record?.id}`)
+      router.push(`${basePath}?id=${record?.id}`);
       router.refresh();  // reruns server component (app/secrets/page.tsx) so the table reflects the edit
+      toast.showToast("Edited " + recordLabel, 'create-outline');
     } else {
-      close();
+      onClose();
     }
   }
 
@@ -43,12 +57,12 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
       key={modalKey}
       mode={mode}
       {...(record as T)}
-      onClose={close}
-      onCreate={close}
-      onDelete={close}
-      onEdit={edit}
-      onEditClose={editClose}
-      onSave={save}
+      onClose={onClose}
+      onCreate={onCreate}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onEditClose={onEditClose}
+      onSave={onSave}
     />
   )
 }
