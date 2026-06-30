@@ -63,13 +63,13 @@
 }
 
 .toast-icon ion-icon[name="checkmark-circle-outline"] {
-  color: green;
+  color: var(--pill-succeeded-text);
 }
 
 .toast-icon ion-icon[name="create-outline"] {
-  color: rgb(206, 161, 15);
+  color: var(--pill-approval-text);
 }
 
 .toast-icon ion-icon[name="trash-outline"] {
-  color: rgb(206, 28, 15);
+  color: var(--red-dark-text);
 }
