@@ -5,23 +5,15 @@
 
 .toast-container {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
   z-index: var(--z-toast);
-}
-
-.toast {
-  position: absolute;
-  top: 18px;
-  display: flex;
-  justify-content: center;
-  align-items: start;
-  width: 100vw;
-  height: 100vh;
-  z-index: var(--z-profile);
 }
 
 .toast-flex {

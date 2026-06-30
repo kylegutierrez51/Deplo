@@ -4,30 +4,36 @@ import { createContext, useContext, useState, useRef } from 'react';
 
 export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline';
 
-interface ToastState {
+interface ToastItem {
+  id: number;
   text: string;
   icon: ToastIcon;
 }
 
 interface ToastContextValue {
-  toast: ToastState | null;
+  toasts: ToastItem[];
   showToast: (text: string, icon: ToastIcon) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toast, setToast] = useState<ToastState | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const nextId = useRef(0);
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
   function showToast(text: string, icon: ToastIcon) {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setToast({ text, icon });
-    timerRef.current = setTimeout(() => setToast(null), 3000);
+    const id = nextId.current++;
+    setToasts(prev => [...prev, { id, text, icon }]);
+    const timer = setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+      timers.current.delete(id);
+    }, 3000);
+    timers.current.set(id, timer);
   }
 
   return (
-    <ToastContext value={{ toast, showToast }}>
+    <ToastContext value={{ toasts, showToast }}>
       {children}
     </ToastContext>
   );

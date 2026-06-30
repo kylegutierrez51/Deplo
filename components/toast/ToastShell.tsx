@@ -5,13 +5,13 @@ import Toast from './Toast';
 import { useToast } from './ToastContext';
 
 export default function ToastShell() {
-  const toast = useToast();
+  const { toasts } = useToast();
 
   return (
     <div className={styles["toast-container"]}>
-      {toast.toast &&
-        <Toast text={toast.toast.text} icon={toast.toast.icon} />  
-      }
+      {toasts.map(t => (
+        <Toast key={t.id} text={t.text} icon={t.icon} />
+      ))}
     </div>
   )
 }
