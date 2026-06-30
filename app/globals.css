@@ -114,6 +114,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --z-header: 100;
   --z-dropdown: 200;
   --z-modal: 1000;
+  --z-toast: 2000;
   --z-profile: 9999;
 
   /* Typography */

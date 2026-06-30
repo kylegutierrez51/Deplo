@@ -1,0 +1,75 @@
+/* .toast-container {
+  display: flex;
+  flex-direction: column;
+} */
+
+.toast-container {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: var(--z-toast);
+}
+
+.toast-flex {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  pointer-events: auto;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  animation: toast-enter 220ms ease-out;
+}
+
+/* must be declared after .toast-flex so animation overrides at equal specificity */
+.exiting {
+  animation: toast-exit 200ms ease-in forwards;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.toast-icon ion-icon {
+  font-size: 25px;
+}
+
+.toast-icon ion-icon[name="checkmark-circle-outline"] {
+  color: var(--pill-succeeded-text);
+}
+
+.toast-icon ion-icon[name="create-outline"] {
+  color: var(--pill-approval-text);
+}
+
+.toast-icon ion-icon[name="trash-outline"] {
+  color: var(--red-dark-text);
+}
