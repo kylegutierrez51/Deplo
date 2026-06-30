@@ -1,28 +1,26 @@
 "use client"
 
 import { capitalize, formatDate } from "@/lib/utils/string";
-import { useState } from 'react';
+import { useEffect, useState, useActionState, useTransition } from 'react';
+import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
+import { FormState, EnvType } from '@/lib/types';
 import Modal from '../modals/Modal';
 import modalStyles from '../modals/modal.module.css';
 import envStyles from './environment-modal.module.css';
 import Pill from '@/components/Pill';
 
-
-
 const styles = { ...modalStyles, ...envStyles };
-
-type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 interface EnvironmentModalProps {
   mode: 'view' | 'edit' | 'create';
-  name?: string;
-  type?: EnvType;
-  secrets?: number;
-  pipelines?: number;
-  requireApproval?: boolean;
-  createdBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id: string;
+  name: string;
+  type: EnvType;
+  secrets: number;
+  requireApproval: boolean;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
   onClose: () => void;
   onCreate: () => void;
   onDelete: () => void;
@@ -39,12 +37,17 @@ const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: 
   { key: 'custom', label: 'Custom', baseClass: styles.typeBtnCustom, activeClass: styles.typeBtnCustomActive },
 ];
 
+const initialState: FormState = {
+  status: 'idle',
+  message: '',
+}
+
 export default function EnvironmentModal({
   mode = 'view',
+  id,
   name,
   type = 'production',
   secrets,
-  pipelines,
   requireApproval = false,
   createdBy,
   createdAt,
@@ -58,28 +61,50 @@ export default function EnvironmentModal({
 }: EnvironmentModalProps) {
   const [envType, setEnvType] = useState<EnvType>(type);
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
+  const [createState, createFormAction] = useActionState(addEnvironment, initialState);
+  const [editState, editFormAction] = useActionState(updateEnvironment, initialState);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (editState.status === 'success') {
+      onSave();
+    }
+  }, [editState, onSave]);
+
+  useEffect(() => {
+    if (createState.status === 'success') {
+      onCreate();
+    }
+  }, [createState, onCreate]);
+
+  const handleDelete = () => startTransition(async () => {
+    await deleteEnvironment(id);
+    onDelete();
+  })
+
+
 
   const title = mode === 'view' ? 'Environment' : (name ? 'Edit Environment' : 'Add Environment');
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={handleDelete}>Delete</button>
       <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" onClick={onCreate}>Create</button>
     </>
   ) :
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Save Changes</button>
     </>
   );
 
   return (
-    <Modal title={title} onClose={onClose} footer={footer} mode={mode}>
+    <Modal action={mode === 'create' ? createFormAction : editFormAction} title={title} onClose={onClose} footer={footer} mode={mode}>
       {mode === 'view' ? (
         <>
           <div className={styles.item}>
@@ -95,21 +120,13 @@ export default function EnvironmentModal({
           </div>
 
           <div className={styles['secrets-pipelines-flex']}>
-            {secrets &&
-              <div className={styles.item}>
-                <label>Secrets</label>
-                <span className={styles.secrets}>
-                  <ion-icon name="key-outline"></ion-icon>
-                  {secrets}
-                </span>
-              </div>
-            }
-            {pipelines &&
-              <div className={styles.item}>
-                <label>Pipelines</label>
-                <span>{pipelines}</span>
-              </div>
-            }
+            <div className={styles.item}>
+              <label>Secrets</label>
+              <span className={styles.secrets}>
+                <ion-icon name="key-outline"></ion-icon>
+                {secrets}
+              </span>
+            </div>
           </div>
 
           <div
@@ -147,14 +164,16 @@ export default function EnvironmentModal({
         </>
       ) : (
         <>
+          <input type="hidden" name="id" value={id ?? ''} />
           <div className={styles.item}>
-            <label>Name</label>
-            <input name="env_name" placeholder="e.g. staging, qa-integration" defaultValue={name} />
+            <label htmlFor="name">Name</label>
+            <input name="name" id="name" placeholder="e.g. staging, qa-integration" defaultValue={name} required />
             <span className={styles.nameHint}>Lowercase letters, numbers, and hyphens only. This is the key used to scope secrets and pipeline targets.</span>
           </div>
 
           <div className={styles.item}>
             <label>Type</label>
+            <input type="hidden" name="type" value={envType} />
             <div className={styles.buttonGroup}>
               {ENV_TYPES.map(({ key, label, baseClass, activeClass }) => (
                 <button
@@ -173,6 +192,7 @@ export default function EnvironmentModal({
             className={styles.approvalToggleBox}
             onClick={() => setApprovalEnabled(v => !v)}
           >
+            <input type="hidden" name="requireApproval" value={approvalEnabled ? 'true' : 'false'} />
             <div className={styles.toggleOption}>
               <span className={`${styles.toggleSwitch} ${approvalEnabled ? styles.toggleSwitchOn : ''}`}></span>
               <div className={styles.toggleContent}>

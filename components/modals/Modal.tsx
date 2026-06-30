@@ -10,9 +10,10 @@ interface ModalProps {
   onClose: () => void;
   footer: React.ReactNode;
   children: React.ReactNode;
+  action?: (formData: FormData) => void | Promise<void>;
 }
 
-export default function Modal({ title, subtitle, icon, mode, onClose, footer, children }: ModalProps) {
+export default function Modal({ title, subtitle, icon, mode, onClose, footer, children, action }: ModalProps) {
   return (
     <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={mode === 'view' ? onClose : undefined}>
       <div className={styles.container} onClick={e => e.stopPropagation()}>
@@ -34,7 +35,7 @@ export default function Modal({ title, subtitle, icon, mode, onClose, footer, ch
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={e => e.preventDefault()}>
+        <form id="modal-form" action={action} className={styles.form}>
           <div className={styles.formItems}>
             {children}
           </div>
