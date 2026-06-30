@@ -14,9 +14,9 @@ interface CrudModalBaseProps {
   onSave: () => void;
 }
 
-export default function CrudModalController<T extends object>({ mode, record, basePath, ModalComponent }: {
+export default function CrudModalController<T extends { id: string }>({ mode, record, basePath, ModalComponent }: {
   mode: "view" | "create" | "edit";
-  record?: any;
+  record?: T;
   basePath: string;
   ModalComponent: ComponentType<T & CrudModalBaseProps>;
 }) {

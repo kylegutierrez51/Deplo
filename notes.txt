@@ -431,3 +431,66 @@ toggle function:
 
 
 ===================================================================================================================================
+EnvironmentModal:
+
+  useEffect(() => {
+    if (editState.status === 'success') {
+      onSave();
+    }
+  }, [editState, onSave]);
+
+This useEffect is needed to prevent a race condition between calling "updateEnvironment" and the below function:
+
+        const save = () => {
+          if (mode === 'edit') {
+            setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode
+            router.push(`${basePath}?id=${record?.id}`)
+            router.refresh();  // reruns server component (app/secrets/page.tsx) so the table reflects the edit
+          } else {
+            close();
+          }
+        }
+
+since the 'Save Changes' button USED TO call both the updateEnvironment function and save function. 
+
+Now: that button just triggers updateEnvironment, and then onSave is called after it finishes.
+
+onSave is a dependency because each render of EnvironmentModal gets a fresh 'onSave' function passed down from CrudModalController. If it's omitted, the effect can call a stale 'onSave' from a previous render. This doesn't really matter though since 'onSave' is the same throughout all renders, but it's still good practice since it keeps the dependencies array honest.
+ - It also suppresses a lint warning (react-hooks/exhaustive-deps), which flags any value referenced inside an effect that isn't listed in the dependency array.
+
+ ===================================================================================================================================
+
+ auth.ts callbacks:
+
+   callbacks: {
+    jwt({ token, user }) {
+       if (user) token.sub = user.id;
+       return token;
+    },
+    session({ session, token }) {
+      if (token.sub) session.user.id = token.sub;
+      return session;
+    }
+  }
+
+
+jwt callback - runs every time a JWT is created or read (on sign-in, on every subsequent request that touches the session, and on session refresh)
+ - user arg is populated once on initial sign-in request. It's the object PrismaAdapter handed back after creating/finding the row in your User table, so user.id is the Prisma cuid.  
+
+On every later request, NextAuth doesn't re-run the adapter lookup — it just decodes the existing JWT, so user is undefined and the if (user) guard skips reassignment. That's why the value needs to be written into token the first time: token is what actually gets encoded into the cookie and persists across requests, while user only exists transiently during sign-in.
+
+token.sub is the conventional JWT field for "subject" (whose identity this token represents) — using it instead of a custom field like token.userId means it lines up with how JWTs are normally structured, and it's the field NextAuth's types already expect you to use for identity.
+
+session callback — runs whenever your app calls auth() (which is happening in your addEnvironment Server Action) or useSession() on the client. Its job is to shape the session object that gets returned to your code. By default, session.user only has name, email, image — NextAuth doesn't put id there automatically. This callback reads the value you stashed in token.sub back in the jwt callback, and copies it onto session.user.id.
+
+You need the JWT callback to persist the id across requests, and the session callback to expose it to session.user.id where addEnvironment() reads it.
+
+Flow:
+ 1. user signs in via GitHub
+ 2. PrismaAdapter creates/finds the User row
+ 3. jwt callback runs with that user, writes user.id into token.sub
+ 4. token gets encoded into the session cookie
+ 5. later, your Server Action calls auth()
+ 6. NextAuth decodes the cookie back into token
+ 7. session callback runs, copies token.sub into session.user.id
+ 8. your action reads session.user.id and gets the correct Prisma cuid

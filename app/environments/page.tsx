@@ -2,7 +2,6 @@ import styles from './env.module.css';
 import Sidebar from "@/components/sidebar/Sidebar"
 import Subheader from "@/components/subheader/Subheader";
 import AddButton from "@/components/subheader/AddButton";
-import StatCards from '@/components/StatCards';
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
 import DataTable from "@/components/DataTable";
@@ -17,7 +16,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
   const { mode, id } = await searchParams;
   const environments = await getEnvironments();
 
-  const record = id ? await getEnvironmentById(Number(id)) : undefined;
+  const record = id ? await getEnvironmentById(id) : undefined;
 
   const modal =
     mode === "create" ? { mode: "create" as const } :
@@ -36,16 +35,6 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           subtitle="Manage deploy targets and their secret scoping.">
           <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
-
-        <StatCards
-          cards={[
-            { icon: "settings-outline", total: 5, label: "ENVIRONMENTS" },
-            { icon: "key-outline", total: 5, label: "TOTAL SECRETS" },
-            { icon: "git-branch-outline", total: 11, label: "PIPELINE BINDINGS" },
-
-          ]} 
-          responsive={false}
-        />
 
         <div className={styles.filters}>
           <div className={styles['filters-bar']}>
@@ -72,7 +61,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           </div>
         </div>
 
-        <DataTable columns={["Name", "Environment Type", "Secrets", "Pipelines", "Last Updated"]}>
+        <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
           {environments.map((env, i) => (
             <EnvironmentRow key={i} env={env} />
           ))}
