@@ -19,7 +19,7 @@
 .toast-flex {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
   padding: var(--space-sm);
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-gray-clr);
@@ -72,17 +72,4 @@
 
 .toast-icon ion-icon[name="trash-outline"] {
   color: rgb(206, 28, 15);
-}
-
-
-
-
-
-.add-toast-btn {
-  background-color: blue;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  font-weight: bold;
-  cursor: pointer;
 }
