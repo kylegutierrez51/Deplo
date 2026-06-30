@@ -10,7 +10,7 @@ export default function ToastShell() {
   return (
     <div className={styles["toast-container"]}>
       {toasts.map(t => (
-        <Toast key={t.id} text={t.text} icon={t.icon} />
+        <Toast key={t.id} text={t.text} icon={t.icon} exiting={t.exiting} />
       ))}
     </div>
   )
