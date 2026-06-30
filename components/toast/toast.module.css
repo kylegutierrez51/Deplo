@@ -1,0 +1,68 @@
+/* .toast-container {
+  display: flex;
+  flex-direction: column;
+} */
+
+.toast-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: var(--z-toast);
+}
+
+.toast {
+  position: absolute;
+  top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--z-profile);
+}
+
+.toast-flex {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-sm);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  pointer-events: auto;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.toast-icon ion-icon {
+  font-size: 25px;
+}
+
+.toast-icon ion-icon[name="checkmark-circle-outline"] {
+  color: green;
+}
+
+.toast-icon ion-icon[name="create-outline"] {
+  color: rgb(206, 161, 15);
+}
+
+.toast-icon ion-icon[name="trash-outline"] {
+  color: rgb(206, 28, 15);
+}
+
+
+
+
+
+.add-toast-btn {
+  background-color: blue;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
