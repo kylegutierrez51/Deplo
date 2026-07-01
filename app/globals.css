@@ -166,6 +166,10 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --pill-cancelled-bg: #64748b1a;
   --pill-cancelled-border: #64748b4d;
 
+  --pill-idle-text: #71717a;
+  --pill-idle-bg: #71717a1a;
+  --pill-idle-border: #71717a4d;
+
   --pill-total-text: #e2e8f0;
   --pill-total-bg: #e2e8f01a;
   --pill-total-border: #e2e8f04d;
@@ -414,6 +418,7 @@ Pill Base + Variants
 .pill--succeeded   { color: var(--pill-succeeded-text);   background: var(--pill-succeeded-bg);   border-color: var(--pill-succeeded-border); }
 .pill--failed      { color: var(--pill-failed-text);      background: var(--pill-failed-bg);      border-color: var(--pill-failed-border); }
 .pill--cancelled   { color: var(--pill-cancelled-text);   background: var(--pill-cancelled-bg);   border-color: var(--pill-cancelled-border); }
+.pill--idle        { color: var(--pill-idle-text);        background: var(--pill-idle-bg);        border-color: var(--pill-idle-border); }
 .pill--total       { color: var(--pill-total-text);       background: var(--pill-total-bg);       border-color: var(--pill-total-border); }
 .pill--approval    { color: var(--pill-approval-text);    background: var(--pill-approval-bg);    border-color: var(--pill-approval-border); }
 .pill--pending     { color: var(--pill-pending-text);     background: var(--pill-pending-bg);     border-color: var(--pill-pending-border); }

@@ -8,3 +8,5 @@ export type FormState = {
 }
 
 export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
+
+export type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'idle';
