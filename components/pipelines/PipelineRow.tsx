@@ -17,7 +17,7 @@ export default function EnvironmentRow({ pipeline }: { pipeline: Pipeline }) {
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>{pipeline.name} 
         {pipeline.runCount ? (pipeline.runCount > 0 ? 
-          <><br /><span className="nowrap">{pipeline.runCount}</span></> : '') 
+          <><br /><span className="nowrap">{pipeline.runCount} {pipeline.runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
         : ''}
       </td>
       <td><Pill variant={pipeline.status} label={capitalize(pipeline.status)} /></td>
