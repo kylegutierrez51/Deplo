@@ -2,10 +2,10 @@
 
 import { capitalize, formatDate } from "@/lib/utils/string";
 import { useEffect, useState, useActionState } from 'react';
-import { addEnvironment, updateEnvironment } from "@/lib/actions/environments";
+import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
 import { FormState, EnvType } from '@/lib/types';
 import Modal from '../modals/Modal';
-import DeleteConfirmation from "../modals/DeleteConfirmation";
+import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
 import Pill from '@/components/Pill';
 import modalStyles from '../modals/modal.module.css';
 import envStyles from './environment-modal.module.css';
@@ -213,7 +213,7 @@ export default function EnvironmentModal({
         )}
       </Modal>
       {isDeleteModalVisible && 
-        <DeleteConfirmation id={id} onDelete={onDelete} onDeleteClose={handleDeleteClose} />
+        <DeleteConfirmationModal id={id} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deleteEnvironment} />
       }
     </>
   );

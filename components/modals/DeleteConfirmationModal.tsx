@@ -2,14 +2,15 @@
 
 import styles from './delete-confirmation.module.css';
 import { useTransition, useState, useEffect } from 'react';
-import { deleteEnvironment } from "@/lib/actions/environments";
 
-interface DeleteConfirmationProps {
+
+interface DeleteConfirmationModalProps {
   id: string;
   onDelete: () => void;
   onDeleteClose: () => void;
+  deleteRecord: (id: string) => void;
 }
-export default function DeleteConfirmation({ id, onDelete, onDeleteClose }: DeleteConfirmationProps) {
+export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, deleteRecord }: DeleteConfirmationModalProps) {
   const [_isDeleteTransitionPending, startDeleteTransition] = useTransition();
   const [ready, setReady] = useState(false);
 
@@ -22,7 +23,7 @@ export default function DeleteConfirmation({ id, onDelete, onDeleteClose }: Dele
   }, [])
 
   const handleDelete = () => startDeleteTransition(async () => {
-    await deleteEnvironment(id);
+    await deleteRecord(id);
     onDelete();
   });
 
