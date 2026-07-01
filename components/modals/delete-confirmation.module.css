@@ -30,6 +30,13 @@
   font-weight: bold;
 }
 
+.delete-overlay .btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .delete-overlay button {
   color: white;
   border: none;
@@ -41,11 +48,17 @@
   cursor: pointer;
 }
 
+.delete-overlay .delete-ghost-btn {
+  color: #804646;
+  border: 1.5px solid #804646;
+  background-color: transparent;
+  cursor: default;
+}
+
 .delete-overlay .delete-btn {
   color: var(--red-text);
   border: 1.5px solid var(--red-btn-border-clr);
   background-color: transparent;
-  margin-left: 100px;
 }
 
 .delete-overlay .delete-btn:hover {
