@@ -16,7 +16,7 @@ export default function DeleteConfirmation({ id, onDelete, onDeleteClose }: Dele
   });
 
   return (
-    <div className={styles["delete-overlay"]} style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }}>
+    <div className={styles["delete-overlay"]} style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={onDeleteClose}>
       <div className={styles["delete-container"]}>
         <p>Delete this Environment?</p>
         <div>
