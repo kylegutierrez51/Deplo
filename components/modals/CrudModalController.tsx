@@ -11,7 +11,7 @@ interface CrudModalBaseProps {
   onCreate: () => void;
   onDelete: () => void;
   onEdit: () => void;
-  onEditClose: () => void;
+  onEditOrDeleteClose: () => void;
   onSave: () => void;
 }
 
@@ -39,7 +39,7 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
   }
 
   const onEdit = () => router.push(`${basePath}?id=${record?.id}&mode=edit`);
-  const onEditClose = () => router.push(`${basePath}?id=${record?.id}`);
+  const onEditOrDeleteClose = () => router.push(`${basePath}?id=${record?.id}`);
 
   const onSave = () => {
     if (mode === 'edit') {
@@ -61,7 +61,7 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
       onCreate={onCreate}
       onDelete={onDelete}
       onEdit={onEdit}
-      onEditClose={onEditClose}
+      onEditOrDeleteClose={onEditOrDeleteClose}
       onSave={onSave}
     />
   )
