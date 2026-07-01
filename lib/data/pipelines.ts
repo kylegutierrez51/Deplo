@@ -5,6 +5,7 @@ import { PipelineStatus } from '@/lib/types';
 export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
   lastRun: Date | null;
   status: PipelineStatus;
+  runCount?: number;
   createdBy?: string | null;
   commitMessage?: string | null;
 }
@@ -25,12 +26,17 @@ export async function getPipelines(): Promise<Pipeline[]> {
         orderBy: { createdAt: "desc" },
         take: 1,
       },
+      _count: {
+        select: { runs: true }
+      }
     },
   });
 
-  return pipelines.map(({ runs, ...pipeline }) => ({
+  return pipelines.map(({ runs, _count, ...pipeline }) => ({
     ...pipeline,
-    status: runs[0] ? RUN_STATUS_MAP[runs[0].status] : 'idle', lastRun: runs[0] ? runs[0].finishedAt : null
+    status: runs[0] ? RUN_STATUS_MAP[runs[0].status] : 'idle',
+    lastRun: runs[0] ? runs[0].finishedAt : null,
+    runCount: _count.runs,
   }));
 }
 
@@ -41,7 +47,7 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
       runs: {
         orderBy: { createdAt: "desc" },
         take: 1,
-      }
+      },
      }
   })
 
