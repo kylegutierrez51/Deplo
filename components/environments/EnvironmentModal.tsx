@@ -96,7 +96,7 @@ export default function EnvironmentModal({
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" onClick={onCreate}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Create</button>
     </>
   ) :
     <>
