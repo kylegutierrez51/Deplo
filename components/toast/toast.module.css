@@ -68,3 +68,7 @@
 .toast-icon ion-icon[name="trash-outline"] {
   color: var(--red-dark-text);
 }
+
+.toast-icon ion-icon[name="close-circle-outline"] {
+  color: var(--red-dark-text);
+}

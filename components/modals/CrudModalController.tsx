@@ -33,6 +33,10 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
     onClose();
   }
 
+  const onError = (message: string) => {
+    toast.showToast(message, 'close-circle-outline')
+  }
+
   const onDelete = () => {
     toast.showToast("Deleted " + recordLabel, 'trash-outline');
     onClose();
@@ -63,6 +67,7 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
       onEdit={onEdit}
       onEditOrDeleteClose={onEditOrDeleteClose}
       onSave={onSave}
+      onError={onError}
     />
   )
 }

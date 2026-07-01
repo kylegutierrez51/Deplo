@@ -31,7 +31,7 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
   } catch (error: unknown) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Failed to add environment',
+      message: error instanceof Error ? error.message : 'Error adding pipeline. Please try again.',
     };
   }
 }
@@ -58,12 +58,12 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
   } catch (error: unknown) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Failed to update environment',
+      message: error instanceof Error ? error.message : 'Error editing environment. Please try again.',
     };
   }
 }
 
-export async function deleteEnvironment(id: string) {
+export async function deleteEnvironment(id: string): Promise<FormState> {
   try {
     const deletedEnv = await prisma.environment.delete({
       where: { id }
@@ -82,7 +82,7 @@ export async function deleteEnvironment(id: string) {
     }
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Failed to delete environment'
+      message: error instanceof Error ? error.message : 'Error deleting environment. Please try again.'
     }
   }
 }

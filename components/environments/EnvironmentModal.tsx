@@ -29,6 +29,7 @@ interface EnvironmentModalProps {
   onEdit: () => void;
   onEditOrDeleteClose: () => void;
   onSave: () => void;
+  onError: (message: string) => void;
 }
 
 const ENV_TYPES: { key: EnvType; label: string; baseClass: string; activeClass: string }[] = [
@@ -60,6 +61,7 @@ export default function EnvironmentModal({
   onEdit,
   onEditOrDeleteClose,
   onSave,
+  onError,
 }: EnvironmentModalProps) {
   const [envType, setEnvType] = useState<EnvType>(type);
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
@@ -68,18 +70,25 @@ export default function EnvironmentModal({
   const [isDeleteModalVisible, setisDeleteModalVisible] = useState(false);
 
   useEffect(() => {
-    if (editState.status === 'success') {
-      onSave();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
-  }, [editState]);
-
-  useEffect(() => {
     if (createState.status === 'success') {
       onCreate();
     }
+    else if (createState.status === 'error') {
+      onError(createState.message);
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createState]);
+
+  useEffect(() => {
+    if (editState.status === 'success') {
+      onSave();
+    }
+    else if (editState.status === 'error') {
+      onError(createState.message);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
+  }, [editState]);
 
   const handleDeleteClose = () => {
     setisDeleteModalVisible(false);
@@ -213,7 +222,7 @@ export default function EnvironmentModal({
         )}
       </Modal>
       {isDeleteModalVisible && 
-        <DeleteConfirmationModal id={id} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deleteEnvironment} />
+        <DeleteConfirmationModal id={id} onDelete={onDelete} onDeleteClose={handleDeleteClose} onError={onError} deleteRecord={deleteEnvironment} />
       }
     </>
   );

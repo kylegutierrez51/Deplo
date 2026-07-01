@@ -2,15 +2,16 @@
 
 import styles from './delete-confirmation.module.css';
 import { useTransition, useState, useEffect } from 'react';
-
+import { type FormState } from '@/lib/types';
 
 interface DeleteConfirmationModalProps {
   id: string;
   onDelete: () => void;
   onDeleteClose: () => void;
-  deleteRecord: (id: string) => void;
+  deleteRecord: (id: string) => Promise<FormState>;
+  onError: (message: string) => void;
 }
-export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, deleteRecord }: DeleteConfirmationModalProps) {
+export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, onError, deleteRecord }: DeleteConfirmationModalProps) {
   const [_isDeleteTransitionPending, startDeleteTransition] = useTransition();
   const [ready, setReady] = useState(false);
 
@@ -23,8 +24,13 @@ export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, d
   }, [])
 
   const handleDelete = () => startDeleteTransition(async () => {
-    await deleteRecord(id);
-    onDelete();
+    const deletedRecord = await deleteRecord(id);
+    if (deletedRecord.status === 'success') {
+      onDelete();
+    }
+    else if (deletedRecord.status === 'error') {
+      onError(deletedRecord.message);
+    }
   });
 
   return (
