@@ -97,10 +97,10 @@ async function main() {
     { key: "GITHUB_TOKEN", env: "prev", createdBy: "marcus.coco" },
     { key: "GITHUB_TOKEN", env: "custom", createdBy: null },
     { key: "API_KEY", env: "dev-2", createdBy: "marcus.coco" },
-    { key: "STRIPE_KEY", env: "prod-eu", createdBy: "sarah.chen" },
-    { key: "JWT_SECRET", env: "staging-2", createdBy: "sarah.chen" },
-    { key: "SLACK_WEBHOOK", env: "preview-pr", createdBy: "diego.ramirez" },
-    { key: "NPM_TOKEN", env: "sandbox", createdBy: "priya.nair" },
+    { key: "STRIPE_KEY", env: "prod-eu", createdBy: "sarah.chen", notes: "stripe key production", },
+    { key: "JWT_SECRET", env: "staging-2", createdBy: "sarah.chen", notes: "staging notes" },
+    { key: "SLACK_WEBHOOK", env: "preview-pr", createdBy: "diego.ramirez", notes: "preview slack webhook notes" },
+    { key: "NPM_TOKEN", env: "sandbox", createdBy: "priya.nair", notes: "sandbox key -- do whatever" },
   ];
   const secrets = await Promise.all(
     secretSeeds.map((s) => {
