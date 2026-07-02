@@ -6,12 +6,13 @@ import { type FormState } from '@/lib/types';
 
 interface DeleteConfirmationModalProps {
   id: string;
+  recordLabel: string;
   onDelete: () => void;
   onDeleteClose: () => void;
   deleteRecord: (id: string) => Promise<FormState>;
   onError: (message: string) => void;
 }
-export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, onError, deleteRecord }: DeleteConfirmationModalProps) {
+export default function DeleteConfirmationModal({ id, recordLabel, onDelete, onDeleteClose, onError, deleteRecord }: DeleteConfirmationModalProps) {
   const [_isDeleteTransitionPending, startDeleteTransition] = useTransition();
   const [ready, setReady] = useState(false);
 
@@ -36,7 +37,7 @@ export default function DeleteConfirmationModal({ id, onDelete, onDeleteClose, o
   return (
     <div className={styles["delete-overlay"]} style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={onDeleteClose}>
       <div className={styles["delete-container"]} onClick={e => e.stopPropagation()}>
-        <p>Delete this Environment?</p>
+        <p>Delete this {recordLabel}?</p>
         <div className={styles['btn-group']}>
           <button className={styles["cancel-btn"]} type="button" onClick={onDeleteClose}>Cancel</button>
           {!ready ? 
