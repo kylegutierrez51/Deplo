@@ -69,7 +69,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
               ))}
             </DataTable>
 
-            <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+            <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
         }
       </main>
