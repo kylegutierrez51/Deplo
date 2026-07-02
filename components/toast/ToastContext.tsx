@@ -1,8 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useRef } from 'react';
-
-export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline';
+import { type ToastIcon } from '@/lib/types';
 
 interface ToastItem {
   id: number;

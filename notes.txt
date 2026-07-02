@@ -458,7 +458,7 @@ Now: that button just triggers updateEnvironment, and then onSave is called afte
 onSave is a dependency because each render of EnvironmentModal gets a fresh 'onSave' function passed down from CrudModalController. If it's omitted, the effect can call a stale 'onSave' from a previous render. This doesn't really matter though since 'onSave' is the same throughout all renders, but it's still good practice since it keeps the dependencies array honest.
  - It also suppresses a lint warning (react-hooks/exhaustive-deps), which flags any value referenced inside an effect that isn't listed in the dependency array.
 
- ===================================================================================================================================
+===================================================================================================================================
 
  auth.ts callbacks:
 
@@ -494,3 +494,17 @@ Flow:
  6. NextAuth decodes the cookie back into token
  7. session callback runs, copies token.sub into session.user.id
  8. your action reads session.user.id and gets the correct Prisma cuid
+
+===================================================================================================================================
+
+  const pipelines = await prisma.pipeline.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      runs: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+This gets the newest PipelineRun for each pipeline so that we can get the 'status' of each

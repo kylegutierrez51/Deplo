@@ -36,39 +36,42 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
 
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <SearchInput placeholder={"Search environments..."} />
-            <FilterSelect
-              id={"environment"} name={"environment"}
-              options={[
-                { value: "all", label: "All environment types" },
-                { value: "production", label: "Production" },
-                { value: "staging", label: "Staging" },
-                { value: "development", label: "Development" },
-                { value: "preview", label: "Preview" },
-                { value: "custom", label: "Custom" },
-              ]} />
-            <FilterSelect
-              id={"status"} name={"status"}
-              options={[
-                { value: "all", label: "All time" },
-                { value: "today", label: "Today" },
-                { value: "7days", label: "Last 7 days" },
-                { value: "30days", label: "Last 30 days" },
-                { value: "90days", label: "Last 90 days" },
-              ]} />
-          </div>
-        </div>
+        {environments.length > 0 &&
+          <>
+            <div className={styles.filters}>
+              <div className={styles['filters-bar']}>
+                <SearchInput placeholder={"Search environments..."} />
+                <FilterSelect
+                  id={"environment"} name={"environment"}
+                  options={[
+                    { value: "all", label: "All environment types" },
+                    { value: "production", label: "Production" },
+                    { value: "staging", label: "Staging" },
+                    { value: "development", label: "Development" },
+                    { value: "preview", label: "Preview" },
+                    { value: "custom", label: "Custom" },
+                  ]} />
+                <FilterSelect
+                  id={"status"} name={"status"}
+                  options={[
+                    { value: "all", label: "All time" },
+                    { value: "today", label: "Today" },
+                    { value: "7days", label: "Last 7 days" },
+                    { value: "30days", label: "Last 30 days" },
+                    { value: "90days", label: "Last 90 days" },
+                  ]} />
+              </div>
+            </div>
+            
+            <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
+              {environments.map((env, i) => (
+                <EnvironmentRow key={i} env={env} />
+              ))}
+            </DataTable>
 
-        <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
-          {environments.map((env, i) => (
-            <EnvironmentRow key={i} env={env} />
-          ))}
-        </DataTable>
-
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
-
+            <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+          </>
+        }
       </main>
 
       {modal && (

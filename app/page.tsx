@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import LoginButton from "./LoginButton";
+import LoginButton from "@/components/LoginButton";
 import styles from "./page.module.css";
 
 export default async function Login() {

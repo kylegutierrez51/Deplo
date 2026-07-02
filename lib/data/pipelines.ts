@@ -1,33 +1,61 @@
-export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
+import prisma from '@/lib/prisma';
+import type { Pipeline as PrismaPipeline, RunStatus } from "@/generated/prisma/client";
+import { PipelineStatus } from '@/lib/types';
 
-export type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-
-export type Pipeline = {
-  id: number;
-  name: string; 
-  status: PipelineStatus; 
-  lastRun?: string;
-  repoUrl: string;
-  commitMessage: string; 
-  description?: string;
-  branchFilters: string[];
-  createdBy?: string;
-  createdAt: string;
-  updatedAt: string
+export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
+  lastRun: Date | null;
+  status: PipelineStatus;
+  runCount?: number;
+  createdBy?: string | null;
+  commitMessage?: string | null;
 }
 
-const PIPELINES: Pipeline[] = [
-  { id: 1, name: 'build-frontend', status: 'running', lastRun: '1h 2m 14s ago', repoUrl: 'https://github.com/abcd/web-client', commitMessage: 'f4e5d6c feat: add retry logic to webhook...',  description: 'Builds and deploys the web client on every push to main', branchFilters: ['main', 'release/*', 'hotfix/*'], createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 2, name: 'deploy-api', status: 'succeeded', lastRun: '1h 7m 7s ago', repoUrl: 'https://github.com/abcd/api-server', commitMessage: 'a1b2c3d fix: resolve connection pool exh...', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 3, name: 'release-mobile', status: 'failed', repoUrl: 'https://github.com/abcd/mobile-app', commitMessage: '7890abc chore: bump dependencies to l...', branchFilters: ['main', 'release/*'], createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 4, name: 'release-mobile', status: 'queued',  repoUrl: 'https://github.com/abcd/mobile-app', commitMessage: '7890abc chore: bump dependencies to l...', branchFilters: ['main'], createdBy: 'coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 5, name: 'release-mobile', status: 'cancelled',  repoUrl: 'https://github.com/abcd/mobile-app', commitMessage: '7890abc chore: bump dependencies to l...', branchFilters: [], createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-];
+const RUN_STATUS_MAP: Record<RunStatus, PipelineStatus> = {
+  QUEUED: 'queued',
+  RUNNING: 'running',
+  SUCCESS: 'succeeded',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
+};
 
 export async function getPipelines(): Promise<Pipeline[]> {
-  return PIPELINES.map(({ ...pipeline }) => pipeline);
+  const pipelines = await prisma.pipeline.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      runs: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+      _count: {
+        select: { runs: true }
+      }
+    },
+  });
+
+  return pipelines.map(({ runs, _count, ...pipeline }) => ({
+    ...pipeline,
+    status: runs[0] ? RUN_STATUS_MAP[runs[0].status] : 'idle',
+    lastRun: runs[0] ? runs[0].finishedAt : null,
+    runCount: _count.runs,
+  }));
 }
 
-export async function getPipelineById(id: number): Promise<Pipeline | undefined> {
-  return PIPELINES.find(p => p.id === id);
+export async function getPipelineById(id: string): Promise<Pipeline | null> {
+  const pipeline = await prisma.pipeline.findUnique({
+    where: { id },
+    include: {
+      runs: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+     }
+  })
+
+  if (!pipeline) return null;
+
+  return {
+    ...pipeline,
+    status: pipeline.runs[0] ? RUN_STATUS_MAP[pipeline.runs[0].status] : 'idle',
+    lastRun: pipeline.runs[0] ? pipeline.runs[0].finishedAt : null
+  }
 }

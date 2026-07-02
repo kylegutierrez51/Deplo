@@ -4,6 +4,7 @@ import { capitalize } from "@/lib/utils/string";
 import { useRouter } from 'next/navigation';
 import type { Pipeline } from "@/lib/data/pipelines";
 import Pill from '@/components/Pill';
+import { formatDate } from "@/lib/utils/string";
 
 
 export default function EnvironmentRow({ pipeline }: { pipeline: Pipeline }) {
@@ -14,10 +15,14 @@ export default function EnvironmentRow({ pipeline }: { pipeline: Pipeline }) {
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
-      <td>{pipeline.name} <br /><span className="nowrap">79 runs (PipelineRun model)</span></td>
+      <td>{pipeline.name} 
+        {pipeline.runCount ? (pipeline.runCount > 0 ? 
+          <><br /><span className="nowrap">{pipeline.runCount} {pipeline.runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
+        : ''}
+      </td>
       <td><Pill variant={pipeline.status} label={capitalize(pipeline.status)} /></td>
       <td>{repoName}<br /><span>{pipeline.commitMessage}</span></td>
-      <td className="nowrap">{pipeline.lastRun || 'No Runs'}</td>
+      <td className="nowrap">{pipeline.lastRun ? formatDate(pipeline.lastRun) : 'No Runs'}</td>
     </tr>
   )
 }
