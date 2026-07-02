@@ -9,7 +9,6 @@ import { auth } from '@/auth';
 
 export async function addEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
-  console.log('session user:', session?.user);
   const createdById = session?.user?.id ?? null;
 
   const name = formData.get('name') as string;
@@ -29,9 +28,10 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
     };
 
   } catch (error: unknown) {
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Error adding pipeline. Please try again.',
+      message: 'Error adding pipeline. Please try again.',
     };
   }
 }
@@ -56,9 +56,10 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
     };
 
   } catch (error: unknown) {
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Error editing environment. Please try again.',
+      message: 'Error updating environment. Please try again.',
     };
   }
 }
@@ -80,9 +81,10 @@ export async function deleteEnvironment(id: string): Promise<FormState> {
     if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
       console.log(`${error.code}:` + 'Error deleting environment');
     }
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Error deleting environment. Please try again.'
+      message: 'Error deleting environment. Please try again.'
     }
   }
 }

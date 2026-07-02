@@ -3,7 +3,7 @@
 import { capitalize, formatDate } from "@/lib/utils/string";
 import { useEffect, useState, useActionState } from 'react';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
-import { FormState, EnvType } from '@/lib/types';
+import { type FormState, type EnvType } from '@/lib/types';
 import Modal from '../modals/Modal';
 import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
 import Pill from '@/components/Pill';
@@ -222,7 +222,7 @@ export default function EnvironmentModal({
         )}
       </Modal>
       {isDeleteModalVisible && 
-        <DeleteConfirmationModal id={id} onDelete={onDelete} onDeleteClose={handleDeleteClose} onError={onError} deleteRecord={deleteEnvironment} />
+        <DeleteConfirmationModal id={id} recordLabel={"Environment"} onDelete={onDelete} onDeleteClose={handleDeleteClose} onError={onError} deleteRecord={deleteEnvironment} />
       }
     </>
   );

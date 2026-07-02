@@ -25,10 +25,6 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
         record ? { mode: "view" as const, record } :
           null;
 
-  console.log(pipelines);
-
-
-
   return (
     <>
       <Sidebar activeItem="pipelines" />

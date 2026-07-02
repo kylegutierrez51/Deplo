@@ -13,6 +13,7 @@ interface CrudModalBaseProps {
   onEdit: () => void;
   onEditOrDeleteClose: () => void;
   onSave: () => void;
+  onError: (message: string) => void;
 }
 
 export default function CrudModalController<T extends { id: string }>({ mode, record, basePath, recordLabel, ModalComponent }: {
@@ -34,7 +35,7 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
   }
 
   const onError = (message: string) => {
-    toast.showToast(message, 'close-circle-outline')
+    toast.showToast(message, 'close-circle-outline');
   }
 
   const onDelete = () => {
