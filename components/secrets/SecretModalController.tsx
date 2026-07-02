@@ -8,5 +8,14 @@ export default function SecretModalController({ mode, secret }: {
   mode: "view" | "create" | "edit";
   secret?: Secret;
 }) {
-  return <CrudModalController mode={mode} record={secret} basePath={"/secrets"} ModalComponent={SecretModal} />;
+  // `key` is a reserved React prop name — spreading it onto ModalComponent would
+  // get swallowed as the reconciliation key instead of reaching SecretModal's props.
+  let record: (Omit<Secret, "key"> & { secretKey: string }) | undefined;
+  
+  if (secret) {
+    const { key, ...rest } = secret;
+    record = { ...rest, secretKey: key };
+  }
+
+  return <CrudModalController mode={mode} record={record} basePath={"/secrets"} recordLabel={"Secret"} ModalComponent={SecretModal} />;
 }

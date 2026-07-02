@@ -3,7 +3,7 @@
 import { capitalize, formatDate } from "@/lib/utils/string";
 import { useState, useRef, useEffect, useActionState } from 'react';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
-import { type PipelineStatus, type FormState } from "@/lib/types";
+import type { PipelineStatus, FormState } from "@/lib/types";
 import Modal from '../modals/Modal';
 import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
 import modalStyles from '../modals/modal.module.css';
