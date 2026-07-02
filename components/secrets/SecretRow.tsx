@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import Pill from '@/components/Pill';
-import type { SecretListItem } from "@/lib/data/secrets";
+import type { Secret } from "@/lib/data/secrets";
+import { formatDate } from '@/lib/utils/string';
 
-export default function SecretRow({ secret }: { secret: SecretListItem }) {
+export default function SecretRow({ secret }: { secret: Secret }) {
   const router = useRouter();
 
   const open = () => router.push(`/secrets?id=${secret.id}`);
@@ -12,11 +13,11 @@ export default function SecretRow({ secret }: { secret: SecretListItem }) {
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>
-        {secret.secretKey}
+        {secret.key}
         {secret.notes && (<><br /><span>{secret.notes.slice(0, 40)}...</span></>)}
       </td>
-      <td><Pill variant={secret.environmentType} label={secret.environmentName} /></td>
-      <td className="nowrap">{secret.updatedAt}</td>
+      <td><Pill variant={secret.environment.type} label={secret.environment.name} /></td>
+      <td className="nowrap">{formatDate(secret.updatedAt)}</td>
     </tr>
   )
 }
