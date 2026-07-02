@@ -8,5 +8,5 @@ export default function PipelineModalControler({ mode, pipeline }: {
   mode: "view" | "create" | "edit";
   pipeline?: Pipeline;
 }) {
-  return <CrudModalController mode={mode} record={pipeline} basePath={"/pipelines"} ModalComponent={PipelineModal} />;
+  return <CrudModalController mode={mode} record={pipeline} basePath={"/pipelines"} recordLabel={"Pipeline"} ModalComponent={PipelineModal} />;
 }
