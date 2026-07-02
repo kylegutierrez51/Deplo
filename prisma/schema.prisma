@@ -197,7 +197,7 @@ enum StageStatus {
   AWAITING_APPROVAL
   APPROVED
   UNAPPROVED
-  CANCELLED 
+  CANCELLED
 }
 
 enum StageType {
@@ -289,6 +289,8 @@ model Secret {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  notes String? @db.Text
+
   @@unique([environmentId, key])
   @@map("secrets")
 }
@@ -304,7 +306,7 @@ model Webhook {
   events        String[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  String?
-  registeredAgo   String
+  registeredAgo String
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
@@ -376,7 +378,7 @@ enum ResourceType {
 }
 
 model AuditLog {
-  id           String      @id @default(cuid())
+  id           String       @id @default(cuid())
   userId       String?
   action       AuditAction
   resourceType ResourceType // "Pipeline", "Secret", "PipelineRun", etc.
