@@ -508,3 +508,46 @@ Flow:
   });
 
 This gets the newest PipelineRun for each pipeline so that we can get the 'status' of each
+
+===================================================================================================================================
+
+AES-256-GCM 
+
+A fixed 256 bit key and a 96 bit nonce (IV) that has a 32 bit counter added to it everytime we put it through AES, where the first nonce (IV) (with a 32 bit counter) is reserved to produce the tag. Once the AES algorithm runs on them, we get a 128 bit scrambled block (a keystream) that we XOR with 1 chunk of a message to create a chunk of a ciphertext. We repeat this process with multiple message chunks until the entire message is converted into a ciphertext.
+
+We have a value “H” computed by putting 128 0 bits into AES, and we use it in a GHASH Chain that essentially multiplies by H and uses XORs with ciphertext to achieve a sequence of bits (a 128-bit hash value) for the Tag. The reserved first nonce (IV) is XORed onto the GHASH result to finish it.
+
+On decryption, recompute the entire GHASH chain over the received ciphertext, XOR in the reserved first nonce (IV) to build a copy of the Tag to compare against the one that arrives. If the ciphertext was changed, it rejects (doesn't decrypt the ciphertext) the arrived Tag.
+
+The last message chunk entered is typically smaller than 128 bits, so it just XORs with the first part of that block's keystream and discards leftovers, meaning the ciphertext ends up being the same length as the message.
+
+GCM chops up your message into 128 bit blocks each (where last message can be shorter, as said in paragraph above)
+
+The 32-bit counter gives AES a different input block for every chunk of your message so that each chunk gets it own unique keystream. Without the counter, you would have the same keystream being XORed with different message chunks, which breaks the encryption. 
+
+The counter keeps different chunks within one message from colliding, while the nonce (IV) keeps different messages (NOT chunks of one) from colliding.
+
+If the same key and nonce (IV) are used for 2 different messages, the keystream repeats, meaning an attacker who knows one plaintext can XOR their way to the other plaintext (but not get the key). However, if the counter was different for those 2 messages, then it wpuld be safe.
+
+For each message, the counter sequence (32-bits) is always the same. What makes each message's keystream unique is the nonce (IV) it's paired with.
+
+The tag, iv, and ciphertext are made public. The only way someone can get plaintext is if they had the 256-bit key. 
+
+The 256-bit key:
+- Generates each keystream block that gets XOred with the message chunks
+- Derives H 
+- Produces the reserved first nonce, used to finish the tag
+
+
+
+
+
+AAD (additional authenticated data) is data you want to keep readable but protect from tampering. It's guarded by the Tag, and if added, is used in the GHASH chain at the very start, multiplied by H. 
+
+
+2 Uses of AAD:
+
+Database fields: Encrypt a user’s account balance, and put that user’s ID in the AAD. Now an attacker with write access to the database can’t copy user A’s encrypted balance into user B’s row — decryption there recomputes the tag with B’s ID as AAD, even though A's ID is in the AAD, meaning it won’t match, and it’s rejected. The ciphertext is cryptographically nailed to user A.
+
+Encrypted files: Put the filename or a version number in AAD so one valid encrypted file can’t be silently swapped for another.
+
