@@ -106,6 +106,7 @@ model Pipeline {
 
   definitions   PipelineDefinition[]
   runs          PipelineRun[]
+  webhooks Webhook[]
   webhookEvents WebhookEvent[]
 
   createdAt DateTime @default(now())
@@ -301,6 +302,7 @@ model Secret {
 
 model Webhook {
   id            String    @id @default(cuid())
+  pipelineId String?
   repo          String
   isActive      Boolean   @default(false)
   events        String[]
@@ -310,7 +312,9 @@ model Webhook {
 
   encryptedValue String @db.Text
   iv             String
-  authTag        String
+  authTag        String 
+
+  pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)

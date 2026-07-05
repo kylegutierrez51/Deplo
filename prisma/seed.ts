@@ -284,6 +284,7 @@ async function main() {
           encryptedValue,
           iv,
           authTag,
+          pipelineId: pipelineByName.get(w.pipeline)?.id ?? null,
           createdById: w.createdBy ? userByName.get(w.createdBy)?.id ?? null : null,
         },
       });
