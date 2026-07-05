@@ -303,7 +303,6 @@ model Secret {
 model Webhook {
   id            String    @id @default(cuid())
   pipelineId String?
-  repo          String
   isActive      Boolean   @default(false)
   events        String[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
