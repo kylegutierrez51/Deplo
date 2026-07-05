@@ -581,3 +581,10 @@ The fix (already applied) removes the inline wrapper and passes environments thr
 
 ===================================================================================================================================
 
+WebhookModal 'handleGenerateSecret()' vs crypto.ts 'generateWebhookSecret()'
+
+We don't use 'generateWebhookSecret()' since 'node:crypto' is a server-only API, meaning the WebhookModal can't import it since it has a 'use client' directive. 
+
+handleGenerateSecret is used on the client side -- the Web Crypto API's crypto.getRandomValues, producing the same whsec_<64 hex chars> shape as the server-side version, just via a browser API instead of Node's. 
+
+'generateWebhookSecret()' is used in lib/actions/webhooks.ts in regenerateWebhookSecret(). 

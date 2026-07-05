@@ -13,6 +13,10 @@ export function encryptSecret(plaintext: string) {
   return { encryptedValue, iv: iv.toString("hex"), authTag };
 }
 
+export function generateWebhookSecret(): string {
+  return `whsec_${randomBytes(32).toString("hex")}`;
+}
+
 export function decryptSecret(encryptedData: ReturnType<typeof encryptSecret>): string {
   const { encryptedValue, iv, authTag } = encryptedData;
 

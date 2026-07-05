@@ -260,31 +260,34 @@ async function main() {
   // ── Webhooks ─────────────────────────────────────────────────────
   // From lib/data/webhooks.ts, extended with a couple more repos.
   const webhookSeeds = [
-    { repo: "abcd/infra", pipeline: "deploy-infra", isActive: true, events: ["push", "pull_request"], branchFilters: ["main/*", "release/*", "hotfix/*"], createdBy: "coco" },
-    { repo: "abcd/infra", pipeline: "deploy-infra", isActive: false, events: ["push"], branchFilters: [], createdBy: null },
-    { repo: "abcd/api-server", pipeline: "deploy-api", isActive: false, events: ["pull_request"], branchFilters: [], createdBy: null },
-    { repo: "abcd/web-client", pipeline: "build-frontend", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "sarah.chen" },
-    { repo: "abcd/web-client", pipeline: "db-migrate", isActive: true, events: ["push", "pull_request"], branchFilters: ["main"], createdBy: "marcus.coco" },
-    { repo: "abcd/mobile-app", pipeline: "release-mobile", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "coco" },
-    { repo: "abcd/worker-service", pipeline: "deploy-worker", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "diego.ramirez" },
-    { repo: "abcd/web-client", pipeline: "run-e2e-tests", isActive: false, events: ["pull_request"], branchFilters: ["main"], createdBy: "priya.nair" },
-    { repo: "abcd/docs-site", pipeline: "deploy-docs", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "jordan.lee" },
-    { repo: "abcd/web-client", pipeline: "sync-translations", isActive: false, events: ["push"], branchFilters: ["main"], createdBy: "amara.okafor" },
+    { pipeline: "deploy-infra", isActive: true, events: ["push", "pull_request"], branchFilters: ["main/*", "release/*", "hotfix/*"], createdBy: "coco" },
+    { pipeline: "deploy-infra", isActive: false, events: ["push"], branchFilters: [], createdBy: null },
+    { pipeline: "deploy-api", isActive: false, events: ["pull_request"], branchFilters: [], createdBy: null },
+    { pipeline: "build-frontend", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "sarah.chen" },
+    { pipeline: "db-migrate", isActive: true, events: ["push", "pull_request"], branchFilters: ["main"], createdBy: "marcus.coco" },
+    { pipeline: "release-mobile", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "coco" },
+    { pipeline: "deploy-worker", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "diego.ramirez" },
+    { pipeline: "run-e2e-tests", isActive: false, events: ["pull_request"], branchFilters: ["main"], createdBy: "priya.nair" },
+    { pipeline: "deploy-docs", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "jordan.lee" },
+    { pipeline: "sync-translations", isActive: false, events: ["push"], branchFilters: ["main"], createdBy: "amara.okafor" },
   ];
   await Promise.all(
-    webhookSeeds.map((w) =>
-      prisma.webhook.create({
+    webhookSeeds.map((w) => {
+      const { encryptedValue, iv, authTag } = encryptSecret(randomBytes(20).toString("hex"));
+      return prisma.webhook.create({
         data: {
-          repo: w.repo,
           isActive: w.isActive,
           events: w.events,
           branchFilters: w.branchFilters,
-          lastDelivery: new Date().toISOString(),
-          registeredAgo: new Date().toISOString(),
+          lastDelivery: new Date(),
+          encryptedValue,
+          iv,
+          authTag,
+          pipelineId: pipelineByName.get(w.pipeline)?.id ?? null,
           createdById: w.createdBy ? userByName.get(w.createdBy)?.id ?? null : null,
         },
-      })
-    )
+      });
+    })
   );
 
   // ── Webhook Events ───────────────────────────────────────────────

@@ -1,16 +1,9 @@
 import styles from './webhook-card.module.css'
 import SyncButton from './SyncButton';
+import type { Webhook } from "@/lib/data/webhooks";
+import { formatDate } from '@/lib/utils/string';
 
-interface WebhookCardProps {
-  id: number;
-  repo: string;
-  status: boolean;
-  events: string[];
-  lastDelivery?: string;
-  registeredAgo: string;
-  branchFilters?: string[];
-}
-export default function WebhookCard({ id, repo, status, events, lastDelivery, registeredAgo, branchFilters }: WebhookCardProps) {
+export default function WebhookCard({ webhook }: { webhook: Webhook}) {
   return (
     <div className={styles['webhook-card']}>
       <div className={styles['webhook-row']}>
@@ -20,31 +13,29 @@ export default function WebhookCard({ id, repo, status, events, lastDelivery, re
           </div>
           <div className={styles['pipeline-info']}>
             <div className={styles['name-status']}>
-              <div className={styles.name}>{repo}</div>
-              <div className={`${status ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{status ? 'Active' : 'Inactive' }</div>
+              <div className={styles.name}>{webhook.pipelineName || 'Action Needed'}</div>
+              <div className={`${webhook.isActive ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{webhook.isActive ? 'Active' : 'Inactive' }</div>
             </div>
             <div className={styles.events}>
-              {events.map((event, index) => (
+              {webhook.events.map((event, index) => (
                 <div className={styles['event-type']} key={index}>{event}</div>
               ))}
             </div>
             <div className={styles.time}>
-              {lastDelivery &&
+              {webhook.lastDelivery &&
                 <>
                   <div className={styles['last-delivery']}>
                     <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    <span>{lastDelivery} ago</span>
+                    <span>{formatDate(webhook.lastDelivery)}</span>
                   </div>
-                  <span>&bull;</span>
                 </>
               }
-              <span className={styles.registered}>Registered: {registeredAgo} ago</span>
             </div>
-            {branchFilters &&
+            {webhook.branchFilters.length > 0  &&
               <div className={styles.branchFilters}>
                 <span>Branch Filters:</span>
                 <div className={styles.branchPills}>
-                  {branchFilters?.map((branchFilter, index) => (
+                  {webhook.branchFilters?.map((branchFilter, index) => (
                     <span key={index} className={styles.branchPill}>{branchFilter}</span>
                   ))}
                 </div>
@@ -52,7 +43,7 @@ export default function WebhookCard({ id, repo, status, events, lastDelivery, re
             }
           </div>
         </div>
-        <SyncButton id={id} />
+        <SyncButton id={webhook.id} />
       </div>
     </div>
   )
