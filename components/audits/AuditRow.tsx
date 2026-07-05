@@ -3,6 +3,7 @@
 import styles from '@/app/audits/audit.module.css';
 import { useRouter } from 'next/navigation';
 import type { Audit } from "@/lib/data/audits";
+import { formatDate } from '@/lib/utils/string';
 
 export default function AuditRow({ audit }: { audit: Audit }) {
   const router = useRouter();
@@ -12,9 +13,9 @@ export default function AuditRow({ audit }: { audit: Audit }) {
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>{audit.action}</td>
-      <td>push → acme/api-server <span className={styles['audit-category']}>[{audit.category}]</span></td>
-      <td>{audit.actor}</td>
-      <td className={styles.nowrap}>{audit.time}</td>
+      <td>{audit.resourceLabel ?? '—'} <span className={styles['audit-category']}>[{audit.resourceType}]</span></td>
+      <td>{audit.user ?? audit.actor ?? "System"}</td>
+      <td className={styles.nowrap}>{formatDate(audit.createdAt)}</td>
     </tr>
   )
 }
