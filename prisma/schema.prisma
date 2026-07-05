@@ -300,13 +300,13 @@ model Secret {
 // ─────────────────────────────────────────────
 
 model Webhook {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   repo          String
-  isActive      Boolean  @default(false)
+  isActive      Boolean   @default(false)
   events        String[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
-  lastDelivery  String?
-  registeredAgo String
+  lastDelivery  DateTime?
+  createdAt     DateTime  @default(now())
 
   encryptedValue String @db.Text
   iv             String
