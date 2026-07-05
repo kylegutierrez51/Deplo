@@ -48,6 +48,7 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
         orderBy: { createdAt: "desc" },
         take: 1,
       },
+      createdBy: { select: { name: true } }
      }
   })
 
@@ -56,6 +57,7 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
   return {
     ...pipeline,
     status: pipeline.runs[0] ? RUN_STATUS_MAP[pipeline.runs[0].status] : 'idle',
-    lastRun: pipeline.runs[0] ? pipeline.runs[0].finishedAt : null
+    lastRun: pipeline.runs[0] ? pipeline.runs[0].finishedAt : null,
+    createdBy: pipeline.createdBy?.name ?? null
   }
 }
