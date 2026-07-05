@@ -16,7 +16,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
   const { mode, id } = await searchParams;
   const audits = await getAudits();
 
-  const record = id ? await getAuditById(Number(id)) : undefined;
+  const record = id ? await getAuditById(id) : undefined;
 
   const modal =
     mode === "create" ? { mode: "create" as const } :
