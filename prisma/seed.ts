@@ -272,8 +272,9 @@ async function main() {
     { repo: "abcd/web-client", pipeline: "sync-translations", isActive: false, events: ["push"], branchFilters: ["main"], createdBy: "amara.okafor" },
   ];
   await Promise.all(
-    webhookSeeds.map((w) =>
-      prisma.webhook.create({
+    webhookSeeds.map((w) => {
+      const { encryptedValue, iv, authTag } = encryptSecret(randomBytes(20).toString("hex"));
+      return prisma.webhook.create({
         data: {
           repo: w.repo,
           isActive: w.isActive,
@@ -281,10 +282,13 @@ async function main() {
           branchFilters: w.branchFilters,
           lastDelivery: new Date().toISOString(),
           registeredAgo: new Date().toISOString(),
+          encryptedValue,
+          iv,
+          authTag,
           createdById: w.createdBy ? userByName.get(w.createdBy)?.id ?? null : null,
         },
-      })
-    )
+      });
+    })
   );
 
   // ── Webhook Events ───────────────────────────────────────────────

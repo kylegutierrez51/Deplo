@@ -308,6 +308,10 @@ model Webhook {
   lastDelivery  String?
   registeredAgo String
 
+  encryptedValue String @db.Text
+  iv             String
+  authTag        String
+
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
