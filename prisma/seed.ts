@@ -322,10 +322,10 @@ async function main() {
 
   // ── Audit Log ────────────────────────────────────────────────────
   // From lib/data/audits.ts, extended with a few more action types.
-  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; user: string | null }[] = [
-    { action: AuditAction.RUN_COMPLETED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null },
-    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null },
-    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("deploy-api")!.id, user: null },
+  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; user: string | null; actor?: string }[] = [
+    { action: AuditAction.RUN_COMPLETED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null, actor: "github" },
+    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null, actor: "github" },
+    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("deploy-api")!.id, user: null, actor: "github" },
     { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("build-frontend")!.id, user: "coco" },
     { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, user: "sarah.chen" },
     { action: AuditAction.APPROVAL_GRANTED, resourceType: ResourceType.STAGE_RESULT, resourceId: stageResults[18].id, user: "coco" },
@@ -342,6 +342,7 @@ async function main() {
           resourceType: a.resourceType,
           resourceId: a.resourceId,
           userId: a.user ? userByName.get(a.user)?.id ?? null : null,
+          actor: a.actor ?? null,
         },
       })
     )

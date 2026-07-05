@@ -387,6 +387,7 @@ enum ResourceType {
 model AuditLog {
   id           String       @id @default(cuid())
   userId       String?
+  actor        String? // display name for non-user actors (webhooks, integrations, system jobs)
   action       AuditAction
   resourceType ResourceType // "Pipeline", "Secret", "PipelineRun", etc.
   resourceId   String
