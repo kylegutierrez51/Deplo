@@ -3,7 +3,7 @@
 import styles from "@/app/webhooks/webhooks.module.css"
 import { useRouter } from 'next/navigation';
 
-export default function WebhookCardShell({ children, id }: { children: React.ReactNode; id: number }) {
+export default function WebhookCardShell({ children, id }: { children: React.ReactNode; id: string }) {
   const router = useRouter();
   const open = () => router.push(`/webhooks?id=${id}`);
   

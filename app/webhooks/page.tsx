@@ -16,7 +16,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
   const { mode, id } = await searchParams;
   const webhooks = await getWebhooks();
 
-  const record = id ? await getWebhookById(Number(id)) : undefined;
+  const record = id ? await getWebhookById(id) : undefined;
 
   const modal =
     mode === "create" ? { mode: "create" as const } :
@@ -60,13 +60,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
             {webhooks.map((webhook, i) => (
               <WebhookCardShell key={i} id={webhook.id}>
                 <WebhookCard
-                  id={webhook.id}
-                  repo={webhook.repository}
-                  status={webhook.status}
-                  events={webhook.events}
-                  lastDelivery={webhook.lastDelivery}
-                  registeredAgo={webhook.registeredAgo}
-                  branchFilters={webhook.branchFilters} />
+                  webhook={webhook} />
               </WebhookCardShell>
             ))}
           </div>
