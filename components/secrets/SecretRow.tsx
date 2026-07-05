@@ -14,7 +14,7 @@ export default function SecretRow({ secret }: { secret: Secret }) {
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>
         {secret.key}
-        {secret.notes && (<><br /><span>{secret.notes.slice(0, 40)}...</span></>)}
+        {secret.notes && (<><br /><span>{secret.notes?.length > 40 ? secret.notes.slice(0, 40) + "..." : secret.notes}</span></>)}
       </td>
       <td><Pill variant={secret.environment.type} label={secret.environment.name} /></td>
       <td className="nowrap">{formatDate(secret.updatedAt)}</td>
