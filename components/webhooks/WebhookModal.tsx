@@ -1,53 +1,109 @@
 "use client"
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useActionState } from 'react';
+import { formatDate } from '@/lib/utils/string';
+import type { FormState } from '@/lib/types';
+import type { Pipeline } from '@/lib/data/pipelines';
 import Modal from '../modals/Modal';
+import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
+import RegenerateSecretModal from './RegenerateSecretModal';
 import modalStyles from '../modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
+import { addWebhook, updateWebhook, deleteWebhook } from '@/lib/actions/webhooks';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
 interface WebhookModalProps {
   mode?: 'view' | 'edit' | 'create';
-  repository?: string;
-  pipeline?: string;
-  branchFilters?: string[];
-  events?: string[];
-  webhookSecret?: string;
+  id: string;
+  pipelineName?: string | null;
+  branchFilters: string[];
+  events: string[];
   createdBy?: string | null;
-  lastDelivery?: string;
-  registeredAgo?: string;
+  lastDelivery?: Date | null;
+  createdAt: Date;
+  pipelines: Pipeline[] | null;
   onClose: () => void;
   onCreate: () => void;
-  onDelete?: () => void;
+  onDelete: () => void;
   onEdit: () => void;
-  onEditClose: () => void;
-  onSave?: () => void;
+  onEditOrDeleteClose: () => void;
+  onSave: () => void;
+  onError: (message: string) => void;
 }
+
+const initialState: FormState = {
+  status: 'idle',
+  message: '',
+}
+
+const EVENT_DEFS = [
+  { key: 'push', label: 'Push', desc: 'Triggered when commits are pushed to a branch' },
+  { key: 'pull_request', label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
+];
 
 export default function WebhookModal({
   mode = 'view',
-  repository,
-  pipeline,
+  id,
+  pipelineName,
   branchFilters = [],
   events = [],
-  webhookSecret = '',
   createdBy,
   lastDelivery,
-  registeredAgo,
+  createdAt,
+  pipelines,
   onClose,
   onCreate,
   onDelete,
   onEdit,
-  onEditClose,
+  onEditOrDeleteClose,
   onSave,
+  onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
   const [selectedEvents, setSelectedEvents] = useState<string[]>(events);
-  const [secretVisible, setSecretVisible] = useState(false);
-  const [secret, setSecret] = useState(webhookSecret);
-  const [copied, setCopied] = useState(false);
+  const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
+
+  const [query, setQuery] = useState(pipelineName ?? '');
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
+    pipelines?.find(p => p.name === pipelineName)?.id ?? null
+  );
+  const [openMatches, setOpenMatches] = useState(false);
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isRegenerateModalVisible, setIsRegenerateModalVisible] = useState(false);
+  const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
+  const [revealedSecretVisible, setRevealedSecretVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const [createState, createFormAction] = useActionState(addWebhook, initialState);
+  const [editState, editFormAction] = useActionState(updateWebhook, initialState);
+
+  useEffect(() => {
+    if (createState.status === 'success') {
+      onCreate();
+    }
+    else if (createState.status === 'error') {
+      onError(createState.message);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createState]);
+
+  useEffect(() => {
+    if (editState.status === 'success') {
+      onSave();
+    }
+    else if (editState.status === 'error') {
+      onError(editState.message);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
+  }, [editState]);
+
+  const handleDeleteClose = () => {
+    setIsDeleteModalVisible(false);
+    onEditOrDeleteClose();
+  }
 
   const handleBranchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
@@ -62,16 +118,24 @@ export default function WebhookModal({
     setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(secret);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const matches = () => {
+    if (!query) return [];
+    const q = query.toLowerCase();
+    return pipelines?.filter(p => p.name.toLowerCase().includes(q)) ?? [];
+  }
+
+  const handleGenerateSecret = () => {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    setSecret(`whsec_${hex}`);
   };
 
-  const handleRegenerate = () => {
-    const chars = 'abcdef0123456789';
-    const random = Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    setSecret(`whsec_${random}`);
+  const handleCopyRevealed = () => {
+    if (!revealedSecret) return;
+    navigator.clipboard.writeText(revealedSecret);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
@@ -80,208 +144,252 @@ export default function WebhookModal({
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={onDelete}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setIsDeleteModalVisible(true)}>Delete</button>
       <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onCreate}>Create</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Create</button>
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="button" onClick={onSave}>Save Changes</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditOrDeleteClose}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Save Changes</button>
     </>
   );
 
-  const EVENT_DEFS = [
-    { key: 'push', label: 'Push', desc: 'Triggered when commits are pushed to a branch' },
-    { key: 'pull request', label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
-  ];
-
   return (
-    <Modal title={title} subtitle={subtitle} icon={icon} onClose={onClose} footer={footer} mode={mode}>
-      {mode === 'view' ? (
-        <>
-          <div className={styles.fieldGroup}>
-            <label>Repository</label>
-            <div className={styles.selectWrapper}>
-              <ion-icon name="git-branch-outline" className={styles.selectIconLeft}></ion-icon>
-              <span>{repository}</span>
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label>Pipeline to trigger</label>
-            <div className={styles.selectWrapper}>
-              <ion-icon name="link-outline" className={styles.selectIconLeft}></ion-icon>
-              <span>{pipeline}</span>
-            </div>
-          </div>
-
-          {filters.length > 0 && (
+    <>
+      <Modal action={mode === 'create' ? createFormAction : editFormAction} title={title} subtitle={subtitle} icon={icon} onClose={onClose} footer={footer} mode={mode}>
+        {mode === 'view' ? (
+          <>
             <div className={styles.fieldGroup}>
-              <label>Branch filters <span className={styles.optionalBadge}>optional</span></label>
-              <div className={styles.branchPills}>
-                {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+              <label>Pipeline to trigger</label>
+              <div className={styles.selectWrapper}>
+                <ion-icon name="link-outline" className={styles.selectIconLeft}></ion-icon>
+                <span>{pipelineName}</span>
               </div>
             </div>
-          )}
 
-          <div className={styles.fieldGroup}>
-            <label>Trigger events</label>
-            <div className={styles.eventCards}>
-              {EVENT_DEFS.map(({ key, label, desc }) => (
-                <div key={key} className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}>
-                  <div className={styles.eventCardCheckbox}>
-                    <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <span className={styles.eventName}>{label}</span>
-                    <span className={styles.eventDesc}>{desc}</span>
-                  </div>
+            {filters.length > 0 && (
+              <div className={styles.fieldGroup}>
+                <label>Branch filters <span className={styles.optionalBadge}>optional</span></label>
+                <div className={styles.branchPills}>
+                  {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            )}
 
-          <div className={styles.fieldGroup}>
-            <div className={styles.fieldLabelRow}>
-              <label>Webhook secret</label>
-            </div>
-            <div className={styles.secretInputWrapper}>
-              <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
-              <input
-                type={secretVisible ? 'text' : 'password'}
-                value={secret}
-                readOnly
-                className={styles.secretInput}
-              />
-              <div className={styles.secretActions}>
-                <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
-                  <ion-icon name={secretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
-                </button>
-                <span className={styles.secretDivider}></span>
-                <button type="button" className={styles.iconActionBtn} onClick={handleCopy}>
-                  <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
-                </button>
+            <div className={styles.fieldGroup}>
+              <label>Trigger events</label>
+              <div className={styles.eventCards}>
+                {EVENT_DEFS.map(({ key, label, desc }) => (
+                  <div key={key} className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}>
+                    <div className={styles.eventCardCheckbox}>
+                      <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
+                    </div>
+                    <div className={styles.eventCardContent}>
+                      <span className={styles.eventName}>{label}</span>
+                      <span className={styles.eventDesc}>{desc}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
 
-          <div className={styles['item-flex']}>
-            <div className={styles.fieldGroup}>
-              <label>Created By</label>
-              <span>{createdBy || 'Unknown User'}</span>
-            </div>
-            <div className={styles.fieldGroup}>
-              <label>Last Delivery</label>
-              <span>{lastDelivery}</span>
-            </div>
-            <div className={styles.fieldGroup}>
-              <label>Registered Ago</label>
-              <span>{registeredAgo}</span>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="webhook-repo">Repository</label>
-            <div className={styles.selectWrapper}>
-              <ion-icon name="git-branch-outline" className={styles.selectIconLeft}></ion-icon>
-              <select id="webhook-repo" name="repository" defaultValue={repository ?? ''}>
-                <option value="">Select a repository...</option>
-                {repository && <option value={repository}>{repository}</option>}
-              </select>
-              <ion-icon name="chevron-down-outline" className={styles.selectIconRight}></ion-icon>
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label htmlFor="webhook-pipeline">Pipeline to trigger</label>
-            <div className={styles.selectWrapper}>
-              <ion-icon name="link-outline" className={styles.selectIconLeft}></ion-icon>
-              <select id="webhook-pipeline" name="pipeline" defaultValue={pipeline ?? ''}>
-                <option value="">Select a pipeline...</option>
-                {pipeline && <option value={pipeline}>{pipeline}</option>}
-              </select>
-              <ion-icon name="chevron-down-outline" className={styles.selectIconRight}></ion-icon>
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label>
-              Branch filters
-              <span className={styles.optionalBadge}>optional</span>
-            </label>
-            <input
-              type="text"
-              ref={branchInputRef}
-              placeholder="e.g. main, release/*, feature/** — press Enter to add"
-              onKeyDown={handleBranchKeyDown}
-            />
-            <div className={styles.branchPills}>
-              {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label>Trigger events</label>
-            <div className={styles.eventCards}>
-              {EVENT_DEFS.map(({ key, label, desc }) => (
-                <label
-                  key={key}
-                  className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}
-                >
-                  <div className={styles.eventCardCheckbox}>
-                    <input type="checkbox" checked={selectedEvents.includes(key)} onChange={() => toggleEvent(key)} />
-                    <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
-                  </div>
-                  <div className={styles.eventCardContent}>
-                    <span className={styles.eventName}>{label}</span>
-                    <span className={styles.eventDesc}>{desc}</span>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <div className={styles.fieldLabelRow}>
-              <label htmlFor="webhook-secret">Webhook secret</label>
-              <button type="button" className={styles.regenerateBtn} onClick={handleRegenerate} title="Regenerate secret">
-                <ion-icon name="refresh-outline"></ion-icon>
-              </button>
-            </div>
-            <div className={styles.secretInputWrapper}>
-              <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
-              <input
-                type={secretVisible ? 'text' : 'password'}
-                id="webhook-secret"
-                name="webhook_secret"
-                value={secret}
-                onChange={e => setSecret(e.target.value)}
-                className={styles.secretInput}
-              />
-              <div className={styles.secretActions}>
-                <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
-                  <ion-icon name={secretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
-                </button>
-                <span className={styles.secretDivider}></span>
-                <button type="button" className={styles.iconActionBtn} onClick={handleCopy}>
-                  <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
-                </button>
+            <div className={styles['item-flex']}>
+              <div className={styles.fieldGroup}>
+                <label>Created By</label>
+                <span>{createdBy || 'Unknown User'}</span>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Last Delivery</label>
+                <span>{lastDelivery ? formatDate(lastDelivery) : '—'}</span>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Created At</label>
+                <span>{formatDate(createdAt)}</span>
               </div>
             </div>
-            <p className={styles.fieldHint}>
-              <ion-icon name="information-circle-outline"></ion-icon>
-              Used for HMAC-SHA256 signature validation. Store securely — it won&apos;t be shown again.
-            </p>
-          </div>
-        </>
-      )}
-    </Modal>
+          </>
+        ) : (
+          <>
+            <input type="hidden" name="id" value={id ?? ''} />
+
+            <div className={styles.fieldGroup}>
+              <label htmlFor="pipeline-name">Pipeline to trigger</label>
+              <input type="hidden" name="pipeline_id" value={selectedPipelineId ?? ''} />
+              <div className={styles.autocompleteWrapper}>
+                <input
+                  type="text"
+                  id="pipeline-name"
+                  name="pipeline_name"
+                  placeholder="e.g. deploy-api"
+                  autoComplete="off"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setSelectedPipelineId(null);
+                    setOpenMatches(true);
+                  }}
+                  onFocus={() => setOpenMatches(true)}
+                  onBlur={() => setTimeout(() => setOpenMatches(false), 100)}
+                  required
+                />
+                {openMatches && query && (
+                  <ul className={styles.autocompleteList}>
+                    {matches().length > 0 ? (
+                      matches().map(p => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            className={styles.autocompleteOption}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setQuery(p.name);
+                              setSelectedPipelineId(p.id);
+                              setOpenMatches(false);
+                            }}
+                          >
+                            <span>{p.name}</span>
+                            <span className={styles.autocompleteMuted}>{p.repoUrl}</span>
+                          </button>
+                        </li>
+                      ))
+                    ) : (
+                      <li className={styles.autocompleteEmpty}>No matching pipelines</li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>
+                Branch filters
+                <span className={styles.optionalBadge}>optional</span>
+              </label>
+              <input
+                type="text"
+                ref={branchInputRef}
+                placeholder="e.g. main, release/*, feature/** — press Enter to add"
+                onKeyDown={handleBranchKeyDown}
+              />
+              <div className={styles.branchPills}>
+                {filters.map((p, i) => (
+                  <span key={i} className={styles.branchPill}>
+                    {p}
+                    <input type="hidden" name="branch_filters" value={p} />
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>Trigger events</label>
+              <div className={styles.eventCards}>
+                {EVENT_DEFS.map(({ key, label, desc }) => (
+                  <label
+                    key={key}
+                    className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}
+                  >
+                    <div className={styles.eventCardCheckbox}>
+                      <input type="checkbox" checked={selectedEvents.includes(key)} onChange={() => toggleEvent(key)} />
+                      <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
+                    </div>
+                    <div className={styles.eventCardContent}>
+                      <span className={styles.eventName}>{label}</span>
+                      <span className={styles.eventDesc}>{desc}</span>
+                    </div>
+                  </label>
+                ))}
+                {selectedEvents.map((key, i) => <input key={i} type="hidden" name="events" value={key} />)}
+              </div>
+            </div>
+
+            {mode === 'create' ? (
+              <div className={styles.fieldGroup}>
+                <div className={styles.fieldLabelRow}>
+                  <label htmlFor="webhook-secret">Webhook secret</label>
+                  <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
+                    <ion-icon name="refresh-outline"></ion-icon>
+                  </button>
+                </div>
+                <div className={styles.secretInputWrapper}>
+                  <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                  <input
+                    type="text"
+                    id="webhook-secret"
+                    name="webhook_secret"
+                    value={secret}
+                    onChange={e => setSecret(e.target.value)}
+                    className={styles.secretInput}
+                    required
+                  />
+                </div>
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  Used for HMAC-SHA256 signature validation. Store securely — it won&apos;t be shown again.
+                </p>
+              </div>
+            ) : (
+              <div className={styles.fieldGroup}>
+                <label>Webhook secret</label>
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  The signing secret can&apos;t be viewed again after creation. Regenerate it if it may have been compromised.
+                </p>
+                <button type="button" className={styles.regenerateSecretBtn} onClick={() => setIsRegenerateModalVisible(true)}>
+                  <ion-icon name="refresh-outline"></ion-icon>
+                  Regenerate secret
+                </button>
+
+                {revealedSecret && (
+                  <div className={styles.revealedSecretBanner}>
+                    <div className={styles.secretInputWrapper}>
+                      <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                      <input
+                        type={revealedSecretVisible ? 'text' : 'password'}
+                        value={revealedSecret}
+                        readOnly
+                        className={styles.secretInput}
+                      />
+                      <div className={styles.secretActions}>
+                        <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>
+                          <ion-icon name={revealedSecretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
+                        </button>
+                        <span className={styles.secretDivider}></span>
+                        <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
+                          <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
+                        </button>
+                      </div>
+                    </div>
+                    <span className={styles.revealedSecretHint}>Copy this now — it won&apos;t be shown again.</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
+
+      {isDeleteModalVisible &&
+        <DeleteConfirmationModal id={id} recordLabel={"Webhook"} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deleteWebhook} onError={onError} />
+      }
+
+      {isRegenerateModalVisible &&
+        <RegenerateSecretModal
+          id={id}
+          onRegenerate={(newSecret) => {
+            setRevealedSecret(newSecret);
+            setRevealedSecretVisible(false);
+            setIsRegenerateModalVisible(false);
+          }}
+          onRegenerateClose={() => setIsRegenerateModalVisible(false)}
+          onError={onError}
+        />
+      }
+    </>
   );
 }

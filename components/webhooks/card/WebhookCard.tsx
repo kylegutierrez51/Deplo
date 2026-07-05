@@ -13,7 +13,7 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
           </div>
           <div className={styles['pipeline-info']}>
             <div className={styles['name-status']}>
-              <div className={styles.name}>{webhook.repo}</div>
+              <div className={styles.name}>{webhook.pipelineName || 'Action Needed'}</div>
               <div className={`${webhook.isActive ? ` ${styles.active}` : ` ${styles.inactive}`} `}>{webhook.isActive ? 'Active' : 'Inactive' }</div>
             </div>
             <div className={styles.events}>
