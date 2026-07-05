@@ -551,3 +551,33 @@ Database fields: Encrypt a user’s account balance, and put that user’s ID in
 
 Encrypted files: Put the filename or a version number in AAD so one valid encrypted file can’t be silently swapped for another.
 
+===================================================================================================================================
+
+Explanation on why 'SecretModalWithEnvironments' in SecretModalController didn't call onCreate() or onSave() properly, but Environment and Pipeline Modals did call:
+
+
+The difference comes down to component identity, not behavior — the four controllers all render structurally similar JSX, but only SecretModalController created a new component on every render.
+
+The other two (working):
+
+
+return <CrudModalController mode={mode} record={pipeline} ... ModalComponent={PipelineModal} />;
+PipelineModal is a reference to a function declared once, at module scope, in PipelineModal.tsx. No matter how many times PipelineModalController re-renders, PipelineModal is the exact same function object every time. React identifies component types by reference equality — same reference in → React treats it as "the same component, just re-render it with new props," preserving all of its internal hook state across renders.
+
+
+SecretModalController (broken):
+
+        const SecretModalWithEnvironments = (props) => (
+          <SecretModal {...props} environments={environments} />
+        )
+        return <CrudModalController ... ModalComponent={SecretModalWithEnvironments} />;
+
+
+This arrow function is defined inside SecretModalController's body. Every time that body runs, JavaScript allocates a brand-new function object — even though the code looks identical each time, it's a different reference. When CrudModalController renders <ModalComponent .../> and sees the type changed from the previous render, React doesn't update in place — it unmounts the old SecretModal instance entirely (discarding all its hook state: query, selectedEnvId, and the useActionState results) and mounts a fresh one from scratch.
+
+Why that timing was fatal specifically for save/create: addSecret/updateSecret both call revalidatePath('/secrets'). Next.js ties that to a router refresh of app/secrets/page.tsx, which hands SecretModalController new environments/secret props right as the action resolves — causing exactly the re-render that manufactures a new SecretModalWithEnvironments identity, right when useActionState's state was transitioning to 'success'. The remount reset everything back to {status: 'idle'} before the useEffect watching for 'success' ever got to run, so onCreate()/onSave() silently never fired. PipelineModal/EnvironmentModal/WebhookModal go through the identical revalidatePath → refresh → re-render sequence, but since their component reference never changes, React just updates props in place and the in-flight useActionState result survives to be observed by the effect.
+
+The fix (already applied) removes the inline wrapper and passes environments through a new extraProps param on CrudModalController, so SecretModal itself — a stable, module-level reference — is used as ModalComponent, matching the other three.
+
+===================================================================================================================================
+

@@ -16,12 +16,13 @@ interface CrudModalBaseProps {
   onError: (message: string) => void;
 }
 
-export default function CrudModalController<T extends { id: string }>({ mode, record, basePath, recordLabel, ModalComponent }: {
+export default function CrudModalController<T extends { id: string }, Extra extends object = Record<string, never>>({ mode, record, basePath, recordLabel, ModalComponent, extraProps }: {
   mode: "view" | "create" | "edit";
   record?: T;
   basePath: string;
   recordLabel: string;
-  ModalComponent: ComponentType<T & CrudModalBaseProps>;
+  ModalComponent: ComponentType<T & Extra & CrudModalBaseProps>;
+  extraProps?: Extra;
 }) {
   const router = useRouter();
   const [modalKey, setModalKey] = useState(0);
@@ -57,18 +58,18 @@ export default function CrudModalController<T extends { id: string }>({ mode, re
     }
   }
 
-  return (
-    <ModalComponent
-      key={modalKey}
-      mode={mode}
-      {...(record as T)}
-      onClose={onClose}
-      onCreate={onCreate}
-      onDelete={onDelete}
-      onEdit={onEdit}
-      onEditOrDeleteClose={onEditOrDeleteClose}
-      onSave={onSave}
-      onError={onError}
-    />
-  )
+  const props = {
+    mode,
+    ...(record as T),
+    ...(extraProps as Extra),
+    onClose,
+    onCreate,
+    onDelete,
+    onEdit,
+    onEditOrDeleteClose,
+    onSave,
+    onError,
+  } as T & Extra & CrudModalBaseProps;
+
+  return <ModalComponent key={modalKey} {...props} />;
 }

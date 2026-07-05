@@ -9,6 +9,7 @@ import SecretRow from '@/components/secrets/SecretRow';
 import Pagination from "@/components/pagination/Pagination";
 import SecretModalController from '@/components/secrets/SecretModalController';
 import { getSecretById, getSecrets } from '@/lib/data/secrets';
+import { getEnvironments } from '@/lib/data/environments';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -23,6 +24,8 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
       record && mode === "edit" ? { mode: "edit" as const, record } :
         record ? { mode: "view" as const, record } :
           null;
+
+  const environments = await getEnvironments();
 
   return (
     <>
@@ -68,6 +71,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
         <SecretModalController
           mode={modal.mode}
           secret={modal.record}
+          environments={environments}
         />
       )}
     </>
