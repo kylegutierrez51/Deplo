@@ -391,6 +391,7 @@ model AuditLog {
   action       AuditAction
   resourceType ResourceType // "Pipeline", "Secret", "PipelineRun", etc.
   resourceId   String
+  resourceLabel String? // human-readable snapshot of the resource, captured at write time so it survives resource deletion/rename
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 

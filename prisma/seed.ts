@@ -322,17 +322,17 @@ async function main() {
 
   // ── Audit Log ────────────────────────────────────────────────────
   // From lib/data/audits.ts, extended with a few more action types.
-  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; user: string | null; actor?: string }[] = [
-    { action: AuditAction.RUN_COMPLETED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null, actor: "github" },
-    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, user: null, actor: "github" },
-    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("deploy-api")!.id, user: null, actor: "github" },
-    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("build-frontend")!.id, user: "coco" },
-    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, user: "sarah.chen" },
-    { action: AuditAction.APPROVAL_GRANTED, resourceType: ResourceType.STAGE_RESULT, resourceId: stageResults[18].id, user: "coco" },
-    { action: AuditAction.RUN_CANCELLED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[4].id, user: "marcus.coco" },
-    { action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, user: "priya.nair" },
-    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[1].id, user: "coco" },
-    { action: AuditAction.PIPELINE_DELETED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("sync-translations")!.id, user: "amara.okafor" },
+  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; user: string | null; actor?: string }[] = [
+    { action: AuditAction.RUN_COMPLETED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, resourceLabel: "deploy-api @ a1b2c3d", user: null, actor: "github" },
+    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, resourceLabel: "deploy-api @ a1b2c3d", user: null, actor: "github" },
+    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("deploy-api")!.id, resourceLabel: "push → abcd/api-server", user: null, actor: "github" },
+    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("build-frontend")!.id, resourceLabel: "build-frontend", user: "coco" },
+    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (prod)", user: "sarah.chen" },
+    { action: AuditAction.APPROVAL_GRANTED, resourceType: ResourceType.STAGE_RESULT, resourceId: stageResults[18].id, resourceLabel: "release-approval", user: "coco" },
+    { action: AuditAction.RUN_CANCELLED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[4].id, resourceLabel: "deploy-api @ 7890abc", user: "marcus.coco" },
+    { action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "priya.nair" },
+    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[1].id, resourceLabel: "GITHUB_TOKEN (dev)", user: "coco" },
+    { action: AuditAction.PIPELINE_DELETED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("sync-translations")!.id, resourceLabel: "sync-translations", user: "amara.okafor" },
   ];
   await Promise.all(
     auditSeeds.map((a) =>
@@ -341,6 +341,7 @@ async function main() {
           action: a.action,
           resourceType: a.resourceType,
           resourceId: a.resourceId,
+          resourceLabel: a.resourceLabel,
           userId: a.user ? userByName.get(a.user)?.id ?? null : null,
           actor: a.actor ?? null,
         },
