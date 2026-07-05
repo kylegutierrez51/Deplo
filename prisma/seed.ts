@@ -1,7 +1,8 @@
 // Seeds the database with data shaped after the mock arrays in lib/data/*.
 // Run via `npx prisma db seed` (or automatically after `prisma migrate dev`).
 import "dotenv/config";
-import { randomBytes, createCipheriv } from "node:crypto";
+import { randomBytes } from "node:crypto";
+import { encryptSecret } from "@/lib/crypto";
 import prisma from "@/lib/prisma";
 import {
   UserRole,
@@ -14,18 +15,6 @@ import {
   AuditAction,
   ResourceType
 } from "../generated/prisma/client";
-
-// Secrets in lib/data/secrets.ts store plaintext "value" — the real Secret
-// model only stores AES-256-GCM ciphertext, so we encrypt with a seed-only key.
-const SEED_ENCRYPTION_KEY = randomBytes(32);
-
-function encryptSecret(plaintext: string) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", SEED_ENCRYPTION_KEY, iv);
-  const encryptedValue = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]).toString("hex");
-  const authTag = cipher.getAuthTag().toString("hex");
-  return { encryptedValue, iv: iv.toString("hex"), authTag };
-}
 
 async function main() {
   // Clear in reverse dependency order so re-running the seed is idempotent.
