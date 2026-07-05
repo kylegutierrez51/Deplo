@@ -31,7 +31,7 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                 </>
               }
             </div>
-            {webhook.branchFilters &&
+            {webhook.branchFilters.length > 0  &&
               <div className={styles.branchFilters}>
                 <span>Branch Filters:</span>
                 <div className={styles.branchPills}>
