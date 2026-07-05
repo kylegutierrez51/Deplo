@@ -508,3 +508,76 @@ Flow:
   });
 
 This gets the newest PipelineRun for each pipeline so that we can get the 'status' of each
+
+===================================================================================================================================
+
+AES-256-GCM 
+
+A fixed 256 bit key and a 96 bit nonce (IV) that has a 32 bit counter added to it everytime we put it through AES, where the first nonce (IV) (with a 32 bit counter) is reserved to produce the tag. Once the AES algorithm runs on them, we get a 128 bit scrambled block (a keystream) that we XOR with 1 chunk of a message to create a chunk of a ciphertext. We repeat this process with multiple message chunks until the entire message is converted into a ciphertext.
+
+We have a value “H” computed by putting 128 0 bits into AES, and we use it in a GHASH Chain that essentially multiplies by H and uses XORs with ciphertext to achieve a sequence of bits (a 128-bit hash value) for the Tag. The reserved first nonce (IV) is XORed onto the GHASH result to finish it.
+
+On decryption, recompute the entire GHASH chain over the received ciphertext, XOR in the reserved first nonce (IV) to build a copy of the Tag to compare against the one that arrives. If the ciphertext was changed, it rejects (doesn't decrypt the ciphertext) the arrived Tag.
+
+The last message chunk entered is typically smaller than 128 bits, so it just XORs with the first part of that block's keystream and discards leftovers, meaning the ciphertext ends up being the same length as the message.
+
+GCM chops up your message into 128 bit blocks each (where last message can be shorter, as said in paragraph above)
+
+The 32-bit counter gives AES a different input block for every chunk of your message so that each chunk gets it own unique keystream. Without the counter, you would have the same keystream being XORed with different message chunks, which breaks the encryption. 
+
+The counter keeps different chunks within one message from colliding, while the nonce (IV) keeps different messages (NOT chunks of one) from colliding.
+
+If the same key and nonce (IV) are used for 2 different messages, the keystream repeats, meaning an attacker who knows one plaintext can XOR their way to the other plaintext (but not get the key). However, if the counter was different for those 2 messages, then it wpuld be safe.
+
+For each message, the counter sequence (32-bits) is always the same. What makes each message's keystream unique is the nonce (IV) it's paired with.
+
+The tag, iv, and ciphertext are made public. The only way someone can get plaintext is if they had the 256-bit key. 
+
+The 256-bit key:
+- Generates each keystream block that gets XOred with the message chunks
+- Derives H 
+- Produces the reserved first nonce, used to finish the tag
+
+
+
+
+
+AAD (additional authenticated data) is data you want to keep readable but protect from tampering. It's guarded by the Tag, and if added, is used in the GHASH chain at the very start, multiplied by H. 
+
+
+2 Uses of AAD:
+
+Database fields: Encrypt a user’s account balance, and put that user’s ID in the AAD. Now an attacker with write access to the database can’t copy user A’s encrypted balance into user B’s row — decryption there recomputes the tag with B’s ID as AAD, even though A's ID is in the AAD, meaning it won’t match, and it’s rejected. The ciphertext is cryptographically nailed to user A.
+
+Encrypted files: Put the filename or a version number in AAD so one valid encrypted file can’t be silently swapped for another.
+
+===================================================================================================================================
+
+Explanation on why 'SecretModalWithEnvironments' in SecretModalController didn't call onCreate() or onSave() properly, but Environment and Pipeline Modals did call:
+
+
+The difference comes down to component identity, not behavior — the four controllers all render structurally similar JSX, but only SecretModalController created a new component on every render.
+
+The other two (working):
+
+
+return <CrudModalController mode={mode} record={pipeline} ... ModalComponent={PipelineModal} />;
+PipelineModal is a reference to a function declared once, at module scope, in PipelineModal.tsx. No matter how many times PipelineModalController re-renders, PipelineModal is the exact same function object every time. React identifies component types by reference equality — same reference in → React treats it as "the same component, just re-render it with new props," preserving all of its internal hook state across renders.
+
+
+SecretModalController (broken):
+
+        const SecretModalWithEnvironments = (props) => (
+          <SecretModal {...props} environments={environments} />
+        )
+        return <CrudModalController ... ModalComponent={SecretModalWithEnvironments} />;
+
+
+This arrow function is defined inside SecretModalController's body. Every time that body runs, JavaScript allocates a brand-new function object — even though the code looks identical each time, it's a different reference. When CrudModalController renders <ModalComponent .../> and sees the type changed from the previous render, React doesn't update in place — it unmounts the old SecretModal instance entirely (discarding all its hook state: query, selectedEnvId, and the useActionState results) and mounts a fresh one from scratch.
+
+Why that timing was fatal specifically for save/create: addSecret/updateSecret both call revalidatePath('/secrets'). Next.js ties that to a router refresh of app/secrets/page.tsx, which hands SecretModalController new environments/secret props right as the action resolves — causing exactly the re-render that manufactures a new SecretModalWithEnvironments identity, right when useActionState's state was transitioning to 'success'. The remount reset everything back to {status: 'idle'} before the useEffect watching for 'success' ever got to run, so onCreate()/onSave() silently never fired. PipelineModal/EnvironmentModal/WebhookModal go through the identical revalidatePath → refresh → re-render sequence, but since their component reference never changes, React just updates props in place and the in-flight useActionState result survives to be observed by the effect.
+
+The fix (already applied) removes the inline wrapper and passes environments through a new extraProps param on CrudModalController, so SecretModal itself — a stable, module-level reference — is used as ModalComponent, matching the other three.
+
+===================================================================================================================================
+

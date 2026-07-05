@@ -3,7 +3,7 @@
 import { capitalize, formatDate } from "@/lib/utils/string";
 import { useEffect, useState, useActionState } from 'react';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
-import { type FormState, type EnvType } from '@/lib/types';
+import type { FormState, EnvType } from '@/lib/types';
 import Modal from '../modals/Modal';
 import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
 import Pill from '@/components/Pill';

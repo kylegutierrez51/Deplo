@@ -75,7 +75,7 @@ export async function deletePipeline(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Environment ${deletedPipeline.id} deleted`
+      message: `Pipeline ${deletedPipeline.id} deleted`
     }
 
   } catch (error: unknown) {

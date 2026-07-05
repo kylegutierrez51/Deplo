@@ -1,31 +1,58 @@
-export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
+import prisma from '@/lib/prisma';
+import { decryptSecret } from '@/lib/crypto';
+import type { Secret as PrismaSecret, EnvironmentType } from '@/generated/prisma';
 
-export type Secret = {
-  id: number;
-  secretKey: string;
-  value: string;
-  notes?: string;
-  environmentType: EnvType;
-  environmentName: string;
-  createdBy: string | null;
-  createdAt: string;
-  updatedAt: string; 
+export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
+  environment: {
+    type: Lowercase<EnvironmentType>;
+    name: string
+  },
+  createdBy?: string | null;
 };
 
-export type SecretListItem = Omit<Secret, 'value'>;
+export type SecretDetail = Secret & { value: string };
 
-const SECRETS: Secret[] = [
-  { id: 1, secretKey: 'DATABASE_URL', value: 'asidaifaegauidfgaybaw2', notes: 'Primary Postgres connection — pool size 20, read replica enabled', environmentName: 'prod', environmentType: 'production', createdBy: 'sarah.chen', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 2, secretKey: 'DATABASE_URL', value: "asidaifaegauidfgaybaw2", environmentName: 'staging', environmentType: 'staging', createdBy: 'sarah.chen', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 3, secretKey: 'GITHUB_TOKEN', value: 'asidaifaegauidfgaybaw2', notes: 'Fine-grained PAT scoped to acme org, expires 2025-01-01', environmentName: 'dev', environmentType: 'development', createdBy: 'marcus.coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 4, secretKey: 'GITHUB_TOKEN', value: 'asidaifaegauidfgaybaw2', notes: 'Fine-grained PAT scoped to acme org, expires 2025-01-01', environmentName: 'prev', environmentType: 'preview', createdBy: 'marcus.coco', createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-  { id: 5, secretKey: 'GITHUB_TOKEN', value: 'asidaifaegauidfgaybaw2',  notes: 'Fine-grained PAT scoped to acme org, expires 2025-01-01', environmentName: 'custom', environmentType: 'custom', createdBy: null, createdAt: '6/9/26, 21:27:34', updatedAt: '6/9/26, 21:27:34' },
-];
-
-export async function getSecrets(): Promise<SecretListItem[]> {
-  return SECRETS.map(({ value: _, ...rest }) => rest);
+export async function getSecrets(): Promise<Secret[]> {
+  const secrets = await prisma.secret.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      environment: { 
+        select: { type: true, name: true}
+      }
+    }
+  });
+  return secrets.map((s) => ({
+    ...s,
+    environment: {
+      ...s.environment,
+      type: s.environment.type.toLowerCase() as Secret["environment"]["type"],
+    },
+  }));
 }
 
-export async function getSecretById(id: number): Promise<Secret | undefined> {
-  return SECRETS.find(s => s.id === id);
+export async function getSecretById(id: string): Promise<SecretDetail | null> {
+  const secret = await prisma.secret.findUnique({
+    where: { id },
+    include: {
+      environment: {
+        select: { type: true, name: true}
+      },
+      createdBy: { select: { name: true } }
+    }
+  });
+  if (!secret) return null;
+  const value = decryptSecret({
+    encryptedValue: secret.encryptedValue,
+    iv: secret.iv,
+    authTag: secret.authTag,
+  });
+  return {
+    ...secret,
+    value,
+    environment: {
+      ...secret.environment,
+      type: secret.environment.type.toLowerCase() as Secret["environment"]["type"],
+    },
+    createdBy: secret.createdBy?.name ?? null,
+  };
 }
