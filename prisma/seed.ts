@@ -189,14 +189,14 @@ async function main() {
   const runSeeds = [
     { pipeline: "deploy-api", status: RunStatus.QUEUED, trigger: RunTrigger.WEBHOOK, env: "prod", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
     { pipeline: "build-frontend", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "staging", branch: "main", commitSha: "f4e5d6c", triggeredBy: "coco" },
-    { pipeline: "deploy-api", status: RunStatus.SUCCESS, trigger: RunTrigger.API, env: "dev", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
+    { pipeline: "deploy-api", status: RunStatus.SUCCEEDED, trigger: RunTrigger.API, env: "dev", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
     { pipeline: "deploy-api", status: RunStatus.FAILED, trigger: RunTrigger.WEBHOOK, env: "prev", branch: "main", commitSha: "7890abc", triggeredBy: "sarah.chen" },
     { pipeline: "deploy-api", status: RunStatus.CANCELLED, trigger: RunTrigger.MANUAL, env: "custom", branch: "main", commitSha: "7890abc", triggeredBy: "marcus.coco" },
     { pipeline: "release-mobile", status: RunStatus.FAILED, trigger: RunTrigger.WEBHOOK, env: "prod", branch: "main", commitSha: "7890abc", triggeredBy: "coco" },
     { pipeline: "release-mobile", status: RunStatus.QUEUED, trigger: RunTrigger.MANUAL, env: "staging", branch: "main", commitSha: "7890abc", triggeredBy: "coco" },
     { pipeline: "deploy-infra", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "prod-eu", branch: "main", commitSha: "c3d435f", triggeredBy: "coco" },
     { pipeline: "deploy-infra", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "prod-eu", branch: "main", commitSha: "c3d435f", triggeredBy: "diego.ramirez" },
-    { pipeline: "db-migrate", status: RunStatus.SUCCESS, trigger: RunTrigger.WEBHOOK, env: "dev-2", branch: "feature/auth-flow", commitSha: "7890abc", triggeredBy: "marcus.coco" },
+    { pipeline: "db-migrate", status: RunStatus.SUCCEEDED, trigger: RunTrigger.WEBHOOK, env: "dev-2", branch: "feature/auth-flow", commitSha: "7890abc", triggeredBy: "marcus.coco" },
   ];
   const runs = await Promise.all(
     runSeeds.map((r) =>
@@ -211,7 +211,7 @@ async function main() {
           environmentId: envByName.get(r.env)!.id,
           triggeredById: userByName.get(r.triggeredBy)?.id ?? null,
           startedAt: new Date(),
-          finishedAt: ([RunStatus.SUCCESS, RunStatus.FAILED, RunStatus.CANCELLED] as RunStatus[]).includes(r.status) ? new Date() : null,
+          finishedAt: ([RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED] as RunStatus[]).includes(r.status) ? new Date() : null,
         },
       })
     )
@@ -221,23 +221,23 @@ async function main() {
   // Stage shapes come from lib/data/run-detail.ts (graph nodes) and
   // lib/data/approvals.ts (approval-gated stage lists).
   const stageSeeds: { run: number; stageId: string; stageName: string; stageType: StageType; status: StageStatus; approvedBy?: string }[] = [
-    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
+    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
     { run: 0, stageId: "stage-2", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
-    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
-    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCESS },
-    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
+    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED },
+    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
     { run: 1, stageId: "stage-5", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.RUNNING },
-    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
-    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
+    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
     { run: 3, stageId: "stage-3", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.FAILED },
-    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
-    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
-    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCESS },
+    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED },
     { run: 5, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
     { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.SCRIPT, status: StageStatus.QUEUED },
     { run: 5, stageId: "stage-6", stageName: "publish-stores", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCESS },
+    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
     { run: 6, stageId: "stage-2", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
     { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco" },
   ];

@@ -146,7 +146,7 @@ model PipelineDefinition {
 enum RunStatus {
   QUEUED
   RUNNING
-  SUCCESS
+  SUCCEEDED
   FAILED
   CANCELLED
 }
@@ -193,7 +193,7 @@ enum StageStatus {
   PENDING
   QUEUED
   RUNNING
-  SUCCESS
+  SUCCEEDED
   FAILED
   AWAITING_APPROVAL
   APPROVED
