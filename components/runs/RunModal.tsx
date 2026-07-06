@@ -8,7 +8,7 @@ import Pill from '@/components/Pill';
 import type { RunStatus, RunTrigger } from '@/lib/types';
 import type { Run } from '@/lib/data/runs';
 import { capitalize } from "@/lib/utils/string";
-import { formatDate, getTimeDifference } from "@/lib/utils/date";
+import { formatDate, getDuration } from "@/lib/utils/date";
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
@@ -40,7 +40,7 @@ export default function RunModal({
   onClose,
 }: RunModalProps) {
 
-  const duration = startedAt && finishedAt ? getTimeDifference(startedAt, finishedAt) : startedAt ? 'Ongoing' : '—';
+  const duration = startedAt && finishedAt ? getDuration(startedAt, finishedAt) : startedAt ? 'Ongoing' : '—';
 
   const footer =
     <>

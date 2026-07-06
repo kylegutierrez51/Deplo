@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Pill from '@/components/Pill';
 import type { Run } from "@/lib/data/runs";
 import { capitalize } from "@/lib/utils/string";
-import { formatDate, getTimeDifference } from "@/lib/utils/date";
+import { formatDate, getDuration } from "@/lib/utils/date";
 
 export default function RunRow({ run }: { run: Run }) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function RunRow({ run }: { run: Run }) {
       <td><Pill variant={run.trigger} label={run.trigger === 'api' ? 'API' : capitalize(run.trigger)} /></td>
       <td className={styles.filter}>
         <ion-icon name="stopwatch-outline"></ion-icon>
-        <div className="nowrap">{run.startedAt && run.finishedAt ? getTimeDifference(run.startedAt, run.finishedAt) : run.startedAt ? 'Ongoing' : '—'}</div>
+        <div className="nowrap">{run.startedAt && run.finishedAt ? getDuration(run.startedAt, run.finishedAt) : run.startedAt ? 'Ongoing' : '—'}</div>
       </td>
       <td className="nowrap">{formatDate(run.createdAt)}</td>
     </tr>
