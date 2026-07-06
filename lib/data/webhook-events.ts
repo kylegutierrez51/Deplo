@@ -32,24 +32,51 @@ type GithubWebhookPayload = {
   ref?: string;
 };
 
-export async function getWebhookEvents(): Promise<WebhookEvent[]> {
-  const webhookEvents = await prisma.webhookEvent.findMany({
-    orderBy: { receivedAt: "desc" },
-    include: {
-      pipeline: { select: { name: true, repoUrl: true }},      
-    }
-  });
-  return webhookEvents.map((webhookEvent) => ({
-    ...webhookEvent,
-    pipeline: webhookEvent.pipeline ? {
-      ...webhookEvent.pipeline,
-    } : null,
-    status: WEBHOOK_EVENT_STATUS_MAP[webhookEvent.status],
-    eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
-    commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
-    commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
-    branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
-  }));
+export type WebhookEventCounts = Record<WebhookEventStatus, number>;
+
+export type WebhookEventsResult = {
+  events: WebhookEvent[];
+  counts: WebhookEventCounts;
+};
+
+export async function getWebhookEvents(): Promise<WebhookEventsResult> {
+  const [webhookEvents, statusCounts] = await Promise.all([
+    prisma.webhookEvent.findMany({
+      orderBy: { receivedAt: "desc" },
+      include: {
+        pipeline: { select: { name: true, repoUrl: true }},
+      },
+    }),
+    prisma.webhookEvent.groupBy({
+      by: ["status"],
+      _count: true,
+    }),
+  ]);
+
+  const counts: WebhookEventCounts = {
+    pending: 0,
+    processed: 0,
+    ignored: 0,
+    failed: 0,
+  };
+  for (const { status, _count } of statusCounts) {
+    counts[WEBHOOK_EVENT_STATUS_MAP[status]] = _count;
+  }
+
+  return {
+    events: webhookEvents.map((webhookEvent) => ({
+      ...webhookEvent,
+      pipeline: webhookEvent.pipeline ? {
+        ...webhookEvent.pipeline,
+      } : null,
+      status: WEBHOOK_EVENT_STATUS_MAP[webhookEvent.status],
+      eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
+      commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
+      commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
+      branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
+    })),
+    counts,
+  };
 }
 
 export async function getWebhookEventById(id: string): Promise<WebhookEvent | null> {

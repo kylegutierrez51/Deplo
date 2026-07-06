@@ -16,7 +16,7 @@ type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
 export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
   const { mode, id } = await searchParams;
-  const webhookEvents = await getWebhookEvents();
+  const { events: webhookEvents, counts } = await getWebhookEvents();
 
   const record = id ? await getWebhookEventById(id) : undefined;
 
@@ -43,10 +43,10 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
             <StatCards
               cards={
                 [
-                  { icon: "time-outline", total: 1, label: "PENDING", valueClassName: 'pending' },
-                  { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
-                  { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
-                  { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
+                  { icon: "time-outline", total: counts.pending, label: "PENDING", valueClassName: 'pending' },
+                  { icon: "checkmark-circle-outline", total: counts.processed, label: "PROCESSED", valueClassName: 'processed' },
+                  { icon: "remove-circle-outline", total: counts.ignored, label: "IGNORED", valueClassName: 'ignored' },
+                  { icon: "close-circle-outline", total: counts.failed, label: "FAILED", valueClassName: 'failed' },
                 ]
               } />
 
