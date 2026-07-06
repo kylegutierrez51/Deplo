@@ -2,7 +2,7 @@ import styles from './approval-meta.module.css'
 
 interface ApprovalMetaProps {
   createdBy: string | null;
-  branch: string;
+  branch: string | null;
   waitingTime: string;
   stagesComplete: string;
 }
@@ -15,7 +15,7 @@ export default function ApprovalMeta({ createdBy, branch, waitingTime, stagesCom
       </div>
       <div className={styles['meta-row']}>
         <ion-icon name="git-branch-outline"></ion-icon>
-        <span>{branch}</span>
+        <span>{branch ?? 'None'}</span>
       </div>
       <div className={styles['meta-row']}>
         <ion-icon name="stopwatch-outline"></ion-icon>

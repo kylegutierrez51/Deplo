@@ -1,13 +1,12 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './approval-actions.module.css'
 
 
 // add OnApprove and OnReject: () => void;
 interface ApprovalActionsProps {
-  runId: number
+  runId: string
 }
 
 export default function ApprovalActions({ runId }: ApprovalActionsProps) {
