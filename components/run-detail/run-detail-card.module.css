@@ -51,8 +51,11 @@
   font-weight: 600;
 }
 
-.rdc-status.running ion-icon {
+.rdc-status ion-icon {
   font-size: var(--font-size-body);
+}
+
+.rdc-status ion-icon.running {
   animation: rdc-spin 1.2s linear infinite;
 }
 
