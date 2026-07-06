@@ -34,15 +34,33 @@ Approval Cards
   row-gap: var(--space-sm);
 }
 
-.pipeline-name-type {
+.top-row {
   display: flex;
   align-items: center;
   gap: var(--space-md);
 }
 
-.pipeline-name-type span {
+.top-row span {
   font-weight: bold;
   font-size: 18px;
+}
+
+.top-row .divider {
+  width: 1px;
+  height: 16px;
+  background: var(--light-gray-clr);
+}
+
+.top-row .environment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.top-row .environment .env-name {
+  font-weight: normal;
+  font-size: var(--font-size-body);
+  color: var(--subtitle-clr);
 }
 
 .feature-info {
