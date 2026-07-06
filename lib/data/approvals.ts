@@ -23,7 +23,7 @@ export type Approval = {
   pipelineName: string;
   commitSha: string | null;
   commitMessage: string | null;
-  environment: EnvType;
+  environment: { type: EnvType; name: string } | null;
   branch: string | null;
 
   /* below are stages */
@@ -56,7 +56,7 @@ async function getCommitMessagesByRunId(runIds: string[]): Promise<Map<string, s
 
 const approvalRunInclude = {
   pipeline: { select: { name: true } },
-  environment: { select: { type: true } },
+  environment: { select: { type: true, name: true } },
   triggeredBy: { select: { name: true } },
   stages: { orderBy: { createdAt: 'asc' as const } },
 };
@@ -80,7 +80,10 @@ export async function getApprovals(): Promise<Approval[]> {
       pipelineName: run.pipeline.name,
       commitSha: run.commitSha,
       commitMessage: commitMessageByRunId.get(run.id) ?? null,
-      environment: (run.environment?.type.toLowerCase() ?? 'development') as EnvType,
+      environment: run.environment ? {
+        type: run.environment.type.toLowerCase() as EnvType,
+        name: run.environment.name,
+      } : null,
       branch: run.branch,
       stages: run.stages.map((stage) => ({
         id: stage.id,
@@ -112,7 +115,10 @@ export async function getApprovalById(id: string): Promise<Approval | null> {
     pipelineName: run.pipeline.name,
     commitSha: run.commitSha,
     commitMessage: commitMessageByRunId.get(run.id) ?? null,
-    environment: (run.environment?.type.toLowerCase() ?? 'development') as EnvType,
+    environment: run.environment ? {
+      type: run.environment.type.toLowerCase() as EnvType,
+      name: run.environment.name,
+    } : null,
     branch: run.branch,
     stages: run.stages.map((stage) => ({
       id: stage.id,
