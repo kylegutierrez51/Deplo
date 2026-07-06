@@ -103,7 +103,6 @@ Approval Cards
 
 .approval-card-wrapper {
   width: 100%;
-  cursor: pointer;
   overflow: hidden;
   border: 1px solid var(--light-gray-clr);
 }
