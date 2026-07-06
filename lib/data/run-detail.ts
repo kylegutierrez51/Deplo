@@ -257,6 +257,62 @@ export function buildLogs(stages: StageForLogs[]): JobLog[] {
     });
 }
 
+type GithubWebhookPayload = { head_commit?: { message?: string } };
+
+async function getCommitMessage(runId: string): Promise<string | null> {
+  const webhookEvent = await prisma.webhookEvent.findFirst({ where: { runId } });
+  return (webhookEvent?.payload as GithubWebhookPayload)?.head_commit?.message ?? null;
+}
+
 export async function getRunDetailById(id: string): Promise<RunDetail | undefined> {
-  return undefined; // implemented in Task 3
+  const run = await prisma.pipelineRun.findUnique({
+    where: { id },
+    include: {
+      pipeline: { select: { name: true, repoUrl: true } },
+      environment: { select: { name: true, type: true } },
+      triggeredBy: { select: { name: true } },
+      definition: { select: { graphJson: true } },
+      stages: { orderBy: { createdAt: 'asc' } },
+    },
+  });
+
+  if (!run) return undefined;
+
+  const graphJson = run.definition.graphJson as unknown as GraphJson;
+  const stagesLite: StageLite[] = run.stages.map((s) => ({
+    stageId: s.stageId,
+    status: s.status,
+    startedAt: s.startedAt,
+    finishedAt: s.finishedAt,
+  }));
+
+  const [runNumber, commitMessage] = await Promise.all([
+    prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
+    getCommitMessage(run.id),
+  ]);
+
+  return {
+    runNumber,
+    pipelineName: run.pipeline.name,
+    status: RUN_STATUS_MAP[run.status],
+    environment: run.environment
+      ? { type: run.environment.type.toLowerCase() as EnvType, name: run.environment.name }
+      : null,
+    commitHash: run.commitSha ?? '—',
+    commitMessage: commitMessage ?? '—',
+    branch: run.branch ?? '—',
+    repo: run.pipeline.repoUrl,
+    trigger: RUN_TRIGGER_MAP[run.trigger],
+    triggeredBy: run.triggeredBy?.name ?? '—',
+    duration: run.finishedAt
+      ? getDuration(run.startedAt!, run.finishedAt)
+      : run.startedAt
+        ? getDuration(run.startedAt)
+        : '—',
+    timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
+    jobCounts: countJobs(graphJson, stagesLite),
+    graph: buildGraph(graphJson, stagesLite),
+    logFilters: buildLogFilters(graphJson, stagesLite),
+    logs: buildLogs(run.stages),
+  };
 }
