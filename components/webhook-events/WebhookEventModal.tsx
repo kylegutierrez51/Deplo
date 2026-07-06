@@ -5,7 +5,8 @@ import modalStyles from '../modals/modal.module.css';
 import webhookEventStyles from './webhook-event-modal.module.css';
 import Pill from '@/components/Pill';
 import type { PillVariant } from '@/components/Pill';
-import { capitalize } from '@/lib/utils/string';
+import { capitalize, getRepoName, getBranch } from '@/lib/utils/string';
+import { formatDate } from '@/lib/utils/date';
 
 const styles = { ...modalStyles, ...webhookEventStyles };
 
@@ -13,12 +14,11 @@ interface WebhookEventModalProps {
   mode?: 'view' | 'create' | 'edit';
   status?: PillVariant;
   eventType?: PillVariant;
-  repository?: string;
-  branch?: string;
-  commitHash?: string;
-  commitMessage?: string;
-  pipeline?: string;
-  received?: string;
+  branch?: string | null;
+  commitSha?: string | null;
+  commitMessage?: string | null;
+  pipeline?: { name: string; repoUrl: string } | null;
+  receivedAt: Date;
   onClose: () => void;
 }
 
@@ -26,12 +26,11 @@ export default function WebhookEventModal({
   mode = 'view',
   status,
   eventType,
-  repository,
   branch,
-  commitHash,
+  commitSha,
   commitMessage,
   pipeline,
-  received,
+  receivedAt,
   onClose,
 }: WebhookEventModalProps) {
   const footer =
@@ -60,11 +59,11 @@ export default function WebhookEventModal({
         <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Repository</label>
-            <span>{repository}</span>
+            <span>{pipeline ? getRepoName(pipeline.repoUrl) : 'None'}</span>
           </div>
           <div className={styles.item}>
             <label>Branch</label>
-            <span>{branch}</span>
+            <span>{branch ? getBranch(branch) : 'None'}</span>
           </div>
         </div>
 
@@ -73,20 +72,20 @@ export default function WebhookEventModal({
           <div className={styles['commit-detail']}>
             <span className={styles['commit-hash']}>
               <ion-icon name="git-commit-outline"></ion-icon>
-              {commitHash}
+              {commitSha ?? 'None'}
             </span>
-            <span className={styles['commit-message']}>{commitMessage}</span>
+            <span className={styles['commit-message']}>{commitMessage ?? 'None'}</span>
           </div>
         </div>
 
         <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Pipeline</label>
-            <span>{pipeline}</span>
+            <span>{pipeline?.name ?? 'None'}</span>
           </div>
           <div className={styles.item}>
             <label>Received</label>
-            <span>{received}</span>
+            <span>{formatDate(receivedAt)}</span>
           </div>
         </div>
       </>

@@ -12,8 +12,9 @@ import {
   StageStatus,
   StageType,
   WebhookEventStatus,
+  EventType,
   AuditAction,
-  ResourceType
+  ResourceType,
 } from "../generated/prisma/client";
 
 async function main() {
@@ -304,16 +305,16 @@ async function main() {
   // ── Webhook Events ───────────────────────────────────────────────
   // From lib/data/webhook-events.ts, extended with a few more deliveries.
   const webhookEventSeeds = [
-    { pipeline: "deploy-api", eventType: "pull_request", status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { pipeline: "deploy-api", eventType: "push", status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { pipeline: "build-frontend", eventType: "push", status: WebhookEventStatus.IGNORED, branch: "release/v2.4.0", commitSha: "f4e5d6c", commitMessage: "chore: bump dependencies to latest stable versions" },
-    { pipeline: "db-migrate", eventType: "pull_request", status: WebhookEventStatus.FAILED, branch: "feature/auth-flow", commitSha: "7890abc", commitMessage: "feat: add user role migration for RBAC system" },
-    { pipeline: "release-mobile", eventType: "push", status: WebhookEventStatus.PROCESSED, branch: "release/v3.1.0", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
-    { pipeline: "deploy-infra", eventType: "push", status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
-    { pipeline: "deploy-worker", eventType: "push", status: WebhookEventStatus.PENDING, branch: "main", commitSha: "d4e5f6a", commitMessage: "feat: add dead-letter queue for failed jobs" },
-    { pipeline: "run-e2e-tests", eventType: "pull_request", status: WebhookEventStatus.IGNORED, branch: "feature/checkout-flow", commitSha: "e5f6a1b", commitMessage: "test: add checkout flow e2e coverage" },
-    { pipeline: "deploy-docs", eventType: "push", status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "f6a1b2c", commitMessage: "docs: update API reference for v2 endpoints" },
-    { pipeline: "sync-translations", eventType: "push", status: WebhookEventStatus.FAILED, branch: "main", commitSha: "a1b2c3e", commitMessage: "chore: sync translations from Crowdin" },
+    { pipeline: "deploy-api", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
+    { pipeline: "deploy-api", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
+    { pipeline: "build-frontend", eventType: EventType.PUSH, status: WebhookEventStatus.IGNORED, branch: "release/v2.4.0", commitSha: "f4e5d6c", commitMessage: "chore: bump dependencies to latest stable versions" },
+    { pipeline: "db-migrate", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.FAILED, branch: "feature/auth-flow", commitSha: "7890abc", commitMessage: "feat: add user role migration for RBAC system" },
+    { pipeline: "release-mobile", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "release/v3.1.0", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
+    { pipeline: "deploy-infra", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
+    { pipeline: "deploy-worker", eventType: EventType.PUSH, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "d4e5f6a", commitMessage: "feat: add dead-letter queue for failed jobs" },
+    { pipeline: "run-e2e-tests", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.IGNORED, branch: "feature/checkout-flow", commitSha: "e5f6a1b", commitMessage: "test: add checkout flow e2e coverage" },
+    { pipeline: "deploy-docs", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "f6a1b2c", commitMessage: "docs: update API reference for v2 endpoints" },
+    { pipeline: "sync-translations", eventType: EventType.PUSH, status: WebhookEventStatus.FAILED, branch: "main", commitSha: "a1b2c3e", commitMessage: "chore: sync translations from Crowdin" },
   ];
   await Promise.all(
     webhookEventSeeds.map((e) => {

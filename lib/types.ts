@@ -15,7 +15,12 @@ export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-o
 
 export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
-export type RunTrigger = "webhook" | "manual" | "api"
+export type RunTrigger = "webhook" | "manual" | "api";
+
+export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
+
+export type EventType = 'push' | 'pull-request'
+
 
 /* AuditAction and ResourceType can be capitalized since they're not used by a separate component (Pill, Toast) */
 export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Triggered" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Approval Granted" | "Approval Rejected" | "Run Completed" | "Run Cancelled" | "Webhook Received" | "Environment Created" | "Environment Deleted" | "User Role Changed";
