@@ -5,36 +5,43 @@ import Modal from '../modals/Modal';
 import modalStyles from '../modals/modal.module.css';
 import runHistoryStyles from './run-modal.module.css';
 import Pill from '@/components/Pill';
-import type { PipelineStatus, EnvType, TriggerType } from '@/lib/data/runs';
+import type { RunStatus, RunTrigger } from '@/lib/types';
+import type { Run } from '@/lib/data/runs';
 import { capitalize } from "@/lib/utils/string";
+import { formatDate, getTimeDifference } from "@/lib/utils/date";
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
 interface RunModalProps {
   mode: 'view' | 'edit' | 'create';
-  id?: number;
-  status?: PipelineStatus;
-  pipeline?: string;
-  repo?: string;
-  environment?: EnvType;
-  trigger?: TriggerType;
-  duration?: string;
-  time?: string;
+  id: string;
+  status: RunStatus;
+  pipelineName: Run['pipelineName'];
+  repoUrl: string;
+  environment: Run['environment'];
+  trigger: RunTrigger;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+  createdAt: Date;
   onClose: () => void;
 }
 
 export default function RunModal({
   mode = 'view',
   id,
-  pipeline,
-  repo,
   status,
+  pipelineName,
+  repoUrl,
   environment,
   trigger,
-  duration,
-  time,
+  startedAt,
+  finishedAt,
+  createdAt,
   onClose,
 }: RunModalProps) {
+
+  const duration = startedAt && finishedAt ? getTimeDifference(startedAt, finishedAt) : startedAt ? 'Ongoing' : '—';
+
   const footer =
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Close</button>
@@ -48,8 +55,8 @@ export default function RunModal({
           <div className={styles.item}>
             <label>Pipeline</label>
             <div className={styles['pipeline-detail']}>
-              <span>{pipeline}</span>
-              <span className={styles.repo}>{repo}</span>
+              <span>{pipelineName}</span>
+              <span className={styles.repo}>{repoUrl}</span>
             </div>
           </div>
           {status && (
@@ -61,12 +68,13 @@ export default function RunModal({
         </div>
 
         <div className={styles['item-flex']}>
-          {environment && (
             <div className={styles.item}>
               <label>Environment</label>
-              <span><Pill variant={environment} label={capitalize(environment)} /></span>
+              <span>{environment ? 
+                <>
+                  {environment.name} <Pill variant={environment.type} label={capitalize(environment.type)} /> 
+                </> : 'None'}</span>
             </div>
-          )}
           {trigger && (
             <div className={styles.item}>
               <label>Trigger</label>
@@ -77,6 +85,10 @@ export default function RunModal({
 
         <div className={styles['item-flex']}>
           <div className={styles.item}>
+            <label>Created At</label>
+            <span>{formatDate(createdAt)}</span>
+          </div>
+          <div className={styles.item}>
             <label>Duration</label>
             <span className={styles.duration}>
               <ion-icon name="stopwatch-outline"></ion-icon>
@@ -84,8 +96,8 @@ export default function RunModal({
             </span>
           </div>
           <div className={styles.item}>
-            <label>Time</label>
-            <span>{time}</span>
+            <label>Start Time</label>
+            <span>{startedAt ? formatDate(startedAt) : '—'}</span>
           </div>
         </div>
       </>
