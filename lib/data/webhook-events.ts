@@ -1,29 +1,72 @@
-export type WebhookStatus = 'processed' | 'pending' | 'ignored' | 'failed';
-export type EventType = 'push' | 'pull-request'
+import prisma from '../prisma';
+import type { WebhookEvent as PrismaWebhookEvent, WebhookEventStatus as PrismaWebhookEventStatus, EventType as PrismaEventType } from "@/generated/prisma";
+import type { WebhookEventStatus, EventType } from '@/lib/types';
 
-export type WebhookEvent = {
-  id: number;
-  status: WebhookStatus;
+export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
+  status: WebhookEventStatus;
   eventType: EventType;
-  repository: string; 
-  branch: string;
-  commitHash: string; 
-  commitMessage: string;
-  pipeline: string; 
-  received: string;
+  commitSha: string | null;
+  commitMessage: string | null;
+  pipeline: {
+    name: string;
+    repoUrl: string;
+  } | null;
 };
 
-const WEBHOOK_EVENTS: WebhookEvent[] = [
-    { id: 1, status: 'pending', eventType: 'pull-request', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-    { id: 2, status: 'processed', eventType: 'push', repository: 'abcd/api-server', branch: 'main', commitHash: 'a1b2c3d', commitMessage: 'feat: add retry logic to webhook delivery handler', pipeline: 'deploy-api', received: '1h ago' },
-    { id: 3, status: 'ignored', eventType: 'push', repository: 'abcd/web-client', branch: 'release/v2.4.0', commitHash: 'f4e5d6c', commitMessage: 'chore: bump dependencies to latest stable versions', pipeline: 'build-frontend', received: '2h ago' },
-    { id: 4, status: 'failed', eventType: 'pull-request', repository: 'abcd/web-client', branch: 'feature/auth-flow', commitHash: '7890abc', commitMessage: 'feat: add user role migration for RBAC system', pipeline: 'db-migrate', received: '3h ago' },
-  ];
+const WEBHOOK_EVENT_STATUS_MAP: Record<PrismaWebhookEventStatus, WebhookEventStatus> = {
+  PENDING: "pending",
+  PROCESSED: "processed",  
+  IGNORED: "ignored",
+  FAILED: "failed"
+};
+
+const WEBHOOK_EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
+  PUSH: "push",
+  PULL_REQUEST: "pull-request"
+};
+
+type GithubWebhookPayload = {
+  after?: string;
+  head_commit?: { message?: string };
+};
 
 export async function getWebhookEvents(): Promise<WebhookEvent[]> {
-  return WEBHOOK_EVENTS.map(({ ...events }) => events);
+  const webhookEvents = await prisma.webhookEvent.findMany({
+    orderBy: { receivedAt: "desc" },
+    include: {
+      pipeline: { select: { name: true, repoUrl: true }},      
+    }
+  });
+  return webhookEvents.map((webhookEvent) => ({
+    ...webhookEvent,
+    pipeline: webhookEvent.pipeline ? {
+      ...webhookEvent.pipeline,
+    } : null,
+    status: WEBHOOK_EVENT_STATUS_MAP[webhookEvent.status],
+    eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
+    commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
+    commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
+  }));
 }
 
-export async function getWebhookEventById(id: number): Promise<WebhookEvent | undefined> {
-  return WEBHOOK_EVENTS.find(w => w.id === id);
+export async function getWebhookEventById(id: string): Promise<WebhookEvent | null> {
+  const webhookEvent = await prisma.webhookEvent.findUnique({
+    where: { id },
+    include: {
+      pipeline: { select: { name: true, repoUrl: true }},      
+    }
+  });
+
+  if (!webhookEvent) return null;
+
+  return {
+    ...webhookEvent,
+    pipeline: webhookEvent.pipeline ? {
+      ...webhookEvent.pipeline,
+    } : null,
+    status: WEBHOOK_EVENT_STATUS_MAP[webhookEvent.status],
+    eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
+    commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
+    commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
+  }
 }
