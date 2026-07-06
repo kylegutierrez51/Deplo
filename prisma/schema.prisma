@@ -328,10 +328,15 @@ enum WebhookEventStatus {
   FAILED
 }
 
+enum EventType {
+  PUSH
+  PULL_REQUEST
+}
+
 model WebhookEvent {
   id         String  @id @default(cuid())
   pipelineId String?
-  eventType  String // "push", "pull_request"
+  eventType  EventType // "push", "pull_request"
   source     String  @default("github")
 
   // Raw payload for auditability and replay
