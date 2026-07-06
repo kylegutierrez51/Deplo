@@ -18,7 +18,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
   const { mode, id } = await searchParams;
   const webhookEvents = await getWebhookEvents();
 
-  const record = id ? await getWebhookEventById(Number(id)) : undefined;
+  const record = id ? await getWebhookEventById(id) : undefined;
 
   const modal =
     mode === "create" ? { mode: "create" as const } :
@@ -38,55 +38,58 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
           <RefreshButton />
         </Subheader>
 
-        <StatCards
-          cards={
-            [
-              { icon: "time-outline", total: 1, label: "PENDING", valueClassName: 'pending' },
-              { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
-              { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
-              { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
-            ]
-          } />
-
-        <div className={styles.filters}>
-          <div className={styles['filters-bar']}>
-            <SearchInput
-              placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
-              styles={styles} />
-            <FilterSelect
-              id={"status"} name={"status"}
-              styles={styles}
-              options={
+        {webhookEvents.length > 0 &&
+          <>
+            <StatCards
+              cards={
                 [
-                  { value: "all", label: "All statuses" },
-                  { value: "processed", label: "Processed" },
-                  { value: "pending", label: "Pending" },
-                  { value: "ignored", label: "Ignored" },
-                  { value: "failed", label: "Failed" },
+                  { icon: "time-outline", total: 1, label: "PENDING", valueClassName: 'pending' },
+                  { icon: "checkmark-circle-outline", total: 3, label: "PROCESSED", valueClassName: 'processed' },
+                  { icon: "remove-circle-outline", total: 2, label: "IGNORED", valueClassName: 'ignored' },
+                  { icon: "close-circle-outline", total: 2, label: "FAILED", valueClassName: 'failed' },
                 ]
               } />
-            <FilterSelect
-              id={"event-type"} name={"event-type"}
-              styles={styles}
-              options={
-                [
-                  { value: "all", label: "All event types" },
-                  { value: "push", label: "Push" },
-                  { value: "pull_request", label: "Pull Request" },
-                ]
-              } />
-          </div>
-        </div>
 
-        <DataTable
-          columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
-          {webhookEvents.map((event, i) => (
-            <WebhookEventRow key={i} event={event} />
-          ))}
-        </DataTable>
+            <div className={styles.filters}>
+              <div className={styles['filters-bar']}>
+                <SearchInput
+                  placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
+                  styles={styles} />
+                <FilterSelect
+                  id={"status"} name={"status"}
+                  styles={styles}
+                  options={
+                    [
+                      { value: "all", label: "All statuses" },
+                      { value: "processed", label: "Processed" },
+                      { value: "pending", label: "Pending" },
+                      { value: "ignored", label: "Ignored" },
+                      { value: "failed", label: "Failed" },
+                    ]
+                  } />
+                <FilterSelect
+                  id={"event-type"} name={"event-type"}
+                  styles={styles}
+                  options={
+                    [
+                      { value: "all", label: "All event types" },
+                      { value: "push", label: "Push" },
+                      { value: "pull_request", label: "Pull Request" },
+                    ]
+                  } />
+              </div>
+            </div>
 
-        <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+            <DataTable
+              columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
+              {webhookEvents.map((event, i) => (
+                <WebhookEventRow key={i} event={event} />
+              ))}
+            </DataTable>
 
+            <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+          </>
+        }
       </main>
 
       {modal && (

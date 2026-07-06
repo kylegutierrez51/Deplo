@@ -7,6 +7,7 @@ export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   eventType: EventType;
   commitSha: string | null;
   commitMessage: string | null;
+  branch: string | null;
   pipeline: {
     name: string;
     repoUrl: string;
@@ -28,6 +29,7 @@ const WEBHOOK_EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
 type GithubWebhookPayload = {
   after?: string;
   head_commit?: { message?: string };
+  ref?: string;
 };
 
 export async function getWebhookEvents(): Promise<WebhookEvent[]> {
@@ -46,6 +48,7 @@ export async function getWebhookEvents(): Promise<WebhookEvent[]> {
     eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
     commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
     commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
+    branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
   }));
 }
 
@@ -68,5 +71,6 @@ export async function getWebhookEventById(id: string): Promise<WebhookEvent | nu
     eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
     commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
     commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
+    branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
   }
 }
