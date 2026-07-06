@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useActionState } from 'react';
-import { formatDate } from "@/lib/utils/string"
+import { formatDate } from "@/lib/utils/date"
 import type { FormState, EnvType } from "@/lib/types.ts";
 import type { Environment } from "@/lib/data/environments";
 import Modal from '../modals/Modal';
@@ -165,7 +165,13 @@ export default function SecretModal({
             <div className={styles.item}>
               <label>Environment</label>
               <div className={styles.buttonGroup}>
-                <Pill variant={environmentType} label={environmentName ?? ''} />
+                {environmentName ? 
+                  <>
+                    {environmentName} <Pill variant={environmentType} label={environmentType} /> 
+                  </>
+                  : "None"
+                }
+                
               </div>
             </div>
 

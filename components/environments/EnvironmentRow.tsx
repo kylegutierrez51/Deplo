@@ -4,7 +4,8 @@ import styles from '@/app/environments/env.module.css';
 import { useRouter } from 'next/navigation';
 import Pill from '@/components/Pill';
 import type { Environment } from "@/lib/data/environments";
-import { capitalize, formatDate } from "@/lib/utils/string";
+import { capitalize } from "@/lib/utils/string";
+import { formatDate } from "@/lib/utils/date";
 
 export default function EnvironmentRow({ env }: { env: Environment }) {
   const router = useRouter();

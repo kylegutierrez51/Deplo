@@ -4,7 +4,7 @@ import { capitalize } from "@/lib/utils/string";
 import { useRouter } from 'next/navigation';
 import type { Pipeline } from "@/lib/data/pipelines";
 import Pill from '@/components/Pill';
-import { formatDate } from "@/lib/utils/string";
+import { formatDate } from "@/lib/utils/date";
 
 
 export default function EnvironmentRow({ pipeline }: { pipeline: Pipeline }) {

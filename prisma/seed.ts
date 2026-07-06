@@ -186,6 +186,14 @@ async function main() {
   // ── Pipeline Runs ────────────────────────────────────────────────
   // From lib/data/runs.ts and lib/data/run-detail.ts, plus the three runs
   // referenced by lib/data/approvals.ts (awaiting manual approval).
+  function randomPastDate(daysAgoMax: number, daysAgoMin = 0): Date {
+    const minMs = daysAgoMin * 86400000;
+    const maxMs = daysAgoMax * 86400000;
+    return new Date(Date.now() - (minMs + Math.random() * (maxMs - minMs)));
+  }
+  function addRandomMinutes(date: Date, minMinutes: number, maxMinutes: number): Date {
+    return new Date(date.getTime() + (minMinutes + Math.random() * (maxMinutes - minMinutes)) * 60000);
+  }
   const runSeeds = [
     { pipeline: "deploy-api", status: RunStatus.QUEUED, trigger: RunTrigger.WEBHOOK, env: "prod", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
     { pipeline: "build-frontend", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "staging", branch: "main", commitSha: "f4e5d6c", triggeredBy: "coco" },
@@ -199,8 +207,11 @@ async function main() {
     { pipeline: "db-migrate", status: RunStatus.SUCCEEDED, trigger: RunTrigger.WEBHOOK, env: "dev-2", branch: "feature/auth-flow", commitSha: "7890abc", triggeredBy: "marcus.coco" },
   ];
   const runs = await Promise.all(
-    runSeeds.map((r) =>
-      prisma.pipelineRun.create({
+    runSeeds.map((r) => {
+      const isTerminal = ([RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED] as RunStatus[]).includes(r.status);
+      const startedAt = r.status === RunStatus.QUEUED ? null : randomPastDate(14, 1);
+      const finishedAt = isTerminal && startedAt ? addRandomMinutes(startedAt, 1, 45) : null;
+      return prisma.pipelineRun.create({
         data: {
           pipelineId: pipelineByName.get(r.pipeline)!.id,
           definitionId: latestDefinitionByPipeline.get(r.pipeline)!.id,
@@ -210,11 +221,11 @@ async function main() {
           branch: r.branch,
           environmentId: envByName.get(r.env)!.id,
           triggeredById: userByName.get(r.triggeredBy)?.id ?? null,
-          startedAt: new Date(),
-          finishedAt: ([RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED] as RunStatus[]).includes(r.status) ? new Date() : null,
+          startedAt,
+          finishedAt,
         },
-      })
-    )
+      });
+    })
   );
 
   // ── Stage Results ────────────────────────────────────────────────

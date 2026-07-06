@@ -1,6 +1,7 @@
 "use client"
 
-import { capitalize, formatDate } from "@/lib/utils/string";
+import { capitalize } from "@/lib/utils/string";
+import { formatDate } from "@/lib/utils/date";
 import { useEffect, useState, useActionState } from 'react';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
 import type { FormState, EnvType } from '@/lib/types';
