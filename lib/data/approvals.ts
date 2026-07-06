@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import type { StageType as PrismaStageType, StageStatus as PrismaStageStatus } from '@/generated/prisma';
 import type { EnvType } from '@/lib/types';
-import { getWaitingTime } from '@/lib/utils/date';
+import { getDuration } from '@/lib/utils/date';
 
 export type StageType = Lowercase<PrismaStageType>;
 export type StageStatus = Lowercase<PrismaStageStatus>;
@@ -75,7 +75,7 @@ export async function getApprovals(): Promise<Approval[]> {
     return {
       id: approvalStage.id,
       runId: run.id,
-      waitingTime: getWaitingTime(approvalStage.createdAt),
+      waitingTime: getDuration(approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,
       commitSha: run.commitSha,
@@ -110,7 +110,7 @@ export async function getApprovalById(id: string): Promise<Approval | null> {
   return {
     id: approvalStage.id,
     runId: run.id,
-    waitingTime: getWaitingTime(approvalStage.createdAt),
+    waitingTime: getDuration(approvalStage.createdAt),
     createdBy: run.triggeredBy?.name ?? null,
     pipelineName: run.pipeline.name,
     commitSha: run.commitSha,
