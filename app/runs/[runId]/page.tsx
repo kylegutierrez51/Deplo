@@ -21,11 +21,12 @@ const STATUS_ICONS: Record<JobStatus, string> = {
   failed: 'close-circle-outline',
   queued: 'time-outline',
   pending: 'time-outline',
+  cancelled: 'ban-outline',
 };
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { runId } = await params;
-  const run = await getRunDetailById(Number(runId));
+  const run = await getRunDetailById(runId);
 
   if (!run) {
     notFound();
@@ -51,8 +52,8 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
           <RunDetailCard
             pipelineName={run.pipelineName}
             runNumber={run.runNumber}
-            status={capitalize(run.status)}
-            environment={capitalize(run.environment)}
+            status={run.status}
+            environment={run.environment}
             commitHash={run.commitHash}
             commitMessage={run.commitMessage}
             branch={run.branch}
