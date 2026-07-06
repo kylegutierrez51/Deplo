@@ -1,6 +1,7 @@
 "use client"
 
-import { capitalize, formatDate } from "@/lib/utils/string";
+import { capitalize } from "@/lib/utils/string";
+import { formatDate } from "@/lib/utils/date";
 import { useState, useRef, useEffect, useActionState } from 'react';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";

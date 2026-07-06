@@ -3,7 +3,7 @@
 import styles from '@/app/audits/audit.module.css';
 import { useRouter } from 'next/navigation';
 import type { Audit } from "@/lib/data/audits";
-import { formatDate } from '@/lib/utils/string';
+import { formatDate } from '@/lib/utils/date';
 
 export default function AuditRow({ audit }: { audit: Audit }) {
   const router = useRouter();

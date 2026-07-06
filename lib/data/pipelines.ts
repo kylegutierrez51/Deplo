@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import type { Pipeline as PrismaPipeline, RunStatus } from "@/generated/prisma/client";
+import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@/generated/prisma/client";
 import { PipelineStatus } from '@/lib/types';
 
 export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
@@ -10,10 +10,10 @@ export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
   commitMessage?: string | null;
 }
 
-const RUN_STATUS_MAP: Record<RunStatus, PipelineStatus> = {
+const RUN_STATUS_MAP: Record<PrismaRunStatus, PipelineStatus> = {
   QUEUED: 'queued',
   RUNNING: 'running',
-  SUCCESS: 'succeeded',
+  SUCCEEDED: 'succeeded',
   FAILED: 'failed',
   CANCELLED: 'cancelled',
 };

@@ -383,6 +383,13 @@ PRISMA MIGRATIONS:
 1. npx prisma migrate dev --name <migration_name>
 2. npx prisma generate
 
+To revert: 
+  Delete the migration folder you don't want.
+
+  Terminal example: rm -rf prisma/migrations/20260706032341_add_idle_to_run_status_enum
+
+  Then run `npx prisma migrate reset --force` to drop the ENTIRE Postgres database, reapply migrations in prisma/migrations/, and rerun the seed.ts file.
+
 ===================================================================================================================================
 
 PipelineEditorChrome SidebarSlot

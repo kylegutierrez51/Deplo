@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useActionState } from 'react';
-import { formatDate } from '@/lib/utils/string';
+import { formatDate } from '@/lib/utils/date';
 import type { FormState } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
 import Modal from '../modals/Modal';

@@ -56,7 +56,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
               </div>
             </div>
 
-            <DataTable columns={["Key", "Environment Name", "Last Updated"]}>
+            <DataTable columns={["Key", "Environment", "Last Updated"]}>
               {secrets.map((secret, i) => (
                 <SecretRow key={i} secret={secret} />
               ))}

@@ -1,7 +1,7 @@
 import styles from './webhook-card.module.css'
 import SyncButton from './SyncButton';
 import type { Webhook } from "@/lib/data/webhooks";
-import { formatDate } from '@/lib/utils/string';
+import { formatDate } from '@/lib/utils/date';
 
 export default function WebhookCard({ webhook }: { webhook: Webhook}) {
   return (

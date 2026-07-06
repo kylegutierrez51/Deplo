@@ -1,6 +1,6 @@
 "use client"
 
-import { formatDate } from '@/lib/utils/string';
+import { formatDate } from '@/lib/utils/date';
 import type { ResourceType } from '@/lib/types';
 import Modal from '../modals/Modal';
 import modalStyles from '../modals/modal.module.css';
@@ -10,7 +10,6 @@ const styles = { ...modalStyles, ...auditStyles };
 
 interface AuditModalProps {
   mode?: 'view' | 'edit' | 'create';
-  id: string;
   action?: string;
   resourceType: ResourceType;
   resourceLabel: string | null;
