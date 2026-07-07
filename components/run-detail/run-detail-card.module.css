@@ -27,12 +27,20 @@
   display: flex;
   align-items: center;
   gap: var(--space-gap-md);
+  flex-wrap: wrap;
+}
+
+.rdc-title-row .divider {
+  width: 1px;
+  height: 16px;
+  background: var(--light-gray-clr);
 }
 
 .rdc-name {
   font-size: 18px;
   font-weight: 700;
   color: var(--white-clr);
+  white-space: nowrap;
 }
 
 .rdc-num {
@@ -45,14 +53,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px var(--space-gap-md);
   border-radius: 20px;
   font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
-.rdc-status.running ion-icon {
+.rdc-status ion-icon {
   font-size: var(--font-size-body);
+}
+
+.rdc-status ion-icon.running {
   animation: rdc-spin 1.2s linear infinite;
 }
 

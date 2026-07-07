@@ -1,24 +1,31 @@
 import styles from './run-detail-card.module.css'
 import RunDetailActions from './RunDetailActions';
+import Pill from '@/components/Pill';
+import { capitalize } from '@/lib/utils/string';
+import type { RunStatus, EnvType } from '@/lib/types';
 
-/*
-onCancel: () => void; 
-onRerun: () => void
-*/
 interface RunDetailCardProps {
-  pipelineName: string; 
-  runNumber: number; 
-  status: string; 
-  environment: string; 
-  commitHash: string; 
-  commitMessage: string; 
-  branch: string; 
-  repo: string; 
-  trigger: string; 
-  triggeredBy: string; 
-  duration: string; 
-  timeAgo: string; 
+  pipelineName: string;
+  runNumber: number;
+  status: RunStatus;
+  environment: { type: EnvType; name: string } | null;
+  commitHash: string;
+  commitMessage: string;
+  branch: string;
+  repo: string;
+  trigger: string;
+  triggeredBy: string;
+  duration: string;
+  timeAgo: string;
 }
+
+const STATUS_ICONS: Record<RunStatus, string> = {
+  queued: 'time-outline',
+  running: 'sync-outline',
+  succeeded: 'checkmark-circle-outline',
+  failed: 'close-circle-outline',
+  cancelled: 'ban-outline',
+};
 
 export default function RunDetailCard({ pipelineName, runNumber, status, environment, commitHash, commitMessage, branch, repo, trigger, triggeredBy, duration, timeAgo }: RunDetailCardProps) {
   return (
@@ -30,11 +37,20 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
           <div className={styles['rdc-title-row']}>
             <span className={styles['rdc-name']}>{pipelineName}</span>
             <span className={styles['rdc-num']}>#{runNumber}</span>
-            <div className={`${styles['rdc-status']} ${styles.running} pill pill--running`}>
-              <ion-icon name="sync-outline"></ion-icon>
-              {status}
+            <span className={styles.divider} aria-hidden="true" />
+            <div className={styles['rdc-status']}>
+              <ion-icon name={STATUS_ICONS[status]} className={status === 'running' ? styles.running : undefined}></ion-icon>
+              <Pill variant={status} label={capitalize(status)} />
             </div>
-            <div className="pill pill--production">{environment}</div>
+            {environment ? (
+              <>
+                <span className={styles.divider} aria-hidden="true" />
+                <span className={styles['rdc-meta-item']}>{environment.name}</span>
+                <Pill variant={environment.type} label={capitalize(environment.type)} />
+              </>
+            ) : (
+              <span className={styles['rdc-meta-item']}>None</span>
+            )}
           </div>
 
           {/* Row 2: commit info */}
