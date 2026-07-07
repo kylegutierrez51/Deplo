@@ -9,7 +9,6 @@ import PipelineGraph, { type PipelineNode } from "@/components/run-detail/pipeli
 import Pill from '@/components/Pill';
 import RunTabs from "./RunTabs";
 import { getRunDetailById, type JobStatus } from "@/lib/data/run-detail";
-import { capitalize } from "@/lib/utils/string";
 
 interface RunDetailPageProps {
   params: Promise<{ runId: string }>;
