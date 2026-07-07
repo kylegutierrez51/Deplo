@@ -232,29 +232,66 @@ async function main() {
   // ── Stage Results ────────────────────────────────────────────────
   // Stage shapes come from lib/data/run-detail.ts (graph nodes) and
   // lib/data/approvals.ts (approval-gated stage lists).
-  const stageSeeds: { run: number; stageId: string; stageName: string; stageType: StageType; status: StageStatus; approvedBy?: string }[] = [
-    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+  const stageSeeds: { run: number; stageId: string; stageName: string; stageType: StageType; status: StageStatus; approvedBy?: string; durationSeconds?: number }[] = [
+    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
     { run: 0, stageId: "stage-2", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED },
-    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
+    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 38 },
+    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED, durationSeconds: 133 },
+    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 85 },
     { run: 1, stageId: "stage-5", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.RUNNING },
-    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 3, stageId: "stage-3", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.FAILED },
-    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED },
+    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 40 },
+    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 70 },
+    { run: 3, stageId: "stage-3", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.FAILED, durationSeconds: 101 },
+    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 35 },
+    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 30 },
+    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED, durationSeconds: 95 },
     { run: 5, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
     { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.SCRIPT, status: StageStatus.QUEUED },
     { run: 5, stageId: "stage-6", stageName: "publish-stores", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
+    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
     { run: 6, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
-    { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco" },
+    { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco", durationSeconds: 45 },
   ];
+
+  // Stage timestamps are anchored to their parent run's startedAt and walked
+  // forward sequentially per run, so each stage's duration (and the live
+  // elapsed time for still-running/awaiting-approval stages) renders
+  // meaningfully in the Run Detail pipeline graph. A run that hasn't started
+  // (startedAt === null, i.e. QUEUED) leaves all its stages unstarted too,
+  // regardless of the stage's own (already-inconsistent) seeded status.
+  const TERMINAL_STAGE_STATUSES: StageStatus[] = [
+    StageStatus.SUCCEEDED,
+    StageStatus.FAILED,
+    StageStatus.APPROVED,
+    StageStatus.UNAPPROVED,
+    StageStatus.CANCELLED,
+  ];
+  const ACTIVE_STAGE_STATUSES: StageStatus[] = [StageStatus.RUNNING, StageStatus.AWAITING_APPROVAL];
+  const runCursors = new Map<number, Date>();
+  const stageSeedsWithTimes = stageSeeds.map((s) => {
+    const runStartedAt = runs[s.run].startedAt;
+    if (!runStartedAt) return { ...s, startedAt: null, finishedAt: null };
+
+    const cursor = runCursors.get(s.run) ?? runStartedAt;
+
+    if (TERMINAL_STAGE_STATUSES.includes(s.status)) {
+      const finishedAt = new Date(cursor.getTime() + (s.durationSeconds ?? 60) * 1000);
+      runCursors.set(s.run, finishedAt);
+      return { ...s, startedAt: cursor, finishedAt };
+    }
+
+    if (ACTIVE_STAGE_STATUSES.includes(s.status)) {
+      runCursors.set(s.run, cursor);
+      return { ...s, startedAt: cursor, finishedAt: null };
+    }
+
+    // QUEUED / PENDING — not reached yet.
+    return { ...s, startedAt: null, finishedAt: null };
+  });
+
   const stageResults = await Promise.all(
-    stageSeeds.map((s) =>
+    stageSeedsWithTimes.map((s) =>
       prisma.stageResult.create({
         data: {
           runId: runs[s.run].id,
@@ -262,6 +299,8 @@ async function main() {
           stageName: s.stageName,
           stageType: s.stageType,
           status: s.status,
+          startedAt: s.startedAt,
+          finishedAt: s.finishedAt,
           approvedById: s.approvedBy ? userByName.get(s.approvedBy)?.id ?? null : null,
           approvedAt: s.approvedBy ? new Date() : null,
         },
