@@ -37,12 +37,17 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
           <div className={styles['rdc-title-row']}>
             <span className={styles['rdc-name']}>{pipelineName}</span>
             <span className={styles['rdc-num']}>#{runNumber}</span>
+            <span className={styles.divider} aria-hidden="true" />
             <div className={styles['rdc-status']}>
               <ion-icon name={STATUS_ICONS[status]} className={status === 'running' ? styles.running : undefined}></ion-icon>
               <Pill variant={status} label={capitalize(status)} />
             </div>
             {environment ? (
-              <Pill variant={environment.type} label={capitalize(environment.type)} />
+              <>
+                <span className={styles.divider} aria-hidden="true" />
+                <span className={styles['rdc-meta-item']}>{environment.name}</span>
+                <Pill variant={environment.type} label={capitalize(environment.type)} />
+              </>
             ) : (
               <span className={styles['rdc-meta-item']}>None</span>
             )}

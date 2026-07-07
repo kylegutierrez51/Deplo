@@ -250,7 +250,7 @@ async function main() {
     { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.SCRIPT, status: StageStatus.QUEUED },
     { run: 5, stageId: "stage-6", stageName: "publish-stores", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
     { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED },
-    { run: 6, stageId: "stage-2", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
+    { run: 6, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
     { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco" },
   ];
   const stageResults = await Promise.all(
