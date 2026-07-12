@@ -38,6 +38,7 @@ export interface StagePayload {
   stageName: string;
   stageType: string;
   command: string;
+  cwd: string;
   timeout: number;
   attempt: number;
   maxRetries: number;
@@ -53,8 +54,12 @@ export interface CompressedStagePayload {
   stageId: string;
   attempt: number;
   command: string;
+  cwd: string;
   timeout: number;
   retries: number;
   env: { key: string, value: string }[];
   secrets: string[];
 }
+
+
+
