@@ -2,7 +2,7 @@ import type { ConfigJson, GraphJson } from "./types"
 
 export const configJson: ConfigJson = {
   "stage_install": {
-    "command": "npm ci",
+    "command": "npx tsc --noEmit",
     "timeout": 300,
     "retries": 2,
     "env": [],
@@ -12,14 +12,14 @@ export const configJson: ConfigJson = {
     "command": "npm run build",
     "timeout": 600,
     "retries": 1,
-    "env": [{ "key": "NODE_ENV", "value": "production" }],
+    "env": [{ key: "NODE_ENV", value: "production" }],
     "secrets": []
   },
   "stage_test": {
-    "command": "npm test -- --ci",
+    "command": "npm run lint",
     "timeout": 600,
     "retries": 0,
-    "env": [{ "key": "CI", "value": "true" }],
+    "env": [{ key: "CI", value: "true" }],
     "secrets": []
   },
   "stage_approve": {
@@ -33,7 +33,7 @@ export const configJson: ConfigJson = {
     "command": "./scripts/deploy.sh",
     "timeout": 900,
     "retries": 0,
-    "env": [{ "key": "TARGET", "value": "prod" }],
+    "env": [{ key: "TARGET", value: "prod" }],
     "secrets": ["DATABASE_URL", "API_SECRET_KEY"]
   }
 }
