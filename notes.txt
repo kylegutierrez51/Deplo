@@ -595,3 +595,59 @@ We don't use 'generateWebhookSecret()' since 'node:crypto' is a server-only API,
 handleGenerateSecret is used on the client side -- the Web Crypto API's crypto.getRandomValues, producing the same whsec_<64 hex chars> shape as the server-side version, just via a browser API instead of Node's. 
 
 'generateWebhookSecret()' is used in lib/actions/webhooks.ts in regenerateWebhookSecret(). 
+
+===================================================================================================================================
+
+BullMQ Runner Stuff
+
+CWD - Working directory that each pipeline stage's shell command runs in.
+
+
+
+
+===================================================================================================================================
+
+Explanation on 'env', used with child_process.spawn()
+
+"
+  const env = { ...process.env, ...Object.fromEntries(job.data.env.map(({ key, value }) => [key, value])) };
+"
+
+Step 1 — job.data.env.map(({ key, value }) => [key, value])
+
+      .map walks the array and, for each { key, value } object, destructures it and returns a 2-element tuple [key, value].
+
+
+      [{ key: "TARGET", value: "prod" }]
+            ↓
+      [["TARGET", "prod"]]
+      If there were multiple env vars, e.g. [{key:"TARGET",value:"prod"}, {key:"REGION",value:"us-east-1"}], you'd get [["TARGET","prod"], ["REGION","us-east-1"]] — a list of key/value pairs.
+
+
+Step 2 — Object.fromEntries(...)
+
+      Object.fromEntries takes that array of [key, value] pairs and builds a plain object out of them — the inverse of Object.entries.
+
+
+      [["TARGET", "prod"]]
+            ↓
+      { TARGET: "prod" }
+
+
+Step 3 — { ...process.env, ...<that object> }
+
+      This spreads two objects together, later keys winning on collision:
+
+      ...process.env — copies in every variable from the current Node process's environment (PATH, HOME, etc.), so the shell spawned by spawn still works normally.
+      ...{ TARGET: "prod" } — layers the job-specific vars on top, overwriting any pre-existing variable of the same name.
+
+      So the final env passed to spawn looks like:
+
+          {
+            PATH: "C:\\Windows\\system32;...",   // inherited from process.env
+            HOME: "C:\\Users\\...",              // inherited
+            // ...everything else in process.env...
+            TARGET: "prod"                        // added by the job
+          }
+
+Why it's needed at all: job.data.env is stored as an array of { key, value } objects (matching the Prisma/pipeline config shape in types.ts:60), but Node's spawn env option expects a plain Record<string, string> (NodeJS.ProcessEnv). The map + fromEntries chain converts the array shape into the object shape spawn requires, and the spread merges it with the current process environment instead of replacing it entirely
