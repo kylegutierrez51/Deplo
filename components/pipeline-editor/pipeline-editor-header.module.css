@@ -23,15 +23,16 @@ Header
 }
 
 .divider {
-  width: 1px;
-  height: 30px;
-  background-color: var(--gray-clr);
+  width: 2px;
+  height: 25px;
+  background-color: rgb(116, 116, 116);
 }
 
 .editor-header .left-side {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  margin-right: var(--space-md);
 }
 
 .editor-header .left-side .sidebar-toggle {
@@ -58,7 +59,7 @@ Header
 .editor-header .left-side .pipeline-title {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-md);
 }
 
 .editor-header .left-side .nodes-edges {
