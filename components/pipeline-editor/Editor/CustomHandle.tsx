@@ -8,10 +8,11 @@ export type CustomHandleProps = {
   connectionCount: number;
 }
 
-export default function CustomHandle(props: CustomHandleProps) {
+// Since <Handle /> doesn't accept a 'connectionCount' prop, destructure 'connectionCount' before spreading out the props so that it doesn't leak into <Handle />
+export default function CustomHandle({ connectionCount, ...props }: CustomHandleProps) {
   const connections = useNodeConnections({
     handleType: props.type,
   });
- 
-  return <Handle {...props} isConnectable={connections.length < props.connectionCount} />;
+
+  return <Handle {...props} isConnectable={connections.length < connectionCount} />;
 };
