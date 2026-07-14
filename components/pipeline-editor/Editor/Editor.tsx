@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type CSSProperties } from 'react';
 import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import Stage from './Stage';
 import '@xyflow/react/dist/style.css';
@@ -43,7 +43,14 @@ export default function Editor() {
         fitView
         >
         <Background />
-        <Controls />
+        <Controls
+          style={{
+            '--xy-controls-button-background-color': 'var(--controls-btn-clr)',
+            '--xy-controls-button-background-color-hover': 'var(--controls-btn-clr-hover)',
+            '--xy-controls-button-color': '#ffffff',
+            '--xy-controls-button-color-hover': '#ffffff',
+          } as CSSProperties}
+        />
       </ReactFlow>
   );
 }
