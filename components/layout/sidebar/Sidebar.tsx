@@ -3,7 +3,7 @@ import styles from './sidebar.module.css'
 import Profile from './Profile'
 import SidebarShell from './SidebarShell';
 
-type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'webhook-events' | 'audit';
+type ActiveItem = 'dashboard' | 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'webhook-events' | 'audit';
 
 interface SidebarProps {
   activeItem?: ActiveItem;
@@ -17,6 +17,18 @@ export default function Sidebar({ activeItem, showToggle = true }: SidebarProps)
   return (
     <SidebarShell activeItem={activeItem} showToggle={showToggle}>
       <nav className={styles['sidebar-nav']} aria-label="Main">
+        <div className={styles['sidebar-content']}>
+          <span className={styles.subtitle}>OVERVIEW</span>
+          <ul>
+            <li className={activePage('dashboard')}>
+              <Link href="/">
+                <ion-icon name="grid-outline"></ion-icon>
+                <span className={styles.title}>Dashboard</span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+
         <div className={styles['sidebar-content']}>
           <span className={styles.subtitle}>DEPLOY</span>
           <ul>
