@@ -1,7 +1,8 @@
 "use client"
 
 import styles from './stage.module.css'
-import type { Node, NodeProps } from '@xyflow/react';
+import { type Node, type NodeProps, Position } from '@xyflow/react';
+import CustomHandle from './CustomHandle';
 
 export type StageNode = Node<
   {
@@ -34,6 +35,8 @@ export default function Stage(props: NodeProps<StageNode>) {
           }
         </div>
       </div>
+      <CustomHandle type="target" position={Position.Top} connectionCount={100}/>
+      <CustomHandle type="source" position={Position.Bottom} connectionCount={100} />
     </div>
   );
 }
