@@ -23,7 +23,7 @@
   top: var(--size-topbar-height);
   min-width: 320px;
   max-width: 320px;
-  background-color: var(--dark-clr-1);
+  background-color: var(--sidebar-clr);
   padding: var(--space-lg) 0 0 var(--space-lg);
   overflow: hidden;
   display: flex;

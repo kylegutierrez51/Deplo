@@ -11,7 +11,7 @@ Header
   right: 0;
   z-index: var(--z-header);
   height: var(--size-topbar-height);
-  background-color: var(--dark-clr-1);
+  background-color: var(--sidebar-clr);
   transition: left 0.3s ease;
 }
 
