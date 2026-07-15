@@ -57,12 +57,12 @@ export function MainSidebarToggle({ className, children }: { className?: string;
   )
 }
 
-export function StageSidebarToggle({ className, children }: { className?: string; children?: ReactNode }) {
+export function StageSidebarToggle({ children }: { className?: string; children?: ReactNode }) {
   const { openStageSidebar } = useChrome();
   return (
-    <button type="button" className={className} onClick={openStageSidebar}>
+    <div onClick={openStageSidebar}>
       {children}
-    </button>
+    </div>
   )
 }
 

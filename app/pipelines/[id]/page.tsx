@@ -2,7 +2,7 @@ import styles from "./pipeline-editor.module.css"
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader"
 import Sidebar from "@/components/sidebar/Sidebar"
 import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar"
-import { PipelineEditorChrome, SidebarSlot, StageSidebarSlot, StageSidebarToggle } from "@/components/pipeline-editor/PipelineEditorChrome";
+import { PipelineEditorChrome, SidebarSlot, StageSidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 
 interface EditorProps {
@@ -29,15 +29,11 @@ export default async function PipelineEditor({ params }: EditorProps) {
 
       <main className={`page-content ${styles['editor-main']}`}>
         <Editor />
-        {/* <StageSidebarToggle className={styles["toggle-stage-sidebar"]}>
-          Open Stage Sidebar
-        </StageSidebarToggle> */}
       </main>
 
       <StageSidebarSlot>
         <StageSidebar />
       </StageSidebarSlot>
-
     </PipelineEditorChrome>
   )
 }
