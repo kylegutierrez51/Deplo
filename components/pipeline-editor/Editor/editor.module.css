@@ -1,0 +1,105 @@
+/*
+================================================
+Custom Node
+================================================
+*/
+
+.stage-container {
+  border-radius: 10px;
+  background-color: var(--background-clr);
+  padding: 10px;
+  width: 225px;
+  box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
+  -webkit-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
+  -moz-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
+}
+
+.stage-name {
+  flex: 1;
+  min-width: 40px;
+  font-weight: bold;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stage-detail {
+  margin-top: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.stage-label {
+  background-color: var(--header-clr);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+  min-width: 0;
+  overflow: hidden;
+  flex: 0 1 auto;
+}
+
+.stage-label p {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stage-options {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.stage-timeout, .stage-retries {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.stage-timeout p, .stage-retries p {
+  color: rgb(158, 157, 157);
+  font-size: var(--font-size-sm);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stage-timeout ion-icon, .stage-retries ion-icon {
+  font-size: var(--font-size-sm);
+  color: rgb(158, 157, 157);
+  flex-shrink: 0;
+}
+
+
+/*
+================================================
+Context Menu (Right Click an Edge)
+================================================
+*/
+
+.context-menu {
+  position: fixed;
+  z-index: var(--z-context-menu);
+  padding: var(--space-xs) 0;
+
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  transition: opacity 0.2s ease;
+}
+
+.context-menu p {
+  font-weight: bold;
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: 7px;
+}
+
+.context-menu p:hover {
+  background-color: var(--gray-clr);
+  cursor: pointer;
+}

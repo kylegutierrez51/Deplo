@@ -20,24 +20,14 @@ export default function PipelineEditorHeader({ pipelineName, stageCount, connect
           <div className={styles.divider}></div>
           <div className={styles['pipeline-title']}>
             <Link href="/pipelines">Pipelines</Link>
-            <div>|</div>
-            <div className={styles.nowrap}>{pipelineName}</div>
-          </div>
-          <FilterSelect
-            id={"environment"} name={"environment"} responsive={false}
-            options={
-              [
-                { value: "production", label: "Production" },
-                { value: "staging", label: "Staging" },
-                { value: "development", label: "Development" },
-                { value: "preview", label: "Preview" },
-                { value: "custom", label: "Custom" },
-              ]
-            } />
-          <div className={styles['nodes-edges']}>
-            <span className="nowrap">{stageCount} stages</span>
-            <span>&bull;</span>
-            <span className="nowrap">{connectionCount} connections</span>
+            <div className={styles.divider}></div>
+            <div className={"nowrap"}>{pipelineName}</div>
+            <div className={styles.divider}></div>
+            <div className={styles['nodes-edges']}>
+              <span className="nowrap">{stageCount} stages</span>
+              <span>&bull;</span>
+              <span className="nowrap">{connectionCount} connections</span>
+            </div>
           </div>
         </div>
         <HeaderButtons />

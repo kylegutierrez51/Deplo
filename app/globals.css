@@ -71,11 +71,13 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --color-border-dark: #2a2a2a;
   --color-border-mid: #474747;
 
+  --controls-btn-clr: #4d4949;
+  --controls-btn-clr-hover: rgb(66, 61, 61);
 
   --draft-btn-clr: #134e4a;
   --draft-btn-hover-clr: #0d3b38;
 
-
+  
   /* Green Ghost Button */
   --green-text: rgb(1, 163, 1);
   --green-clr: #1a2e1a;
@@ -113,6 +115,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --z-stage-sidebar: 100;
   --z-header: 100;
   --z-dropdown: 200;
+  --z-context-menu: 300;
   --z-modal: 1000;
   --z-toast: 2000;
   --z-delete-confirm: 3000;

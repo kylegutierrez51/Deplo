@@ -2,6 +2,13 @@
 .editor-main {
   margin-top: var(--size-topbar-height);
   padding: 0;
+  height: calc(100vh - var(--size-topbar-height));
+  overflow: hidden;
+}
+
+.editor-main :global(.react-flow) {
+  width: 100%;
+  height: 100%;
 }
 
 /*

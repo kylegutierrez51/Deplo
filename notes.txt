@@ -651,3 +651,22 @@ Step 3 — { ...process.env, ...<that object> }
           }
 
 Why it's needed at all: job.data.env is stored as an array of { key, value } objects (matching the Prisma/pipeline config shape in types.ts:60), but Node's spawn env option expects a plain Record<string, string> (NodeJS.ProcessEnv). The map + fromEntries chain converts the array shape into the object shape spawn requires, and the spread merges it with the current process environment instead of replacing it entirely
+
+===================================================================================================================================
+
+MOVE FUNCTIONALITY -- onReconnect, onNodeDragStop
+
+onNodeDragStop() has this if statement:
+  if (!start || start.id !== node.id) return;
+
+You may think that the 2nd if condition will never be true, which is correct under normal mouse-driven circumstances. But if a user uses a touchscreen device and drags two nodes at the same time, the dragStartPosition.current could switch back and forth between different node ids, to where the start.id (node A) may not match the node.id (node B), returning true.
+
+
+const onReconnect = (oldEdge, newConnection) => {
+  setEdges((edges) => reconnectEdge(oldEdge, newConnection, edges, { shouldReplaceId: false }));
+  setPast(prevPast => [ ...prevPast, { ...oldEdge, operation: 'move' } ]);
+};
+
+onReconnect fires with the edge as it was (oldEdge) and where it's now pointing (newConnection). reconnectEdge applies the change to edges state. 'shouldReplaceId: false' — by default React Flow regenerates the edge's id from the new connection endpoints on reconnect, which would break every id-based lookup elsewhere in the undo stack. Keeping the id stable lets undo/redo find "this edge" reliably later. The past entry pushed here is oldEdge (pre-reconnect source/target/handles) tagged 'move'.
+
+===================================================================================================================================
