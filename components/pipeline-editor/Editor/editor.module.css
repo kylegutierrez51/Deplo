@@ -1,3 +1,9 @@
+/*
+================================================
+Custom Node
+================================================
+*/
+
 .stage-container {
   border-radius: 10px;
   background-color: var(--background-clr);
@@ -67,4 +73,33 @@
   font-size: var(--font-size-sm);
   color: rgb(158, 157, 157);
   flex-shrink: 0;
+}
+
+
+/*
+================================================
+Context Menu (Right Click an Edge)
+================================================
+*/
+
+.context-menu {
+  position: fixed;
+  z-index: var(--z-context-menu);
+  padding: var(--space-xs) 0;
+
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  transition: opacity 0.2s ease;
+}
+
+.context-menu p {
+  font-weight: bold;
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: 7px;
+}
+
+.context-menu p:hover {
+  background-color: var(--gray-clr);
+  cursor: pointer;
 }

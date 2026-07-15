@@ -1,6 +1,6 @@
 "use client"
 
-import styles from './stage.module.css'
+import styles from './editor.module.css'
 import { type Node, type NodeProps, Position } from '@xyflow/react';
 import CustomHandle from './CustomHandle';
 

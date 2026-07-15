@@ -1,9 +1,7 @@
 import {
-  BezierEdge,
-  EdgeLabelRenderer,
+  BaseEdge,
   EdgeProps,
   getBezierPath,
-  useReactFlow,
 } from "@xyflow/react";
 
 export default function CustomEdge({
@@ -16,9 +14,7 @@ export default function CustomEdge({
   targetPosition,
   markerEnd,
 }: EdgeProps) {
-  const { setEdges } = useReactFlow();
-
-  const [_edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     targetX,
@@ -27,21 +23,5 @@ export default function CustomEdge({
     targetPosition,
   });
 
-  return (
-    <>
-      <BezierEdge id={id} sourceX={sourceX} sourceY={sourceY} targetX={targetX} targetY={targetY} sourcePosition={sourcePosition} targetPosition={targetPosition} markerEnd={markerEnd} />
-      <EdgeLabelRenderer>
-        <div
-          className="nodrag nopan"
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            pointerEvents: 'all',
-          }}
-        >
-          x
-        </div>
-      </EdgeLabelRenderer>
-    </>
-  );
+  return <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} />;
 }

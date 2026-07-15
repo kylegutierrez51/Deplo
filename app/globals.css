@@ -115,6 +115,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --z-stage-sidebar: 100;
   --z-header: 100;
   --z-dropdown: 200;
+  --z-context-menu: 300;
   --z-modal: 1000;
   --z-toast: 2000;
   --z-delete-confirm: 3000;
