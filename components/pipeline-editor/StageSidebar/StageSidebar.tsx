@@ -8,9 +8,6 @@ export default function StageSidebar() {
     <>
       <div className={styles['stage-sidebar-header']}>
         <div className={styles['stage-title']}>
-          <div className={styles['icon-border']}>
-            <ion-icon name="rocket-outline"></ion-icon>
-          </div>
           <div className={styles.title}>Configure Stage</div>
         </div>
         <StageCloseButton className={styles['exit-btn']}>
