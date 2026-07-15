@@ -394,11 +394,11 @@ To revert:
 
 PipelineEditorChrome SidebarSlot
 
-      export function SidebarSlot({ children }: { children: ReactNode }) {
-1.      const { sidebarOpen, toggleSidebar } = useChrome();
-2.      if (!isValidElement(children)) return null;
-3.      return cloneElement(children as ReactElement<any>, { open: sidebarOpen, onToggle: toggleSidebar });
-      }
+export function SidebarSlot({ children }: { children: ReactNode }) {
+1.   const { sidebarOpen, toggleSidebar } = useChrome();
+2.   if (!isValidElement<SidebarProps>(children)) return null;
+3.   return cloneElement(children, { open: sidebarOpen, onToggle: toggleSidebar });
+}
 
 // page.tsx
 
@@ -408,10 +408,10 @@ PipelineEditorChrome SidebarSlot
 
 
 Line 1:
- - Pulls shared open/closed state and toggle function out of PipelineEditorChrome context 
+ - Pulls shared open/closed state and toggle function out of PipelineEditorChrome context. useChrome() throws if there's no provider, so it also acs as a guard that SidebarSlot is used in the right place. 
 
 Line 2:
- - isValidElement is a type guard/runtime check confirming that the {children} prop is a single React element
+ - isValidElement is a type guard/runtime check confirming that the {children} prop is a single React element. The <SidebarProps> type parameter tells TS "if this passes, treat 'children' as an element that accepts 'open' / 'onToggle' props, which is what makes the 'cloneElement' call on the next line type-check without a cast.
 
 Line 3:
  - Returns a copy of the sidebar element and returns a copy of it with the 2 props put in (open, onToggle)
