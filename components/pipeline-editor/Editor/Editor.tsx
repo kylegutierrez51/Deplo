@@ -1,13 +1,16 @@
 "use client"
 
 import { useCallback, useRef, useState, useEffect, type CSSProperties } from 'react';
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState, addEdge, reconnectEdge, type Connection, type Node, type Edge, type XYPosition } from '@xyflow/react';
+import { ReactFlow, Background, Controls, Panel, useNodesState, useEdgesState, addEdge, reconnectEdge, type Connection, type Node, type Edge, type XYPosition, type ReactFlowInstance } from '@xyflow/react';
 import Stage from './Stage';
 import CustomEdge from './CustomEdge';
 import CustomMarker from './CustomMarker';
 import { useUndoRedo } from './useUndoRedo';
-import styles from './editor.module.css';
+import editorStyles from './editor.module.css';
+import headerButtonStyles from '../header-buttons.module.css';
 import '@xyflow/react/dist/style.css';
+
+const styles = { ...editorStyles, ...headerButtonStyles };
 
 const nodeTypes = {
   standardStage: Stage
@@ -16,6 +19,9 @@ const nodeTypes = {
 const edgeTypes = {
   customEdge: CustomEdge
 }
+
+const INIT_STAGE_WIDTH = 450;
+const INIT_STAGE_HEIGHT = 104;
 
 const initialNodes = [
   { id: 'n1', position: { x: 0, y: 0 }, data: { }, type: "standardStage" },
@@ -29,12 +35,27 @@ export default function Editor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [contextMenu, setContextMenu] = useState<{ id: string; type: 'node' | 'edge'; x: number; y: number } | null>(null);
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
+
+  const onAddStage = useCallback(() => {
+    const wrapperBounds = wrapperRef.current?.getBoundingClientRect();
+    if (!wrapperBounds || !reactFlowInstanceRef.current) return;
+
+    const position = reactFlowInstanceRef.current.screenToFlowPosition({
+      x: wrapperBounds.x + wrapperBounds.width / 2 - (INIT_STAGE_WIDTH / 2),
+      y: wrapperBounds.y + wrapperBounds.height / 2 - (INIT_STAGE_HEIGHT / 2),
+    });
+    const newNode: Node = { id: crypto.randomUUID(), position, data: {}, type: 'standardStage' };
+    setNodes((nodes) => [...nodes, newNode]);
+    setPast(prevPast => [ ...prevPast, { ...newNode, operation: 'delete' } ]);
+  }, [setNodes, setPast]);
 
   const onConnect = useCallback((params: Connection) => {
     const edge: Edge = {...params, id: crypto.randomUUID(), markerEnd: 'marker', type: 'customEdge' };
     setEdges((edges) => addEdge(edge, edges));
     setPast(prevPast => [ ...prevPast, { ...edge, operation: 'delete' } ]);
-  }, [setEdges]);
+  }, [setEdges, setPast]);
 
   const onEdgeContextMenu: NonNullable<React.ComponentProps<typeof ReactFlow>['onEdgeContextMenu']> = (event, edge) => {
     event.preventDefault();
@@ -119,6 +140,7 @@ export default function Editor() {
   }, [undo, redo]);
 
   return (
+    <div ref={wrapperRef} className={styles['editor-wrapper']}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -127,6 +149,7 @@ export default function Editor() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onConnect={onConnect}
+        onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
         onEdgeContextMenu={onEdgeContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onEdgesDelete={onEdgesDelete}
@@ -148,6 +171,12 @@ export default function Editor() {
             '--xy-controls-button-color-hover': '#ffffff',
           } as CSSProperties}
         />
+        <Panel position="top-left">
+          <button type="button" className={styles['add-stage-btn']} onClick={onAddStage}>
+            <ion-icon name="add-outline"></ion-icon>
+            Add Stage
+          </button>
+        </Panel>
         {contextMenu && (
           <div
             className={styles['context-menu']}
@@ -158,5 +187,6 @@ export default function Editor() {
           </div>
         )}
       </ReactFlow>
+    </div>
   );
 }
