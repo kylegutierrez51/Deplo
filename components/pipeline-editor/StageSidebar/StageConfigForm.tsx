@@ -20,13 +20,42 @@ export type StageType = 'custom' | 'deploy' | 'approval';
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
-export default function StageConfigForm({ node }: { node: Node }) {
+type CustomNodeProps = Omit<Node, 'data'> & {
+  data: {
+    name: string;
+    label: string;
+    command: string;
+    timeout: number;
+    retries: number;
+  }
+}
+
+export default function StageConfigForm({ node }: { node: CustomNodeProps }) {
+  const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [stageType, setStageType] = useState<StageType>('custom');
+  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
+  const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
+  const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
   const [envVars, setEnvVars] = useState([{ key: "", value: "" }, { key: "", value: "" }]);
   const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
-  const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
-  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
+
+  console.log(timeOptions.timeout);
+
+  const handleTimeOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (/^[0-9]*$/.test(value)) {
+      if (name === 'retries' && Number(value) > 10) {
+        setTimeOptions(prev => ({ ...prev, retries: '10'}));
+      }
+      else if (name === 'timeout' && Number(value) > 3600) {
+        setTimeOptions(prev => ({ ...prev, timeout: '3600'}));
+      } 
+      else {
+        setTimeOptions(prev => ({ ...prev, [name]: value }));
+      }
+    }
+  }
 
   const normalizedLabel = label.trim().toLowerCase();
   const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
@@ -53,7 +82,12 @@ export default function StageConfigForm({ node }: { node: Node }) {
       <div className={styles["stage-sidebar-nav"]}>
         <div className={styles["stage-name"]}>
           <label htmlFor="stage-name">STAGE NAME</label>
-          <input id="stage-name" name="stage-name" placeholder="e.g. build" />
+          <input 
+            id="stage-name" 
+            name="stage-name" 
+            placeholder="e.g. build" 
+            value={name} 
+            onChange={e => setName(e.target.value)} />
         </div>
         <div className={styles["stage-types"]}>
           <label>STAGE TYPE</label>
@@ -61,16 +95,6 @@ export default function StageConfigForm({ node }: { node: Node }) {
         </div>
         {stageType !== 'approval' &&
           <>
-            <div className={styles.command}>
-              <label htmlFor="command">COMMAND</label>
-              <textarea 
-                id="command" 
-                name="command" 
-                placeholder="e.g. npm run build" 
-                value={command} 
-                onChange={e => setCommand(e.target.value)}>
-              </textarea>
-            </div>
             <div className={styles.label}>
               <label htmlFor="stage-label">LABEL</label>
               <input
@@ -88,14 +112,34 @@ export default function StageConfigForm({ node }: { node: Node }) {
                 </p>
               }
             </div>
+            <div className={styles.command}>
+              <label htmlFor="command">COMMAND</label>
+              <textarea
+                id="command"
+                name="command"
+                placeholder="e.g. npm run build"
+                value={command}
+                onChange={e => setCommand(e.target.value)}>
+              </textarea>
+            </div>
             <div className={styles["timeout-and-retries"]}>
               <div className={styles.timeout}>
                 <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout">TIMEOUT (S)</label></div>
-                <input id="timeout" name="timeout" defaultValue="0" />
+                <input 
+                  id="timeout"
+                  name="timeout"
+                  value={timeOptions.timeout}
+                  placeholder="In seconds (S)"
+                  onChange={e => handleTimeOptionsChange(e)} />
               </div>
               <div className={styles.retries}>
                 <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries">RETRIES</label></div>
-                <input id="retries" name="retries" defaultValue="0" />
+                <input 
+                  id="retries" 
+                  name="retries" 
+                  value={timeOptions.retries} 
+                  placeholder="e.g. 1, 2, ..., 10"
+                  onChange={e => handleTimeOptionsChange(e)} />
               </div>
             </div>
             <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />

@@ -26,7 +26,7 @@ const INIT_STAGE_WIDTH = 450;
 const INIT_STAGE_HEIGHT = 104;
 
 const initialNodes = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: {}, type: "standardStage" },
+  { id: 'n1', position: { x: 0, y: 0 }, data: { name: 'Stage 1', label: 'Test' }, type: "standardStage" },
   { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Build' }, type: "standardStage" },
   { id: 'n3', position: { x: 0, y: 200 }, data: { label: 'Build' }, type: "standardStage" },
 ];
