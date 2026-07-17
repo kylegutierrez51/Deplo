@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
-import FilterSelect from '../filters/FilterSelect';
 import HeaderButtons from './HeaderButtons';
 import { MainSidebarToggle } from './PipelineEditorChrome';
 

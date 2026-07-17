@@ -5,6 +5,7 @@ import styles from "./stage-sidebar.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
+import type { Node } from "@xyflow/react";
 
 const INITIAL_SECRETS = [
   { key: "DATABASE_URL", env: "production", checked: false },
@@ -15,11 +16,20 @@ const INITIAL_SECRETS = [
   { key: "S3_ACCESS_KEY", env: "development", checked: false },
 ];
 
-export default function StageConfigForm() {
-  const [stageType, setStageType] = useState<string | undefined>(undefined);
+export type StageType = 'custom' | 'deploy' | 'approval';
+
+const RESERVED_LABELS = ['approval', 'deploy'] as const;
+
+export default function StageConfigForm({ node }: { node: Node }) {
+  const [stageType, setStageType] = useState<StageType>('custom');
   const [envVars, setEnvVars] = useState([{ key: "", value: "" }, { key: "", value: "" }]);
   const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
+  const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
+  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
+
+  const normalizedLabel = label.trim().toLowerCase();
+  const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
 
   const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
 
@@ -36,7 +46,10 @@ export default function StageConfigForm() {
   }; /* runs whenever you toggle a secret. Checks what secrets are toggled. */
 
   return (
-    <form id="post-form" method="POST" onSubmit={e => e.preventDefault()}>
+    <form id="post-form" method="POST" onSubmit={e => {
+      e.preventDefault();
+      if (reservedLabelMatch) return;
+    }}>
       <div className={styles["stage-sidebar-nav"]}>
         <div className={styles["stage-name"]}>
           <label htmlFor="stage-name">STAGE NAME</label>
@@ -46,27 +59,54 @@ export default function StageConfigForm() {
           <label>STAGE TYPE</label>
           <StageTypeGrid selected={stageType} onSelect={setStageType} />
         </div>
-        <div className={styles.command}>
-          <label htmlFor="command">COMMAND</label>
-          <textarea id="command" name="command" placeholder="e.g. npm run build"></textarea>
-        </div>
-        <div className={styles["timeout-and-retries"]}>
-          <div className={styles.timeout}>
-            <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout">TIMEOUT (S)</label></div>
-            <input id="timeout" name="timeout" defaultValue="0" />
-          </div>
-          <div className={styles.retries}>
-            <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries">RETRIES</label></div>
-            <input id="retries" name="retries" defaultValue="0" />
-          </div>
-        </div>
-        <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
-        <SecretsSection
-          secrets={secrets}
-          searchValue={secretSearch}
-          onSearchChange={setSecretSearch}
-          onToggle={handleSecretToggle}
-        />
+        {stageType !== 'approval' &&
+          <>
+            <div className={styles.command}>
+              <label htmlFor="command">COMMAND</label>
+              <textarea 
+                id="command" 
+                name="command" 
+                placeholder="e.g. npm run build" 
+                value={command} 
+                onChange={e => setCommand(e.target.value)}>
+              </textarea>
+            </div>
+            <div className={styles.label}>
+              <label htmlFor="stage-label">LABEL</label>
+              <input
+                id="stage-label"
+                name="stage-label"
+                placeholder="e.g. build, script"
+                value={label}
+                onChange={e => setLabel(e.target.value)}
+                className={reservedLabelMatch ? styles['input-error'] : undefined}
+                aria-invalid={reservedLabelMatch ? true : undefined}
+              />
+              {reservedLabelMatch &&
+                <p className={styles['error-text']}>
+                  &ldquo;{label.trim()}&rdquo; is reserved for the {reservedLabelMatch === 'approval' ? 'Approval' : 'Deploy'} stage type.
+                </p>
+              }
+            </div>
+            <div className={styles["timeout-and-retries"]}>
+              <div className={styles.timeout}>
+                <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout">TIMEOUT (S)</label></div>
+                <input id="timeout" name="timeout" defaultValue="0" />
+              </div>
+              <div className={styles.retries}>
+                <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries">RETRIES</label></div>
+                <input id="retries" name="retries" defaultValue="0" />
+              </div>
+            </div>
+            <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
+            <SecretsSection
+              secrets={secrets}
+              searchValue={secretSearch}
+              onSearchChange={setSecretSearch}
+              onToggle={handleSecretToggle}
+            />
+          </>
+        }
       </div>
     </form>
   );

@@ -1,6 +1,6 @@
 "use client"
 
-import { cloneElement, createContext, isValidElement, useContext, useState, type ReactElement, type ReactNode } from "react";
+import { cloneElement, createContext, isValidElement, useContext, useState, type ReactNode } from "react";
 import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
 
 type ChromeValue = {
@@ -37,10 +37,15 @@ export function PipelineEditorChrome({ children }: { children: ReactNode }) {
   )
 }
 
+type SidebarProps = {
+  open?: boolean;
+  onToggle?: () => void;
+};
+
 export function SidebarSlot({ children }: { children: ReactNode }) {
   const { sidebarOpen, toggleSidebar } = useChrome();
-  if (!isValidElement(children)) return null;
-  return cloneElement(children as ReactElement<any>, { open: sidebarOpen, onToggle: toggleSidebar });
+  if (!isValidElement<SidebarProps>(children)) return null;
+  return cloneElement(children, { open: sidebarOpen, onToggle: toggleSidebar });
 }
 
 export function MainSidebarToggle({ className, children }: { className?: string; children?: ReactNode }) {
@@ -52,12 +57,12 @@ export function MainSidebarToggle({ className, children }: { className?: string;
   )
 }
 
-export function StageSidebarToggle({ className, children }: { className?: string; children?: ReactNode }) {
+export function StageSidebarToggle({ children }: { className?: string; children?: ReactNode }) {
   const { openStageSidebar } = useChrome();
   return (
-    <button type="button" className={className} onClick={openStageSidebar}>
+    <div onClick={openStageSidebar}>
       {children}
-    </button>
+    </div>
   )
 }
 

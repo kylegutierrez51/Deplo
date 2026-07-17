@@ -1,18 +1,17 @@
 "use client"
 
 import styles from './stage-sidebar.module.css'
+import type { StageType } from './StageConfigForm';
 
 interface StageTypeGridProps {
-  selected?: string;
-  onSelect: (type: string) => void;
+  selected?: StageType;
+  onSelect: (type: StageType) => void;
 }
 
 const STAGE_TYPES = [
-  { type: 'build', label: 'Build', icon: 'hammer-outline' },
-  { type: 'test', label: 'Test', icon: 'flask-outline' },
+  { type: 'custom', label: 'Custom', icon: 'flask-outline' },
   { type: 'deploy', label: 'Deploy', icon: 'rocket-outline' },
   { type: 'approval', label: 'Approval', icon: 'shield-checkmark-outline' },
-  { type: 'script', label: 'Script', icon: 'code-outline' },
 ] as const;
 
 export default function StageTypeGrid({ selected, onSelect }: StageTypeGridProps) {

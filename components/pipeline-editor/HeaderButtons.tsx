@@ -2,19 +2,9 @@
 
 import styles from './header-buttons.module.css'
 
-/*
-onAddStage: () => void;
-onSaveDraft: () => void;
-onRunPipeline: () => void;
-*/
-
 export default function HeaderButtons() {
   return (
     <div className={styles['right-side']}>
-      <button className={styles['add-stage-btn']}>
-        <ion-icon name="add-outline"></ion-icon>
-        Add Stage
-      </button>
       <button className={styles['save-btn']}>
         <ion-icon name="save-outline"></ion-icon>
         Save
