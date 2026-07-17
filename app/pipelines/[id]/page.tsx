@@ -1,7 +1,6 @@
 import styles from "./pipeline-editor.module.css";
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
 import Sidebar from "@/components/sidebar/Sidebar";
-import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar";
 import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 

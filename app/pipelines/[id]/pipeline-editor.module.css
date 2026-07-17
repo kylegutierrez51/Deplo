@@ -59,8 +59,6 @@ Pipeline Editor Media Queries
 /*
   Breakpoints:
      874px — collapse sidebar; full-width header and content
-     768px — simplify header; remove decorative icon and dividers
-     480px — icon-only header buttons; full-width stage sidebar; touch targets
 */
 
 /*
@@ -73,8 +71,12 @@ Pipeline Editor Media Queries
   /* --- Page content --- */
 
   /* Override globals.css 874px rule — editor has its own fixed header,
-     no need for hamburger-clearance padding. */
-  .editor-main {
+     no need for hamburger-clearance padding. Compound selector (not a
+     selector list) so its specificity beats sidebar.module.css's
+     :global(.page-content) rule at the same breakpoint, regardless of
+     which stylesheet ends up later in the bundle. */
+  .editor-main,
+  .editor-main:global(.page-content) {
     padding: 0;
   }
 }
