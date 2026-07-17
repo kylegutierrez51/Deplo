@@ -5,6 +5,7 @@ import styles from "./stage-sidebar.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
+import type { Node } from "@xyflow/react";
 
 const INITIAL_SECRETS = [
   { key: "DATABASE_URL", env: "production", checked: false },
@@ -19,12 +20,13 @@ export type StageType = 'custom' | 'deploy' | 'approval';
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
-export default function StageConfigForm() {
+export default function StageConfigForm({ node }: { node: Node }) {
   const [stageType, setStageType] = useState<StageType>('custom');
   const [envVars, setEnvVars] = useState([{ key: "", value: "" }, { key: "", value: "" }]);
   const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
-  const [label, setLabel] = useState("");
+  const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
+  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
 
   const normalizedLabel = label.trim().toLowerCase();
   const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
@@ -61,7 +63,13 @@ export default function StageConfigForm() {
           <>
             <div className={styles.command}>
               <label htmlFor="command">COMMAND</label>
-              <textarea id="command" name="command" placeholder="e.g. npm run build"></textarea>
+              <textarea 
+                id="command" 
+                name="command" 
+                placeholder="e.g. npm run build" 
+                value={command} 
+                onChange={e => setCommand(e.target.value)}>
+              </textarea>
             </div>
             <div className={styles.label}>
               <label htmlFor="stage-label">LABEL</label>

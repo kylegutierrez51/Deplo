@@ -1,8 +1,8 @@
-import styles from "./pipeline-editor.module.css"
-import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader"
-import Sidebar from "@/components/sidebar/Sidebar"
-import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar"
-import { PipelineEditorChrome, SidebarSlot, StageSidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
+import styles from "./pipeline-editor.module.css";
+import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
+import Sidebar from "@/components/sidebar/Sidebar";
+import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar";
+import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 
 interface EditorProps {
@@ -30,10 +30,6 @@ export default async function PipelineEditor({ params }: EditorProps) {
       <main className={`page-content ${styles['editor-main']}`}>
         <Editor />
       </main>
-
-      <StageSidebarSlot>
-        <StageSidebar />
-      </StageSidebarSlot>
     </PipelineEditorChrome>
   )
 }
