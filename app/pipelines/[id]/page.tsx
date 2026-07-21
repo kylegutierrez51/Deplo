@@ -2,6 +2,7 @@ import styles from "./pipeline-editor.module.css";
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
 import Sidebar from "@/components/sidebar/Sidebar";
 import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
+import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGraphProvider";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 
 interface EditorProps {
@@ -20,15 +21,17 @@ export default async function PipelineEditor({ params }: EditorProps) {
         <Sidebar activeItem="pipelines" showToggle={false} />
       </SidebarSlot>
 
-      <PipelineEditorHeader
-        pipelineName={pipeline.name}
-        stageCount={stageCount}
-        connectionCount={connectionCount}
-      />
+      <PipelineGraphProvider>
+        <PipelineEditorHeader
+          pipelineName={pipeline.name}
+          stageCount={stageCount}
+          connectionCount={connectionCount}
+        />
 
-      <main className={`page-content ${styles['editor-main']}`}>
-        <Editor />
-      </main>
+        <main className={`page-content ${styles['editor-main']}`}>
+          <Editor />
+        </main>
+      </PipelineGraphProvider>
     </PipelineEditorChrome>
   )
 }

@@ -40,7 +40,8 @@ export default function StageConfigForm({ node }: { node: CustomNodeProps }) {
   const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
 
-  console.log(timeOptions.timeout);
+  const normalizedLabel = label.trim().toLowerCase();
+  const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
 
   const handleTimeOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,9 +57,6 @@ export default function StageConfigForm({ node }: { node: CustomNodeProps }) {
       }
     }
   }
-
-  const normalizedLabel = label.trim().toLowerCase();
-  const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
 
   const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
 
