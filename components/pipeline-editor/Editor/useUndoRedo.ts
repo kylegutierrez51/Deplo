@@ -1,12 +1,13 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { addEdge, type Edge, type Node } from '@xyflow/react';
+import { addEdge, type Edge } from '@xyflow/react';
+import { CustomNode } from '@/lib/types';
 
 export type Operation = 'delete' | 'add' | 'move';
-export type HistoryItem = (Edge & { operation: Operation }) | (Node & { operation: Operation });
+export type HistoryItem = (Edge & { operation: Operation }) | (CustomNode & { operation: Operation });
 
 export function useUndoRedo(
-  nodes: Node[],
-  setNodes: Dispatch<SetStateAction<Node[]>>,
+  nodes: CustomNode[],
+  setNodes: Dispatch<SetStateAction<CustomNode[]>>,
   edges: Edge[],
   setEdges: Dispatch<SetStateAction<Edge[]>>,
 ) {
