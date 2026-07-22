@@ -1,7 +1,6 @@
 "use client"
 
 import { cloneElement, createContext, isValidElement, useContext, useState, type ReactNode } from "react";
-import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
 
 type ChromeValue = {
   sidebarOpen: boolean;
@@ -57,31 +56,12 @@ export function MainSidebarToggle({ className, children }: { className?: string;
   )
 }
 
+// used in Stage.tsx, wrapped around each node
 export function StageSidebarToggle({ children }: { className?: string; children?: ReactNode }) {
   const { openStageSidebar } = useChrome();
   return (
     <div onClick={openStageSidebar}>
       {children}
     </div>
-  )
-}
-
-export function StageSidebarSlot({ children }: { children: ReactNode }) {
-  const { stageSidebarOpen } = useChrome();
-  return (
-    <aside className={`${stageStyles['stage-sidebar']} ${stageSidebarOpen ? ` ${stageStyles.open}` : ''}`}>
-      {children}
-    </aside>
-  )
-}
-
-
-
-export function StageCloseButton({ className, children }: { className?: string; children?: ReactNode }) {
-  const { closeStageSidebar } = useChrome();
-  return (
-    <button type="button" className={className} onClick={closeStageSidebar} aria-label="Close">
-      {children}
-    </button>
   )
 }
