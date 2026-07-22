@@ -709,3 +709,17 @@ onAddStage — the click handler for the new button:
               "onInit={(instance) => { reactFlowInstanceRef.current = instance; }}"
 
 onInit is called when the viewport is initialized. It sets the reactFlowInstanceRef.current to the current <ReactFlow> instance, needed for the 'screenToFlowPosition' function.
+
+===================================================================================================================================
+
+'const onNodesDelete: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodesDelete']>'
+
+You can replace that entire type with ReactFlow's built in 'onNodesDelete' by importing 'type onNodesDelete' from @xyflow/react.
+
+Then you can do something like:
+
+    const onNodesDelete: OnNodesDelete<CustomNode>
+
+so that it carrys the CustomNode generic instead of the basic Node type that reactflow gives it and makes it readable
+
+===================================================================================================================================
