@@ -29,12 +29,20 @@ export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline De
 
 export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" | "Environment" | "Secret" | "Stage Result" | "Setting";
 
+
+export type StageType = 'custom' | 'deploy' | 'approval';
+
 export type CustomNode = Omit<Node, 'data'> & {
   data: {
+    type: StageType;
     name?: string;
     label?: string;
     command?: string;
     timeout?: number;
     retries?: number;
+    env_vars?: {
+      [key: string]: string;
+    }
+    secrets?: string[];
   }
 }
