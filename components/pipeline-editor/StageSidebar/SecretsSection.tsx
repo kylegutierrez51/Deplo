@@ -1,10 +1,10 @@
 "use client"
 
-import styles from './stage-sidebar.module.css'
-import SecretCheckboxRow from './SecretCheckboxRow'
+import styles from './stage-sidebar.module.css';
+import SecretCheckboxRow from './SecretCheckboxRow';
 
 interface SecretsSectionProps {
-  secrets: { key: string; env: string; checked: boolean }[];
+  secrets: { key: string; env_id: string; checked: boolean }[];
   searchValue: string;
   onSearchChange: (v: string) => void;
   onToggle: (index: number) => void;
@@ -13,7 +13,7 @@ interface SecretsSectionProps {
 export default function SecretsSection({ secrets, searchValue, onSearchChange, onToggle }: SecretsSectionProps) {
   const visible = secrets
     .map((s, i) => ({ ...s, originalIndex: i }))
-    .filter(s => !searchValue || s.key.toLowerCase().includes(searchValue.toLowerCase()));
+    .filter(s => !searchValue || s.key.toLowerCase().includes(searchValue.toLowerCase())); // .filter(...) keeps only entries whose key contains searchValue (case-insensitive), or keeps everything if searchValue is empty:
 
   return (
     <>
@@ -34,11 +34,11 @@ export default function SecretsSection({ secrets, searchValue, onSearchChange, o
         />
       </div>
       <div className={styles['secrets-list']}>
-        {visible.map(({ originalIndex, key, env, checked }) => (
+        {visible.map(({ originalIndex, key, env_id, checked }) => (
           <SecretCheckboxRow
             key={originalIndex}
             secretKey={key}
-            env={env}
+            env={env_id}
             checked={checked}
             onToggle={() => onToggle(originalIndex)}
           />
