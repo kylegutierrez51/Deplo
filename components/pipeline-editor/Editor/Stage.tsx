@@ -7,19 +7,33 @@ import CustomHandle from './CustomHandle';
 
 export type StageNode = Node<
   {
+    type: 'custom' | 'deploy' | 'approval';
     name?: string;
     label?: string;
     timeout?: number;
     retries?: number;
-  }
->
+  }>
+
 export default function Stage(props: NodeProps<StageNode>) {
   return (
     <StageSidebarToggle>
       <div className={styles['stage-container']}>
-        {props.data.name ? <p className={styles['stage-name']} title={props.data.name}>{props.data.name}</p> :
-          <p className={styles['stage-name']}>New Stage</p>
-        }
+        <div className={styles['stage-header']}>
+          {props.data.type &&
+            <>
+              <div className={`${styles['icon-container']} ${styles[props.data.type]}`}>
+                <ion-icon name={
+                  props.data.type === 'custom' ? 'flask-outline' : props.data.type === 'deploy' ? 'rocket-outline' : 'shield-checkmark-outline'}>
+                </ion-icon>
+              </div>
+            </>
+
+          }
+          {props.data.name ? <p className={styles['stage-name']} title={props.data.name}>{props.data.name}</p> :
+            <p className={styles['stage-name']}>New Stage</p>
+          }
+        </div>
+
         <div className={styles['stage-detail']}>
           {props.data.label && <div className={styles['stage-label']} title={props.data.label}><p>{props.data.label}</p></div>}
           <div className={styles['stage-options']}>
