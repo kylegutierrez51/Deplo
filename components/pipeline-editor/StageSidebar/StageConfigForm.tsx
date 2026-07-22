@@ -5,30 +5,31 @@ import styles from "./stage-sidebar.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
-import type { CustomNode } from "@/lib/types";
+import type { CustomNode, StageType } from "@/lib/types";
+import { usePipelineGraph } from "../PipelineGraphProvider";
 
 const INITIAL_SECRETS = [
-  { key: "DATABASE_URL", env: "production", checked: false },
-  { key: "API_SECRET_KEY", env: "production", checked: false },
-  { key: "REDIS_URL", env: "staging", checked: false },
-  { key: "STRIPE_SECRET", env: "production", checked: false },
-  { key: "JWT_SECRET", env: "staging", checked: false },
-  { key: "S3_ACCESS_KEY", env: "development", checked: false },
+  { key: "DATABASE_URL", env_id: '1', checked: false },
+  { key: "API_SECRET_KEY", env_id: '2', checked: false },
+  { key: "REDIS_URL", env_id: '3', checked: false },
+  { key: "STRIPE_SECRET", env_id: '4', checked: false },
+  { key: "JWT_SECRET", env_id: '5', checked: false },
+  { key: "S3_ACCESS_KEY", env_id: '6', checked: false },
 ];
-
-export type StageType = 'custom' | 'deploy' | 'approval';
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
-  const [stageType, setStageType] = useState<StageType>('custom');
+  const [type, setType] = useState<StageType>(node?.data?.type || 'custom')
   const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
-  const [envVars, setEnvVars] = useState([{ key: "", value: "" }, { key: "", value: "" }]);
+  const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
   const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
+
+  const { updateNodeData } = usePipelineGraph();
 
   const normalizedLabel = label.trim().toLowerCase();
   const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
@@ -38,12 +39,15 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
     if (/^[0-9]*$/.test(value)) {
       if (name === 'retries' && Number(value) > 10) {
         setTimeOptions(prev => ({ ...prev, retries: '10'}));
+        updateNodeData(node.id, { retries: 10});
       }
       else if (name === 'timeout' && Number(value) > 3600) {
         setTimeOptions(prev => ({ ...prev, timeout: '3600'}));
+        updateNodeData(node.id, { timeout: 3600});
       } 
       else {
         setTimeOptions(prev => ({ ...prev, [name]: value }));
+        updateNodeData(node.id, { [name]: Number(value)});
       }
     }
   }
@@ -51,11 +55,13 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
 
   const handleEnvDelete = (index: number) => {
-    setEnvVars(prev => prev.filter((v, i) => i !== index));
+    setEnvVars(prev => prev.filter((_v, i) => i !== index));
+    updateNodeData(node.id, { env_vars: envVars });
   };
 
   const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
     setEnvVars(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
+    updateNodeData(node.id, { env_vars: envVars });
   }; /* runs when you change key or value in an env variable via changing the input */
 
   const handleSecretToggle = (index: number) => {
@@ -75,13 +81,16 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
             name="stage-name" 
             placeholder="e.g. build" 
             value={name} 
-            onChange={e => setName(e.target.value)} />
+            onChange={e => {
+              setName(e.target.value);
+              updateNodeData(node.id, { name: e.target.value});
+            }} />
         </div>
         <div className={styles["stage-types"]}>
           <label>STAGE TYPE</label>
-          <StageTypeGrid selected={stageType} onSelect={setStageType} />
+          <StageTypeGrid node={node} selectedType={type} setType={setType} />
         </div>
-        {stageType !== 'approval' &&
+        {type !== 'approval' &&
           <>
             <div className={styles.label}>
               <label htmlFor="stage-label">LABEL</label>
@@ -90,7 +99,10 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
                 name="stage-label"
                 placeholder="e.g. build, script"
                 value={label}
-                onChange={e => setLabel(e.target.value)}
+                onChange={e => {
+                  setLabel(e.target.value);
+                  updateNodeData(node.id, { label: e.target.value});
+                }}
                 className={reservedLabelMatch ? styles['input-error'] : undefined}
                 aria-invalid={reservedLabelMatch ? true : undefined}
               />
@@ -107,7 +119,10 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
                 name="command"
                 placeholder="e.g. npm run build"
                 value={command}
-                onChange={e => setCommand(e.target.value)}>
+                onChange={e => {
+                  setCommand(e.target.value)
+                  updateNodeData(node.id, { command: e.target.value});
+                }}>
               </textarea>
             </div>
             <div className={styles["timeout-and-retries"]}>

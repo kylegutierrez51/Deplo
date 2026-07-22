@@ -14,14 +14,14 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
     <div className={styles['env-container']}>
       <input
         name="env-key"
-        placeholder="KEY"
+        placeholder="e.g., NODE_ENV"
         value={envKey}
         onChange={e => onChange('key', e.target.value)}
       />
       <span>=</span>
       <input
         name="env-value"
-        placeholder="VALUE"
+        placeholder="e.g. production"
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />

@@ -40,9 +40,7 @@ export type CustomNode = Omit<Node, 'data'> & {
     command?: string;
     timeout?: number;
     retries?: number;
-    env_vars?: {
-      [key: string]: string;
-    }
+    env_vars?: Record<string, string>[]
     secrets?: string[];
   }
 }

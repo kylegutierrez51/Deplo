@@ -4,7 +4,7 @@ import styles from './stage-sidebar.module.css'
 import EnvVarRow from './EnvVarRow'
 
 interface EnvVarsSectionProps {
-  vars: { key: string; value: string }[];
+  vars: Record<string, string>[]
   onAdd: () => void;
   onChange: (index: number, field: 'key' | 'value', value: string) => void;
   onDelete: (index: number) => void;
