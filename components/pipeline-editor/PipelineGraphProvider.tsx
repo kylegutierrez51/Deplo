@@ -1,4 +1,6 @@
-import { useState, useCallback, createContext, type ReactNode, Dispatch, SetStateAction } from "react";
+"use client"
+
+import { useCallback, createContext, type ReactNode, Dispatch, SetStateAction } from "react";
 import { useUndoRedo, type HistoryItem } from './Editor/useUndoRedo';
 import { type Edge, type Node, OnEdgesChange, OnNodesChange, useEdgesState, useNodesState } from "@xyflow/react";
 

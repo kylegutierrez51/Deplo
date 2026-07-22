@@ -1,10 +1,10 @@
 import styles from './stage-sidebar.module.css';
 import StageConfigForm from './StageConfigForm';
 import DeleteStageButton from './DeleteStageButton';
-import type { Node } from '@xyflow/react';
+import type { CustomNode } from '@/lib/types';
 
 interface StageSidebarProps {
-  node: Node | undefined;
+  node: CustomNode | undefined;
   setStageSidebarOpen: (state: boolean) => void;
 }
 

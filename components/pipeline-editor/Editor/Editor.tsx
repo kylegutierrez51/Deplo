@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useRef, useState, useEffect, type CSSProperties } from 'react';
-import { ReactFlow, Background, Controls, Panel, useNodesState, useEdgesState, addEdge, reconnectEdge, type Connection, type Node, type Edge, type XYPosition, type ReactFlowInstance } from '@xyflow/react';
+import { ReactFlow, Background, Controls, Panel, useNodesState, useEdgesState, addEdge, reconnectEdge, type Connection, type Edge, type XYPosition, type ReactFlowInstance } from '@xyflow/react';
+import type { CustomNode } from '@/lib/types';
 import Stage from './Stage';
 import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar";
 import CustomEdge from './CustomEdge';
@@ -33,12 +34,12 @@ const initialNodes = [
 const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'customEdge', markerEnd: 'marker' }];
 
 export default function Editor() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [contextMenu, setContextMenu] = useState<{ id: string; type: 'node' | 'edge'; x: number; y: number } | null>(null);
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const reactFlowInstanceRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<CustomNode, Edge> | null>(null);
   const [stageSidebarOpen, setStageSidebarOpen] = useState<boolean>(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -50,7 +51,7 @@ export default function Editor() {
       x: wrapperBounds.x + wrapperBounds.width / 2 - (INIT_STAGE_WIDTH / 2),
       y: wrapperBounds.y + wrapperBounds.height / 2 - (INIT_STAGE_HEIGHT / 2),
     });
-    const newNode: Node = { id: crypto.randomUUID(), position, data: {}, type: 'standardStage' };
+    const newNode: CustomNode = { id: crypto.randomUUID(), position, data: {}, type: 'standardStage' };
     setNodes((nodes) => [...nodes, newNode]);
     setPast(prevPast => [...prevPast, { ...newNode, operation: 'delete' }]);
   }, [setNodes, setPast]);

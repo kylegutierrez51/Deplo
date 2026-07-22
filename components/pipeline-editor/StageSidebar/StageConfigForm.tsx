@@ -5,7 +5,7 @@ import styles from "./stage-sidebar.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
-import type { Node } from "@xyflow/react";
+import type { CustomNode } from "@/lib/types";
 
 const INITIAL_SECRETS = [
   { key: "DATABASE_URL", env: "production", checked: false },
@@ -20,17 +20,7 @@ export type StageType = 'custom' | 'deploy' | 'approval';
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
-type CustomNodeProps = Omit<Node, 'data'> & {
-  data: {
-    name: string;
-    label: string;
-    command: string;
-    timeout: number;
-    retries: number;
-  }
-}
-
-export default function StageConfigForm({ node }: { node: CustomNodeProps }) {
+export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [stageType, setStageType] = useState<StageType>('custom');
   const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
