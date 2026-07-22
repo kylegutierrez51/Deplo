@@ -1,11 +1,13 @@
 "use client"
 
-import styles from './stage-sidebar.module.css'
-import type { StageType } from './StageConfigForm';
+import styles from './stage-sidebar.module.css';
+import type { CustomNode, StageType } from "@/lib/types";
+import { usePipelineGraph } from '../PipelineGraphProvider';
 
 interface StageTypeGridProps {
-  selected?: StageType;
-  onSelect: (type: StageType) => void;
+  selectedType?: StageType;
+  setType: (type: StageType) => void;
+  node: CustomNode;
 }
 
 const STAGE_TYPES = [
@@ -14,14 +16,19 @@ const STAGE_TYPES = [
   { type: 'approval', label: 'Approval', icon: 'shield-checkmark-outline' },
 ] as const;
 
-export default function StageTypeGrid({ selected, onSelect }: StageTypeGridProps) {
+export default function StageTypeGrid({ selectedType, setType, node }: StageTypeGridProps) {
+  const { updateNodeData } = usePipelineGraph();
+
   return (
     <div className={styles['stage-type-grid']}>
       {STAGE_TYPES.map(({ type, label, icon }) => (
         <div
           key={type}
-          className={`${styles.item}${selected === type ? ` ${styles.selected}` : ''}`}
-          onClick={() => onSelect(type)}
+          className={`${styles.item}${selectedType === type ? ` ${styles['selected-type']}` : ''}`}
+          onClick={() => {
+            setType(type);
+            updateNodeData(node.id, { type: type });
+          }}
         >
           <ion-icon name={icon}></ion-icon>
           <div>{label}</div>

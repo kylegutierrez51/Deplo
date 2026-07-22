@@ -137,7 +137,7 @@
   background-color: var(--light-gray-clr);
 }
 
-.stage-type-grid .item.selected {
+.stage-type-grid .item.selected-type {
   border-color: var(--blue-clr);
   background-color: var(--header-clr);
 }
