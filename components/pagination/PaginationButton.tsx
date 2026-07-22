@@ -1,7 +1,6 @@
 "use client"
 
-import styles from './pagination.module.css'
-import { capitalize } from '@/lib/utils/string'
+import styles from './pagination.module.css';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 interface PaginationButtonProps {
