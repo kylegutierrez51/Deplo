@@ -1,3 +1,8 @@
+.editor-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
 /*
 ================================================
 Custom Node
@@ -12,6 +17,34 @@ Custom Node
   box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
   -webkit-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
   -moz-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
+}
+
+.stage-header {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--light-gray-clr);
+  border-radius: 2px;
+  padding: 3px;
+}
+
+.icon-container.approval {
+  background-color: #c2661b;
+}
+
+.icon-container.custom {
+  background-color: var(--light-gray-clr);
+}
+
+.icon-container.deploy {
+  background-color: #3f5d7e;
 }
 
 .stage-name {

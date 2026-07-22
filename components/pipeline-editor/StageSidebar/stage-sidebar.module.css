@@ -23,7 +23,7 @@
   top: var(--size-topbar-height);
   min-width: 320px;
   max-width: 320px;
-  background-color: var(--dark-clr-1);
+  background-color: var(--sidebar-clr);
   padding: var(--space-lg) 0 0 var(--space-lg);
   overflow: hidden;
   display: flex;
@@ -49,11 +49,20 @@
 }
 
 /* Includes all sections */
-.stage-name, .stage-types, .command, .env-vars, .secrets {
+.stage-name, .stage-types, .command, .label, .env-vars, .secrets {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
+}
+
+.input-error {
+  border-color: var(--red-btn-border-clr) !important;
+}
+
+.error-text {
+  color: var(--red-text);
+  font-size: var(--font-size-sm);
 }
 
 .stage-title {
@@ -128,7 +137,7 @@
   background-color: var(--light-gray-clr);
 }
 
-.stage-type-grid .item.selected {
+.stage-type-grid .item.selected-type {
   border-color: var(--blue-clr);
   background-color: var(--header-clr);
 }

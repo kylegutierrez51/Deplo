@@ -20,7 +20,7 @@
 /* 
 Header Buttons
 */
-.right-side button {
+.add-stage-btn, .save-btn, .run-btn {
   display: flex;
   justify-content: center;
   align-items: center;

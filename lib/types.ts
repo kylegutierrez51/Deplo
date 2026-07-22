@@ -1,3 +1,5 @@
+import type { Node } from '@xyflow/react';
+
 export type FormState = {
   status: 'idle' | 'success' | 'error';
   message: string;
@@ -26,3 +28,19 @@ export type EventType = 'push' | 'pull-request'
 export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Triggered" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Approval Granted" | "Approval Rejected" | "Run Completed" | "Run Cancelled" | "Webhook Received" | "Environment Created" | "Environment Deleted" | "User Role Changed";
 
 export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" | "Environment" | "Secret" | "Stage Result" | "Setting";
+
+
+export type StageType = 'custom' | 'deploy' | 'approval';
+
+export type CustomNode = Omit<Node, 'data'> & {
+  data: {
+    type: StageType;
+    name?: string;
+    label?: string;
+    command?: string;
+    timeout?: number;
+    retries?: number;
+    env_vars?: Record<string, string>[]
+    secrets?: string[];
+  }
+}

@@ -1,8 +1,8 @@
-import styles from "./pipeline-editor.module.css"
-import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader"
-import Sidebar from "@/components/sidebar/Sidebar"
-import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar"
-import { PipelineEditorChrome, SidebarSlot, StageSidebarSlot, StageSidebarToggle } from "@/components/pipeline-editor/PipelineEditorChrome";
+import styles from "./pipeline-editor.module.css";
+import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
+import Sidebar from "@/components/sidebar/Sidebar";
+import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
+import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGraphProvider";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 
 interface EditorProps {
@@ -11,9 +11,9 @@ interface EditorProps {
 export default async function PipelineEditor({ params }: EditorProps) {
   const { id } = await params;
 
+  console.log(id);
+
   const pipeline = { name: "deploy-api" };
-  const stageCount = 7;
-  const connectionCount = 6;
 
   return (
     <PipelineEditorChrome>
@@ -21,23 +21,15 @@ export default async function PipelineEditor({ params }: EditorProps) {
         <Sidebar activeItem="pipelines" showToggle={false} />
       </SidebarSlot>
 
-      <PipelineEditorHeader
-        pipelineName={pipeline.name}
-        stageCount={stageCount}
-        connectionCount={connectionCount}
-      />
+      <PipelineGraphProvider>
+        <PipelineEditorHeader
+          pipelineName={pipeline.name}
+        />
 
-      <main className={`page-content ${styles['editor-main']}`}>
-        <Editor />
-        {/* <StageSidebarToggle className={styles["toggle-stage-sidebar"]}>
-          Open Stage Sidebar
-        </StageSidebarToggle> */}
-      </main>
-
-      <StageSidebarSlot>
-        <StageSidebar />
-      </StageSidebarSlot>
-
+        <main className={`page-content ${styles['editor-main']}`}>
+          <Editor />
+        </main>
+      </PipelineGraphProvider>
     </PipelineEditorChrome>
   )
 }

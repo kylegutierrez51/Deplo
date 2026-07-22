@@ -1,7 +1,6 @@
 "use client"
 
-import { cloneElement, createContext, isValidElement, useContext, useState, type ReactElement, type ReactNode } from "react";
-import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
+import { cloneElement, createContext, isValidElement, useContext, useState, type ReactNode } from "react";
 
 type ChromeValue = {
   sidebarOpen: boolean;
@@ -37,10 +36,15 @@ export function PipelineEditorChrome({ children }: { children: ReactNode }) {
   )
 }
 
+type SidebarProps = {
+  open?: boolean;
+  onToggle?: () => void;
+};
+
 export function SidebarSlot({ children }: { children: ReactNode }) {
   const { sidebarOpen, toggleSidebar } = useChrome();
-  if (!isValidElement(children)) return null;
-  return cloneElement(children as ReactElement<any>, { open: sidebarOpen, onToggle: toggleSidebar });
+  if (!isValidElement<SidebarProps>(children)) return null;
+  return cloneElement(children, { open: sidebarOpen, onToggle: toggleSidebar });
 }
 
 export function MainSidebarToggle({ className, children }: { className?: string; children?: ReactNode }) {
@@ -52,31 +56,12 @@ export function MainSidebarToggle({ className, children }: { className?: string;
   )
 }
 
-export function StageSidebarToggle({ className, children }: { className?: string; children?: ReactNode }) {
+// used in Stage.tsx, wrapped around each node
+export function StageSidebarToggle({ children }: { className?: string; children?: ReactNode }) {
   const { openStageSidebar } = useChrome();
   return (
-    <button type="button" className={className} onClick={openStageSidebar}>
+    <div onClick={openStageSidebar}>
       {children}
-    </button>
-  )
-}
-
-export function StageSidebarSlot({ children }: { children: ReactNode }) {
-  const { stageSidebarOpen } = useChrome();
-  return (
-    <aside className={`${stageStyles['stage-sidebar']} ${stageSidebarOpen ? ` ${stageStyles.open}` : ''}`}>
-      {children}
-    </aside>
-  )
-}
-
-
-
-export function StageCloseButton({ className, children }: { className?: string; children?: ReactNode }) {
-  const { closeStageSidebar } = useChrome();
-  return (
-    <button type="button" className={className} onClick={closeStageSidebar} aria-label="Close">
-      {children}
-    </button>
+    </div>
   )
 }

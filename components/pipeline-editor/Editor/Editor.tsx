@@ -1,13 +1,19 @@
 "use client"
 
 import { useCallback, useRef, useState, useEffect, type CSSProperties } from 'react';
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState, addEdge, reconnectEdge, type Connection, type Node, type Edge, type XYPosition } from '@xyflow/react';
+import { ReactFlow, Background, Controls, Panel, type Edge, type ReactFlowInstance, type OnNodesDelete, type NodeMouseHandler, type EdgeMouseHandler } from '@xyflow/react';
+import type { CustomNode } from '@/lib/types';
+import { usePipelineGraph } from '../PipelineGraphProvider';
 import Stage from './Stage';
+import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar";
 import CustomEdge from './CustomEdge';
 import CustomMarker from './CustomMarker';
-import { useUndoRedo } from './useUndoRedo';
-import styles from './editor.module.css';
+import editorStyles from './editor.module.css';
+import headerButtonStyles from '../header-buttons.module.css';
+import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
 import '@xyflow/react/dist/style.css';
+
+const styles = { ...editorStyles, ...headerButtonStyles, ...stageStyles };
 
 const nodeTypes = {
   standardStage: Stage
@@ -17,31 +23,40 @@ const edgeTypes = {
   customEdge: CustomEdge
 }
 
-const initialNodes = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { }, type: "standardStage" },
-  { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Build' }, type: "standardStage" },
-  { id: 'n3', position: { x: 0, y: 200 }, data: { label: 'Build' }, type: "standardStage" },
-];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'customEdge', markerEnd: 'marker' }];
- 
+const INIT_STAGE_WIDTH = 450;
+const INIT_STAGE_HEIGHT = 104;
+
 export default function Editor() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
+  const {
+    nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, setPast, undo, redo,
+    onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect,
+  } = usePipelineGraph();
+  
   const [contextMenu, setContextMenu] = useState<{ id: string; type: 'node' | 'edge'; x: number; y: number } | null>(null);
-  const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<CustomNode, Edge> | null>(null);
+  const [toggleStageSidebar, setToggleStageSidebar] = useState<boolean>(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const onConnect = useCallback((params: Connection) => {
-    const edge: Edge = {...params, id: crypto.randomUUID(), markerEnd: 'marker', type: 'customEdge' };
-    setEdges((edges) => addEdge(edge, edges));
-    setPast(prevPast => [ ...prevPast, { ...edge, operation: 'delete' } ]);
-  }, [setEdges]);
+  const onAddStage = useCallback(() => {
+    const wrapperBounds = wrapperRef.current?.getBoundingClientRect();
+    if (!wrapperBounds || !reactFlowInstanceRef.current) return;
 
-  const onEdgeContextMenu: NonNullable<React.ComponentProps<typeof ReactFlow>['onEdgeContextMenu']> = (event, edge) => {
+    const position = reactFlowInstanceRef.current.screenToFlowPosition({
+      x: wrapperBounds.x + wrapperBounds.width / 2 - (INIT_STAGE_WIDTH / 2),
+      y: wrapperBounds.y + wrapperBounds.height / 2 - (INIT_STAGE_HEIGHT / 2),
+    });
+    const newNode: CustomNode = { id: crypto.randomUUID(), position, data: { type: 'custom' }, type: 'standardStage' };
+    setNodes((nodes) => [...nodes, newNode]);
+    setPast(prevPast => [...prevPast, { ...newNode, operation: 'delete' }]);
+  }, [setNodes, setPast]);
+
+  const onEdgeContextMenu: EdgeMouseHandler<Edge> = (event, edge) => {
     event.preventDefault();
     setContextMenu({ id: edge.id, type: 'edge', x: event.clientX, y: event.clientY });
   };
 
-  const onNodeContextMenu: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodeContextMenu']> = (event, node) => {
+  const onNodeContextMenu: NodeMouseHandler<CustomNode> = (event, node) => {
     event.preventDefault();
     setContextMenu({ id: node.id, type: 'node', x: event.clientX, y: event.clientY });
   };
@@ -51,7 +66,7 @@ export default function Editor() {
     const deletedEdge = edges.find((edge) => edge.id === contextMenu.id);
     setEdges((edges) => edges.filter((edge) => edge.id !== contextMenu.id));
     setContextMenu(null);
-    if (deletedEdge) setPast(prevPast => [ ...prevPast, { ...deletedEdge, operation: 'add' } ]);
+    if (deletedEdge) setPast(prevPast => [...prevPast, { ...deletedEdge, operation: 'add' }]);
   };
 
   const onDeleteNode = () => {
@@ -61,6 +76,7 @@ export default function Editor() {
     setNodes((nodes) => nodes.filter((node) => node.id !== contextMenu.id));
     setEdges((edges) => edges.filter((edge) => edge.source !== contextMenu.id && edge.target !== contextMenu.id));
     setContextMenu(null);
+    setToggleStageSidebar(false);
     setPast(prevPast => [
       ...prevPast,
       ...connectedEdges.map((edge) => ({ ...edge, operation: 'add' as const })),
@@ -68,39 +84,13 @@ export default function Editor() {
     ]);
   };
 
-  // used for when user presses 'Backspace' or 'Del' key on edge
-  const onEdgesDelete: NonNullable<React.ComponentProps<typeof ReactFlow>['onEdgesDelete']> = (deletedEdges) => {
-    setPast(prevPast => [
-      ...prevPast,
-      ...deletedEdges.map((edge) => ({ ...edge, operation: 'add' as const })),
-    ]);
-  };
-
   // used for when user presses 'Backspace' or 'Del' key on node
-  const onNodesDelete: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodesDelete']> = (deletedNodes) => {
+  const onNodesDelete: OnNodesDelete<CustomNode> = (deletedNodes) => {
+    setToggleStageSidebar(false);
     setPast(prevPast => [
       ...prevPast,
       ...deletedNodes.map((node) => ({ ...node, operation: 'add' as const })),
     ]);
-  };
-
-  const dragStartPosition = useRef<{ id: string; position: XYPosition } | null>(null);
-
-  const onNodeDragStart: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodeDragStart']> = (_event, node) => {
-    dragStartPosition.current = { id: node.id, position: node.position };
-  };
-
-  const onNodeDragStop: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodeDragStop']> = (_event, node) => {
-    const start = dragStartPosition.current;
-    dragStartPosition.current = null;
-    if (!start || start.id !== node.id) return;
-    if (start.position.x === node.position.x && start.position.y === node.position.y) return;
-    setPast(prevPast => [ ...prevPast, { ...node, position: start.position, operation: 'move' } ]);
-  };
-
-  const onReconnect: NonNullable<React.ComponentProps<typeof ReactFlow>['onReconnect']> = (oldEdge, newConnection) => {
-    setEdges((edges) => reconnectEdge(oldEdge, newConnection, edges, { shouldReplaceId: false }));
-    setPast(prevPast => [ ...prevPast, { ...oldEdge, operation: 'move' } ]);
   };
 
   useEffect(() => {
@@ -119,6 +109,7 @@ export default function Editor() {
   }, [undo, redo]);
 
   return (
+    <div ref={wrapperRef} className={styles['editor-wrapper']}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -127,17 +118,22 @@ export default function Editor() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onConnect={onConnect}
+        onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
         onEdgeContextMenu={onEdgeContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onEdgesDelete={onEdgesDelete}
         onNodesDelete={onNodesDelete}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
+        onNodeClick={(_e, node) => {
+          setSelectedNodeId(node.id);
+          setToggleStageSidebar(true);
+        }}
         onReconnect={onReconnect}
         onPaneClick={() => setContextMenu(null)}
         deleteKeyCode={['Backspace', 'Delete']}
         fitView
-        >
+      >
         <CustomMarker />
         <Background />
         <Controls
@@ -148,6 +144,13 @@ export default function Editor() {
             '--xy-controls-button-color-hover': '#ffffff',
           } as CSSProperties}
         />
+        <Panel position="top-left">
+          <button type="button" className={styles['add-stage-btn']} onClick={onAddStage}>
+            <ion-icon name="add-outline"></ion-icon>
+            Add Stage
+          </button>
+        </Panel>
+
         {contextMenu && (
           <div
             className={styles['context-menu']}
@@ -158,5 +161,10 @@ export default function Editor() {
           </div>
         )}
       </ReactFlow>
+
+      <aside className={`${styles['stage-sidebar']} ${toggleStageSidebar ? ` ${styles.open}` : ''}`}>
+        <StageSidebar key={selectedNodeId} node={nodes.find(node => node.id === selectedNodeId)} setStageSidebarOpen={setToggleStageSidebar} />
+      </aside>
+    </div>
   );
 }

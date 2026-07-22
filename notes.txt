@@ -394,11 +394,11 @@ To revert:
 
 PipelineEditorChrome SidebarSlot
 
-      export function SidebarSlot({ children }: { children: ReactNode }) {
-1.      const { sidebarOpen, toggleSidebar } = useChrome();
-2.      if (!isValidElement(children)) return null;
-3.      return cloneElement(children as ReactElement<any>, { open: sidebarOpen, onToggle: toggleSidebar });
-      }
+export function SidebarSlot({ children }: { children: ReactNode }) {
+1.   const { sidebarOpen, toggleSidebar } = useChrome();
+2.   if (!isValidElement<SidebarProps>(children)) return null;
+3.   return cloneElement(children, { open: sidebarOpen, onToggle: toggleSidebar });
+}
 
 // page.tsx
 
@@ -408,10 +408,10 @@ PipelineEditorChrome SidebarSlot
 
 
 Line 1:
- - Pulls shared open/closed state and toggle function out of PipelineEditorChrome context 
+ - Pulls shared open/closed state and toggle function out of PipelineEditorChrome context. useChrome() throws if there's no provider, so it also acs as a guard that SidebarSlot is used in the right place. 
 
 Line 2:
- - isValidElement is a type guard/runtime check confirming that the {children} prop is a single React element
+ - isValidElement is a type guard/runtime check confirming that the {children} prop is a single React element. The <SidebarProps> type parameter tells TS "if this passes, treat 'children' as an element that accepts 'open' / 'onToggle' props, which is what makes the 'cloneElement' call on the next line type-check without a cast.
 
 Line 3:
  - Returns a copy of the sidebar element and returns a copy of it with the 2 props put in (open, onToggle)
@@ -668,5 +668,58 @@ const onReconnect = (oldEdge, newConnection) => {
 };
 
 onReconnect fires with the edge as it was (oldEdge) and where it's now pointing (newConnection). reconnectEdge applies the change to edges state. 'shouldReplaceId: false' — by default React Flow regenerates the edge's id from the new connection endpoints on reconnect, which would break every id-based lookup elsewhere in the undo stack. Keeping the id stable lets undo/redo find "this edge" reliably later. The past entry pushed here is oldEdge (pre-reconnect source/target/handles) tagged 'move'.
+
+===================================================================================================================================
+
+'Add Stage' code
+
+        const wrapperRef = useRef<HTMLDivElement>(null);
+        const reactFlowInstanceRef = useRef<ReactFlowInstance<Node, Edge> | null>(null);
+
+        const onAddStage = useCallback(() => {
+          const wrapperBounds = wrapperRef.current?.getBoundingClientRect();
+          if (!wrapperBounds || !reactFlowInstanceRef.current) return;
+
+          const position = reactFlowInstanceRef.current.screenToFlowPosition({
+            x: wrapperBounds.x + wrapperBounds.width / 2 - (INIT_STAGE_WIDTH / 2),
+            y: wrapperBounds.y + wrapperBounds.height / 2 - (INIT_STAGE_HEIGHT / 2),
+          });
+          const newNode: Node = { id: crypto.randomUUID(), position, data: {}, type: 'standardStage' };
+          setNodes((nodes) => [...nodes, newNode]);
+          setPast(prevPast => [ ...prevPast, { ...newNode, operation: 'delete' } ]);
+        }, [setNodes, setPast]);
+
+wrapperRef — a ref on a new div wrapping <ReactFlow>, used to read the canvas's on-screen bounding box.
+
+reactFlowInstanceRef — holds the ReactFlowInstance once React Flow initializes, giving access to instance methods like screenToFlowPosition.
+
+onAddStage — the click handler for the new button:
+  1. Reads the wrapper's bounding rect; bails if either ref isn't ready yet.
+
+  2. Computes the screen-pixel center of the visible canvas and converts it to flow coordinates with screenToFlowPosition, so the new node lands wherever the user is currently looking (not a fixed {0,0}). 'wrapperBounds.x' can be 0 or 300 (if sidebar is up) while 'wrapperBounds.y' is always 72 because of the PipelineEditorHeader. 'wrapperBounds.width' = 1920, 'wrapperBounds.height' = 1080. Subtracting by the initial stage height and width places the node exactly in the center. 
+
+  3. Builds a new node with a random UUID, the computed position, empty data (renders as "New Stage", same as the existing n1 seed node), and type: 'standardStage'.
+
+  4. Appends it via setNodes.
+
+  5. Pushes { ...newNode, operation: 'delete' } onto the undo history — mirroring how onConnect records new edges — so Ctrl+Z removes the node that was just added.
+
+
+
+              "onInit={(instance) => { reactFlowInstanceRef.current = instance; }}"
+
+onInit is called when the viewport is initialized. It sets the reactFlowInstanceRef.current to the current <ReactFlow> instance, needed for the 'screenToFlowPosition' function.
+
+===================================================================================================================================
+
+'const onNodesDelete: NonNullable<React.ComponentProps<typeof ReactFlow>['onNodesDelete']>'
+
+You can replace that entire type with ReactFlow's built in 'onNodesDelete' by importing 'type onNodesDelete' from @xyflow/react.
+
+Then you can do something like:
+
+    const onNodesDelete: OnNodesDelete<CustomNode>
+
+so that it carrys the CustomNode generic instead of the basic Node type that reactflow gives it and makes it readable
 
 ===================================================================================================================================
