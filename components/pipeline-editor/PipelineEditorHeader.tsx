@@ -1,14 +1,17 @@
+'use client'
+
 import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
 import HeaderButtons from './HeaderButtons';
 import { MainSidebarToggle } from './PipelineEditorChrome';
+import { usePipelineGraph } from './PipelineGraphProvider';
 
 interface PipelineEditorHeaderProps {
   pipelineName: string,
-  stageCount: number,
-  connectionCount: number;
 }
-export default function PipelineEditorHeader({ pipelineName, stageCount, connectionCount }: PipelineEditorHeaderProps) {
+export default function PipelineEditorHeader({ pipelineName }: PipelineEditorHeaderProps) {
+  const { nodes, edges } = usePipelineGraph();
+
   return (
     <header className={styles["editor-header"]}>
       <div className={styles['header-flex']}>
@@ -23,9 +26,9 @@ export default function PipelineEditorHeader({ pipelineName, stageCount, connect
             <div className={"nowrap"}>{pipelineName}</div>
             <div className={styles.divider}></div>
             <div className={styles['nodes-edges']}>
-              <span className="nowrap">{stageCount} stages</span>
+              <span className="nowrap">{nodes.length} stages</span>
               <span>&bull;</span>
-              <span className="nowrap">{connectionCount} connections</span>
+              <span className="nowrap">{edges.length} connections</span>
             </div>
           </div>
         </div>

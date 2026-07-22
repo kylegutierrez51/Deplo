@@ -11,9 +11,9 @@ interface EditorProps {
 export default async function PipelineEditor({ params }: EditorProps) {
   const { id } = await params;
 
+  console.log(id);
+
   const pipeline = { name: "deploy-api" };
-  const stageCount = 7;
-  const connectionCount = 6;
 
   return (
     <PipelineEditorChrome>
@@ -24,8 +24,6 @@ export default async function PipelineEditor({ params }: EditorProps) {
       <PipelineGraphProvider>
         <PipelineEditorHeader
           pipelineName={pipeline.name}
-          stageCount={stageCount}
-          connectionCount={connectionCount}
         />
 
         <main className={`page-content ${styles['editor-main']}`}>
