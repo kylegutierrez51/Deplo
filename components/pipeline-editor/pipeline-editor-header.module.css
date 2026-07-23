@@ -17,9 +17,25 @@ Header
 
 .header-flex {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   height: 100%;
   margin-left: var(--space-lg);
+}
+
+/* Three-column flex: equal-growing sides keep the selector centered. The
+   selector holds a fixed width and never shrinks (flex-shrink: 0); the side
+   columns absorb the width change instead. */
+.center-slot {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--space-md);
+}
+
+.right-slot {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .divider {
@@ -28,14 +44,15 @@ Header
   background-color: rgb(116, 116, 116);
 }
 
-.editor-header .left-side {
+.editor-header .left-slot {
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   gap: var(--space-md);
   margin-right: var(--space-md);
 }
 
-.editor-header .left-side .sidebar-toggle {
+.editor-header .left-slot .sidebar-toggle {
   position: static;
   display: flex;
   align-items: center;
@@ -48,49 +65,37 @@ Header
   transition: background-color 0.2s ease;
 }
 
-.editor-header .left-side .sidebar-toggle:hover {
+.editor-header .left-slot .sidebar-toggle:hover {
   background-color: var(--gray-clr);
 }
 
-.editor-header .left-side .sidebar-toggle ion-icon {
+.editor-header .left-slot .sidebar-toggle ion-icon {
   font-size: 20px;
 }
 
-.editor-header .left-side .pipeline-title {
+.editor-header .left-slot .pipeline-detail {
   display: flex;
   align-items: center;
   gap: var(--space-md);
 }
 
-.editor-header .left-side .nodes-edges {
+.editor-header .left-slot .nodes-edges {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.editor-header .right-side {
+.editor-header .right-slot {
   display: flex;
   align-items: center;
   gap: var(--space-md);
   margin-right: var(--space-lg);
 }
 
-.right-side .sidebar-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.right-side .sidebar-icon ion-icon {
-  margin-right: 0;
-}
-
-
-
 /* 
 Header Buttons
 */
-.right-side button {
+.right-slot button {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -105,7 +110,7 @@ Header Buttons
   white-space: nowrap; /* keep button text on one line regardless of container width */
 }
 
-.right-side button ion-icon {
+.right-slot button ion-icon {
   margin-right: var(--space-xs);
 }
 
@@ -159,7 +164,10 @@ Pipeline Editor Header Media Queries
 @media (max-width: 1024px) {
 
   .nodes-edges {
-    display: none;
+    display: none !important;
+  }
+  .divider.last {
+    display: none !important;
   }
 }
 
@@ -170,9 +178,6 @@ Pipeline Editor Header Media Queries
 ============================================================ 
 */
 @media (max-width: 874px) {
-
-  /* --- Header --- */
-
   /* Sidebar is off-screen; header now spans the full viewport. */
   .editor-header {
     left: 0;
@@ -182,35 +187,15 @@ Pipeline Editor Header Media Queries
 /* 
 ============================================================
 768px — Tablets and large phones
-  The journal icon and its flanking dividers consume space
-  without adding information at this width. Drop them and
-  tighten the header's outer margins.
 ============================================================ 
 */
 @media (max-width: 768px) {
-
-  /* Decorative icon — serves no interaction at this breakpoint. */
-  .sidebar-icon {
-    display: none;
-  }
-
-  /* Both right-side dividers become adjacent once the icon is
-     hidden; remove all of them and let gap handle spacing. */
-  .right-side .divider {
-    display: none;
-  }
-
-  /* Also drop the divider between the hamburger and pipeline title. */
-  .left-side .divider {
-    display: none;
-  }
-
   /* Tighten outer margins so remaining flex items gain more room. */
   .header-flex {
     margin-left: var(--space-sm);
   }
 
-  .right-side {
+  .right-slot {
     margin-right: var(--space-sm);
   }
 }
@@ -251,13 +236,13 @@ Pipeline Editor Header Media Queries
 
   /* --- Header spacing --- */
 
-  /* Reduce left-side and right-side gaps so remaining elements
+  /* Reduce left-slot and right-slot gaps so remaining elements
      have more room on narrow viewports. */
-  .left-side {
+  .left-slot {
     gap: var(--space-sm);
   }
 
-  .right-side {
+  .right-slot {
     gap: var(--space-sm);
   }
 }
