@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, createContext, useContext, useRef, type ReactNode, Dispatch, SetStateAction } from "react";
+import { useCallback, createContext, useContext, useRef, useState, type ReactNode, Dispatch, SetStateAction } from "react";
 import { useUndoRedo, type HistoryItem } from './Editor/useUndoRedo';
 import { useNodesState, useEdgesState, addEdge, reconnectEdge, OnEdgesChange, type OnNodesChange, type OnNodeDrag, type OnEdgesDelete, type OnReconnect, type Connection, type Edge, type XYPosition } from '@xyflow/react';
 import type { CustomNode } from '@/lib/types';
@@ -28,6 +28,8 @@ type GraphValue = {
   onNodeDragStart: OnNodeDrag<CustomNode>;
   onNodeDragStop: OnNodeDrag<CustomNode>;
   onReconnect: OnReconnect<Edge>;
+  selectedEnvironmentId: string | null;
+  setSelectedEnvironmentId: Dispatch<SetStateAction<string | null>>;
 }
 
 const GraphContext = createContext<GraphValue | null>(null);
@@ -36,6 +38,7 @@ const GraphContext = createContext<GraphValue | null>(null);
 export function PipelineGraphProvider({ children }: { children: ReactNode }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
 
   const updateNodeData = useCallback((id: string, patch: Record<string, unknown>) => {
@@ -79,7 +82,8 @@ export function PipelineGraphProvider({ children }: { children: ReactNode }) {
     <GraphContext.Provider 
       value={{
         nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, updateNodeData, setPast, undo, redo,
-        onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect
+        onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect,
+        selectedEnvironmentId, setSelectedEnvironmentId
       }}>
         {children}
     </GraphContext.Provider>
@@ -88,6 +92,6 @@ export function PipelineGraphProvider({ children }: { children: ReactNode }) {
 
 export function usePipelineGraph() {
   const ctx = useContext(GraphContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
+  if (!ctx) throw new Error('usePipelineGraph must be used within PipelineGraphProvider');
   return ctx;
 }
