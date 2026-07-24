@@ -281,10 +281,6 @@
   font-weight: bold;
 }
 
-.secret-container .secret-env {
-  font-weight: 100;
-}
-
 /* Delete Stage Button */
 .delete-stage {
   display: flex;
