@@ -101,6 +101,8 @@ export default function SecretModal({
     return environments?.filter(env => env.name.toLowerCase().includes(q)) ?? [];
   }
 
+  const results = matches();
+
   const handleCopy = () => {
     if (value) {
       navigator.clipboard.writeText(value);
@@ -246,8 +248,8 @@ export default function SecretModal({
                 />
                 {openMatches && query && (
                   <ul className={styles.autocompleteList}>
-                    {matches().length > 0 ? (
-                      matches().map(env => (
+                    {results.length > 0 ? (
+                      results.map(env => (
                         <li key={env.id}>
                           <button
                             type="button"

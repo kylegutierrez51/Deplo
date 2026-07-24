@@ -4,16 +4,16 @@ import styles from './stage-sidebar.module.css';
 import SecretCheckboxRow from './SecretCheckboxRow';
 
 interface SecretsSectionProps {
-  secrets: { key: string; env_id: string; checked: boolean }[];
+  secrets: { id: string; key: string; checked: boolean }[];
   searchValue: string;
   onSearchChange: (v: string) => void;
-  onToggle: (index: number) => void;
+  onToggle: (id: string) => void;
+  hasEnvironment: boolean;
 }
 
-export default function SecretsSection({ secrets, searchValue, onSearchChange, onToggle }: SecretsSectionProps) {
+export default function SecretsSection({ secrets, searchValue, onSearchChange, onToggle, hasEnvironment }: SecretsSectionProps) {
   const visible = secrets
-    .map((s, i) => ({ ...s, originalIndex: i }))
-    .filter(s => !searchValue || s.key.toLowerCase().includes(searchValue.toLowerCase())); // .filter(...) keeps only entries whose key contains searchValue (case-insensitive), or keeps everything if searchValue is empty:
+    .filter(s => !searchValue || s.key.toLowerCase().includes(searchValue.toLowerCase())); // keep everything in secrets if searchValue is empty or only secrets whose key contains searchValue (case-insensitive)
 
   return (
     <>
@@ -34,15 +34,18 @@ export default function SecretsSection({ secrets, searchValue, onSearchChange, o
         />
       </div>
       <div className={styles['secrets-list']}>
-        {visible.map(({ originalIndex, key, env_id, checked }) => (
-          <SecretCheckboxRow
-            key={originalIndex}
-            secretKey={key}
-            env={env_id}
-            checked={checked}
-            onToggle={() => onToggle(originalIndex)}
-          />
-        ))}
+        {hasEnvironment ? (
+          visible.map(({ id, key, checked }) => (
+            <SecretCheckboxRow
+              key={id}
+              secretKey={key}
+              checked={checked}
+              onToggle={() => onToggle(id)}
+            />
+          ))
+        ) : (
+          <div className={styles.info}>Select an environment to see its secrets.</div>
+        )}
       </div>
     </>
   )

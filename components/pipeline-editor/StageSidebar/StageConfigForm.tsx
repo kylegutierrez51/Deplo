@@ -8,15 +8,6 @@ import SecretsSection from "./SecretsSection";
 import type { CustomNode, StageType } from "@/lib/types";
 import { usePipelineGraph } from "../PipelineGraphProvider";
 
-const INITIAL_SECRETS = [
-  { key: "DATABASE_URL", env_id: '1', checked: false },
-  { key: "API_SECRET_KEY", env_id: '2', checked: false },
-  { key: "REDIS_URL", env_id: '3', checked: false },
-  { key: "STRIPE_SECRET", env_id: '4', checked: false },
-  { key: "JWT_SECRET", env_id: '5', checked: false },
-  { key: "S3_ACCESS_KEY", env_id: '6', checked: false },
-];
-
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
@@ -26,13 +17,19 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
-  const [secrets, setSecrets] = useState(INITIAL_SECRETS);
   const [secretSearch, setSecretSearch] = useState("");
-
-  const { updateNodeData } = usePipelineGraph();
+  const { updateNodeData, selectedEnvironmentId, secrets} = usePipelineGraph();
 
   const normalizedLabel = label.trim().toLowerCase();
   const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
+
+  const checkedIds = selectedEnvironmentId ? (node.data?.secrets?.[selectedEnvironmentId] ?? []) : [];
+  const environmentSecrets = selectedEnvironmentId
+    ? secrets.filter(s => s.environmentId === selectedEnvironmentId)
+    : [];
+  const secretRows = environmentSecrets.map(s => ({
+    id: s.id, key: s.key, checked: checkedIds.includes(s.id)
+  }));
 
   const handleTimeOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,9 +61,13 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
     updateNodeData(node.id, { env_vars: envVars });
   }; /* runs when you change key or value in an env variable via changing the input */
 
-  const handleSecretToggle = (index: number) => {
-    setSecrets(prev => prev.map((s, i) => i === index ? { ...s, checked: !s.checked } : s));
-  }; /* runs whenever you toggle a secret. Checks what secrets are toggled. */
+  const handleSecretToggle = (secretId: string) => {
+    if (!selectedEnvironmentId) return;
+    const allSecrets = node.data?.secrets ?? {};
+    const current = allSecrets[selectedEnvironmentId] ?? [];
+    const next = current.includes(secretId) ? current.filter(id => id !== secretId) : [...current, secretId]; // uncheck or check secret
+    updateNodeData(node.id, { secrets: { ...allSecrets, [selectedEnvironmentId]: next } });
+  };
 
   return (
     <form id="post-form" method="POST" onSubmit={e => {
@@ -147,10 +148,11 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
             </div>
             <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
             <SecretsSection
-              secrets={secrets}
+              secrets={secretRows}
               searchValue={secretSearch}
               onSearchChange={setSecretSearch}
               onToggle={handleSecretToggle}
+              hasEnvironment={Boolean(selectedEnvironmentId)}
             />
           </>
         }
