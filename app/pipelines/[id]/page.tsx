@@ -5,6 +5,7 @@ import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/
 import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGraphProvider";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 import { getEnvironments } from "@/lib/data/environments";
+import { getSecrets } from "@/lib/data/secrets";
 
 interface EditorProps {
   params: Promise<{ id: string }>;
@@ -16,6 +17,7 @@ export default async function PipelineEditor({ params }: EditorProps) {
 
   const pipeline = { name: "deploy-api" };
   const environments = await getEnvironments();
+  const secrets = await getSecrets();
 
   return (
     <PipelineEditorChrome>
@@ -23,7 +25,7 @@ export default async function PipelineEditor({ params }: EditorProps) {
         <Sidebar activeItem="pipelines" showToggle={false} />
       </SidebarSlot>
 
-      <PipelineGraphProvider>
+      <PipelineGraphProvider secrets={secrets}>
         <PipelineEditorHeader
           pipelineName={pipeline.name}
           environments={environments}

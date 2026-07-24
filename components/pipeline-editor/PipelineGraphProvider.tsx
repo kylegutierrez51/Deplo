@@ -4,9 +4,10 @@ import { useCallback, createContext, useContext, useRef, useState, type ReactNod
 import { useUndoRedo, type HistoryItem } from './Editor/useUndoRedo';
 import { useNodesState, useEdgesState, addEdge, reconnectEdge, OnEdgesChange, type OnNodesChange, type OnNodeDrag, type OnEdgesDelete, type OnReconnect, type Connection, type Edge, type XYPosition } from '@xyflow/react';
 import type { CustomNode } from '@/lib/types';
+import type { Secret } from "@/lib/data/secrets";
 
 const initialNodes: CustomNode[] = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'Stage 1', label: 'Test' }, type: "standardStage" },
+  { id: 'n1', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'Stage 1', label: 'Test', secrets: { '123': ['hi', 'bye', 'etc.'], '234': ['hel']} }, type: "standardStage" },
   { id: 'n2', position: { x: 0, y: 100 }, data: { type: 'deploy', label: 'Build' }, type: "standardStage" },
   { id: 'n3', position: { x: 0, y: 200 }, data: { type: 'approval', label: 'Build' }, type: "standardStage" },
 ];
@@ -30,12 +31,13 @@ type GraphValue = {
   onReconnect: OnReconnect<Edge>;
   selectedEnvironmentId: string | null;
   setSelectedEnvironmentId: Dispatch<SetStateAction<string | null>>;
+  secrets: Secret[]
 }
 
 const GraphContext = createContext<GraphValue | null>(null);
 
 
-export function PipelineGraphProvider({ children }: { children: ReactNode }) {
+export function PipelineGraphProvider({ children, secrets }: { children: ReactNode, secrets: Secret[] }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function PipelineGraphProvider({ children }: { children: ReactNode }) {
       value={{
         nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, updateNodeData, setPast, undo, redo,
         onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect,
-        selectedEnvironmentId, setSelectedEnvironmentId
+        selectedEnvironmentId, setSelectedEnvironmentId, secrets
       }}>
         {children}
     </GraphContext.Provider>
