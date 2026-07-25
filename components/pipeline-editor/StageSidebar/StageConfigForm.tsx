@@ -70,10 +70,7 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   };
 
   return (
-    <form id="post-form" method="POST" onSubmit={e => {
-      e.preventDefault();
-      if (reservedLabelMatch) return;
-    }}>
+    <div className={styles['stage-sidebar-container']}>
       <div className={styles["stage-sidebar-nav"]}>
         <div className={styles["stage-name"]}>
           <label htmlFor="stage-name">STAGE NAME</label>
@@ -157,6 +154,6 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
           </>
         }
       </div>
-    </form>
+    </div>
   );
 }

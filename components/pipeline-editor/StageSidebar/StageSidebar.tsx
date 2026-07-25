@@ -1,6 +1,5 @@
 import styles from './stage-sidebar.module.css';
 import StageConfigForm from './StageConfigForm';
-import DeleteStageButton from './DeleteStageButton';
 import type { CustomNode } from '@/lib/types';
 
 interface StageSidebarProps {
@@ -24,10 +23,6 @@ export default function StageSidebar({ node, setStageSidebarOpen }: StageSidebar
       </div>
 
       <StageConfigForm key={node.id} node={node} />
-
-      <div className={styles['delete-stage']}>
-        <DeleteStageButton className={styles["delete-btn"]} />
-      </div>
     </>
   )
 }
