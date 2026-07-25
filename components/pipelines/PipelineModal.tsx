@@ -3,6 +3,7 @@
 import { capitalize } from "@/lib/utils/string";
 import { formatDate } from "@/lib/utils/date";
 import { useState, useRef, useEffect, useActionState } from 'react';
+import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";
 import Modal from '../modals/Modal';
@@ -108,7 +109,11 @@ export default function PipelineModal({
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setisDeleteModalVisible(true)}>Delete</button>
-      <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
+      {/* Grouped so .footer's space-between still sees two children and keeps Delete on the far edge */}
+      <div className={styles.footerActions}>
+        <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit Details</button>
+        <Link href={`/pipelines/${id}`} className={`${styles.footerBtn} ${styles.createBtn}`} target="_blank">Open Editor</Link>
+      </div>
     </>
   ) : (mode === 'create' ? (
     <>

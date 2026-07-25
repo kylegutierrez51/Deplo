@@ -6,6 +6,8 @@ import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGrap
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 import { getEnvironments } from "@/lib/data/environments";
 import { getSecrets } from "@/lib/data/secrets";
+import { getPipelineById } from "@/lib/data/pipelines";
+import { notFound } from "next/navigation";
 
 interface EditorProps {
   params: Promise<{ id: string }>;
@@ -13,9 +15,11 @@ interface EditorProps {
 export default async function PipelineEditor({ params }: EditorProps) {
   const { id } = await params;
 
-  console.log(id);
+  const pipeline = await getPipelineById(id);
 
-  const pipeline = { name: "deploy-api" };
+  if (!pipeline) notFound();
+
+
   const environments = await getEnvironments();
   const secrets = await getSecrets();
 

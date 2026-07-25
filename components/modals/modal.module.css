@@ -117,14 +117,20 @@ Modal Footer
 
 .footer {
   position: sticky;
-  bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 30px;
+  padding: var(--space-xl);
   border-top: 1px solid gray;
-  background-color: rgb(48, 48, 48);
+}
+
+/* Groups multiple right-hand actions into a single flex child so .footer's
+   space-between keeps the destructive action pinned to the opposite edge. */
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
 }
 
 /*
