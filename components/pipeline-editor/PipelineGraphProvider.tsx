@@ -6,14 +6,8 @@ import { useNodesState, useEdgesState, addEdge, reconnectEdge, OnEdgesChange, ty
 import type { CustomNode } from '@/lib/types';
 import type { Secret } from "@/lib/data/secrets";
 
-const initialNodes: CustomNode[] = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'Stage 1', label: 'Test', secrets: { '123': ['hi', 'bye', 'etc.'], '234': ['hel']} }, type: "standardStage" },
-  { id: 'n2', position: { x: 0, y: 100 }, data: { type: 'deploy', label: 'Build' }, type: "standardStage" },
-  { id: 'n3', position: { x: 0, y: 200 }, data: { type: 'approval', label: 'Build' }, type: "standardStage" },
-];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'customEdge', markerEnd: 'marker' }];
-
 type GraphValue = {
+  pipelineId: string;
   nodes: CustomNode[];
   setNodes: Dispatch<SetStateAction<CustomNode[]>>;
   onNodesChange: OnNodesChange<CustomNode>;
@@ -37,7 +31,18 @@ type GraphValue = {
 const GraphContext = createContext<GraphValue | null>(null);
 
 
-export function PipelineGraphProvider({ children, secrets }: { children: ReactNode, secrets: Secret[] }) {
+interface PipelineGraphProviderProps {
+  children: ReactNode;
+  pipelineId: string;
+  initialNodes: CustomNode[];
+  initialEdges: Edge[];
+  secrets: Secret[];
+}
+
+/* initialNodes/initialEdges seed state and are then ignored — useNodesState only
+   reads its argument on mount. That's deliberate: saving revalidates this route,
+   and re-rendering with fresh props must not stomp on edits made since. */
+export function PipelineGraphProvider({ children, pipelineId, initialNodes, initialEdges, secrets }: PipelineGraphProviderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
@@ -83,6 +88,7 @@ export function PipelineGraphProvider({ children, secrets }: { children: ReactNo
   return (
     <GraphContext.Provider 
       value={{
+        pipelineId,
         nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, updateNodeData, setPast, undo, redo,
         onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect,
         selectedEnvironmentId, setSelectedEnvironmentId, secrets
