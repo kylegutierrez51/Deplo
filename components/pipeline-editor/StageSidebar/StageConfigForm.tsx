@@ -10,18 +10,23 @@ import { usePipelineGraph } from "../PipelineGraphProvider";
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
+/* Reserved labels are stored capitalized ('Approval', 'Deploy'), so compare normalized. */
+function matchReservedLabel(value: string | undefined): typeof RESERVED_LABELS[number] | null {
+  const normalized = value?.trim().toLowerCase();
+  return RESERVED_LABELS.find(word => word === normalized) ?? null;
+}
+
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [type, setType] = useState<StageType>(node?.data?.type || 'custom')
-  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
+  const [label, setLabel] = useState<string>(matchReservedLabel(node?.data?.label) ? '' : node?.data?.label ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
   const [secretSearch, setSecretSearch] = useState("");
   const { updateNodeData, selectedEnvironmentId, secrets } = usePipelineGraph();
 
-  const normalizedLabel = label.trim().toLowerCase();
-  const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
+  const reservedLabelMatch = matchReservedLabel(label);
 
   const checkedIds = selectedEnvironmentId ? (node.data?.secrets?.[selectedEnvironmentId] ?? []) : [];
   const environmentSecrets = selectedEnvironmentId
