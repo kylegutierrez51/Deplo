@@ -202,11 +202,9 @@ enum StageStatus {
 }
 
 enum StageType {
-  BUILD
-  TEST
+  CUSTOM
   DEPLOY
   APPROVAL
-  SCRIPT
 }
 
 model StageResult {
