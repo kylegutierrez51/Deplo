@@ -1,19 +1,19 @@
-import type { Node } from '@xyflow/react';
+import type { Edge, Node } from '@xyflow/react';
 
 export type FormState = {
   status: 'idle' | 'success' | 'error';
   message: string;
   errors?: {
-    name?: string
-    feedback?: string
+    name?: string;
+    feedback?: string;
   };
 }
+
+export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline' | 'close-circle-outline';
 
 export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
 export type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'idle';
-
-export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline' | 'close-circle-outline';
 
 export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
@@ -21,7 +21,7 @@ export type RunTrigger = "webhook" | "manual" | "api";
 
 export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
 
-export type EventType = 'push' | 'pull-request'
+export type EventType = 'push' | 'pull-request';
 
 
 /* AuditAction and ResourceType can be capitalized since they're not used by a separate component (Pill, Toast) */
@@ -31,6 +31,7 @@ export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" |
 
 
 export type StageType = 'custom' | 'deploy' | 'approval';
+
 
 export type CustomNode = Omit<Node, 'data'> & {
   data: {
@@ -44,3 +45,24 @@ export type CustomNode = Omit<Node, 'data'> & {
     secrets?: Record<string, string[]>;
   }
 }
+
+/*
+===================================================
+PipelineDefinition types
+===================================================
+*/
+
+export type GraphJson = {
+  nodes: CustomNode[];
+  edges: Edge[];
+}
+
+export type StageConfig = {
+  command: string | null;
+  timeout: number | null;
+  retries: number | null;
+  env_vars: Record<string, string>[];
+  secrets: Record<string, string[]>; // environmentId -> secretId[]
+}
+
+export type ConfigJson = Record<string, StageConfig>;
