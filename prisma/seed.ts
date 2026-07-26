@@ -139,13 +139,25 @@ async function main() {
   const pipelineByName = new Map(pipelines.map((p) => [p.name, p]));
 
   // ── Pipeline Definitions ────────────────────────────────────────
-  // graphJson mirrors the React Flow shape implied by lib/data/run-detail.ts;
-  // configJson is a per-stage command/timeout/retry map.
+  // Both columns follow lib/pipeline-definition.ts's split: graphJson is the
+  // React Flow structure the editor draws, configJson the per-stage execution
+  // settings keyed by node id.
   function buildDefinition(stageNames: string[]) {
-    const nodes = stageNames.map((name, i) => ({ id: `stage-${i + 1}`, type: "stage", data: { label: name }, position: { x: 0, y: i * 120 } }));
-    const edges = stageNames.slice(1).map((_, i) => ({ id: `edge-${i + 1}`, source: `stage-${i + 1}`, target: `stage-${i + 2}` }));
+    const nodes = stageNames.map((name, i) => ({
+      id: `stage-${i + 1}`,
+      type: "standardStage",
+      position: { x: 0, y: i * 120 },
+      data: { type: "custom", name },
+    }));
+    const edges = stageNames.slice(1).map((_, i) => ({
+      id: `edge-${i + 1}`,
+      source: `stage-${i + 1}`,
+      target: `stage-${i + 2}`,
+      type: "customEdge",
+      markerEnd: "marker",
+    }));
     const configJson = Object.fromEntries(
-      stageNames.map((name, i) => [`stage-${i + 1}`, { command: `run ${name}`, timeoutSeconds: 600, retries: 0 }])
+      stageNames.map((name, i) => [`stage-${i + 1}`, { command: `run ${name}`, timeout: 600, retries: 0, env_vars: [], secrets: {} }])
     );
     return { graphJson: { nodes, edges }, configJson };
   }
