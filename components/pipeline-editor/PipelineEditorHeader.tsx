@@ -12,6 +12,7 @@ interface PipelineEditorHeaderProps {
   pipelineName: string,
   environments: Environment[]
 }
+
 export default function PipelineEditorHeader({ pipelineName, environments }: PipelineEditorHeaderProps) {
   const { nodes, edges } = usePipelineGraph();
 
