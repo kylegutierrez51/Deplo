@@ -7,6 +7,7 @@ import Editor from "@/components/pipeline-editor/Editor/Editor";
 import { getEnvironments } from "@/lib/data/environments";
 import { getSecrets } from "@/lib/data/secrets";
 import { getPipelineById } from "@/lib/data/pipelines";
+import { getPipelineDefinition } from "@/lib/data/pipeline-definitions";
 import { notFound } from "next/navigation";
 
 interface EditorProps {
@@ -22,6 +23,7 @@ export default async function PipelineEditor({ params }: EditorProps) {
 
   const environments = await getEnvironments();
   const secrets = await getSecrets();
+  const { nodes, edges } = await getPipelineDefinition(id);
 
   return (
     <PipelineEditorChrome>
@@ -29,7 +31,7 @@ export default async function PipelineEditor({ params }: EditorProps) {
         <Sidebar activeItem="pipelines" showToggle={false} />
       </SidebarSlot>
 
-      <PipelineGraphProvider secrets={secrets}>
+      <PipelineGraphProvider pipelineId={id} initialNodes={nodes} initialEdges={edges} secrets={secrets}>
         <PipelineEditorHeader
           pipelineName={pipeline.name}
           environments={environments}
