@@ -1,10 +1,13 @@
 "use server"
 
-import { FormState } from '@/lib/types';
+import { FormState, type CustomNode } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { auth } from '@/auth';
+import { toDefinition } from '@/lib/pipeline-definition';
+import type { Edge } from '@xyflow/react';
+import type { Prisma } from '@/generated/prisma/client';
 
 export async function addPipeline(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
@@ -17,7 +20,12 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
 
   try {
     await prisma.pipeline.create({
-      data: { name, repoUrl, description, branchFilters, createdById },
+      data: {
+        name, repoUrl, description, branchFilters, createdById,
+        definitions: {
+          create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
+        },
+      },
     });
 
     revalidatePath('/pipelines');
@@ -64,6 +72,46 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
     };
   }
 }
+
+
+export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
+  const session = await auth();
+  const createdById = session?.user?.id ?? null;
+
+  const { graphJson, configJson } = toDefinition(nodes, edges);
+
+  try {
+    const latest = await prisma.pipelineDefinition.findFirstOrThrow({
+      where: { pipelineId },
+      orderBy: { version: 'desc' },
+      select: { id: true },
+    });
+
+    await prisma.pipelineDefinition.update({
+      where: { id: latest.id },
+      data: { graphJson: graphJson as unknown as Prisma.InputJsonValue, configJson, createdById },
+    });
+
+    revalidatePath('/pipelines');
+    revalidatePath(`/pipelines/${pipelineId}`);
+
+    return {
+      status: 'success',
+      message: 'Pipeline saved'
+    };
+
+  } catch (error: unknown) {
+    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      return { status: 'error', message: 'This pipeline no longer exists.' };
+    }
+    console.log(error instanceof Error ? error.message : '');
+    return {
+      status: 'error',
+      message: 'Error saving pipeline. Please try again.'
+    };
+  }
+}
+
 
 export async function deletePipeline(id: string): Promise<FormState> {
   try {

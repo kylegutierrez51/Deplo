@@ -723,3 +723,32 @@ Then you can do something like:
 so that it carrys the CustomNode generic instead of the basic Node type that reactflow gives it and makes it readable
 
 ===================================================================================================================================
+
+Explanation on "graphJson as unknown as Prisma.InputJsonValue" 
+
+
+await prisma.pipelineDefinition.update({
+  where: { id: latest.id },
+  data: { graphJson: graphJson as unknown as Prisma.InputJsonValue, configJson, createdById },
+});
+
+
+
+graphJsonInput is just graphJson with a cast to Prisma.InputJsonValue. Although graphJson is deserialized through 'toDefinition()', it still holds nodes of type 'CustomNode', which is why we need that cast. 
+
+Why the cast: Prisma types a Json column as InputJsonValue, whose object arm is { readonly [key: string]: InputJsonValue | null } — an index signature. GraphJson has named properties, so TypeScript checks each one against that signature recursively, and nodes: CustomNode[] fails. 
+
+CustomNode is built on React Flow's Node, which declares non-JSON fields:
+
+        export type Node<...> = NodeBase<...> & {
+            style?: CSSProperties;
+            domAttributes?: Omit<HTMLAttributes<HTMLDivElement>, ...>;  // event handlers
+        };
+
+so TypeScript can't see GraphJson as an InputJsonValue even though toDefinition only ever builds plain data.
+
+ConfigJson is fine since it's a Record<string, StageConfig>, which already has an index signature and bottoms out in primitive types.
+
+An index signature declares the shape of keys rather than naming them, like 'key: string'. 
+ - Record<K, V> means "{ [key: string]: string[]}
+ - ConfigJson has an index signature where a node id (a string) maps to a StageConfig type with named keys (command, timeout, retries)
