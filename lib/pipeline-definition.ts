@@ -147,17 +147,3 @@ export function definitionsEqual(a: DefinitionContent, b: DefinitionContent): bo
   return canonicalize(a.graphJson) === canonicalize(b.graphJson)
     && canonicalize(a.configJson) === canonicalize(b.configJson);
 }
-
-
-
-//   nodes: [                                             // ← inserted 1st
-//     { id: 'n1', position: { x: 10, y: 20 },  data: { type: 'custom',   name: 'lint' } },
-//     { id: 'n2', position: { x: 240, y: 20 }, data: { type: 'approval', name: 'gate' } },
-//   ],
-//   edges: [ { id: 'e1', source: 'n1', target: 'n2' } ], // ← inserted 2nd
-// }
-
-// configJson = {
-//   n1: { command: 'npm run lint', timeout: 30, retries: null, env_vars: [{ CI: 'true' }], secrets: { env_prod: ['sec_9', 'sec_2'] } },
-//   n2: { command: null, timeout: null, retries: null, env_vars: [], secrets: {} },
-// }
