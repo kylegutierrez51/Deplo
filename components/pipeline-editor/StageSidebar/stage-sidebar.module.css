@@ -97,7 +97,7 @@
 }
 
 /* this css enables the sidebar to appear upon overflow (via secrets, environments) */
-.stage-sidebar form {
+.stage-sidebar-container {
   flex: 1;
   min-height: 0;
   display: flex;

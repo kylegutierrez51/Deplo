@@ -10,18 +10,23 @@ import { usePipelineGraph } from "../PipelineGraphProvider";
 
 const RESERVED_LABELS = ['approval', 'deploy'] as const;
 
+/* Reserved labels are stored capitalized ('Approval', 'Deploy'), so compare normalized. */
+function matchReservedLabel(value: string | undefined): typeof RESERVED_LABELS[number] | null {
+  const normalized = value?.trim().toLowerCase();
+  return RESERVED_LABELS.find(word => word === normalized) ?? null;
+}
+
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [type, setType] = useState<StageType>(node?.data?.type || 'custom')
-  const [label, setLabel] = useState<string>(node?.data?.label as string | undefined ?? '');
+  const [label, setLabel] = useState<string>(matchReservedLabel(node?.data?.label) ? '' : node?.data?.label ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
   const [secretSearch, setSecretSearch] = useState("");
-  const { updateNodeData, selectedEnvironmentId, secrets} = usePipelineGraph();
+  const { updateNodeData, selectedEnvironmentId, secrets } = usePipelineGraph();
 
-  const normalizedLabel = label.trim().toLowerCase();
-  const reservedLabelMatch = RESERVED_LABELS.find(word => word === normalizedLabel) ?? null;
+  const reservedLabelMatch = matchReservedLabel(label);
 
   const checkedIds = selectedEnvironmentId ? (node.data?.secrets?.[selectedEnvironmentId] ?? []) : [];
   const environmentSecrets = selectedEnvironmentId
@@ -35,16 +40,16 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
     const { name, value } = e.target;
     if (/^[0-9]*$/.test(value)) {
       if (name === 'retries' && Number(value) > 10) {
-        setTimeOptions(prev => ({ ...prev, retries: '10'}));
-        updateNodeData(node.id, { retries: 10});
+        setTimeOptions(prev => ({ ...prev, retries: '10' }));
+        updateNodeData(node.id, { retries: 10 });
       }
       else if (name === 'timeout' && Number(value) > 3600) {
-        setTimeOptions(prev => ({ ...prev, timeout: '3600'}));
-        updateNodeData(node.id, { timeout: 3600});
-      } 
+        setTimeOptions(prev => ({ ...prev, timeout: '3600' }));
+        updateNodeData(node.id, { timeout: 3600 });
+      }
       else {
         setTimeOptions(prev => ({ ...prev, [name]: value }));
-        updateNodeData(node.id, { [name]: Number(value)});
+        updateNodeData(node.id, { [name]: Number(value) });
       }
     }
   }
@@ -70,49 +75,48 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   };
 
   return (
-    <form id="post-form" method="POST" onSubmit={e => {
-      e.preventDefault();
-      if (reservedLabelMatch) return;
-    }}>
+    <div className={styles['stage-sidebar-container']}>
       <div className={styles["stage-sidebar-nav"]}>
         <div className={styles["stage-name"]}>
           <label htmlFor="stage-name">STAGE NAME</label>
-          <input 
-            id="stage-name" 
-            name="stage-name" 
-            placeholder="e.g. build" 
-            value={name} 
+          <input
+            id="stage-name"
+            name="stage-name"
+            placeholder="e.g. build"
+            value={name}
             onChange={e => {
               setName(e.target.value);
-              updateNodeData(node.id, { name: e.target.value});
+              updateNodeData(node.id, { name: e.target.value });
             }} />
         </div>
         <div className={styles["stage-types"]}>
           <label>STAGE TYPE</label>
-          <StageTypeGrid node={node} selectedType={type} setType={setType} />
+          <StageTypeGrid node={node} selectedType={type} setType={setType} label={label} />
         </div>
         {type !== 'approval' &&
           <>
-            <div className={styles.label}>
-              <label htmlFor="stage-label">LABEL</label>
-              <input
-                id="stage-label"
-                name="stage-label"
-                placeholder="e.g. build, script"
-                value={label}
-                onChange={e => {
-                  setLabel(e.target.value);
-                  updateNodeData(node.id, { label: e.target.value});
-                }}
-                className={reservedLabelMatch ? styles['input-error'] : undefined}
-                aria-invalid={reservedLabelMatch ? true : undefined}
-              />
-              {reservedLabelMatch &&
-                <p className={styles['error-text']}>
-                  &ldquo;{label.trim()}&rdquo; is reserved for the {reservedLabelMatch === 'approval' ? 'Approval' : 'Deploy'} stage type.
-                </p>
-              }
-            </div>
+            {type !== 'deploy' &&
+              <div className={styles.label}>
+                <label htmlFor="stage-label">LABEL</label>
+                <input
+                  id="stage-label"
+                  name="stage-label"
+                  placeholder="e.g. build, script"
+                  value={label}
+                  onChange={e => {
+                    setLabel(e.target.value);
+                    updateNodeData(node.id, { label: e.target.value });
+                  }}
+                  className={reservedLabelMatch ? styles['input-error'] : undefined}
+                  aria-invalid={reservedLabelMatch ? true : undefined}
+                />
+                {reservedLabelMatch &&
+                  <p className={styles['error-text']}>
+                    &ldquo;{label.trim()}&rdquo; is reserved for the {reservedLabelMatch === 'approval' ? 'Approval' : 'Deploy'} stage type.
+                  </p>
+                }
+              </div>
+            }
             <div className={styles.command}>
               <label htmlFor="command">COMMAND</label>
               <textarea
@@ -122,14 +126,14 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
                 value={command}
                 onChange={e => {
                   setCommand(e.target.value)
-                  updateNodeData(node.id, { command: e.target.value});
+                  updateNodeData(node.id, { command: e.target.value });
                 }}>
               </textarea>
             </div>
             <div className={styles["timeout-and-retries"]}>
               <div className={styles.timeout}>
                 <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout">TIMEOUT (S)</label></div>
-                <input 
+                <input
                   id="timeout"
                   name="timeout"
                   value={timeOptions.timeout}
@@ -138,10 +142,10 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
               </div>
               <div className={styles.retries}>
                 <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries">RETRIES</label></div>
-                <input 
-                  id="retries" 
-                  name="retries" 
-                  value={timeOptions.retries} 
+                <input
+                  id="retries"
+                  name="retries"
+                  value={timeOptions.retries}
                   placeholder="e.g. 1, 2, ..., 10"
                   onChange={e => handleTimeOptionsChange(e)} />
               </div>
@@ -157,6 +161,6 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
           </>
         }
       </div>
-    </form>
+    </div>
   );
 }

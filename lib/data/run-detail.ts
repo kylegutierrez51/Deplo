@@ -97,9 +97,11 @@ const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
   RUNNING: 'running',
 };
 
-// Shape of PipelineDefinition.graphJson, as written by prisma/seed.ts's
-// buildDefinition(): a flat chain of stage nodes connected by edges.
-export type GraphJsonNode = { id: string; type: string; data: { label: string } };
+// Shape of PipelineDefinition.graphJson, as written by lib/pipeline-definition.ts
+// and prisma/seed.ts's buildDefinition(): a chain of stage nodes connected by
+// edges. `name` is the stage name; `label` is a free-text tag the editor shows on
+// the node's card, so it is not a display name here.
+export type GraphJsonNode = { id: string; type: string; data: { label?: string; name?: string } };
 export type GraphJsonEdge = { id: string; source: string; target: string };
 export type GraphJson = { nodes: GraphJsonNode[]; edges: GraphJsonEdge[] };
 
@@ -139,7 +141,7 @@ export function buildGraph(graphJson: GraphJson, stages: StageLite[]): RunGraphN
     const duration = stage?.startedAt
       ? getDuration(stage.startedAt, stage.finishedAt ?? undefined)
       : undefined;
-    return { name: node.data.label, status: statusOf(id), duration };
+    return { name: node.data.name ?? '', status: statusOf(id), duration };
   }
 
   // The connector leading into the first currently-running stage is drawn
@@ -218,7 +220,7 @@ export function buildLogFilters(graphJson: GraphJson, stages: StageLite[]): { va
   return graphJson.nodes.map((node) => {
     const stage = stageByStageId.get(node.id);
     const status = stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending';
-    return { value: node.id, label: `${node.data.label} - ${status}` };
+    return { value: node.id, label: `${node.data.name ?? ''} - ${status}` };
   });
 }
 

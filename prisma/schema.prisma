@@ -118,7 +118,11 @@ model Pipeline {
 model PipelineDefinition {
   id         String @id @default(cuid())
   pipelineId String
-  version    Int // For now, this can represent the number of edits made to a pipeline
+  // The nth edit made to a pipeline. Monotonic and never reused: a save inserts
+  // a new version rather than editing this row, then deletes superseded
+  // versions no run references — so versions run sparse (0, 1, 4, 9...).
+  // Rows are immutable once written; runs depend on that (see below).
+  version    Int
 
   // React Flow serialization: { nodes: [...], edges: [...] }
   graphJson  Json
@@ -132,7 +136,10 @@ model PipelineDefinition {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
-  // Runs reference the exact definition version they executed
+  // Runs reference the exact definition version they executed. The relation is
+  // ON DELETE RESTRICT (PipelineRun.definition is required with no override),
+  // which is what stops the sweep in savePipelineDefinition from deleting a
+  // definition a run still needs.
   runs PipelineRun[]
 
   @@unique([pipelineId, version])
@@ -202,11 +209,9 @@ enum StageStatus {
 }
 
 enum StageType {
-  BUILD
-  TEST
+  CUSTOM
   DEPLOY
   APPROVAL
-  SCRIPT
 }
 
 model StageResult {

@@ -139,13 +139,25 @@ async function main() {
   const pipelineByName = new Map(pipelines.map((p) => [p.name, p]));
 
   // ── Pipeline Definitions ────────────────────────────────────────
-  // graphJson mirrors the React Flow shape implied by lib/data/run-detail.ts;
-  // configJson is a per-stage command/timeout/retry map.
+  // Both columns follow lib/pipeline-definition.ts's split: graphJson is the
+  // React Flow structure the editor draws, configJson the per-stage execution
+  // settings keyed by node id.
   function buildDefinition(stageNames: string[]) {
-    const nodes = stageNames.map((name, i) => ({ id: `stage-${i + 1}`, type: "stage", data: { label: name }, position: { x: 0, y: i * 120 } }));
-    const edges = stageNames.slice(1).map((_, i) => ({ id: `edge-${i + 1}`, source: `stage-${i + 1}`, target: `stage-${i + 2}` }));
+    const nodes = stageNames.map((name, i) => ({
+      id: `stage-${i + 1}`,
+      type: "standardStage",
+      position: { x: 0, y: i * 120 },
+      data: { type: "custom", name },
+    }));
+    const edges = stageNames.slice(1).map((_, i) => ({
+      id: `edge-${i + 1}`,
+      source: `stage-${i + 1}`,
+      target: `stage-${i + 2}`,
+      type: "customEdge",
+      markerEnd: "marker",
+    }));
     const configJson = Object.fromEntries(
-      stageNames.map((name, i) => [`stage-${i + 1}`, { command: `run ${name}`, timeoutSeconds: 600, retries: 0 }])
+      stageNames.map((name, i) => [`stage-${i + 1}`, { command: `run ${name}`, timeout: 600, retries: 0, env_vars: [], secrets: {} }])
     );
     return { graphJson: { nodes, edges }, configJson };
   }
@@ -233,23 +245,23 @@ async function main() {
   // Stage shapes come from lib/data/run-detail.ts (graph nodes) and
   // lib/data/approvals.ts (approval-gated stage lists).
   const stageSeeds: { run: number; stageId: string; stageName: string; stageType: StageType; status: StageStatus; approvedBy?: string; durationSeconds?: number }[] = [
-    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
+    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
     { run: 0, stageId: "stage-2", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
-    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 38 },
-    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED, durationSeconds: 133 },
-    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 85 },
+    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
+    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 38 },
+    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 133 },
+    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 85 },
     { run: 1, stageId: "stage-5", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.RUNNING },
-    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 40 },
-    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 70 },
+    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 40 },
+    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 70 },
     { run: 3, stageId: "stage-3", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.FAILED, durationSeconds: 101 },
-    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 35 },
-    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 30 },
-    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.TEST, status: StageStatus.SUCCEEDED, durationSeconds: 95 },
+    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 35 },
+    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 30 },
+    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 95 },
     { run: 5, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
-    { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.SCRIPT, status: StageStatus.QUEUED },
+    { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.CUSTOM, status: StageStatus.QUEUED },
     { run: 5, stageId: "stage-6", stageName: "publish-stores", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.BUILD, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
+    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
     { run: 6, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
     { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco", durationSeconds: 45 },
   ];
