@@ -9,6 +9,12 @@ export type FormState = {
   };
 }
 
+// Saving a definition also reports which one it landed on, so a run triggered
+// straight after a save can pin itself to the exact graph the editor showed.
+export type SaveDefinitionResult = FormState & {
+  definitionId?: string;
+}
+
 export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline' | 'close-circle-outline';
 
 export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
