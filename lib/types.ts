@@ -1,4 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
+import type { Prisma } from '@/generated/prisma';
 
 export type FormState = {
   status: 'idle' | 'success' | 'error';
@@ -38,6 +39,12 @@ export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" |
 
 export type StageType = 'custom' | 'deploy' | 'approval';
 
+export type PipelineRun = {
+  id: string;
+  version: number;
+  graphJson: GraphJson
+  configJson: ConfigJson
+} | null
 
 export type CustomNode = Omit<Node, 'data'> & {
   data: {
