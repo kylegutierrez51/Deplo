@@ -377,14 +377,14 @@ function detectedCycle(edges: Edge[]): { isCycle: boolean; edgeMap: Map<string, 
 
 
 function checkApprovalBeforeDeploy(edgeMap: Map<string, string[]>, nodes: CustomNode[]): boolean {
-  const isApprovalBeforeDeploy = true;
+  let isApprovalBeforeDeploy = true;
 
   edgeMap.forEach((targets, source) => {
     const sourceNode = nodes.find(n => n.id === source);
 
     for (const target of targets) {
       const targetNode = nodes.find(n => n.id === target);
-      if (targetNode?.data.type === 'deploy' && sourceNode?.data.type !== 'approval') return false;
+      if (targetNode?.data.type === 'deploy' && sourceNode?.data.type !== 'approval') isApprovalBeforeDeploy = false;
     }
   })
 
