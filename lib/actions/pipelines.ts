@@ -10,6 +10,7 @@ import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
 import { matchReservedLabel } from '../utils/string';
 import { getEnvironmentById } from '../data/environments';
+import { buildMaps } from '@/runner/util';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -270,7 +271,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: 'Error deleting pipeline. Please try again.'
+      message: 'Error triggering pipeline. Please try again.'
     }
   }
 
@@ -292,9 +293,7 @@ async function verifyPipelineRunReady(latest: PipelineRun, environmentId: string
     message: 'Pipeline has no nodes. Add at least 1 node.'
   }
 
-  const { edgeMap, isCycle } = detectedCycle(graphJson.edges);
-
-  if (isCycle) return {
+  if (detectedCycle(graphJson.edges, graphJson.nodes)) return {
     status: 'error',
     message: 'Cycle detected! Ensure no 2 nodes connect to each other.'
   }
@@ -319,22 +318,20 @@ async function verifyPipelineRunReady(latest: PipelineRun, environmentId: string
 
   for (let i = 0; i < graphJson.nodes.length; i++) {
     const nodeData = graphJson.nodes[i].data;
-    const configData = configJson[i];
+    const configData = configJson[graphJson.nodes[i].id];
 
-    if (matchReservedLabel(nodeData.label)) {
+    if (!['approval', 'deploy'].includes(nodeData.type) && matchReservedLabel(nodeData.label)) {
       labelError = true;
-      message += "Label must not be 'Approval' or 'Deploy', case sensitive.";
       status = 'error';
     }
 
     if (!configData.command) {
       commandError = true;
-      message += "Command must be entered for each node.";
       status = "error";
     }
   }
 
-  if (labelError) message += "Label must not be 'Approval' or 'Deploy', case sensitive.";
+  if (labelError) message += "For a Custom stage, Label must not be 'Approval' or 'Deploy', case sensitive.";
 
   if (commandError) message += "Command must be entered for each node.";
 
@@ -343,36 +340,29 @@ async function verifyPipelineRunReady(latest: PipelineRun, environmentId: string
   }
 }
 
-/*
-graphJson = {
-  nodes: [                                             // ← inserted 1st
-    { id: 'n1', position: { x: 10, y: 20 },  data: { type: 'custom',   name: 'lint' } },
-    { id: 'n2', position: { x: 240, y: 20 }, data: { type: 'approval', name: 'gate' } },
-  ],
-  edges: [ { id: 'e1', source: 'n1', target: 'n3' } ], // ← inserted 2nd
-         [ { id: 'e2', source: 'n2', target: 'n3' } ],
-         [ { id: 'e2', source: 'n3', target: 'n4' } ],
-         [ { id: 'e2', source: 'n3', target: 'n2' } ],
-}
 
-configJson = {
-  n1: { command: 'npm run lint', timeout: 30, retries: null,
-        env_vars: [{ CI: 'true' }], secrets: { env_prod: ['sec_9', 'sec_2'] } },
-  n2: { command: null, timeout: null, retries: null, env_vars: [], secrets: {} },
-}
-*/
+function detectedCycle(edges: Edge[], nodes: CustomNode[]): boolean {
+  const { inDegree, adjacency } = buildMaps(edges, nodes);
 
-function detectedCycle(edges: Edge[]): { isCycle: boolean; edgeMap: Map<string, string[]> } {
-  const edgeMap = new Map<string, string[]>();
-  let isCycle = false;
+  const processedNodes = [...inDegree.entries()].filter(([_, degree]) => degree === 0).map(([nodeId]) => nodeId);
 
-  edges.forEach(edge => {
-    edgeMap.set(edge.source, [ ...(edgeMap.get(edge.source) ?? []), edge.target ]);
+  const result = []
 
-    const targets = edgeMap.get(edge.target) ?? [];
-    if (targets.includes(edge.source)) isCycle = true;
-  });
-  return { isCycle, edgeMap }
+  while (processedNodes.length > 0) {
+    const node = processedNodes.pop()!;
+    for (const targetNode of adjacency.get(node) ?? []) {
+      const remaining = (inDegree.get(targetNode) ?? 0) - 1;
+      inDegree.set(targetNode, remaining);
+
+      if (remaining <= 0) {
+        processedNodes.push(targetNode);
+      }
+    }
+    result.push(node);
+
+  }
+
+  return result.length !== inDegree.size;
 }
 
 
