@@ -1,13 +1,7 @@
 // Sample data that the Pipeline Trigger Server Action receives
 
 import type { StageType } from '@/generated/prisma';
-
-interface StageNode {
-  id: string;
-  type: 'stageNode';
-  position: { x: number; y: number };
-  data: { label: string; stageType: StageType };
-}
+import type { CustomNode } from '@/lib/types';
 
 interface StageEdge {
   id: string;
@@ -24,7 +18,7 @@ interface StageConfig {
 }
 
 export interface GraphJson {
-  nodes: StageNode[];
+  nodes: CustomNode[];
   edges: StageEdge[];
 }
 

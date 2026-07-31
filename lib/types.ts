@@ -1,5 +1,4 @@
 import type { Edge, Node } from '@xyflow/react';
-import type { Prisma } from '@/generated/prisma';
 
 export type FormState = {
   status: 'idle' | 'success' | 'error';
