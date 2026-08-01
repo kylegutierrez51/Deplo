@@ -1,6 +1,6 @@
 "use server"
 
-import { FormState, type CustomNode, type SaveDefinitionResult, type PipelineRun } from '@/lib/types';
+import { FormState, type ConfigJson, type CustomNode, type GraphJson, type SaveDefinitionResult } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -8,9 +8,8 @@ import { auth } from '@/auth';
 import { definitionsEqual, toDefinition } from '@/lib/pipeline-definition';
 import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
-import { matchReservedLabel } from '../utils/string';
 import { getEnvironmentById } from '../data/environments';
-import { buildMaps } from '@/runner/util';
+import { validatePipelineGraph } from '@/lib/pipeline-graph';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -222,9 +221,14 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     status: 'error',
     message: 'Select an environment to target.'
   }
-
+  
   const session = await auth();
   const triggeredById = session?.user?.id ?? null;
+
+  if (!triggeredById) return {
+    status: 'error',
+    message: 'Sign in to run a pipeline.'
+  }
 
   try {
     const latest = await prisma.pipelineDefinition.findFirst({
@@ -240,14 +244,15 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
     const { graphJson, configJson } = toDefinition(nodes, edges);
 
+    // A run pins itself to a stored definition, so the editor has to match one.
     if (!definitionsEqual({ graphJson, configJson }, latest)) {
       return {
-        status: 'idle',
+        status: 'error',
         message: 'Save or discard your current changes!'
       }
     }
 
-    const isReadyState = await verifyPipelineRunReady({ id: latest.id, version: latest.version, graphJson, configJson }, environmentId);
+    const isReadyState = await verifyPipelineRunReady({ graphJson, configJson }, environmentId);
 
     if (isReadyState.status === 'error') return isReadyState;
 
@@ -265,8 +270,12 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     };
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.log(`${error.code}:` + 'Error deleting pipeline');
+    // P2003: the definition or environment the run points at was deleted between the checks above and the insert.
+    if (error instanceof PrismaClientKnownRequestError && (error.code === 'P2003' || error.code === 'P2025')) {
+      return {
+        status: 'error',
+        message: 'This pipeline or environment no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {
@@ -280,103 +289,38 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
 
 
-async function verifyPipelineRunReady(latest: PipelineRun, environmentId: string): Promise<FormState> {
-  if (!latest) return {
-    status: 'error',
-    message: 'Pipeline definition does not exist.'
-  }
-
-  const { graphJson, configJson } = latest;
+/*
+ * Gates that make the graph checks meaningful come first and return on their own —
+ * there is nothing useful to say about the stages of a pipeline that has none, or
+ * about an environment that has been deleted. Everything after that is collected
+ * by validatePipelineGraph and reported in one message, so a user fixing several
+ * problems does not have to press Run once per problem.
+*/
+async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
+  const { graphJson, configJson } = definition;
 
   if (!graphJson.nodes.length) return {
     status: 'error',
-    message: 'Pipeline has no nodes. Add at least 1 node.'
+    message: 'This pipeline has no stages. Add at least one.'
   }
 
-  if (detectedCycle(graphJson.edges, graphJson.nodes)) return {
-    status: 'error',
-    message: 'Cycle detected! Ensure no 2 nodes connect to each other.'
-  }
-
+  // The environment is fetched before the graph checks rather than after because requireApproval decides whether one of them runs at all. It is the only round trip here.
   const environment = await getEnvironmentById(environmentId);
 
-  if (environment?.requireApproval) {
-    if (!checkApprovalBeforeDeploy(edgeMap, graphJson.nodes)) {
-      return {
-        status: 'error',
-        message: "Stages with type 'Deploy' must be parented to an 'Approval' stage since the selected environment requires approval before deploy stages can execute."
-      }
-    }
+  if (!environment) return {
+    status: 'error',
+    message: 'The selected environment no longer exists. Pick another.'
   }
 
+  const errors = validatePipelineGraph(graphJson, configJson, environment.requireApproval);
 
-  let message: string = '';
-  let status: FormState["status"] = 'success';
-  let labelError = false;
-  let commandError = false;
-
-
-  for (let i = 0; i < graphJson.nodes.length; i++) {
-    const nodeData = graphJson.nodes[i].data;
-    const configData = configJson[graphJson.nodes[i].id];
-
-    if (!['approval', 'deploy'].includes(nodeData.type) && matchReservedLabel(nodeData.label)) {
-      labelError = true;
-      status = 'error';
-    }
-
-    if (!configData.command) {
-      commandError = true;
-      status = "error";
-    }
+  if (errors.length) return {
+    status: 'error',
+    message: ['Cannot run pipeline:', ...errors.map(error => `• ${error}`)].join('\n')
   }
-
-  if (labelError) message += "For a Custom stage, Label must not be 'Approval' or 'Deploy', case sensitive.";
-
-  if (commandError) message += "Command must be entered for each node.";
 
   return {
-    status, message
+    status: 'success',
+    message: ''
   }
-}
-
-
-function detectedCycle(edges: Edge[], nodes: CustomNode[]): boolean {
-  const { inDegree, adjacency } = buildMaps(edges, nodes);
-
-  const processedNodes = [...inDegree.entries()].filter(([_, degree]) => degree === 0).map(([nodeId]) => nodeId);
-
-  const result = []
-
-  while (processedNodes.length > 0) {
-    const node = processedNodes.pop()!;
-    for (const targetNode of adjacency.get(node) ?? []) {
-      const remaining = (inDegree.get(targetNode) ?? 0) - 1;
-      inDegree.set(targetNode, remaining);
-
-      if (remaining <= 0) {
-        processedNodes.push(targetNode);
-      }
-    }
-    result.push(node);
-
-  }
-
-  return result.length !== inDegree.size;
-}
-
-
-function checkApprovalBeforeDeploy(edgeMap: Map<string, string[]>, nodes: CustomNode[]): boolean {
-  let isApprovalBeforeDeploy = true;
-
-  edgeMap.forEach((targets, source) => {
-    const sourceNode = nodes.find(n => n.id === source);
-
-    for (const target of targets) {
-      const targetNode = nodes.find(n => n.id === target);
-      if (targetNode?.data.type === 'deploy' && sourceNode?.data.type !== 'approval') isApprovalBeforeDeploy = false;
-    }
-  })
-
-  return isApprovalBeforeDeploy;
 }
