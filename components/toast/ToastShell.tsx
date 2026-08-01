@@ -5,12 +5,19 @@ import Toast from './Toast';
 import { useToast } from './ToastContext';
 
 export default function ToastShell() {
-  const { toasts } = useToast();
+  const { toasts, dismissToast } = useToast();
 
   return (
     <div className={styles["toast-container"]}>
       {toasts.map(t => (
-        <Toast key={t.id} text={t.text} icon={t.icon} exiting={t.exiting} />
+        <Toast
+          key={t.id}
+          text={t.text}
+          icon={t.icon}
+          exiting={t.exiting}
+          sticky={t.sticky}
+          onDismiss={() => dismissToast(t.id)}
+        />
       ))}
     </div>
   )

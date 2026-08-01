@@ -26,6 +26,48 @@
   animation: toast-enter 220ms ease-out;
 }
 
+/* A sticky toast carries a multi-line report rather than one line of status, so the
+   icon aligns to the first line instead of centering against the whole block, and the
+   width is capped — the base rule has no max-width because a notification never needed one. */
+.sticky {
+  align-items: flex-start;
+  max-width: min(420px, calc(100vw - var(--space-lg) * 2));
+}
+
+.sticky .toast-icon ion-icon {
+  /* nudged onto the cap height of the first line */
+  display: block;
+  margin-top: 1px;
+}
+
+.toast-text {
+  /* the action joins its findings with '\n' */
+  white-space: pre-line;
+  line-height: 1.45;
+}
+
+.toast-dismiss {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--white-clr);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 120ms ease-out;
+}
+
+.toast-dismiss:hover {
+  opacity: 1;
+}
+
+.toast-dismiss ion-icon {
+  font-size: 18px;
+}
+
 /* must be declared after .toast-flex so animation overrides at equal specificity */
 .exiting {
   animation: toast-exit 200ms ease-in forwards;
