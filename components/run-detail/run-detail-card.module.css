@@ -1,11 +1,11 @@
 .run-detail-card {
   width: 100%;
+  align-self: center;
   max-width: var(--width-xl);
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-gray-clr);
   border-radius: var(--radius-xl);
   padding: 22px 28px;
-  margin-top: var(--space-2xl);
   margin-bottom: var(--space-2xl);
 }
 
@@ -56,6 +56,15 @@
   border-radius: 20px;
   font-size: var(--font-size-sm);
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.rdc-env-detail {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .rdc-status ion-icon {
@@ -126,6 +135,7 @@
 .rdc-meta-item span {
   white-space: nowrap;
 }
+
 .rdc-link span {
   color: var(--blue-clr);
 }
@@ -143,9 +153,6 @@ Run Detail Media Queries
 /*
   Breakpoints:
     1450px — stack run-detail card (info above buttons); wrap commit row
-    1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
-    1195px — reduce heavy horizontal padding
-    1024px — shrink pipeline job cards so the graph fits with the sidebar present
      930px — wrap trigger row so timing items fall to a second line (sidebar present)
      874px — collapse sidebar; remove viewport-height constraint; reflow content
      768px — tablet refinements; wrap job-status pills
