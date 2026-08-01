@@ -1,6 +1,7 @@
 .toast-container {
   position: fixed;
-  top: 18px;
+  /* Routes with chrome of their own push this down; see --toast-inset-top in globals.css. */
+  top: var(--toast-inset-top, 18px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
