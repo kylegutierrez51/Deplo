@@ -1,6 +1,6 @@
 "use server"
 
-import { FormState, type CustomNode, type SaveDefinitionResult } from '@/lib/types';
+import { FormState, type ConfigJson, type CustomNode, type GraphJson, type SaveDefinitionResult } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -8,6 +8,8 @@ import { auth } from '@/auth';
 import { definitionsEqual, toDefinition } from '@/lib/pipeline-definition';
 import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
+import { getEnvironmentById } from '../data/environments';
+import { validatePipelineGraph } from '@/lib/pipeline-graph';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -211,5 +213,114 @@ async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promi
 
   } catch (error: unknown) {
     console.log(error instanceof Error ? error.message : '');
+  }
+}
+
+export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
+  if (!environmentId) return {
+    status: 'error',
+    message: 'Select an environment to target.'
+  }
+  
+  const session = await auth();
+  const triggeredById = session?.user?.id ?? null;
+
+  if (!triggeredById) return {
+    status: 'error',
+    message: 'Sign in to run a pipeline.'
+  }
+
+  try {
+    const latest = await prisma.pipelineDefinition.findFirst({
+      where: { pipelineId },
+      orderBy: { version: 'desc' },
+      select: { id: true, version: true, graphJson: true, configJson: true },
+    });
+
+    if (!latest) return {
+      status: 'error',
+      message: 'Save your current pipeline'
+    }
+
+    const { graphJson, configJson } = toDefinition(nodes, edges);
+
+    // A run pins itself to a stored definition, so the editor has to match one.
+    if (!definitionsEqual({ graphJson, configJson }, latest)) {
+      return {
+        status: 'error',
+        message: 'Save or discard your current changes!'
+      }
+    }
+
+    const isReadyState = await verifyPipelineRunReady({ graphJson, configJson }, environmentId);
+
+    if (isReadyState.status === 'error') return isReadyState;
+
+    await prisma.pipelineRun.create({
+      data: {
+        pipelineId, definitionId: latest.id, trigger: "MANUAL", triggeredById, environmentId
+      }
+    });
+    
+    revalidatePath('/pipelines');
+
+    return {
+      status: 'success',
+      message: 'Pipeline Run Triggered!'
+    };
+
+  } catch (error: unknown) {
+    // P2003: the definition or environment the run points at was deleted between the checks above and the insert.
+    if (error instanceof PrismaClientKnownRequestError && (error.code === 'P2003' || error.code === 'P2025')) {
+      return {
+        status: 'error',
+        message: 'This pipeline or environment no longer exists.'
+      }
+    }
+    console.log(error instanceof Error ? error.message : '');
+    return {
+      status: 'error',
+      message: 'Error triggering pipeline. Please try again.'
+    }
+  }
+
+}
+
+
+
+
+/*
+ * Gates that make the graph checks meaningful come first and return on their own —
+ * there is nothing useful to say about the stages of a pipeline that has none, or
+ * about an environment that has been deleted. Everything after that is collected
+ * by validatePipelineGraph and reported in one message, so a user fixing several
+ * problems does not have to press Run once per problem.
+*/
+async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
+  const { graphJson, configJson } = definition;
+
+  if (!graphJson.nodes.length) return {
+    status: 'error',
+    message: 'This pipeline has no stages. Add at least one.'
+  }
+
+  // The environment is fetched before the graph checks rather than after because requireApproval decides whether one of them runs at all. It is the only round trip here.
+  const environment = await getEnvironmentById(environmentId);
+
+  if (!environment) return {
+    status: 'error',
+    message: 'The selected environment no longer exists. Pick another.'
+  }
+
+  const errors = validatePipelineGraph(graphJson, configJson, environment.requireApproval);
+
+  if (errors.length) return {
+    status: 'error',
+    message: ['Cannot run pipeline:', ...errors.map(error => `• ${error}`)].join('\n')
+  }
+
+  return {
+    status: 'success',
+    message: ''
   }
 }

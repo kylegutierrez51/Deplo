@@ -7,14 +7,7 @@ import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
 import type { CustomNode, StageType } from "@/lib/types";
 import { usePipelineGraph } from "../PipelineGraphProvider";
-
-const RESERVED_LABELS = ['approval', 'deploy'] as const;
-
-/* Reserved labels are stored capitalized ('Approval', 'Deploy'), so compare normalized. */
-function matchReservedLabel(value: string | undefined): typeof RESERVED_LABELS[number] | null {
-  const normalized = value?.trim().toLowerCase();
-  return RESERVED_LABELS.find(word => word === normalized) ?? null;
-}
+import { matchReservedLabel } from '@/lib/utils/string';
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');

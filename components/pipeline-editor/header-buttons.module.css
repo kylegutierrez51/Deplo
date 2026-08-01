@@ -39,8 +39,9 @@ Header Buttons
 /* While a save is in flight. The hover override keeps the button from lighting
    up under a cursor that's already resting on it. */
 .save-btn:disabled,
-.save-btn:disabled:hover {
-  background-color: var(--draft-btn-clr);
+.save-btn:disabled:hover,
+.run-btn:disabled,
+.run-btn:disabled:hover {
   opacity: 0.6;
   cursor: default;
 }

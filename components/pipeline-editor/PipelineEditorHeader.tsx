@@ -17,7 +17,7 @@ export default function PipelineEditorHeader({ pipelineName, environments }: Pip
   const { nodes, edges } = usePipelineGraph();
 
   return (
-    <header className={styles["editor-header"]}>
+    <header className={styles["editor-header"]} data-pipeline-editor>
       <div className={styles['header-flex']}>
         <div className={styles['left-slot']}>
           <MainSidebarToggle className={styles['sidebar-toggle']}>

@@ -752,3 +752,50 @@ ConfigJson is fine since it's a Record<string, StageConfig>, which already has a
 An index signature declares the shape of keys rather than naming them, like 'key: string'. 
  - Record<K, V> means "{ [key: string]: string[]}
  - ConfigJson has an index signature where a node id (a string) maps to a StageConfig type with named keys (command, timeout, retries)
+
+===================================================================================================================================
+
+SYNCING ENVIRONMENT PARAMS
+
+    function syncEnvironmentParam(environmentId: string | null) {
+      const params = new URLSearchParams(window.location.search);
+
+      if (environmentId) params.set('environment', environmentId);
+      else params.delete('environment');
+
+      const query = params.toString();
+      window.history.replaceState(null, '', query ? `${window.location.pathname}?${query}` : window.location.pathname);
+    }
+
+======
+ex 1:
+
+User is at /pipelines/cms70rgdv001wukk4dwz00l9b with no query string and clicks an 
+environment in the dropdown, firing syncEnvironmentParam(cms70rgd5000nukk407x7tfph)
+
+      window.location.search is '' -> params = URLSearchParams("")
+
+      params = environment=cms70rgd5000nukk407x7tfph
+      
+      query = 'environment=cms70rgd5000nukk407x7tfph'
+
+      window.history.replaceState -> since query is truthy, it becomes:
+        /pipelines/cms70rgdv001wukk4dwz00l9b?environment=cms70rgd5000nukk407x7tfph
+======
+ex 2:
+
+Continuing from ex 1, user now types a character into the input, firing syncEnvironmentParam(null)
+
+      window.location.search is '?environment=cms70rgd5000nukk407x7tfph' -> params = environment=cms70rgd5000nukk407x7tfph
+
+      params.delete('environment') -> params = (empty) 
+
+      query = ''
+
+      window.history.replaceState -> since query is falsy, it becomes: 
+        /pipelines/cms70rgdv001wukk4dwz00l9b
+
+
+
+
+

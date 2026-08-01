@@ -38,6 +38,12 @@ export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" |
 
 export type StageType = 'custom' | 'deploy' | 'approval';
 
+export type PipelineRun = {
+  id: string;
+  version: number;
+  graphJson: GraphJson
+  configJson: ConfigJson
+} | null
 
 export type CustomNode = Omit<Node, 'data'> & {
   data: {

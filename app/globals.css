@@ -242,6 +242,22 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
 
 /*
 ============================================================
+Route-scoped Layout Overrides
+============================================================
+*/
+
+/* ToastShell is mounted globally in app/layout.tsx, so it can't read a route's
+   chrome. The pipeline editor's fixed header owns the top-centre strip where the
+   environment select sits, and toasts there cover it and intercept its clicks —
+   so that route marks itself and pushes them below the header. Every other route
+   falls back to the value in toast.module.css. */
+body:has([data-pipeline-editor]) {
+  --toast-inset-top: calc(var(--size-topbar-height) + var(--space-md));
+}
+
+
+/*
+============================================================
 Form Element Base Styles
 ============================================================
 */

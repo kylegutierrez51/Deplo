@@ -1,18 +1,19 @@
-import type { GraphJson } from "./types";
+import { type Edge } from "@xyflow/react";
+import { CustomNode } from "@/lib/types";
 
-export function buildMaps(graphJson: GraphJson) {
+export function buildMaps(edges: Edge[], nodes: CustomNode[]) {
   const inDegree = new Map<string, number>();
   const adjacency = new Map<string, string[]>();
 
-  for (const edge of graphJson.edges) {
-    if (inDegree.get(edge.source) === undefined) {
-      inDegree.set(edge.source, 0);
-    }
-    inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1);
+  // catches cases where there's a single node with no edges to or from it
+  for (const node of nodes) {
+    inDegree.set(node.id, 0);
   }
 
-  for (const edge of graphJson.edges) {
-    adjacency.set(edge.source, [ ...(adjacency.get(edge.source) ?? []), edge.target ])
+  for (const edge of edges) {
+    inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1);
+
+    adjacency.set(edge.source, [...(adjacency.get(edge.source) ?? []), edge.target]);
   }
 
   return { inDegree, adjacency };

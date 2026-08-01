@@ -36,16 +36,19 @@ interface PipelineGraphProviderProps {
   pipelineId: string;
   initialNodes: CustomNode[];
   initialEdges: Edge[];
+  initialEnvironmentId: string | null;
   secrets: Secret[];
 }
 
-/* initialNodes/initialEdges seed state and are then ignored — useNodesState only
-   reads its argument on mount. That's deliberate: saving revalidates this route,
-   and re-rendering with fresh props must not stomp on edits made since. */
-export function PipelineGraphProvider({ children, pipelineId, initialNodes, initialEdges, secrets }: PipelineGraphProviderProps) {
+/* initialNodes/initialEdges/initialEnvironmentId seed state and are then ignored —
+   useNodesState only reads its argument on mount. That's deliberate: saving
+   revalidates this route, and re-rendering with fresh props must not stomp on
+   edits made since. initialEnvironmentId comes from ?environment in the URL, so
+   the selection survives a refresh; EnvironmentSelect keeps that param in sync. */
+export function PipelineGraphProvider({ children, pipelineId, initialNodes, initialEdges, initialEnvironmentId, secrets }: PipelineGraphProviderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
-  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(initialEnvironmentId);
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
 
   const updateNodeData = useCallback((id: string, patch: Record<string, unknown>) => {

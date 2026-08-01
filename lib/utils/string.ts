@@ -11,3 +11,13 @@ export function getRepoName(repoUrl: string): string {
 export function getBranch(ref: string): string {
   return ref.slice(11);
 }
+
+
+
+/* Reserved labels are stored capitalized ('Approval', 'Deploy'), so compare normalized. */
+const RESERVED_LABELS = ['approval', 'deploy'] as const;
+
+export function matchReservedLabel(value: string | undefined): typeof RESERVED_LABELS[number] | null {
+  const normalized = value?.trim().toLowerCase();
+  return RESERVED_LABELS.find(word => word === normalized) ?? null;
+}

@@ -40,11 +40,11 @@ export const configJson: ConfigJson = {
 
 export const graphJson: GraphJson = {
   "nodes": [
-    { "id": "stage_install", "type": "stageNode", "position": { "x": 0,   "y": 120 }, "data": { "label": "install",      "stageType": "SCRIPT"   } },
-    { "id": "stage_build",   "type": "stageNode", "position": { "x": 240, "y": 40  }, "data": { "label": "build",        "stageType": "BUILD"    } },
-    { "id": "stage_test",    "type": "stageNode", "position": { "x": 240, "y": 200 }, "data": { "label": "test",         "stageType": "TEST"     } },
-    { "id": "stage_approve", "type": "stageNode", "position": { "x": 480, "y": 120 }, "data": { "label": "approve prod", "stageType": "APPROVAL" } },
-    { "id": "stage_deploy",  "type": "stageNode", "position": { "x": 720, "y": 120 }, "data": { "label": "deploy",       "stageType": "DEPLOY"   } }
+    { "id": "stage_install", "type": "standardStage", "position": { "x": 0,   "y": 120 }, "data": { "type": "custom",   "name": "install",      "label": "script" } },
+    { "id": "stage_build",   "type": "standardStage", "position": { "x": 240, "y": 40  }, "data": { "type": "custom",   "name": "build",        "label": "build"  } },
+    { "id": "stage_test",    "type": "standardStage", "position": { "x": 240, "y": 200 }, "data": { "type": "custom",   "name": "test",         "label": "test"   } },
+    { "id": "stage_approve", "type": "standardStage", "position": { "x": 480, "y": 120 }, "data": { "type": "approval", "name": "approve prod", "label": "Approval" } },
+    { "id": "stage_deploy",  "type": "standardStage", "position": { "x": 720, "y": 120 }, "data": { "type": "deploy",   "name": "deploy",       "label": "Deploy" } }
   ],
   "edges": [
     { "id": "e1", "source": "stage_install", "target": "stage_build"   },

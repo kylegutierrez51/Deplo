@@ -13,7 +13,7 @@ const runGraphs = new Map<string, RunGraphState>();
 
 /** Registers a run's dependency graph and returns the stages with no dependencies, ready to enqueue immediately. */
 export function startRun(runId: string, graphJson: GraphJson, config: ConfigJson): string[] {
-  const { adjacency, inDegree } = buildMaps(graphJson);
+  const { adjacency, inDegree } = buildMaps(graphJson.edges, graphJson.nodes);
   runGraphs.set(runId, {
     adjacency,
     inDegree,
