@@ -84,43 +84,6 @@ Approval Cards
   font-size: var(--font-size-body);
 }
 
-.stage-view {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-sm);
-}
-
-.stage-view > button {
-  display: flex;
-  align-items: center;
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  gap: var(--space-xs);
-  cursor: pointer;
-}
-
-/* Stages */
-.stages {
-  border-top: var(--border-width-md) solid var(--light-gray-clr);
-  padding-top: var(--space-sm);
-  overflow-x: auto;
-  padding-bottom: var(--space-md);
-}
-
-.stages::-webkit-scrollbar {
-  height: 5px;
-}
-
-.stages--hidden {
-  display: none;
-}
-
-.stages-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
 
 /*
 =====================================================================================

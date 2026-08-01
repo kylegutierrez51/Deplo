@@ -1,10 +1,7 @@
-import { Fragment } from 'react';
 import styles from './approval-card.module.css'
 import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
-import StageNode from './StageNode';
 import Pill from '@/components/Pill';
-import HideStagesButton from './HideStagesButton';
 import { Stage } from '@/lib/data/approvals';
 import type { EnvType } from '@/lib/types';
 import { capitalize } from '@/lib/utils/string';
@@ -28,7 +25,6 @@ export default function ApprovalCard({ runId, pipelineName, environment, commitS
     <div className={styles['approval-card']} data-approval-card>
 
       <div className={styles['approval-card-row']}>
-
         <div className={styles['approvals-detail']}>
           <div className={styles['top-row']}>
             <span>{pipelineName}</span>
@@ -39,7 +35,6 @@ export default function ApprovalCard({ runId, pipelineName, environment, commitS
                   <span className={styles['env-name']}>{environment.name}</span>
                   <Pill variant={environment.type} label={capitalize(environment.type)} />
                 </div>
-
               </>
             ) : (
               <Pill variant="idle" label="None" />
@@ -60,28 +55,7 @@ export default function ApprovalCard({ runId, pipelineName, environment, commitS
         </div>
 
         <ApprovalActions runId={runId} />
-
-        <div className={styles['stage-view']}>
-          <HideStagesButton />
-        </div>
       </div>
-
-      <div className={styles.stages} data-stages-row>
-        <div className={styles['stages-row']}>
-          {stages.map((stage, i) => (
-            <Fragment key={stage.id}>
-              <StageNode
-                name={stage.name}
-                stageType={stage.stageType}
-                status={stage.status}
-                isApproval={stage.isApproval}
-              />
-              {i < stages.length - 1 && <span>→</span>}
-            </Fragment>
-          ))}
-        </div>
-      </div>
-
     </div>
   )
 }
