@@ -1,6 +1,5 @@
 // Sample data that the Pipeline Trigger Server Action receives
 
-import type { StageType } from '@/generated/prisma';
 import type { CustomNode } from '@/lib/types';
 
 interface StageEdge {
