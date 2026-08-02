@@ -1,20 +1,34 @@
 /*
 ===============================
-Overview
+Page Shell
 ===============================
 */
 
-/* Fix height chain so .overview scrolls instead of the whole page */
-:global(.page-content) {
-  height: calc(100vh - 40px); /* 40px matches page-content margin-top in sidebar.css*/
+/*
+  Run Detail owns its viewport rather than using globals.css's shared
+  .page-content gutters + .page-layout width cap, which together left the
+  content only ~1000px of a 1920px screen. Same approach as the pipeline
+  editor (app/pipelines/[id]/pipeline-editor.module.css).
+
+  margin-top clears sidebar.module.css's .topbar (the hamburger + "Run
+  History" back link), which is position: absolute; top: 20px; left: 310px.
+  It used to sit in .page-content's 150px left gutter; with that gutter gone
+  it would overlap the run header card, so content starts below it instead.
+*/
+.run-main {
+  margin-top: var(--size-topbar-height);
+  padding: 0 var(--space-xl);
+  height: calc(100vh - var(--size-topbar-height));
   overflow: hidden;
-  /* this makes page itself not grow beyond viewport */
+  display: flex;
+  flex-direction: column;
 }
 
-:global(.page-layout) {
-  height: 100%;
-  overflow: hidden;
-}
+/*
+===============================
+Overview
+===============================
+*/
 
 /* Statuses */
 .overview {
@@ -33,6 +47,21 @@ Overview
   gap: var(--space-xl);
 }
 
+/*
+  React Flow's root div carries an inline width/height of 100% and all of its
+  children are absolutely positioned, so it has no intrinsic height — it can
+  only size itself against a parent with a *definite* height. This wrapper is
+  that parent. Styling .react-flow directly does not work: the inline style
+  always wins over a stylesheet rule.
+
+  Here it takes the space .overview has left over after .job-statuses.
+  min-height: 0 lets it shrink below the graph's content size.
+*/
+.graph {
+  flex: 1;
+  min-height: 0;
+}
+
 
 
 /*
@@ -47,6 +76,13 @@ Log Viewer
   min-height: 0; /* lets flex child shrink below its content size */
   overflow-y: auto;
   padding-bottom: var(--space-2xl);
+
+  /* Without .page-layout's cap the log viewers would span the full ~1560px.
+     Long monospace lines want more than --width-xl, but not edge to edge. */
+  width: 100%;
+  max-width: var(--width-2xl);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /*
@@ -116,7 +152,6 @@ Run Detail Media Queries
 /*
   Breakpoints:
     1300px — wrap job-status pills so "Awaiting Approval" doesn't clip
-    1195px — reduce heavy horizontal padding
      874px — collapse sidebar; remove viewport-height constraint; reflow content
      768px — tablet refinements; wrap job-status pills
      480px — small phones: tighter padding, stacked buttons
@@ -137,19 +172,6 @@ Run Detail Media Queries
 
 /*
 ============================================================
-1195px — Small laptops
-============================================================
-*/
-@media (max-width: 1195px) {
-
-  :global(.page-content) {
-    padding: 0 60px;
-  }
-}
-
-
-/*
-============================================================
 874px — Collapse sidebar, remove height constraint, reflow
 ============================================================
 */
@@ -157,14 +179,14 @@ Run Detail Media Queries
 
   /* --- Page content --- */
 
-  :global(.page-content) {
-    height: auto;
-    overflow: visible;
-  }
-
-  /* --- Layout containers --- */
-
-  :global(.page-layout) {
+  /* Override sidebar.module.css's 874px :global(.page-content) rule, which sets
+     padding: 60px var(--space-xl) 0. Compound selector (not a selector list) so
+     specificity beats it regardless of which stylesheet lands later in the
+     bundle — same reasoning as pipeline-editor.module.css. */
+  .run-main,
+  .run-main:global(.page-content) {
+    margin-top: 0;
+    padding: 75px var(--space-xl) 0;
     height: auto;
     overflow: visible;
   }
@@ -175,6 +197,21 @@ Run Detail Media Queries
     flex: none;
     overflow: visible;
     min-height: auto;
+  }
+
+  /* .overview is content-sized from here down, so `flex: 1` no longer yields a
+     definite height and React Flow's height: 100% would collapse to 0 (error
+     #004). Pin an explicit height so the graph still has something to fill. */
+  .graph {
+    flex: none;
+    height: 65vh;
+    min-height: 380px;
+  }
+
+  .logs {
+    flex: none;
+    min-height: auto;
+    overflow-y: visible;
   }
 }
 
@@ -208,7 +245,8 @@ Run Detail Media Queries
 @media (max-width: 480px) {
   /* --- Page content --- */
 
-  :global(.page-content) {
+  .run-main,
+  .run-main:global(.page-content) {
     padding: 60px var(--space-md) 0;
   }
 

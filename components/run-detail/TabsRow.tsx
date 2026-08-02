@@ -7,7 +7,7 @@ interface TabsRowProps {
   toggleOverview: () => void;
   toggleLogs: () => void;
 }
-export default function Subheader({ activeTab, toggleOverview, toggleLogs }: TabsRowProps) {
+export default function TabsRow({ activeTab, toggleOverview, toggleLogs }: TabsRowProps) {
   return (
     <div className={styles.tabs}>
       <div className={styles['tabs-row']}>

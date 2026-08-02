@@ -3,26 +3,15 @@ import type {
   RunStatus as PrismaRunStatus,
   RunTrigger as PrismaRunTrigger,
   StageStatus as PrismaStageStatus,
+  StageResult
 } from "@/generated/prisma";
-import type { RunStatus, RunTrigger, EnvType } from "@/lib/types";
+import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
 import { getDuration } from "@/lib/utils/date";
+import { fromDefinition } from "../pipeline-definition";
+import { Edge } from "@xyflow/react";
 
-export type JobStatus = 'succeeded' | 'failed' | 'running' | 'queued' | 'pending' | 'cancelled';
+export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';
 export type LogStatus = 'succeeded' | 'failed' | 'running';
-
-export type RunJob = {
-  name: string;
-  status: JobStatus;
-  duration?: string;
-  isActive?: boolean;
-};
-
-export type RunGraphNode =
-  | ({ type: 'job' } & RunJob)
-  | { type: 'connector-straight'; active?: boolean }
-  | { type: 'connector-fork' }
-  | { type: 'connector-merge' }
-  | { type: 'parallel'; jobs: RunJob[] };
 
 export type LogLine = { lineNumber: number; timestamp: string; content: string };
 
@@ -40,11 +29,23 @@ export type JobCounts = {
   running: number;
   queued: number;
   failed: number;
+  cancelled: number;
   awaitingApproval: number;
+  approved: number;
+  unapproved: number;
 };
+
+type StageResultNode = Omit<CustomNode, 'data'> & {
+  data: CustomNode['data'] & {
+    duration: string;
+    status: JobStatus;
+  };
+}
 
 export type RunDetail = {
   runNumber: number;
+  nodes: StageResultNode[],
+  edges: Edge[],
   pipelineName: string;
   status: RunStatus;
   environment: { type: EnvType; name: string } | null;
@@ -57,9 +58,7 @@ export type RunDetail = {
   duration: string;
   timeAgo: string;
   jobCounts: JobCounts;
-  graph: RunGraphNode[];
   logFilters: { value: string; label: string }[];
-  logs: JobLog[];
 };
 
 const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
@@ -76,18 +75,15 @@ const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   API: 'api',
 };
 
-// AWAITING_APPROVAL displays as 'pending' in the graph (it isn't a distinct
-// icon state); jobCounts.awaitingApproval is tallied separately from the raw
-// StageStatus in countJobs below.
 const STAGE_STATUS_TO_JOB_STATUS: Record<PrismaStageStatus, JobStatus> = {
   PENDING: 'pending',
   QUEUED: 'queued',
   RUNNING: 'running',
   SUCCEEDED: 'succeeded',
   FAILED: 'failed',
-  AWAITING_APPROVAL: 'pending',
-  APPROVED: 'succeeded',
-  UNAPPROVED: 'failed',
+  AWAITING_APPROVAL: 'awaiting-approval',
+  APPROVED: 'approved',
+  UNAPPROVED: 'unapproved',
   CANCELLED: 'cancelled',
 };
 
@@ -97,127 +93,47 @@ const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
   RUNNING: 'running',
 };
 
-// Shape of PipelineDefinition.graphJson, as written by lib/pipeline-definition.ts
-// and prisma/seed.ts's buildDefinition(): a chain of stage nodes connected by
-// edges. `name` is the stage name; `label` is a free-text tag the editor shows on
-// the node's card, so it is not a display name here.
-export type GraphJsonNode = { id: string; type: string; data: { label?: string; name?: string } };
-export type GraphJsonEdge = { id: string; source: string; target: string };
-export type GraphJson = { nodes: GraphJsonNode[]; edges: GraphJsonEdge[] };
-
 export type StageLite = {
   stageId: string;
   status: PrismaStageStatus;
-  startedAt: Date | null;
-  finishedAt: Date | null;
 };
 
-/**
- * Walks graphJson's nodes/edges to produce the linear job/connector sequence
- * PipelineGraph renders. Stages with no matching StageResult row (not yet
- * started) render as 'pending'. Branches are assumed to be exactly one stage
- * deep before reconverging — the only shape this schema's simple stage-chain
- * graphJson format actually produces (see prisma/seed.ts); today's seed data
- * never branches at all, so in practice this only emits job/connector-straight.
- */
-export function buildGraph(graphJson: GraphJson, stages: StageLite[]): RunGraphNode[] {
+export function countJobs(nodes: CustomNode[], stages: StageLite[]): JobCounts {
   const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  const nodeById = new Map(graphJson.nodes.map((n) => [n.id, n]));
-  const outgoing = new Map<string, string[]>();
-  const incoming = new Map<string, string[]>();
-  for (const edge of graphJson.edges) {
-    outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]);
-    incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), edge.source]);
-  }
+  const counts: JobCounts = { total: 0, succeeded: 0, running: 0, queued: 0, failed: 0, cancelled: 0, awaitingApproval: 0, approved: 0, unapproved: 0 };
 
-  function statusOf(id: string): JobStatus {
-    const stage = stageByStageId.get(id);
-    return stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending';
-  }
-
-  function toJob(id: string): RunJob {
-    const node = nodeById.get(id)!;
-    const stage = stageByStageId.get(id);
-    const duration = stage?.startedAt
-      ? getDuration(stage.startedAt, stage.finishedAt ?? undefined)
-      : undefined;
-    return { name: node.data.name ?? '', status: statusOf(id), duration };
-  }
-
-  // The connector leading into the first currently-running stage is drawn
-  // highlighted, matching the pipeline's "you are here" indicator.
-  const activeId = graphJson.nodes.map((n) => n.id).find((id) => statusOf(id) === 'running');
-
-  const result: RunGraphNode[] = [];
-  const visited = new Set<string>();
-  let frontier = graphJson.nodes.map((n) => n.id).filter((id) => !incoming.has(id));
-
-  while (frontier.length > 0 && !frontier.every((id) => visited.has(id))) {
-    if (frontier.length === 1) {
-      const [id] = frontier;
-      visited.add(id);
-      result.push({ type: 'job', ...toJob(id) });
-
-      const next = outgoing.get(id) ?? [];
-      if (next.length > 1) {
-        result.push({ type: 'connector-fork' });
-        frontier = next;
-      } else if (next.length === 1) {
-        result.push({ type: 'connector-straight', active: next[0] === activeId });
-        frontier = next;
-      } else {
-        frontier = [];
-      }
-    } else {
-      frontier.forEach((id) => visited.add(id));
-      const jobs = frontier.map((id) => toJob(id));
-      result.push({ type: 'parallel', jobs });
-
-      const mergeTargets = [...new Set(frontier.flatMap((id) => outgoing.get(id) ?? []))];
-      if (mergeTargets.length > 0) {
-        result.push({ type: 'connector-merge' });
-      }
-      frontier = mergeTargets;
-    }
-  }
-
-  return result;
-}
-
-/**
- * Tallies every stage defined in graphJson (including ones with no
- * StageResult row yet, i.e. not started) into the Pill counts shown above
- * the pipeline graph. PENDING stages count only toward `total`.
- */
-export function countJobs(graphJson: GraphJson, stages: StageLite[]): JobCounts {
-  const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  const counts: JobCounts = { total: 0, succeeded: 0, running: 0, queued: 0, failed: 0, awaitingApproval: 0 };
-
-  for (const node of graphJson.nodes) {
+  for (const node of nodes) {
     counts.total += 1;
     const stage = stageByStageId.get(node.id);
+
     if (!stage) continue;
 
-    if (stage.status === 'AWAITING_APPROVAL') {
-      counts.awaitingApproval += 1;
-    } else if (stage.status === 'SUCCEEDED' || stage.status === 'APPROVED') {
-      counts.succeeded += 1;
-    } else if (stage.status === 'RUNNING') {
-      counts.running += 1;
-    } else if (stage.status === 'QUEUED') {
-      counts.queued += 1;
-    } else if (stage.status === 'FAILED' || stage.status === 'UNAPPROVED' || stage.status === 'CANCELLED') {
-      counts.failed += 1;
+    switch(stage.status) {
+      case 'SUCCEEDED':
+        counts.succeeded += 1; break;
+      case 'RUNNING':
+        counts.running += 1; break;
+      case 'QUEUED':
+        counts.queued += 1; break;
+      case 'FAILED':
+        counts.failed += 1; break;
+      case 'CANCELLED':
+        counts.cancelled += 1; break;
+      case 'AWAITING_APPROVAL':
+        counts.awaitingApproval += 1; break;
+      case 'APPROVED':
+        counts.approved += 1; break;
+      case 'UNAPPROVED':
+        counts.unapproved += 1; break;
     }
   }
-
   return counts;
 }
 
 /** One filter option per stage defined in graphJson, in pipeline order. */
-export function buildLogFilters(graphJson: GraphJson, stages: StageLite[]): { value: string; label: string }[] {
+export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): { value: string; label: string }[] {
   const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  return graphJson.nodes.map((node) => {
+  return nodes.map((node) => {
     const stage = stageByStageId.get(node.id);
     const status = stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending';
     return { value: node.id, label: `${node.data.name ?? ''} - ${status}` };
@@ -273,20 +189,21 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       pipeline: { select: { name: true, repoUrl: true } },
       environment: { select: { name: true, type: true } },
       triggeredBy: { select: { name: true } },
-      definition: { select: { graphJson: true } },
+      definition: { select: { graphJson: true, configJson: true } },
       stages: { orderBy: { createdAt: 'asc' } },
     },
   });
 
   if (!run) return undefined;
 
-  const graphJson = run.definition.graphJson as unknown as GraphJson;
+  const { nodes, edges } = fromDefinition(run.definition.graphJson, run.definition.configJson);
+
   const stagesLite: StageLite[] = run.stages.map((s) => ({
     stageId: s.stageId,
     status: s.status,
-    startedAt: s.startedAt,
-    finishedAt: s.finishedAt,
   }));
+
+  const detailedNodes = addNodeDetails(nodes, run.stages);
 
   const [runNumber, commitMessage] = await Promise.all([
     prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
@@ -295,6 +212,8 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
 
   return {
     runNumber,
+    nodes: detailedNodes,
+    edges,
     pipelineName: run.pipeline.name,
     status: RUN_STATUS_MAP[run.status],
     environment: run.environment
@@ -312,9 +231,23 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
         ? getDuration(run.startedAt)
         : '—',
     timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
-    jobCounts: countJobs(graphJson, stagesLite),
-    graph: buildGraph(graphJson, stagesLite),
-    logFilters: buildLogFilters(graphJson, stagesLite),
-    logs: buildLogs(run.stages),
+    jobCounts: countJobs(nodes, stagesLite),
+    logFilters: buildLogFilters(nodes, stagesLite),
   };
+}
+
+function addNodeDetails(nodes: CustomNode[], stages: StageResult[]): StageResultNode[] {
+  const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
+
+  return nodes.map((node) => {
+    const stage = stageByStageId.get(node.id);
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        duration: stage?.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—',
+        status: stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending',
+      },
+    };
+  });
 }

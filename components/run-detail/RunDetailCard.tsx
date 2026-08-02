@@ -45,8 +45,10 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
             {environment ? (
               <>
                 <span className={styles.divider} aria-hidden="true" />
-                <span className={styles['rdc-meta-item']}>{environment.name}</span>
-                <Pill variant={environment.type} label={capitalize(environment.type)} />
+                <div className={styles['rdc-env-detail']}>
+                  <span className={styles['rdc-meta-item']}>{environment.name}</span>
+                  <Pill variant={environment.type} label={capitalize(environment.type)} />
+                </div>
               </>
             ) : (
               <span className={styles['rdc-meta-item']}>None</span>
@@ -87,7 +89,7 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
           </div>
         </div>
 
-        <RunDetailActions/>
+        <RunDetailActions />
 
       </div>
     </div>
