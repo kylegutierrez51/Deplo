@@ -3,13 +3,14 @@ import type {
   RunStatus as PrismaRunStatus,
   RunTrigger as PrismaRunTrigger,
   StageStatus as PrismaStageStatus,
+  StageResult
 } from "@/generated/prisma";
 import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
 import { getDuration } from "@/lib/utils/date";
 import { fromDefinition } from "../pipeline-definition";
 import { Edge } from "@xyflow/react";
 
-export type JobStatus = 'succeeded' | 'failed' | 'running' | 'queued' | 'pending' | 'cancelled' | 'awaiting_approval' | 'approved' | 'unapproved';
+export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';
 export type LogStatus = 'succeeded' | 'failed' | 'running';
 
 export type LogLine = { lineNumber: number; timestamp: string; content: string };
@@ -28,12 +29,22 @@ export type JobCounts = {
   running: number;
   queued: number;
   failed: number;
+  cancelled: number;
   awaitingApproval: number;
+  approved: number;
+  unapproved: number;
 };
+
+type StageResultNode = Omit<CustomNode, 'data'> & {
+  data: CustomNode['data'] & {
+    duration: string;
+    status: JobStatus;
+  };
+}
 
 export type RunDetail = {
   runNumber: number;
-  nodes: CustomNode[],
+  nodes: StageResultNode[],
   edges: Edge[],
   pipelineName: string;
   status: RunStatus;
@@ -64,16 +75,13 @@ const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   API: 'api',
 };
 
-// AWAITING_APPROVAL displays as 'pending' in the graph (it isn't a distinct
-// icon state); jobCounts.awaitingApproval is tallied separately from the raw
-// StageStatus in countJobs below.
 const STAGE_STATUS_TO_JOB_STATUS: Record<PrismaStageStatus, JobStatus> = {
   PENDING: 'pending',
   QUEUED: 'queued',
   RUNNING: 'running',
   SUCCEEDED: 'succeeded',
   FAILED: 'failed',
-  AWAITING_APPROVAL: 'awaiting_approval',
+  AWAITING_APPROVAL: 'awaiting-approval',
   APPROVED: 'approved',
   UNAPPROVED: 'unapproved',
   CANCELLED: 'cancelled',
@@ -90,33 +98,35 @@ export type StageLite = {
   status: PrismaStageStatus;
 };
 
-/**
- * Tallies every stage defined in graphJson (including ones with no
- * StageResult row yet, i.e. not started) into the Pill counts shown above
- * the pipeline graph. PENDING stages count only toward `total`.
- */
 export function countJobs(nodes: CustomNode[], stages: StageLite[]): JobCounts {
   const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  const counts: JobCounts = { total: 0, succeeded: 0, running: 0, queued: 0, failed: 0, awaitingApproval: 0 };
+  const counts: JobCounts = { total: 0, succeeded: 0, running: 0, queued: 0, failed: 0, cancelled: 0, awaitingApproval: 0, approved: 0, unapproved: 0 };
 
   for (const node of nodes) {
     counts.total += 1;
     const stage = stageByStageId.get(node.id);
+
     if (!stage) continue;
 
-    if (stage.status === 'AWAITING_APPROVAL') {
-      counts.awaitingApproval += 1;
-    } else if (stage.status === 'SUCCEEDED' || stage.status === 'APPROVED') {
-      counts.succeeded += 1;
-    } else if (stage.status === 'RUNNING') {
-      counts.running += 1;
-    } else if (stage.status === 'QUEUED') {
-      counts.queued += 1;
-    } else if (stage.status === 'FAILED' || stage.status === 'UNAPPROVED' || stage.status === 'CANCELLED') {
-      counts.failed += 1;
+    switch(stage.status) {
+      case 'SUCCEEDED':
+        counts.succeeded += 1; break;
+      case 'RUNNING':
+        counts.running += 1; break;
+      case 'QUEUED':
+        counts.queued += 1; break;
+      case 'FAILED':
+        counts.failed += 1; break;
+      case 'CANCELLED':
+        counts.cancelled += 1; break;
+      case 'AWAITING_APPROVAL':
+        counts.awaitingApproval += 1; break;
+      case 'APPROVED':
+        counts.approved += 1; break;
+      case 'UNAPPROVED':
+        counts.unapproved += 1; break;
     }
   }
-
   return counts;
 }
 
@@ -193,6 +203,8 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     status: s.status,
   }));
 
+  const detailedNodes = addNodeDetails(nodes, run.stages);
+
   const [runNumber, commitMessage] = await Promise.all([
     prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
     getCommitMessage(run.id),
@@ -200,7 +212,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
 
   return {
     runNumber,
-    nodes,
+    nodes: detailedNodes,
     edges,
     pipelineName: run.pipeline.name,
     status: RUN_STATUS_MAP[run.status],
@@ -222,4 +234,20 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     jobCounts: countJobs(nodes, stagesLite),
     logFilters: buildLogFilters(nodes, stagesLite),
   };
+}
+
+function addNodeDetails(nodes: CustomNode[], stages: StageResult[]): StageResultNode[] {
+  const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
+
+  return nodes.map((node) => {
+    const stage = stageByStageId.get(node.id);
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        duration: stage?.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—',
+        status: stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending',
+      },
+    };
+  });
 }

@@ -52,6 +52,9 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                 <Pill variant="queued" label={`${run.jobCounts.queued} Queued`} />
                 {run.jobCounts.failed > 0 && <Pill variant="failed" label={`${run.jobCounts.failed} Failed`} />}
                 {run.jobCounts.awaitingApproval > 0 && <Pill variant="awaiting-approval" label={`${run.jobCounts.awaitingApproval} Awaiting Approval`} />}
+                {run.jobCounts.approved > 0 && <Pill variant="approved" label={`${run.jobCounts.approved} Approved`} />}
+                {run.jobCounts.unapproved > 0 && <Pill variant="unapproved" label={`${run.jobCounts.unapproved} Unapproved`} />}
+                {run.jobCounts.cancelled > 0 && <Pill variant="cancelled" label={`${run.jobCounts.cancelled} Cancelled`} />}
               </div>
               <div className={styles.graph}>
                 <PipelineGraph nodes={run.nodes} edges={run.edges} />
