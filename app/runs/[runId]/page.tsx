@@ -13,15 +13,6 @@ interface RunDetailPageProps {
   params: Promise<{ runId: string }>;
 }
 
-// const STATUS_ICONS: Record<JobStatus, string> = {
-//   succeeded: 'checkmark-circle-outline',
-//   running: 'sync-outline',
-//   failed: 'close-circle-outline',
-//   queued: 'time-outline',
-//   pending: 'time-outline',
-//   cancelled: 'ban-outline',
-// };
-
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { runId } = await params;
   const run = await getRunDetailById(runId);
@@ -60,7 +51,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                 <Pill variant="running" label={`${run.jobCounts.running} Running`} />
                 <Pill variant="queued" label={`${run.jobCounts.queued} Queued`} />
                 {run.jobCounts.failed > 0 && <Pill variant="failed" label={`${run.jobCounts.failed} Failed`} />}
-                {run.jobCounts.awaitingApproval > 0 && <Pill variant="approval" label={`${run.jobCounts.awaitingApproval} Awaiting Approval`} />}
+                {run.jobCounts.awaitingApproval > 0 && <Pill variant="awaiting-approval" label={`${run.jobCounts.awaitingApproval} Awaiting Approval`} />}
               </div>
               <div className={styles.graph}>
                 <PipelineGraph nodes={run.nodes} edges={run.edges} />
