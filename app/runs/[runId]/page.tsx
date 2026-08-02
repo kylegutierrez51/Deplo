@@ -4,24 +4,23 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import RunDetailCard from "@/components/run-detail/RunDetailCard";
 import FilterSelect from "@/components/filters/FilterSelect";
 import SearchInput from "@/components/filters/SearchInput";
-import LogViewer from "@/components/run-detail/logs/LogViewer";
-import PipelineGraph, { type PipelineNode } from "@/components/run-detail/pipeline-graph/PipelineGraph";
 import Pill from '@/components/Pill';
 import RunTabs from "./RunTabs";
-import { getRunDetailById, type JobStatus } from "@/lib/data/run-detail";
+import { getRunDetailById } from "@/lib/data/run-detail";
+import PipelineGraph from "@/components/run-detail/PipelineGraph";
 
 interface RunDetailPageProps {
   params: Promise<{ runId: string }>;
 }
 
-const STATUS_ICONS: Record<JobStatus, string> = {
-  succeeded: 'checkmark-circle-outline',
-  running: 'sync-outline',
-  failed: 'close-circle-outline',
-  queued: 'time-outline',
-  pending: 'time-outline',
-  cancelled: 'ban-outline',
-};
+// const STATUS_ICONS: Record<JobStatus, string> = {
+//   succeeded: 'checkmark-circle-outline',
+//   running: 'sync-outline',
+//   failed: 'close-circle-outline',
+//   queued: 'time-outline',
+//   pending: 'time-outline',
+//   cancelled: 'ban-outline',
+// };
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { runId } = await params;
@@ -30,16 +29,6 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
   if (!run) {
     notFound();
   }
-
-  const pipelineNodes: PipelineNode[] = run.graph.map((node) => {
-    if (node.type === 'job') {
-      return { ...node, statusIcon: STATUS_ICONS[node.status] };
-    }
-    if (node.type === 'parallel') {
-      return { ...node, jobs: node.jobs.map((job) => ({ ...job, statusIcon: STATUS_ICONS[job.status] })) };
-    }
-    return node;
-  });
 
   return (
     <>
@@ -73,7 +62,9 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                 {run.jobCounts.failed > 0 && <Pill variant="failed" label={`${run.jobCounts.failed} Failed`} />}
                 {run.jobCounts.awaitingApproval > 0 && <Pill variant="approval" label={`${run.jobCounts.awaitingApproval} Awaiting Approval`} />}
               </div>
-              <PipelineGraph nodes={pipelineNodes} />
+              <div className={styles.graph}>
+                <PipelineGraph nodes={run.nodes} edges={run.edges} />
+              </div>
             </>
           }
           logs={
@@ -91,7 +82,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                 </div>
               </div>
 
-              {run.logs.map((log, index) => (
+              {/* {run.logs.map((log, index) => (
                 <LogViewer
                   key={index}
                   jobName={log.jobName}
@@ -100,7 +91,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                   duration={log.duration}
                   lines={log.lines}
                 />
-              ))}
+              ))} */}
             </>
           }
         />
