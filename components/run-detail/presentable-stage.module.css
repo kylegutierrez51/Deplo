@@ -8,7 +8,7 @@ Custom Node
   border-radius: 10px;
   background-color: var(--background-clr);
   padding: 10px;
-  width: 225px;
+  width: 275px;
   box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
   -webkit-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
   -moz-box-shadow: 0px 0px 16px 0px rgba(0,0,0,0.75);
@@ -16,9 +16,23 @@ Custom Node
 
 .stage-header {
   display: flex;
-  justify-content: start;
+  justify-content: space-between;
   align-items: center;
   gap: var(--space-xs);
+}
+
+.stage-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  flex: 1;
+}
+
+.stage-duration {
+  flex: 0 0 auto;
+  color: rgb(158, 157, 157);
+  font-size: var(--font-size-sm);
 }
 
 .icon-container {
@@ -59,6 +73,14 @@ Custom Node
   gap: var(--space-sm);
 }
 
+.stage-detail-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
 .stage-label {
   background-color: var(--header-clr);
   border-radius: var(--radius-sm);
@@ -76,29 +98,9 @@ Custom Node
   text-overflow: ellipsis;
 }
 
-.stage-options {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.stage-timeout, .stage-retries {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.stage-timeout p, .stage-retries p {
+.stage-status {
   color: rgb(158, 157, 157);
   font-size: var(--font-size-sm);
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.stage-timeout ion-icon, .stage-retries ion-icon {
-  font-size: var(--font-size-sm);
-  color: rgb(158, 157, 157);
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
