@@ -2,7 +2,8 @@ type PillVariant =
   | 'running' | 'succeeded' | 'failed' | 'queued' | 'cancelled'
   | 'production' | 'staging' | 'development' | 'preview' | 'custom'
   | 'processed' | 'ignored' | 'pending' | 'push' | 'pull-request' | 'webhook'
-  | 'manual' | 'api' | 'total' | 'approval' | 'idle';
+  | 'manual' | 'api' | 'total' | 'awaiting-approval' | 'idle'
+  | 'approved' | 'unapproved';
 
 interface PillProps {
   variant: PillVariant;

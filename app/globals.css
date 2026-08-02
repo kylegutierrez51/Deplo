@@ -178,9 +178,17 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --pill-total-bg: #e2e8f01a;
   --pill-total-border: #e2e8f04d;
 
-  --pill-approval-text: #fb923c;
-  --pill-approval-bg: #fb923c1a;
-  --pill-approval-border: #fb923c4d;
+  --pill-awaiting-approval-text: #fb923c;
+  --pill-awaiting-approval-bg: #fb923c1a;
+  --pill-awaiting-approval-border: #fb923c4d;
+
+  --pill-approved-text: #4ade80;
+  --pill-approved-bg: #4ade801a;
+  --pill-approved-border: #4ade804d;
+
+  --pill-unapproved-text: #f87171;
+  --pill-unapproved-bg: #f871711a;
+  --pill-unapproved-border: #f871714d;
 
   /* Webhook Statuses */
   --pill-pending-text: #fb923c;
@@ -440,8 +448,10 @@ Pill Base + Variants
 .pill--cancelled   { color: var(--pill-cancelled-text);   background: var(--pill-cancelled-bg);   border-color: var(--pill-cancelled-border); }
 .pill--idle        { color: var(--pill-idle-text);        background: var(--pill-idle-bg);        border-color: var(--pill-idle-border); }
 .pill--total       { color: var(--pill-total-text);       background: var(--pill-total-bg);       border-color: var(--pill-total-border); }
-.pill--approval    { color: var(--pill-approval-text);    background: var(--pill-approval-bg);    border-color: var(--pill-approval-border); }
+.pill--awaiting-approval    { color: var(--pill-awaiting-approval-text);    background: var(--pill-awaiting-approval-bg);    border-color: var(--pill-awaiting-approval-border); }
 .pill--pending     { color: var(--pill-pending-text);     background: var(--pill-pending-bg);     border-color: var(--pill-pending-border); }
+.pill--approved    { color: var(--pill-approved-text);    background: var(--pill-approved-bg);    border-color: var(--pill-approved-border); }
+.pill--unapproved  { color: var(--pill-unapproved-text);  background: var(--pill-unapproved-bg);  border-color: var(--pill-unapproved-border); }
 .pill--processed   { color: var(--pill-processed-text);   background: var(--pill-processed-bg);   border-color: var(--pill-processed-border); }
 .pill--ignored     { color: var(--pill-ignored-text);     background: var(--pill-ignored-bg);     border-color: var(--pill-ignored-border); }
 
