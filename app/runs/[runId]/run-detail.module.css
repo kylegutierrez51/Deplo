@@ -47,6 +47,21 @@ Overview
   gap: var(--space-xl);
 }
 
+/*
+  React Flow's root div carries an inline width/height of 100% and all of its
+  children are absolutely positioned, so it has no intrinsic height — it can
+  only size itself against a parent with a *definite* height. This wrapper is
+  that parent. Styling .react-flow directly does not work: the inline style
+  always wins over a stylesheet rule.
+
+  Here it takes the space .overview has left over after .job-statuses.
+  min-height: 0 lets it shrink below the graph's content size.
+*/
+.graph {
+  flex: 1;
+  min-height: 0;
+}
+
 
 
 /*
@@ -182,6 +197,15 @@ Run Detail Media Queries
     flex: none;
     overflow: visible;
     min-height: auto;
+  }
+
+  /* .overview is content-sized from here down, so `flex: 1` no longer yields a
+     definite height and React Flow's height: 100% would collapse to 0 (error
+     #004). Pin an explicit height so the graph still has something to fill. */
+  .graph {
+    flex: none;
+    height: 65vh;
+    min-height: 380px;
   }
 
   .logs {
