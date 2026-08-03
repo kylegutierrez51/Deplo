@@ -1,6 +1,6 @@
 import styles from './run-detail-card.module.css'
 import RunDetailActions from './RunDetailActions';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import { capitalize } from '@/lib/utils/string';
 import type { RunStatus, EnvType } from '@/lib/types';
 

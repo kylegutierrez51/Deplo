@@ -1,13 +1,13 @@
 import styles from "./pipelines.module.css"
 
-import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/subheader/Subheader";
-import AddButton from '@/components/subheader/AddButton';
-import FilterSelect from "@/components/filters/FilterSelect";
-import SearchInput from "@/components/filters/SearchInput";
-import DataTable from "@/components/DataTable";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import Subheader from "@/components/layout/subheader/Subheader";
+import AddButton from '@/components/layout/subheader/AddButton';
+import FilterSelect from "@/components/ui/filters/FilterSelect";
+import SearchInput from "@/components/ui/filters/SearchInput";
+import DataTable from "@/components/ui/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
-import Pagination from "@/components/pagination/Pagination";
+import Pagination from "@/components/ui/pagination/Pagination";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
 import { getPipelineById, getPipelines } from '@/lib/data/pipelines';
 

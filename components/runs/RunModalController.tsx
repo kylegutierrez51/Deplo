@@ -1,7 +1,7 @@
 "use client";
 
 import RunModal from "./RunModal";
-import ViewModalController from "../modals/ViewModalController";
+import ViewModalController from "@/components/ui/modals/ViewModalController";
 import type { Run } from "@/lib/data/runs";
 
 export default function RunModalController({ mode, run }: {

@@ -1,6 +1,6 @@
 "use client"
 
-import styles from '../modals/delete-confirmation.module.css';
+import styles from '@/components/ui/modals/delete-confirmation.module.css';
 import { useTransition, useState, useEffect } from 'react';
 import { regenerateWebhookSecret } from '@/lib/actions/webhooks';
 

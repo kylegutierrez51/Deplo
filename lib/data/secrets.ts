@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { decryptSecret } from '@/lib/crypto';
+import { decryptSecret } from '@/lib/utils/crypto';
 import type { Secret as PrismaSecret, EnvironmentType } from '@/generated/prisma';
 
 export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {

@@ -1,11 +1,11 @@
 import styles from "./approvals.module.css";
-import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/subheader/Subheader";
-import StatCards from "@/components/StatCards";
-import FilterSelect from "@/components/filters/FilterSelect";
-import SearchInput from "@/components/filters/SearchInput";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import Subheader from "@/components/layout/subheader/Subheader";
+import StatCards from "@/components/ui/StatCards";
+import FilterSelect from "@/components/ui/filters/FilterSelect";
+import SearchInput from "@/components/ui/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
-import Pagination from "@/components/pagination/Pagination";
+import Pagination from "@/components/ui/pagination/Pagination";
 import { getApprovals } from "@/lib/data/approvals";
 
 export default async function Approvals() {

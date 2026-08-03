@@ -4,10 +4,10 @@ import { useState, useRef, useEffect, useActionState } from 'react';
 import { formatDate } from '@/lib/utils/date';
 import type { FormState } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
-import Modal from '../modals/Modal';
-import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
+import Modal from '@/components/ui/modals/Modal';
+import DeleteConfirmationModal from '@/components/ui/modals/DeleteConfirmationModal';
 import RegenerateSecretModal from './RegenerateSecretModal';
-import modalStyles from '../modals/modal.module.css';
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
 import { addWebhook, updateWebhook, deleteWebhook } from '@/lib/actions/webhooks';
 

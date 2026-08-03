@@ -1,7 +1,7 @@
 "use client";
 
 import EnvironmentModal from "./EnvironmentModal";
-import CrudModalController from "../modals/CrudModalController";
+import CrudModalController from "@/components/ui/modals/CrudModalController";
 import type { Environment } from "@/lib/data/environments";
 
 export default function EnvModalController({ mode, env }: {

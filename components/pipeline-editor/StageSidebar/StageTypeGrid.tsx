@@ -2,7 +2,7 @@
 
 import styles from './stage-sidebar.module.css';
 import type { CustomNode, StageType } from "@/lib/types";
-import { usePipelineGraph } from '../PipelineGraphProvider';
+import { usePipelineGraph } from '@/components/pipeline-editor/PipelineGraphProvider';
 import { capitalize } from '@/lib/utils/string';
 
 interface StageTypeGridProps {

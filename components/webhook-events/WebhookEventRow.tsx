@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from 'next/navigation';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import type { WebhookEvent } from "@/lib/data/webhook-events";
 import { capitalize, getRepoName, getBranch } from "@/lib/utils/string";
 import { formatDate } from "@/lib/utils/date";

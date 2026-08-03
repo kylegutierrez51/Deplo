@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from 'next/script';
 import { Open_Sans, JetBrains_Mono } from "next/font/google";
 import Providers from "./providers";
-import ToastShell from "@/components/toast/ToastShell";
+import ToastShell from "@/components/ui/toast/ToastShell";
 import "./globals.css";
 
 const openSans = Open_Sans({

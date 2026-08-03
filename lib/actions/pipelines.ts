@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { auth } from '@/auth';
-import { definitionsEqual, toDefinition } from '@/lib/pipeline-definition';
+import { definitionsEqual, toDefinition } from '@/lib/pipeline/definition';
 import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
-import { validatePipelineGraph } from '@/lib/pipeline-graph';
+import { validatePipelineGraph } from '@/lib/pipeline/validation';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.

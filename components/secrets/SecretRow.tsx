@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from 'next/navigation';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import type { Secret } from "@/lib/data/secrets";
 import { capitalize } from '@/lib/utils/string';
 import { formatDate } from '@/lib/utils/date';

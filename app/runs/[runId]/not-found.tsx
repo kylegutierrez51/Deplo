@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Sidebar from "@/components/sidebar/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import styles from "@/app/not-found.module.css";
 
 export default function RunNotFound() {

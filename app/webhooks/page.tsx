@@ -1,12 +1,12 @@
 import styles from "./webhooks.module.css"
-import Subheader from "@/components/subheader/Subheader"
-import AddButton from '@/components/subheader/AddButton';
-import Sidebar from "@/components/sidebar/Sidebar"
-import FilterSelect from "@/components/filters/FilterSelect"
-import SearchInput from "@/components/filters/SearchInput";
+import Subheader from "@/components/layout/subheader/Subheader"
+import AddButton from '@/components/layout/subheader/AddButton';
+import Sidebar from "@/components/layout/sidebar/Sidebar"
+import FilterSelect from "@/components/ui/filters/FilterSelect"
+import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
-import WebhookCard from "@/components/webhooks/card/WebhookCard";
-import Pagination from "@/components/pagination/Pagination"
+import WebhookCard from "@/components/webhooks/WebhookCard";
+import Pagination from "@/components/ui/pagination/Pagination"
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";

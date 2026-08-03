@@ -2,9 +2,9 @@
 
 import styles from './presentable-stage.module.css'
 import { type Node, type NodeProps, Position } from '@xyflow/react';
-import CustomHandle from '@/components/pipeline-editor/Editor/CustomHandle';
+import CustomHandle from '@/components/flow/CustomHandle';
 import { JobStatus } from '@/lib/data/run-detail';
-import Pill from '../Pill';
+import Pill from '@/components/ui/Pill';
 import { capitalize } from '@/lib/utils/string';
 
 type PresentableStage = Node<

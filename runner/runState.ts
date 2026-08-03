@@ -1,4 +1,4 @@
-import { buildMaps } from "./util";
+import { buildMaps } from "@/lib/pipeline/adjacency";
 import type { ConfigJson, GraphJson } from "./types";
 
 type RunGraphState = {

@@ -6,11 +6,11 @@ import { useState, useRef, useEffect, useActionState } from 'react';
 import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";
-import Modal from '../modals/Modal';
-import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
-import Pill from '../Pill';
+import Pill from '@/components/ui/Pill';
 
 const styles = { ...modalStyles, ...pipelineStyles };
 

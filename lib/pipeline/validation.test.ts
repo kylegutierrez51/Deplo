@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Edge } from '@xyflow/react';
 import type { ConfigJson, CustomNode, StageConfig, StageType } from '@/lib/types';
-import { detectCycle, findDanglingEdges, findUngatedDeployStages, validatePipelineGraph } from '@/lib/pipeline/graph';
+import { detectCycle, findDanglingEdges, findUngatedDeployStages, validatePipelineGraph } from '@/lib/pipeline/validation';
 
 /*
  * Stages are written as "id" or "id:type" — `a` is a custom stage, `d:deploy` a

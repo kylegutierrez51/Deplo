@@ -3,13 +3,13 @@
 import { useCallback, useRef, useState, useEffect, type CSSProperties } from 'react';
 import { ReactFlow, Background, Controls, Panel, type Edge, type ReactFlowInstance, type OnNodesDelete, type NodeMouseHandler, type EdgeMouseHandler } from '@xyflow/react';
 import type { CustomNode } from '@/lib/types';
-import { usePipelineGraph } from '../PipelineGraphProvider';
+import { usePipelineGraph } from '@/components/pipeline-editor/PipelineGraphProvider';
 import Stage from './Stage';
 import StageSidebar from "@/components/pipeline-editor/StageSidebar/StageSidebar";
-import CustomEdge from './CustomEdge';
-import CustomMarker from './CustomMarker';
+import CustomEdge from '@/components/flow/CustomEdge';
+import CustomMarker from '@/components/flow/CustomMarker';
 import editorStyles from './editor.module.css';
-import headerButtonStyles from '../header-buttons.module.css';
+import headerButtonStyles from '@/components/pipeline-editor/header-buttons.module.css';
 import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
 import '@xyflow/react/dist/style.css';
 
