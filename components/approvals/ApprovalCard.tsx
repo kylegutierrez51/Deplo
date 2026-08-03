@@ -1,7 +1,7 @@
-import styles from './approval-card.module.css'
+import styles from './approval.module.css'
 import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import { Stage } from '@/lib/data/approvals';
 import type { EnvType } from '@/lib/types';
 import { capitalize } from '@/lib/utils/string';

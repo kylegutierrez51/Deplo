@@ -4,11 +4,11 @@ import { useState, useEffect, useActionState } from 'react';
 import { formatDate } from "@/lib/utils/date"
 import type { FormState, EnvType } from "@/lib/types.ts";
 import type { Environment } from "@/lib/data/environments";
-import Modal from '../modals/Modal';
-import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import secretStyles from './secret-modal.module.css';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
 
 const styles = { ...modalStyles, ...secretStyles };

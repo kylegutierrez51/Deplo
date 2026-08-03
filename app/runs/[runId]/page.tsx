@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import styles from "./run-detail.module.css";
-import Sidebar from "@/components/sidebar/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import RunDetailCard from "@/components/run-detail/RunDetailCard";
-import FilterSelect from "@/components/filters/FilterSelect";
-import SearchInput from "@/components/filters/SearchInput";
-import Pill from '@/components/Pill';
+import FilterSelect from "@/components/ui/filters/FilterSelect";
+import SearchInput from "@/components/ui/filters/SearchInput";
+import Pill from '@/components/ui/Pill';
 import RunTabs from "./RunTabs";
 import { getRunDetailById } from "@/lib/data/run-detail";
 import PipelineGraph from "@/components/run-detail/PipelineGraph";

@@ -5,7 +5,7 @@ import { capitalize } from "@/lib/utils/string";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Pipeline } from "@/lib/data/pipelines";
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import { formatDate } from "@/lib/utils/date";
 
 

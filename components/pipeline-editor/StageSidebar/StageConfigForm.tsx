@@ -6,7 +6,7 @@ import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
 import type { CustomNode, StageType } from "@/lib/types";
-import { usePipelineGraph } from "../PipelineGraphProvider";
+import { usePipelineGraph } from "@/components/pipeline-editor/PipelineGraphProvider";
 import { matchReservedLabel } from '@/lib/utils/string';
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {

@@ -2,7 +2,7 @@
 
 import styles from "@/app/runs/runs.module.css";
 import { useRouter } from 'next/navigation';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import type { Run } from "@/lib/data/runs";
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";

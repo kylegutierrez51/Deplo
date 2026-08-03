@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import styles from './header-buttons.module.css'
 import { usePipelineGraph } from './PipelineGraphProvider'
 import { savePipelineDefinition, addPipelineRun } from '@/lib/actions/pipelines'
-import { useToast } from '@/components/toast/ToastContext'
+import { useToast } from '@/components/ui/toast/ToastContext'
 
 export default function HeaderButtons() {
   const { pipelineId, selectedEnvironmentId, nodes, edges } = usePipelineGraph();

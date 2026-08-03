@@ -7,7 +7,7 @@ import type {
 } from "@/generated/prisma";
 import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
 import { getDuration } from "@/lib/utils/date";
-import { fromDefinition } from "../pipeline-definition";
+import { fromDefinition } from "@/lib/pipeline/definition";
 import { Edge } from "@xyflow/react";
 
 export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';

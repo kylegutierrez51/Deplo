@@ -1,6 +1,6 @@
 "use server"
 
-import { encryptSecret } from '../crypto';
+import { encryptSecret } from '@/lib/utils/crypto';
 import { FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";

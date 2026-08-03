@@ -1,6 +1,6 @@
 import type { Edge } from '@xyflow/react';
 import type { ConfigJson, CustomNode, GraphJson } from '@/lib/types';
-import { buildMaps } from '@/runner/util';
+import { buildMaps } from '@/lib/pipeline/adjacency';
 import { matchReservedLabel } from '@/lib/utils/string';
 
 // Everything a run is checked against before a PipelineRun row is created.

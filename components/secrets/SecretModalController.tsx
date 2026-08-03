@@ -1,7 +1,7 @@
 "use client";
 
 import SecretModal from "./SecretModal";
-import CrudModalController from "../modals/CrudModalController";
+import CrudModalController from "@/components/ui/modals/CrudModalController";
 import type { SecretDetail } from "@/lib/data/secrets";
 import type { Environment } from "@/lib/data/environments";
 

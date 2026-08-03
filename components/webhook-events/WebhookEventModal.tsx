@@ -1,10 +1,10 @@
 "use client"
 
-import Modal from '../modals/Modal';
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookEventStyles from './webhook-event-modal.module.css';
-import Pill from '@/components/Pill';
-import type { PillVariant } from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
+import type { PillVariant } from '@/components/ui/Pill';
 import { capitalize, getRepoName, getBranch } from '@/lib/utils/string';
 import { formatDate } from '@/lib/utils/date';
 

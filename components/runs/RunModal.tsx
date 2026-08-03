@@ -1,10 +1,10 @@
 "use client"
 
 import Link from 'next/link';
-import Modal from '../modals/Modal';
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import runHistoryStyles from './run-modal.module.css';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import type { RunStatus, RunTrigger } from '@/lib/types';
 import type { Run } from '@/lib/data/runs';
 import { capitalize } from "@/lib/utils/string";

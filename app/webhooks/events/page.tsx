@@ -1,13 +1,13 @@
 import styles from "./webhook-events.module.css";
-import Subheader from "@/components/subheader/Subheader";
-import RefreshButton from "@/components/subheader/RefreshButton";
-import Sidebar from "@/components/sidebar/Sidebar";
-import StatCards from "@/components/StatCards";
-import FilterSelect from "@/components/filters/FilterSelect";
-import SearchInput from "@/components/filters/SearchInput";
-import DataTable from "@/components/DataTable";
+import Subheader from "@/components/layout/subheader/Subheader";
+import RefreshButton from "@/components/layout/subheader/RefreshButton";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import StatCards from "@/components/ui/StatCards";
+import FilterSelect from "@/components/ui/filters/FilterSelect";
+import SearchInput from "@/components/ui/filters/SearchInput";
+import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
-import Pagination from "@/components/pagination/Pagination";
+import Pagination from "@/components/ui/pagination/Pagination";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
 

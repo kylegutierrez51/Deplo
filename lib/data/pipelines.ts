@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@/generated/prisma/client";
-import { PipelineStatus } from '@/lib/types';
+import { fromDefinition } from '@/lib/pipeline/definition';
+import type { GraphJson, PipelineStatus } from '@/lib/types';
 
 export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
   lastRun: Date | null;
@@ -60,4 +61,15 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
     lastRun: pipeline.runs[0] ? pipeline.runs[0].finishedAt : null,
     createdBy: pipeline.createdBy?.name ?? null
   }
+}
+
+export async function getPipelineDefinition(pipelineId: string): Promise<GraphJson> {
+  const definition = await prisma.pipelineDefinition.findFirst({
+    where: { pipelineId },
+    orderBy: { version: 'desc' },
+  });
+
+  if (!definition) return { nodes: [], edges: [] };
+
+  return fromDefinition(definition.graphJson, definition.configJson);
 }

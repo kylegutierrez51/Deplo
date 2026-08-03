@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link';
-import styles from './approval-actions.module.css'
+import styles from './approval.module.css'
 
 
 // add OnApprove and OnReject: () => void;

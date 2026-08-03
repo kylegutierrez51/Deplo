@@ -1,7 +1,7 @@
 "use client";
 
 import AuditModal from "./AuditModal";
-import ViewModalController from "../modals/ViewModalController";
+import ViewModalController from "@/components/ui/modals/ViewModalController";
 import type { Audit } from "@/lib/data/audits";
 
 export default function AuditModalController({ mode, audit }: {

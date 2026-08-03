@@ -2,7 +2,7 @@
 // Run via `npx prisma db seed` (or automatically after `prisma migrate dev`).
 import "dotenv/config";
 import { randomBytes } from "node:crypto";
-import { encryptSecret } from "@/lib/crypto";
+import { encryptSecret } from "@/lib/utils/crypto";
 import prisma from "@/lib/prisma";
 import {
   UserRole,

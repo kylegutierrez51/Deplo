@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Environment } from '@/lib/data/environments';
-import Pill from '@/components/Pill';
+import Pill from '@/components/ui/Pill';
 import { usePipelineGraph } from './PipelineGraphProvider';
 import styles from './environment-select.module.css';
 

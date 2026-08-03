@@ -2,8 +2,8 @@
 
 import { formatDate } from '@/lib/utils/date';
 import type { ResourceType } from '@/lib/types';
-import Modal from '../modals/Modal';
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import auditStyles from './audit-modal.module.css';
 
 const styles = { ...modalStyles, ...auditStyles };

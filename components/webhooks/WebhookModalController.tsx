@@ -1,7 +1,7 @@
 "use client";
 
 import WebhookModal from "./WebhookModal";
-import CrudModalController from "../modals/CrudModalController";
+import CrudModalController from "@/components/ui/modals/CrudModalController";
 import type { Webhook } from "@/lib/data/webhooks";
 import type { Pipeline } from "@/lib/data/pipelines";
 

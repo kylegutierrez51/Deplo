@@ -1,6 +1,6 @@
 "use client"
 
-import styles from './run-detail-actions.module.css'
+import styles from './run-detail-card.module.css'
 
 /*
 onCancel: () => void; 

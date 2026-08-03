@@ -1,13 +1,12 @@
 import styles from "./pipeline-editor.module.css";
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
-import Sidebar from "@/components/sidebar/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
 import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGraphProvider";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 import { getEnvironments } from "@/lib/data/environments";
 import { getSecrets } from "@/lib/data/secrets";
-import { getPipelineById } from "@/lib/data/pipelines";
-import { getPipelineDefinition } from "@/lib/data/pipeline-definitions";
+import { getPipelineById, getPipelineDefinition } from "@/lib/data/pipelines";
 import { notFound } from "next/navigation";
 
 interface EditorProps {

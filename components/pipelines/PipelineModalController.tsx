@@ -1,7 +1,7 @@
 "use client";
 
 import PipelineModal from "./PipelineModal";
-import CrudModalController from "../modals/CrudModalController";
+import CrudModalController from "@/components/ui/modals/CrudModalController";
 import type { Pipeline } from "@/lib/data/pipelines";
 
 export default function PipelineModalControler({ mode, pipeline }: {

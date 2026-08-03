@@ -1,12 +1,12 @@
 import styles from "./audit.module.css";
-import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/subheader/Subheader";
-import ExportButton from "@/components/subheader/ExportButton";
-import FilterSelect from "@/components/filters/FilterSelect";
-import SearchInput from "@/components/filters/SearchInput";
-import DataTable from "@/components/DataTable";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import Subheader from "@/components/layout/subheader/Subheader";
+import ExportButton from "@/components/layout/subheader/ExportButton";
+import FilterSelect from "@/components/ui/filters/FilterSelect";
+import SearchInput from "@/components/ui/filters/SearchInput";
+import DataTable from "@/components/ui/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
-import Pagination from "@/components/pagination/Pagination";
+import Pagination from "@/components/ui/pagination/Pagination";
 import AuditModalController from "@/components/audits/AuditModalController";
 import { getAudits, getAuditById } from '@/lib/data/audits';
 

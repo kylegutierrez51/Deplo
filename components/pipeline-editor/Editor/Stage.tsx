@@ -2,8 +2,8 @@
 
 import styles from './editor.module.css'
 import { type Node, type NodeProps, Position } from '@xyflow/react';
-import { StageSidebarToggle } from '../PipelineEditorChrome';
-import CustomHandle from './CustomHandle';
+import { StageSidebarToggle } from '@/components/pipeline-editor/PipelineEditorChrome';
+import CustomHandle from '@/components/flow/CustomHandle';
 
 export type StageNode = Node<
   {

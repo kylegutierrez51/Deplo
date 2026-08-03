@@ -5,10 +5,10 @@ import { formatDate } from "@/lib/utils/date";
 import { useEffect, useState, useActionState } from 'react';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
 import type { FormState, EnvType } from '@/lib/types';
-import Modal from '../modals/Modal';
-import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
-import Pill from '@/components/Pill';
-import modalStyles from '../modals/modal.module.css';
+import Modal from '@/components/ui/modals/Modal';
+import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import Pill from '@/components/ui/Pill';
+import modalStyles from '@/components/ui/modals/modal.module.css';
 import envStyles from './environment-modal.module.css';
 
 

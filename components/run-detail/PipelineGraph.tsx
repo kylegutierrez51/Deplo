@@ -3,8 +3,8 @@
 import { type CSSProperties } from 'react';
 import { ReactFlow, Controls, Edge } from '@xyflow/react';
 import PresentableStage from '@/components/run-detail/PresentableStage';
-import CustomEdge from '@/components/pipeline-editor/Editor/CustomEdge';
-import CustomMarker from '@/components/pipeline-editor/Editor//CustomMarker';
+import CustomEdge from '@/components/flow/CustomEdge';
+import CustomMarker from '@/components/flow/CustomMarker';
 import '@xyflow/react/dist/style.css';
 import { CustomNode } from '@/lib/types';
 
