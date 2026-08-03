@@ -1,4 +1,4 @@
-import styles from './approval-meta.module.css'
+import styles from './approval.module.css'
 
 interface ApprovalMetaProps {
   createdBy: string | null;
