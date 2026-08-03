@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, } from "react";
 import type { ComponentType } from 'react';
-import { useToast } from '@/components/toast/ToastContext';
+import { useToast } from '@/components/ui/toast/ToastContext';
 
 interface CrudModalBaseProps {
   mode: "view" | "create" | "edit";
