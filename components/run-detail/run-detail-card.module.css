@@ -144,6 +144,51 @@
   color: var(--blue-clr);
 }
 
+/* Action buttons (RunDetailActions, rendered inside this card) */
+.rdc-actions {
+  display: flex;
+  gap: var(--space-gap-md);
+  flex-shrink: 0;
+}
+
+.rdc-btn-cancel,
+.rdc-btn-rerun {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-sm) 18px;
+  border-radius: 8px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rdc-btn-cancel {
+  color: var(--red-text);
+  border: 1.5px solid var(--red-btn-border-clr);
+  background-color: rgba(248, 113, 113, 0.06);
+}
+
+.rdc-btn-cancel:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+.rdc-btn-rerun {
+  color: var(--white-clr);
+  border: 1.5px solid var(--light-gray-clr);
+  background-color: transparent;
+}
+
+.rdc-btn-rerun:hover {
+  background-color: var(--gray-clr);
+}
+
+.rdc-btn-cancel ion-icon,
+.rdc-btn-rerun ion-icon {
+  font-size: 16px;
+}
+
 /*
 ====================================================================================
 Run Detail Media Queries
@@ -185,9 +230,14 @@ Run Detail Media Queries
     flex-wrap: wrap;
     gap: var(--space-sm);
   }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
 }
 
-/* 
+/*
 ============================================================
 930px — Trigger row wrap (sidebar still present)
   Same fix as 579px: the trigger description claims the full
@@ -245,10 +295,15 @@ Run Detail Media Queries
     flex-wrap: wrap;
     gap: var(--space-sm);
   }
+
+  /* Action buttons span the full card width. */
+  .rdc-actions {
+    width: 100%;
+  }
 }
 
 
-/* 
+/*
 ============================================================
 579px — Trigger row wrap
   At this width "7m ago" gets clipped. Push the two timing items
@@ -307,5 +362,17 @@ Run Detail Media Queries
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-xs);
+  }
+
+  /* Stack action buttons vertically with 44px touch targets. */
+  .rdc-actions {
+    flex-direction: column;
+  }
+
+  .rdc-btn-cancel,
+  .rdc-btn-rerun {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
   }
 }
