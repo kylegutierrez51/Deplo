@@ -16,6 +16,7 @@ env:
   # lib/utils/crypto.ts can initialise.
   ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
   AUTH_SECRET: ci-only-not-a-real-secret-000000000000000
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/deplo_ci
   TZ: UTC
 
 jobs:
@@ -70,8 +71,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/deplo_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -99,8 +98,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/deplo_e2e
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
