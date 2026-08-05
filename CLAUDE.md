@@ -19,7 +19,13 @@ Deplo is a CI/CD pipeline management UI: users draw a pipeline as a graph of sta
 npm run dev      # start Next.js dev server at localhost:3000
 npm run build    # production build
 npm run lint     # ESLint
-npm test         # node:test suite over lib/**/*.test.ts (via tsx)
+npm run typecheck # tsc --noEmit
+
+npm test              # Jest: unit + component (jsdom, no database)
+npm run test:watch    # same, in watch mode
+npm run test:coverage # same, with a coverage report
+npm run test:integration # Jest against a real Postgres (see Testing below)
+npm run test:e2e         # Playwright; builds and boots the app itself
 
 npx prisma generate      # regenerate Prisma client into generated/prisma (also runs on postinstall)
 npx prisma migrate dev   # create/apply a migration after editing prisma/schema.prisma
@@ -30,11 +36,32 @@ npx prisma studio        # browse the Postgres database
 Run a single test file or case:
 
 ```bash
-node --import tsx --test lib/pipeline/graph.test.ts
-node --import tsx --test --test-name-pattern "reports a cycle" "lib/**/*.test.ts"
+npx jest lib/pipeline/validation.test.ts
+npx jest -t "reports a cycle"
+npx playwright test e2e/auth.spec.ts --project=anonymous
 ```
 
-Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), and for the runner `REDIS_HOST`, `REDIS_PORT`, `CWD`.
+Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `CWD`.
+
+## Testing
+
+Three tiers, three configs. CI (`.github/workflows/ci.yml`) runs all of them plus lint/typecheck on every push and PR.
+
+| Tier | Config | What belongs there |
+|---|---|---|
+| Unit + component | `jest.config.mjs` | Everything pure, plus server actions and data readers with Prisma mocked, plus React Testing Library. jsdom, no database. |
+| Integration | `jest.config.integration.mjs` (`*.integration.test.ts`) | Only what a mock cannot prove: real queries, unique constraints, cascades, `ON DELETE RESTRICT`, concurrency. |
+| E2E | `playwright.config.ts` (`e2e/`) | Async server components, which Jest structurally cannot render — the `?id=&mode=` modal contract, `proxy.ts`, the action → `revalidatePath` → re-render loop. |
+
+- **Jest is wired through `next/jest`**, which supplies the SWC transform, CSS-module and `next/font` mocking, and `.env` loading. Do not add `identity-obj-proxy` or a Babel config.
+- **`TZ=UTC` is pinned in `jest.config.mjs` itself**, not in a setup file — V8 caches the zone before setup files run, and `lib/utils/date.ts` formats via `toLocaleString`.
+- **`ENCRYPTION_KEY` is defaulted in `test/setup-env.mjs`** (`setupFiles`, not `setupFilesAfterEnv`): `lib/utils/crypto.ts` reads it at module scope and throws when absent.
+- **Mock Prisma with `jest.mock('@/lib/prisma')`** and read the instance back from `@/test/mocks/prisma` — never import `lib/__mocks__/prisma.ts` directly, because Jest gives a manual mock its own registry slot and you would stub a different object. Any test that imports from `lib/data` or `lib/actions` needs this line even if it only uses a pure helper, since `lib/prisma.ts` opens a `pg` connection at module scope.
+- **Mock `next/cache` with an explicit factory**, not `jest.mock('next/cache')` — automocking loads the real module to introspect it and drags in Next's server runtime.
+- **Build Prisma errors with `prismaError()` from `@/test/helpers/prisma-errors`**, which constructs them from `@/generated/prisma/runtime/library`. That is the class a real query throws; `@prisma/client/runtime/library` exports a *different* class object. See the note in that file.
+- **Graph tests share the `"a b:deploy"` / `"a>b"` DSL** in `test/helpers/graph.ts`. Follow it rather than building `CustomNode[]` literals.
+- **Integration tests truncate every table between cases.** `DATABASE_URL` must point at a throwaway database; `test/integration/setup.ts` refuses to run against one whose name looks like the dev database.
+- **Tests pin current behaviour.** Where a test documents a defect it carries a `// TODO(bug):` comment explaining it, and E2E uses `test.fail()` so the suite goes red when the defect is fixed rather than when it is present. Do not "fix" such a test by inverting its assertion.
 
 ## Database & Auth
 
@@ -84,7 +111,7 @@ A saved pipeline is split into two JSON columns on `PipelineDefinition`, and `li
 
 `savePipelineDefinition` mints a new version only when the content actually changed, and retries on `P2002` since concurrent saves can compute the same `[pipelineId, version]`. Versions are monotonic and sparse — a version number is "the nth edit ever made", not a count of rows.
 
-`lib/pipeline/graph.ts` validates a graph before a run is created: dangling edges, cycles (Kahn's algorithm, reported as a readable path), stages missing commands, and ungated deploy stages. This is the one module with test coverage (`lib/pipeline/graph.test.ts`) — its helpers write graphs compactly as `"a b:deploy"` / `"a>b"` specs; follow that style when adding cases. `lib/pipeline/adjacency.ts` holds `buildMaps`, the adjacency/in-degree builder shared with the runner.
+`lib/pipeline/validation.ts` validates a graph before a run is created: dangling edges, cycles (Kahn's algorithm, reported as a readable path), stages missing commands, and ungated deploy stages. Rule order there is load-bearing — dangling edges report alone because a phantom endpoint reads as a cycle, and a cycle returns early because the approval walk cannot trust a cyclic graph. `lib/pipeline/adjacency.ts` holds `buildMaps`, the adjacency/in-degree builder shared with the runner.
 
 ## Runner
 

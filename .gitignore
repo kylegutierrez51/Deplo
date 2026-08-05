@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+# minted at E2E global-setup time from AUTH_SECRET — a real session cookie
+e2e/.auth
 
 # next.js
 /.next/
