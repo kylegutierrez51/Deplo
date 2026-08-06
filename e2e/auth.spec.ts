@@ -18,7 +18,7 @@ import { test, expect } from '@playwright/test';
  * of AUTH_URL / AUTH_TRUST_HOST / VERCEL / CF_PAGES is set, so under a
  * production build every auth() call through auth.config.ts threw UntrustedHost
  * and proxy.ts could not gate anything. Setting trustHost on the shared config
- * fixed both symptoms at once — see the note in auth.config.ts.
+ * can fix both symptoms at once, but Deplo uses it in the .env and cy.yml env section.
  *
  * Kept as ordinary assertions now. They are the regression test for that fix:
  * the gate is only observable from a project with no storageState, and only
