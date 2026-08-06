@@ -11,18 +11,14 @@ import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/librar
  *   err instanceof (from @prisma/client/runtime/library)  // false
  *   err instanceof (from @/generated/prisma/runtime)      // true
  *
- * Verified against a live database — see lib/actions/*.integration.test.ts.
+ * Verified against a live database — see lib/data/secrets.integration.test.ts.
  *
- * Every action in lib/actions/ imports the class from '@prisma/client/runtime/library',
- * so their `instanceof` guards never match and all their P2002/P2003/P2025
- * translation is unreachable. Using the real class here is what makes the unit
- * tests characterize production rather than a fiction of their own making.
+ * The actions in lib/actions/ reach the class through `Prisma.PrismaClientKnownRequestError`
+ * on the generated client, which is the same object. Building errors here from
+ * '@prisma/client/runtime/library' instead would make every `instanceof` guard
+ * miss, and the unit tests would quietly characterize a fiction of their own
+ * making rather than production — which is how those branches were dead for as
+ * long as they were.
  */
 export const prismaError = (code: string, message = 'boom') =>
   new PrismaClientKnownRequestError(message, { code, clientVersion: '6.19.3' });
-
-/**
- * The error the actions' `instanceof` guards *would* match. Only useful for
- * demonstrating the mismatch — a real query never throws one of these.
- */
-export { PrismaClientKnownRequestError as UnreachableErrorClass } from '@prisma/client/runtime/library';

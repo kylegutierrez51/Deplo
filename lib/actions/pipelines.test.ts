@@ -1,6 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
-import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline } from '@/lib/actions/pipelines';
+import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline, updatePipeline } from '@/lib/actions/pipelines';
 import { toDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
@@ -149,22 +149,13 @@ describe('savePipelineDefinition versioning', () => {
 
 describe('savePipelineDefinition error handling', () => {
   /*
-   * TODO(bug): SAVE_ATTEMPTS never takes effect, and this is the most damaging
-   * instance of the unreachable-guard problem.
-   *
    * The retry exists because two concurrent saves compute the same next version
-   * and collide on [pipelineId, version]. Recovering needs the P2002 branch —
-   * but this module imports PrismaClientKnownRequestError from
-   * '@prisma/client/runtime/library' while the generated client throws that
-   * class from its own bundled copy in generated/prisma. Different class
-   * objects, so `error instanceof PrismaClientKnownRequestError` is always
-   * false and control falls straight to the generic return.
-   *
-   * The observable result: a user who loses the race is told to try again
-   * instead of the save silently succeeding. Confirmed against real Postgres in
-   * lib/actions/pipelines.integration.test.ts. Pinned as-is.
+   * and collide on [pipelineId, version]. The loser re-reads the latest version
+   * and tries again, so losing the race is invisible to the user rather than an
+   * error they have to act on. Confirmed against real Postgres in
+   * lib/actions/pipelines.integration.test.ts.
    */
-  it('does not retry a lost version race', async () => {
+  it('retries a lost version race and succeeds', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create
       .mockRejectedValueOnce(prismaError('P2002') as never)
@@ -172,28 +163,30 @@ describe('savePipelineDefinition error handling', () => {
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
-    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ status: 'error', message: 'Error saving pipeline. Please try again.' });
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ status: 'success', message: 'Pipeline saved', definitionId: 'def-2' });
   });
 
-  it('never makes more than one attempt, whatever SAVE_ATTEMPTS says', async () => {
+  // The retry is bounded: a collision on every attempt gives up rather than
+  // spinning, and reports the generic failure.
+  it('gives up after SAVE_ATTEMPTS collisions', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create.mockRejectedValue(prismaError('P2002') as never);
 
-    await savePipelineDefinition('p1', [node('a')], []);
+    const result = await savePipelineDefinition('p1', [node('a')], []);
 
-    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(3);
+    expect(result).toEqual({ status: 'error', message: 'Error saving pipeline. Please try again.' });
   });
 
-  // Same unreachable guard: the "This pipeline no longer exists." copy that
-  // P2003/P2025 were meant to produce never reaches the user.
-  it.each(['P2003', 'P2025'])('falls through to the generic message for %s', async (code) => {
+  // A missing parent is not a race, so it reports rather than retrying.
+  it.each(['P2003', 'P2025'])('reports a deleted pipeline for %s without retrying', async (code) => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create.mockRejectedValue(prismaError(code) as never);
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
-    expect(result).toEqual({ status: 'error', message: 'Error saving pipeline. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'This pipeline no longer exists.' });
     expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(1);
   });
 
@@ -370,13 +363,28 @@ describe('addPipelineRun graph validation', () => {
     expect(result.status).toBe('success');
   });
 
-  // Same unreachable guard as savePipelineDefinition — see the note there.
-  it.each(['P2003', 'P2025'])('falls through to the generic message for %s at insert time', async (code) => {
+  // Everything the action checked up front can still be deleted between the
+  // checks and the insert, which is what this branch is for.
+  it.each(['P2003', 'P2025'])('reports a deleted pipeline or environment for %s at insert time', async (code) => {
     const nodes = [node('a')];
     const { graphJson, configJson } = toDefinition(nodes, []);
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
     prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
     prismaMock.pipelineRun.create.mockRejectedValue(prismaError(code) as never);
+
+    const result = await addPipelineRun('p1', 'env-1', nodes, []);
+
+    expect(result).toEqual({
+      status: 'error', message: 'This pipeline or environment no longer exists.',
+    });
+  });
+
+  it('falls back to the generic message for an unrecognised error', async () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+    prismaMock.pipelineRun.create.mockRejectedValue(new Error('connection lost') as never);
 
     const result = await addPipelineRun('p1', 'env-1', nodes, []);
 
@@ -444,13 +452,63 @@ describe('deletePipeline', () => {
     expect(revalidate).toHaveBeenCalledWith('/pipelines');
   });
 
-  // P2025 is logged but deliberately not surfaced differently — the row being
-  // gone is the outcome the user wanted anyway.
-  it('returns the generic message when the row was already gone', async () => {
+  it('reports the row being already gone rather than a generic failure', async () => {
     prismaMock.pipeline.delete.mockRejectedValue(prismaError('P2025') as never);
 
     const result = await deletePipeline('p1');
 
+    expect(result).toEqual({ status: 'error', message: 'This pipeline no longer exists.' });
+  });
+
+  it('returns the generic message for an unrecognised error', async () => {
+    prismaMock.pipeline.delete.mockRejectedValue(new Error('network') as never);
+
+    const result = await deletePipeline('p1');
+
     expect(result).toEqual({ status: 'error', message: 'Error deleting pipeline. Please try again.' });
+  });
+});
+
+describe('updatePipeline', () => {
+  const form = (over: Record<string, string> = {}) => {
+    const fd = new FormData();
+    fd.set('id', 'p1');
+    fd.set('name', 'CI');
+    fd.set('repo_url', 'https://github.com/o/r');
+    fd.set('description', 'desc');
+    Object.entries(over).forEach(([k, v]) => fd.set(k, v));
+    fd.append('branch_filters', 'main');
+    return fd;
+  };
+
+  const idle = { status: 'idle' as const, message: '' };
+
+  it('updates by id and revalidates', async () => {
+    const result = await updatePipeline(idle, form({ name: 'Renamed' }));
+
+    expect(prismaMock.pipeline.update).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', branchFilters: ['main'] },
+    });
+    expect(result).toEqual({ status: 'success', message: 'Pipeline updated' });
+    expect(revalidate).toHaveBeenCalledWith('/pipelines');
+  });
+
+  it('reports a pipeline deleted from under the edit', async () => {
+    prismaMock.pipeline.update.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await updatePipeline(idle, form());
+
+    expect(result).toEqual({ status: 'error', message: 'This pipeline no longer exists.' });
+  });
+
+  // The raw Prisma message names tables and columns, so it belongs in the log
+  // rather than in the browser.
+  it('does not put the underlying error message in front of the user', async () => {
+    prismaMock.pipeline.update.mockRejectedValue(new Error('relation "pipelines" does not exist') as never);
+
+    const result = await updatePipeline(idle, form());
+
+    expect(result).toEqual({ status: 'error', message: 'Error updating pipeline. Please try again.' });
   });
 });

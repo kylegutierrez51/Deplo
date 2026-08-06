@@ -84,8 +84,8 @@ describe('addEnvironment', () => {
     expect(revalidate).toHaveBeenCalledWith('/environments');
   });
 
-  it('reports a failure with the correct message on addEnvironment', async () => {
-    prismaMock.environment.create.mockRejectedValue(prismaError('P2002') as never);
+  it('reports a generic failure for an unrecognised error', async () => {
+    prismaMock.environment.create.mockRejectedValue(new Error('network') as never);
 
     const result = await addEnvironment(idle, form());
 
@@ -94,15 +94,17 @@ describe('addEnvironment', () => {
   });
 
   // Environment.name is unique, so a duplicate is the most likely real failure
-  // and it currently surfaces as the generic message rather than a specific one.
-  it('does not distinguish a duplicate name from any other failure', async () => {
+  // and it gets its own copy rather than the generic message.
+  it('distinguishes a duplicate name from any other failure', async () => {
     prismaMock.environment.create.mockRejectedValue(prismaError('P2002') as never);
     const duplicate = await addEnvironment(idle, form());
 
     prismaMock.environment.create.mockRejectedValue(new Error('network') as never);
     const unrelated = await addEnvironment(idle, form());
 
-    expect(duplicate.message).toBe(unrelated.message);
+    expect(duplicate).toEqual({ status: 'error', message: 'Environment name already used. Try a new one.' });
+    expect(duplicate.message).not.toBe(unrelated.message);
+    expect(revalidate).not.toHaveBeenCalled();
   });
 
   /*
@@ -158,8 +160,26 @@ describe('updateEnvironment', () => {
     expect(call.data).not.toHaveProperty('createdById');
   });
 
-  it('reports a failure with the correct message on updateEnvironment', async () => {
+  it('reports an environment deleted from under the edit', async () => {
     prismaMock.environment.update.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await updateEnvironment(idle, form({ id: 'env-1' }));
+
+    expect(result).toEqual({ status: 'error', message: 'This environment no longer exists.' });
+  });
+
+  // Renaming onto another environment's name trips the same unique constraint
+  // addEnvironment does.
+  it('reports a rename onto a name already in use', async () => {
+    prismaMock.environment.update.mockRejectedValue(prismaError('P2002') as never);
+
+    const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'Taken' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Environment name already used. Try a new one.' });
+  });
+
+  it('reports a generic failure for an unrecognised error', async () => {
+    prismaMock.environment.update.mockRejectedValue(new Error('network') as never);
 
     const result = await updateEnvironment(idle, form({ id: 'env-1' }));
 
@@ -188,17 +208,27 @@ describe('updateEnvironment', () => {
 });
 
 describe('deleteEnvironment', () => {
+  // The confirmation names the environment, so the delete has to read the name
+  // off the deleted row rather than echo the id it was handed.
   it('deletes and revalidates', async () => {
-    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1' } as never);
+    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1', name: 'Production' } as never);
 
     const result = await deleteEnvironment('env-1');
 
-    expect(result.status).toBe('success');
+    expect(result).toEqual({ status: 'success', message: 'Environment Production deleted' });
     expect(revalidate).toHaveBeenCalledWith('/environments');
   });
 
-  it('returns the generic message when the row was already gone', async () => {
+  it('reports the row being already gone rather than a generic failure', async () => {
     prismaMock.environment.delete.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await deleteEnvironment('env-1');
+
+    expect(result).toEqual({ status: 'error', message: 'This environment no longer exists.' });
+  });
+
+  it('returns the generic message for an unrecognised error', async () => {
+    prismaMock.environment.delete.mockRejectedValue(new Error('network') as never);
 
     const result = await deleteEnvironment('env-1');
 
