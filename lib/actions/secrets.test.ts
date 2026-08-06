@@ -188,7 +188,7 @@ describe('deleteSecret', () => {
 
     const result = await deleteSecret('sec-1');
 
-    expect(result).toEqual({ status: 'success', message: 'Secret API_KEY deleted' });
+    expect(result).toEqual({ status: 'success', message: 'Secret deleted' });
     expect(revalidate).toHaveBeenCalledWith('/secrets');
   });
 

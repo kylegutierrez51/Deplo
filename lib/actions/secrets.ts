@@ -107,7 +107,7 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
 
 export async function deleteSecret(id: string): Promise<FormState> {
   try {
-    const deletedSecret = await prisma.secret.delete({
+    await prisma.secret.delete({
       where: { id }
     });
 
@@ -115,7 +115,7 @@ export async function deleteSecret(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Secret ${deletedSecret.key} deleted`
+      message: `Secret deleted`
     }
 
   } catch (error: unknown) {

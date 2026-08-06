@@ -215,7 +215,7 @@ describe('deleteEnvironment', () => {
 
     const result = await deleteEnvironment('env-1');
 
-    expect(result).toEqual({ status: 'success', message: 'Environment Production deleted' });
+    expect(result).toEqual({ status: 'success', message: 'Environment deleted' });
     expect(revalidate).toHaveBeenCalledWith('/environments');
   });
 

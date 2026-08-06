@@ -91,7 +91,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
 export async function deleteWebhook(id: string): Promise<FormState> {
   try {
-    const deletedWebhook = await prisma.webhook.delete({
+    await prisma.webhook.delete({
       where: { id }
     });
 
@@ -99,7 +99,7 @@ export async function deleteWebhook(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Webhook ${deletedWebhook.id} deleted`
+      message: `Webhook deleted`
     }
 
   } catch (error: unknown) {

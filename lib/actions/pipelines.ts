@@ -87,7 +87,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 
 export async function deletePipeline(id: string): Promise<FormState> {
   try {
-    const deletedPipeline = await prisma.pipeline.delete({
+    await prisma.pipeline.delete({
       where: { id }
     });
 
@@ -95,7 +95,7 @@ export async function deletePipeline(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Pipeline ${deletedPipeline.id} deleted`
+      message: `Pipeline deleted`
     }
 
   } catch (error: unknown) {

@@ -127,7 +127,7 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
 
 export async function deleteEnvironment(id: string): Promise<FormState> {
   try {
-    const deletedEnv = await prisma.environment.delete({
+    await prisma.environment.delete({
       where: { id }
     });
 
@@ -135,7 +135,7 @@ export async function deleteEnvironment(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Environment ${deletedEnv.name} deleted`
+      message: `Environment deleted`
     }
 
   } catch (error: unknown) {
