@@ -795,7 +795,44 @@ Continuing from ex 1, user now types a character into the input, firing syncEnvi
       window.history.replaceState -> since query is falsy, it becomes: 
         /pipelines/cms70rgdv001wukk4dwz00l9b
 
+===================================================================================================================================
 
+TYPESCRIPT SPREAD OPERATOR
 
+@/lib/data/secret.ts has getSecretById(), with return types that omit 'encryptedValue', 'iv', and 'authTag'. 
 
+If, in the return statement, you return '...secret', it actually returns the encryptedValue, iv, and authTag despite them not being in the return type because '...secret' carries the other types, meaning TypeScript allows excess properties on variables using the spread operator.
+
+The solution is to omit them by using something like: 
+  const { encryptedValue: _ev, iv: _iv, authTag: _at, ...rest } = secret;
+
+and then return '...rest'
+
+Ex:
+
+    type Row    = { id: string; name: string; secretBlob: string };
+    type Public = Omit<Row, 'secretBlob'>;
+    declare const row: Row;
+
+    const a: Public = { ...row };                    // ✅ no error
+    const b: Public = { ...row, secretBlob: 'x' };   // ❌ TS2353
+    const c: Public = { id:'1', name:'n', secretBlob:'x' }; // ❌ TS2353
+    const d: Public = { ...row } as const; // via a variable → ✅ no error
+
+===================================================================================================================================
+
+AUTHJS 'trustHost'
+
+@auth/core defaults trustHost to `NODE_ENV !== "production"` unless AUTH_URL,
+AUTH_TRUST_HOST, VERCEL or CF_PAGES is set, so a production build throws
+UntrustedHost on every auth() call. This app is self-hosted behind a known
+proxy rather than on a platform Auth.js recognises, so the Host header is
+ours to trust. It belongs here rather than in auth.ts because proxy.ts calls
+auth() through this config on every request, and would fail without it.
+
+Currently, I'm opting to use AUTH_TRUST_HOST=true in .env, but you can also pass in 'trustHost: true' in @/auth.config.ts, which gets used in @/auth.ts.
+
+Also add this in @/github/workflows/ci.yml under the top-level env section since it's needed the e2e tests need it to avoid failing.
+
+===================================================================================================================================
 
