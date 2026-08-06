@@ -39,22 +39,21 @@ describe('getSecrets', () => {
   });
 
   /*
-   * TODO(bug): the exported `Secret` type Omits encryptedValue/iv/authTag, but
-   * the implementation spreads the whole row, so the Omit is type-level only —
-   * all three columns are still on the object handed to the client component.
-   *
-   * That is ciphertext rather than plaintext, so it is not an immediate
-   * disclosure, but it ships the IV and auth tag to the browser for no reason
-   * and contradicts what the type promises. Pinned as-is.
+   * The list path drops the encrypted columns by not selecting them, which is a
+   * query-engine behaviour. A mock returns its fixture verbatim and ignores
+   * `omit`, so this tier can only prove the query asked for it. That it actually
+   * takes effect is pinned in secrets.integration.test.ts.
    */
-  it('still carries the encrypted columns at runtime despite the Omit', async () => {
-    prismaMock.secret.findMany.mockResolvedValue([row()] as never);
+  it('asks Postgres not to select the encrypted columns', async () => {
+    prismaMock.secret.findMany.mockResolvedValue([] as never);
 
-    const [secret] = await getSecrets();
+    await getSecrets();
 
-    expect(secret).toHaveProperty('encryptedValue');
-    expect(secret).toHaveProperty('iv');
-    expect(secret).toHaveProperty('authTag');
+    expect(prismaMock.secret.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        omit: { encryptedValue: true, iv: true, authTag: true },
+      }),
+    );
   });
 
   it('orders newest first', async () => {

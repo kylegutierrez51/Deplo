@@ -62,6 +62,19 @@ describe('the encrypt/decrypt round trip through Postgres', () => {
     expect(secret).not.toHaveProperty('value');
   });
 
+  // The `Omit` in the exported Secret type is erased at compile time, so only a
+  // real query proves the columns are absent from the object the UI receives.
+  it('does not carry the encrypted columns at runtime', async () => {
+    const environment = await makeEnvironment();
+    await addSecret(idle, secretForm({ env_id: environment.id }));
+
+    const [secret] = await getSecrets();
+
+    expect(secret).not.toHaveProperty('encryptedValue');
+    expect(secret).not.toHaveProperty('iv');
+    expect(secret).not.toHaveProperty('authTag');
+  });
+
   it('lowercases the environment type read back from the enum column', async () => {
     const environment = await prisma.environment.create({
       data: { name: 'prod', type: 'PRODUCTION', requireApproval: true },

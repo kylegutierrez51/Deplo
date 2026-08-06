@@ -16,10 +16,11 @@ export async function getSecrets(): Promise<Secret[]> {
   const secrets = await prisma.secret.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      environment: { 
-        select: { type: true, name: true}
+      environment: {
+        select: { type: true, name: true }
       }
-    }
+    },
+    omit: { encryptedValue: true, iv: true, authTag: true }
   });
   return secrets.map((s) => ({
     ...s,
@@ -35,7 +36,7 @@ export async function getSecretById(id: string): Promise<SecretDetail | null> {
     where: { id },
     include: {
       environment: {
-        select: { type: true, name: true}
+        select: { type: true, name: true }
       },
       createdBy: { select: { name: true } }
     }
@@ -46,8 +47,11 @@ export async function getSecretById(id: string): Promise<SecretDetail | null> {
     iv: secret.iv,
     authTag: secret.authTag,
   });
+
+  const { encryptedValue: _ev, iv: _iv, authTag: _at, ...rest } = secret;
+
   return {
-    ...secret,
+    ...rest,
     value,
     environment: {
       ...secret.environment,
