@@ -4,8 +4,8 @@ import { encryptSecret } from '@/lib/utils/crypto';
 import { FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { auth } from '@/auth';
+import { Prisma } from '@/generated/prisma/client';
 
 export async function addSecret(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
@@ -31,10 +31,22 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
     };
 
   } catch (error: unknown) {
-    console.log(error instanceof Error ? error.message : '');
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
-      return { status: 'error', message: 'Selected environment no longer exists.' };
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(`${error.code}: ${error.message}`);
+
+      if (error.code === 'P2003') return {
+        status: 'error',
+        message: 'Selected environment no longer exists.'
+      }
+
+      // @@unique([environmentId, key])
+      if (error.code === 'P2002') return {
+        status: 'error',
+        message: 'The key is already registered to the selected environment. Enter a new key or select a different environment.'
+      }
     }
+
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
       message: 'Error adding secret. Please try again.',
@@ -65,13 +77,30 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
     };
 
   } catch (error: unknown) {
-    console.log(error instanceof Error ? error.message : '');
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
-      return { status: 'error', message: 'Selected environment no longer exists.' };
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(`${error.code}: ${error.message}`);
+
+      if (error.code === 'P2003') return {
+        status: 'error',
+        message: 'Selected environment no longer exists.'
+      }
+
+      // @@unique([environmentId, key])
+      if (error.code === 'P2002') return {
+        status: 'error',
+        message: 'The key is already registered to the selected environment. Enter a new key or select a different environment.'
+      }
+
+      if (error.code === 'P2025') return {
+        status: 'error',
+        message: 'This secret no longer exists.'
+      }
     }
+
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: 'Error adding secret. Please try again.',
+      message: 'Error updating secret. Please try again.',
     };
   }
 }
@@ -86,12 +115,16 @@ export async function deleteSecret(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Secret ${deletedSecret.id} deleted`
+      message: `Secret ${deletedSecret.key} deleted`
     }
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.log(`${error.code}:` + 'Error deleting secret');
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This secret no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {

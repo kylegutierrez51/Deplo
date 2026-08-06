@@ -4,7 +4,7 @@ import { encryptSecret, generateWebhookSecret } from '@/lib/utils/crypto';
 import { FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 
 export type RegenerateSecretState = FormState & { secret?: string };
@@ -33,10 +33,14 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
     };
 
   } catch (error: unknown) {
-    console.log(error instanceof Error ? error.message : '');
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
-      return { status: 'error', message: 'Selected pipeline no longer exists.' };
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'Selected pipeline no longer exists.'
+      }
     }
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
       message: 'Error adding webhook. Please try again.',
@@ -64,10 +68,20 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
     };
 
   } catch (error: unknown) {
-    console.log(error instanceof Error ? error.message : '');
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
-      return { status: 'error', message: 'Selected pipeline no longer exists.' };
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(`${error.code}: ${error.message}`);
+
+      if (error.code === 'P2003') return {
+        status: 'error',
+        message: 'Selected pipeline no longer exists.'
+      }
+
+      if (error.code === 'P2025') return {
+        status: 'error',
+        message: 'This webhook no longer exists.'
+      }
     }
+    console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
       message: 'Error updating webhook. Please try again.',
@@ -89,8 +103,12 @@ export async function deleteWebhook(id: string): Promise<FormState> {
     }
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.log(`${error.code}:` + 'Error deleting webhook');
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This webhook no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {
@@ -122,13 +140,17 @@ export async function regenerateWebhookSecret(id: string): Promise<RegenerateSec
     };
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      return { status: 'error', message: 'Webhook no longer exists.' };
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This webhook no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: 'Error regenerating secret. Please try again.'
+      message: 'Error regenerating webhook. Please try again.'
     }
   }
 }

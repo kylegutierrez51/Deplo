@@ -3,11 +3,10 @@
 import { FormState, type ConfigJson, type CustomNode, type GraphJson, type SaveDefinitionResult } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { auth } from '@/auth';
 import { definitionsEqual, toDefinition } from '@/lib/pipeline/definition';
 import type { Edge } from '@xyflow/react';
-import type { Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
 
@@ -71,10 +70,17 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
     };
 
   } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This pipeline no longer exists.'
+      }
+    }
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'Error updating pipeline. Please try again.',
+      message: 'Error updating pipeline. Please try again.',
     };
   }
 }
@@ -93,8 +99,12 @@ export async function deletePipeline(id: string): Promise<FormState> {
     }
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.log(`${error.code}:` + 'Error deleting pipeline');
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This pipeline no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {
@@ -159,7 +169,7 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
       };
 
     } catch (error: unknown) {
-      if (error instanceof PrismaClientKnownRequestError) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
         // Lost the race for this version number — re-read the latest and retry.
         if (error.code === 'P2002' && attempt < SAVE_ATTEMPTS) continue;
 
@@ -271,7 +281,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
   } catch (error: unknown) {
     // P2003: the definition or environment the run points at was deleted between the checks above and the insert.
-    if (error instanceof PrismaClientKnownRequestError && (error.code === 'P2003' || error.code === 'P2025')) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === 'P2003' || error.code === 'P2025')) {
       return {
         status: 'error',
         message: 'This pipeline or environment no longer exists.'

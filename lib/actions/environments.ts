@@ -3,8 +3,7 @@
 import { EnvType, FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { EnvironmentType } from '@/generated/prisma/client';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { EnvironmentType, Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 
 // The UI works in lowercase domain types and Prisma's enum is uppercase, so the
@@ -63,6 +62,13 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
     };
 
   } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'Environment name already used. Try a new one.'
+      }
+    }
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
@@ -98,6 +104,19 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
     };
 
   } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(`${error.code}: ${error.message}`);
+
+      if (error.code === 'P2002') return {
+        status: 'error',
+        message: 'Environment name already used. Try a new one.'
+      }
+
+      if (error.code === 'P2025') return {
+        status: 'error',
+        message: 'This environment no longer exists.'
+      }
+    }
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
@@ -116,12 +135,16 @@ export async function deleteEnvironment(id: string): Promise<FormState> {
 
     return {
       status: 'success',
-      message: `Environment ${deletedEnv.id} deleted`
+      message: `Environment ${deletedEnv.name} deleted`
     }
 
   } catch (error: unknown) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-      console.log(`${error.code}:` + 'Error deleting environment');
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      console.log(`${error.code}: ${error.message}`);
+      return {
+        status: 'error',
+        message: 'This environment no longer exists.'
+      }
     }
     console.log(error instanceof Error ? error.message : '');
     return {
