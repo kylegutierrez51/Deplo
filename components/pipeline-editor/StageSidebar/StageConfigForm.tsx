@@ -11,7 +11,7 @@ import { matchReservedLabel } from '@/lib/utils/string';
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
-  const [type, setType] = useState<StageType>(node?.data?.type || 'custom')
+  const [type, setType] = useState<StageType>(node?.data?.type || 'custom');
   const [label, setLabel] = useState<string>(matchReservedLabel(node?.data?.label) ? '' : node?.data?.label ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
@@ -45,18 +45,24 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
         updateNodeData(node.id, { [name]: Number(value) });
       }
     }
-  }
+  };
 
-  const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
+  const handleEnvAdd = () => {
+    const next = [ ...envVars, { key: '', value: ''}];
+    setEnvVars(next);
+    updateNodeData(node.id, { env_vars: next });
+  };
 
   const handleEnvDelete = (index: number) => {
-    setEnvVars(prev => prev.filter((_v, i) => i !== index));
-    updateNodeData(node.id, { env_vars: envVars });
+    const next = envVars.filter((_v, i) => i !== index);
+    setEnvVars(next);
+    updateNodeData(node.id, { env_vars: next });
   };
 
   const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
-    setEnvVars(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
-    updateNodeData(node.id, { env_vars: envVars });
+    const next = envVars.map((v, i) => i === index ? { ...v, [field]: value } : v);
+    setEnvVars(next);
+    updateNodeData(node.id, { env_vars: next });
   }; /* runs when you change key or value in an env variable via changing the input */
 
   const handleSecretToggle = (secretId: string) => {

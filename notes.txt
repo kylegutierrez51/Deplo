@@ -836,3 +836,52 @@ Also add this in @/github/workflows/ci.yml under the top-level env section since
 
 ===================================================================================================================================
 
+StageConfigForm: handleEnvChange and handleEnvDelete Bugs
+
+        const handleEnvAdd = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
+
+        const handleEnvDelete = (index: number) => {
+          setEnvVars(prev => prev.filter((_v, i) => i !== index));
+          updateNodeData(node.id, { env_vars: envVars });
+        };
+
+        const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
+          setEnvVars(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
+          updateNodeData(node.id, { env_vars: envVars });
+        }; /* runs when you change key or value in an env variable via changing the input */
+
+Issue:
+
+the update made in 'setEnvVars' only ever exists inside 'setEnvVars', and 'envVars' only updates when the page re-renders, which is after the function executes. This means that updateNodeData will just get the old 'envVars', and once the function finishes and the page re-renders, the Stage Sidebar still successfully shows the correct 'envVars' section despite the node data not being updated. 
+
+<Example>
+1. The user changes an env var from 'NODE_ENV = "development"' to 'NODE_ENV = "production"'. 
+2. Since 'handleEnvChange' triggers per character that the user typed, this is what happens:
+    - The environment variables section of the page successfully updates to display 'NODE_ENV=production'
+    - But the node data shows 'NODE_ENV=productio'
+
+3. If the user updates the section again by adding a new env var and adding 1 char to it, then the NODE_ENV will update to 'production'
+</Example>
+
+
+
+
+Fix:
+
+        const handleEnvAdd = () => {
+          const next = [ ...envVars, { key: '', value: ''}];
+          setEnvVars(next);
+          updateNodeData(node.id, { env_vars: next });
+        };
+
+        const handleEnvDelete = (index: number) => {
+          const next = envVars.filter((_v, i) => i !== index);
+          setEnvVars(next);
+          updateNodeData(node.id, { env_vars: next });
+        };
+
+        const handleEnvChange = (index: number, field: 'key' | 'value', value: string) => {
+          const next = envVars.map((v, i) => i === index ? { ...v, [field]: value } : v);
+          setEnvVars(next);
+          updateNodeData(node.id, { env_vars: next });
+        }; /* runs when you change key or value in an env variable via changing the input */
