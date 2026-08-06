@@ -30,13 +30,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const nextId = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>[]>());
 
+  // Starts the exit animation, then drops the toast once it has played. 
+  // Every timer here goes into `timers` so dismissToast can find and cancel it.
   function remove(id: number) {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
 
-    setTimeout(() => {
+    const removeTimer = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
       timers.current.delete(id);
     }, EXIT_DURATION);
+
+    timers.current.set(id, [removeTimer]);
   }
 
   function showToast(text: string, icon: ToastIcon, options?: ShowToastOptions) {
@@ -47,23 +51,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
     if (sticky) return; // sticky toasts never schedules timers
 
-    const exitTimer = setTimeout(() => {
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-    }, TOTAL_DURATION - EXIT_DURATION);
+    const exitTimer = setTimeout(() => remove(id), TOTAL_DURATION - EXIT_DURATION);
 
-    const removeTimer = setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-      timers.current.delete(id);
-    }, TOTAL_DURATION);
-
-    timers.current.set(id, [exitTimer, removeTimer]);
+    timers.current.set(id, [exitTimer]);
   }
 
+  // used only in sticky toasts when user clicks 'x' 
   function dismissToast(id: number) {
     timers.current.get(id)?.forEach(clearTimeout);
     remove(id);
   }
 
+  // used by HeaderButtons to clear prev sticky toasts when a user runs pipeline
   function dismissStickyToasts() {
     toasts.filter(t => t.sticky && !t.exiting).forEach(t => dismissToast(t.id));
   }

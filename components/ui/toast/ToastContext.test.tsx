@@ -185,17 +185,27 @@ describe('dismissToast', () => {
     expect(result.current.toasts).toHaveLength(1);
   });
 
-  /*
-   * TODO(bug): dismissToast clears the two scheduled timers and then calls
-   * remove(), which schedules a third EXIT_DURATION timer that is never recorded
-   * in the timers map. It is harmless today because the callback filters by id
-   * and is idempotent, but the map entry it deletes may already be gone.
-   * Pinned as-is: an untracked timer survives the dismissal.
-   */
-  it('leaves one untracked timer behind after dismissal', () => {
+  it('schedules exactly one exit timer', () => {
     const { result } = renderToasts();
     act(() => { result.current.showToast('Saved', 'checkmark-circle-outline'); });
 
+    act(() => { result.current.dismissToast(0); });
+
+    expect(jest.getTimerCount()).toBe(1);
+  });
+
+  /*
+   * The ✕ stays clickable while the exit animation plays, so a second dismissal
+   * can land inside that window. It has to cancel the exit timer the first one
+   * scheduled, which means every timer must be recorded in the timers map --
+   * dismissToast can only clear what it can find there.
+   */
+  it('does not schedule a second exit timer when dismissed twice', () => {
+    const { result } = renderToasts();
+    act(() => { result.current.showToast('Save failed', 'close-circle-outline', { sticky: true }); });
+
+    act(() => { result.current.dismissToast(0); });
+    advance(EXIT_DURATION / 2);
     act(() => { result.current.dismissToast(0); });
 
     expect(jest.getTimerCount()).toBe(1);

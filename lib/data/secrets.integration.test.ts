@@ -62,6 +62,19 @@ describe('the encrypt/decrypt round trip through Postgres', () => {
     expect(secret).not.toHaveProperty('value');
   });
 
+  // The `Omit` in the exported Secret type is erased at compile time, so only a
+  // real query proves the columns are absent from the object the UI receives.
+  it('does not carry the encrypted columns at runtime', async () => {
+    const environment = await makeEnvironment();
+    await addSecret(idle, secretForm({ env_id: environment.id }));
+
+    const [secret] = await getSecrets();
+
+    expect(secret).not.toHaveProperty('encryptedValue');
+    expect(secret).not.toHaveProperty('iv');
+    expect(secret).not.toHaveProperty('authTag');
+  });
+
   it('lowercases the environment type read back from the enum column', async () => {
     const environment = await prisma.environment.create({
       data: { name: 'prod', type: 'PRODUCTION', requireApproval: true },
@@ -97,29 +110,26 @@ describe('constraints', () => {
   });
 
   /*
-   * TODO(bug): addSecret is written to translate P2003 into "Selected
-   * environment no longer exists." It never does.
-   *
-   * lib/actions/secrets.ts imports PrismaClientKnownRequestError from
-   * '@prisma/client/runtime/library', but prisma/schema.prisma sets
-   * `output = "../generated/prisma"`, so the generated client bundles its own
-   * runtime and throws *its* copy of that class. The two are different class
-   * objects, so the `instanceof` guard is always false.
-   *
-   * This test is the proof: a real foreign key violation from a real database,
-   * and the specific message still does not appear. The same defect disables
-   * every P2002/P2003/P2025 branch in lib/actions — including
-   * savePipelineDefinition's concurrency retry. Pinned as-is.
+   * A real foreign key violation from a real database, translated all the way
+   * through to the copy the user sees. The mocked unit test can only prove the
+   * branch fires for a hand-built error; this proves the error a live query
+   * actually throws is the one the branch matches.
    */
-  it('cannot report a friendly message for a non-existent environment', async () => {
+  it('reports a friendly message for a non-existent environment', async () => {
     const result = await addSecret(idle, secretForm({ env_id: 'does-not-exist' }));
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding secret. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'Selected environment no longer exists.' });
     expect(await prisma.secret.count()).toBe(0);
   });
 
-  // Isolates the cause from the symptom above, so the fix is unambiguous: make
-  // lib/actions import the class from '@/generated/prisma/runtime/library'.
+  /*
+   * Guards the import that makes the branch above reachable. prisma/schema.prisma
+   * sets `output = "../generated/prisma"`, so the generated client bundles its own
+   * runtime and throws *its* copy of the class. Importing the identically-named
+   * class from '@prisma/client/runtime/library' instead compiles, type-checks and
+   * silently never matches — which is exactly how every P2002/P2003/P2025 branch
+   * in lib/actions came to be dead code. See test/helpers/prisma-errors.ts.
+   */
   it('throws the generated runtime\'s error class, not @prisma/client\'s', async () => {
     const { PrismaClientKnownRequestError: Generated } = await import('@/generated/prisma/runtime/library');
     const { PrismaClientKnownRequestError: FromClientPkg } = await import('@prisma/client/runtime/library');

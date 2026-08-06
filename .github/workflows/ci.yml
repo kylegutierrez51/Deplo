@@ -18,6 +18,8 @@ env:
   AUTH_SECRET: ci-only-not-a-real-secret-000000000000000
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/deplo_ci
   TZ: UTC
+  
+  AUTH_TRUST_HOST: true
 
 jobs:
   lint:
@@ -62,9 +64,8 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: postgres
+          # POSTGRES_USER and POSTGRES_DB default to 'postgres' and '$POSTGRES_USER', but the password is required
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: deplo_test
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready
@@ -89,9 +90,7 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: deplo_e2e
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready

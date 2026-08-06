@@ -91,27 +91,29 @@ describe('addSecret outcomes', () => {
     expect(revalidate).toHaveBeenCalledWith('/secrets');
   });
 
-  /*
-   * TODO(bug): the P2003 branch is unreachable. This action imports
-   * PrismaClientKnownRequestError from '@prisma/client/runtime/library', but the
-   * client is generated to generated/prisma and throws that class from its own
-   * bundled runtime copy — a different class object — so the `instanceof` guard
-   * is always false and the specific message never renders.
-   *
-   * Verified against a live database in lib/data/secrets.integration.test.ts.
-   * Pinned as-is: the user sees the generic message instead.
-   */
-  it('falls through to the generic message on a foreign key failure', async () => {
+  // The environment was deleted between the form rendering and the submit.
+  it('names the missing environment on a foreign key failure', async () => {
     prismaMock.secret.create.mockRejectedValue(prismaError('P2003') as never);
 
     const result = await addSecret(idle, form());
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding secret. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'Selected environment no longer exists.' });
   });
 
   // @@unique([environmentId, key]) — a duplicate key in the same environment.
-  it('falls back to the generic message for a duplicate key', async () => {
+  it('names the collision for a duplicate key', async () => {
     prismaMock.secret.create.mockRejectedValue(prismaError('P2002') as never);
+
+    const result = await addSecret(idle, form());
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'The key is already registered to the selected environment. Enter a new key or select a different environment.',
+    });
+  });
+
+  it('falls back to the generic message for an unrecognised error', async () => {
+    prismaMock.secret.create.mockRejectedValue(new Error('network') as never);
 
     const result = await addSecret(idle, form());
 
@@ -141,38 +143,65 @@ describe('updateSecret', () => {
     expect(writtenData(prismaMock.secret.update)).not.toHaveProperty('createdById');
   });
 
-  // Same unreachable P2003 branch as addSecret — see the note there.
-  it('falls through to the generic message on a foreign key failure', async () => {
+  it('names the missing environment on a foreign key failure', async () => {
     prismaMock.secret.update.mockRejectedValue(prismaError('P2003') as never);
 
     const result = await updateSecret(idle, form({ id: 'sec-1' }));
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding secret. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'Selected environment no longer exists.' });
   });
 
-  // TODO(bug): the generic failure message says "adding" on the update path.
-  // Pinned as-is; it is user-visible copy.
-  it('reports an update failure as "adding"', async () => {
+  // Re-keying onto a key that already exists in the target environment.
+  it('names the collision for a duplicate key', async () => {
+    prismaMock.secret.update.mockRejectedValue(prismaError('P2002') as never);
+
+    const result = await updateSecret(idle, form({ id: 'sec-1' }));
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'The key is already registered to the selected environment. Enter a new key or select a different environment.',
+    });
+  });
+
+  it('reports a secret deleted from under the edit', async () => {
     prismaMock.secret.update.mockRejectedValue(prismaError('P2025') as never);
 
     const result = await updateSecret(idle, form({ id: 'sec-1' }));
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding secret. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'This secret no longer exists.' });
+  });
+
+  it('falls back to the generic message for an unrecognised error', async () => {
+    prismaMock.secret.update.mockRejectedValue(new Error('network') as never);
+
+    const result = await updateSecret(idle, form({ id: 'sec-1' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Error updating secret. Please try again.' });
   });
 });
 
 describe('deleteSecret', () => {
+  // The confirmation names the key, so the delete has to read it off the deleted
+  // row rather than echo the id it was handed. The plaintext value never appears.
   it('deletes and revalidates', async () => {
-    prismaMock.secret.delete.mockResolvedValue({ id: 'sec-1' } as never);
+    prismaMock.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY' } as never);
 
     const result = await deleteSecret('sec-1');
 
-    expect(result.status).toBe('success');
+    expect(result).toEqual({ status: 'success', message: 'Secret deleted' });
     expect(revalidate).toHaveBeenCalledWith('/secrets');
   });
 
-  it('returns the generic message when the row was already gone', async () => {
+  it('reports the row being already gone rather than a generic failure', async () => {
     prismaMock.secret.delete.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await deleteSecret('sec-1');
+
+    expect(result).toEqual({ status: 'error', message: 'This secret no longer exists.' });
+  });
+
+  it('returns the generic message for an unrecognised error', async () => {
+    prismaMock.secret.delete.mockRejectedValue(new Error('network') as never);
 
     const result = await deleteSecret('sec-1');
 

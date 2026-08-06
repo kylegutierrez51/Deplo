@@ -269,19 +269,13 @@ describe('secrets', () => {
 });
 
 describe('environment variables', () => {
-  /*
-   * TODO(bug): handleEnvDelete and handleEnvChange call updateNodeData with the
-   * `envVars` captured by the current render, not the array they just computed.
-   * So the node receives the state from *before* the edit — a deletion patches
-   * the list that still contains the deleted row, and the first keystroke
-   * patches an empty value. Pinned as-is.
-   */
-  it('patches the pre-edit array when a variable is edited', async () => {
+
+  it('patches the post-edit array when a variable is edited', async () => {
     const { user } = setup({ env_vars: [{ key: 'A', value: '1' }] });
 
     await user.type(screen.getByDisplayValue('A'), 'B');
 
-    expect(lastPatch()).toEqual({ env_vars: [{ key: 'A', value: '1' }] });
+    expect(lastPatch()).toEqual({ env_vars: [{ key: 'AB', value: '1' }] });
   });
 
   it('renders the variables the node arrived with', () => {

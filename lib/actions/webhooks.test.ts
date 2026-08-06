@@ -68,20 +68,13 @@ describe('addWebhook', () => {
     expect(revalidate).toHaveBeenCalledWith('/webhooks');
   });
 
-  /*
-   * TODO(bug): the P2003 branch is unreachable. This action imports
-   * PrismaClientKnownRequestError from '@prisma/client/runtime/library', while
-   * the generated client throws that class from its own bundled runtime copy in
-   * generated/prisma — a different class object — so the `instanceof` guard is
-   * always false. Every P2002/P2003/P2025 translation in lib/actions has this
-   * problem; see test/helpers/prisma-errors.ts. Pinned as-is.
-   */
-  it('falls through to the generic message on a foreign key failure', async () => {
+  // The pipeline was deleted between the form rendering and the submit.
+  it('names the missing pipeline on a foreign key failure', async () => {
     prismaMock.webhook.create.mockRejectedValue(prismaError('P2003') as never);
 
     const result = await addWebhook(idle, form());
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding webhook. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'Selected pipeline no longer exists.' });
   });
 
   it('falls back to a generic message for anything else', async () => {
@@ -114,9 +107,24 @@ describe('updateWebhook', () => {
     });
   });
 
-  // Same unreachable P2003 branch as addWebhook — see the note there.
-  it('falls through to the generic message on a foreign key failure', async () => {
+  it('names the missing pipeline on a foreign key failure', async () => {
     prismaMock.webhook.update.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await updateWebhook(idle, form({ id: 'wh-1' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Selected pipeline no longer exists.' });
+  });
+
+  it('reports a webhook deleted from under the edit', async () => {
+    prismaMock.webhook.update.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await updateWebhook(idle, form({ id: 'wh-1' }));
+
+    expect(result).toEqual({ status: 'error', message: 'This webhook no longer exists.' });
+  });
+
+  it('falls back to a generic message for anything else', async () => {
+    prismaMock.webhook.update.mockRejectedValue(new Error('network') as never);
 
     const result = await updateWebhook(idle, form({ id: 'wh-1' }));
 
@@ -163,14 +171,20 @@ describe('regenerateWebhookSecret', () => {
     expect(first.secret).not.toBe(second.secret);
   });
 
-  // This is the one path written to turn P2025 into specific user-facing copy,
-  // and the unreachable-guard bug defeats it too.
-  it('falls through to the generic message for a deleted webhook', async () => {
+  it('reports a deleted webhook rather than a generic failure', async () => {
     prismaMock.webhook.update.mockRejectedValue(prismaError('P2025') as never);
 
     const result = await regenerateWebhookSecret('wh-1');
 
-    expect(result).toEqual({ status: 'error', message: 'Error regenerating secret. Please try again.' });
+    expect(result).toEqual({ status: 'error', message: 'This webhook no longer exists.' });
+  });
+
+  it('falls back to the generic message for an unrecognised error', async () => {
+    prismaMock.webhook.update.mockRejectedValue(new Error('network') as never);
+
+    const result = await regenerateWebhookSecret('wh-1');
+
+    expect(result).toEqual({ status: 'error', message: 'Error regenerating webhook. Please try again.' });
   });
 
   it('does not leak a secret alongside an error', async () => {
@@ -192,8 +206,16 @@ describe('deleteWebhook', () => {
     expect(revalidate).toHaveBeenCalledWith('/webhooks');
   });
 
-  it('returns the generic message when the row was already gone', async () => {
+  it('reports the row being already gone rather than a generic failure', async () => {
     prismaMock.webhook.delete.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await deleteWebhook('wh-1');
+
+    expect(result).toEqual({ status: 'error', message: 'This webhook no longer exists.' });
+  });
+
+  it('returns the generic message for an unrecognised error', async () => {
+    prismaMock.webhook.delete.mockRejectedValue(new Error('network') as never);
 
     const result = await deleteWebhook('wh-1');
 
