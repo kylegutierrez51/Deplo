@@ -40,10 +40,6 @@ const config = {
     '<rootDir>/.next/',
     '<rootDir>/e2e/',
     '\\.integration\\.test\\.ts$',
-    // runner/test.ts is a manual console script, not a suite, but its filename
-    // matches Jest's default testMatch. runner/runState.test.ts now covers what
-    // it was demonstrating by hand, so it is safe to delete separately.
-    '<rootDir>/runner/test\\.ts$',
   ],
 
   collectCoverageFrom: [
@@ -54,6 +50,7 @@ const config = {
     '!lib/prisma.ts',
     '!runner/bullmq.ts',
     '!runner/connection.ts',
+    '!runner/env.ts',
     '!runner/sample.ts',
   ],
 };
