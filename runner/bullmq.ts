@@ -1,8 +1,10 @@
+import './env';
+import { connection, RUNNER_WORKSPACE_ROOT } from './connection';
 import { Queue, Worker } from "bullmq";
 import { spawn } from 'child_process';
 import { randomUUID } from 'node:crypto';
 import type { CompressedStagePayload, ConfigJson } from "./types";
-import { connection, CWD } from './connection';
+
 import { startRun, completeStage, failRun } from './runState';
 import { graphJson, configJson } from './sample';
 
@@ -27,7 +29,7 @@ async function enqueueReadyStages(runId: string, stageIds: string[], config: Con
       stageId,
       attempt: 0,
       command: stageConfig.command,
-      cwd: CWD,
+      cwd: RUNNER_WORKSPACE_ROOT,
       timeout: stageConfig.timeout,
       retries: stageConfig.retries,
       env: stageConfig.env,
@@ -102,10 +104,8 @@ worker.on('error', (err) => {
 });
 
 
-async function triggerRun() {
+async function _triggerRun() {
   const runId = randomUUID();
   const readyStages = startRun(runId, graphJson, configJson);
   await enqueueReadyStages(runId, readyStages, configJson);
 }
-
-triggerRun();

@@ -41,7 +41,7 @@ npx jest -t "reports a cycle"
 npx playwright test e2e/auth.spec.ts --project=anonymous
 ```
 
-Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `CWD`.
+Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `RUNNER_WORKSPACE_ROOT`.
 
 ## Testing
 
@@ -115,7 +115,7 @@ A saved pipeline is split into two JSON columns on `PipelineDefinition`, and `li
 
 ## Runner
 
-`runner/` is a standalone BullMQ worker, **not yet connected to the app** — `runner/bullmq.ts` calls `triggerRun()` at module load using the hardcoded `runner/sample.ts` fixtures, and nothing in `app/` imports it. The dependency runs one way — `runner/` imports from `lib/` (`runner/runState.ts` uses `buildMaps` from `lib/pipeline/adjacency.ts`), never the reverse. Treat wiring it to real pipelines as unfinished work.
+`runner/` is a standalone BullMQ worker, **not yet connected to the app** — `runner/bullmq.ts` does not call `triggerRun()` at module load and nothing in `app/` imports it. The dependency runs one way — `runner/` imports from `lib/` (`runner/runState.ts` uses `buildMaps` from `lib/pipeline/adjacency.ts`), never the reverse. Treat wiring it to real pipelines as unfinished work.
 
 How it executes a run: `runState.ts` holds an in-memory `Map` of runId → dependency graph (adjacency + in-degree). `startRun` returns the stages with in-degree 0, those get enqueued, and each `completed` event calls `completeStage` to decrement dependents and enqueue whatever just became ready. State is per-run, so concurrent runs don't interfere — but it lives in process memory and does not survive a restart. Stages run via `spawn(command, { shell: true })` with env vars merged into `process.env`; approval stages have no command and are skipped by `enqueueReadyStages`.
 

@@ -598,15 +598,6 @@ handleGenerateSecret is used on the client side -- the Web Crypto API's crypto.g
 
 ===================================================================================================================================
 
-BullMQ Runner Stuff
-
-CWD - Working directory that each pipeline stage's shell command runs in.
-
-
-
-
-===================================================================================================================================
-
 Explanation on 'env', used with child_process.spawn()
 
 "
@@ -885,3 +876,15 @@ Fix:
           setEnvVars(next);
           updateNodeData(node.id, { env_vars: next });
         }; /* runs when you change key or value in an env variable via changing the input */
+
+===================================================================================================================================
+
+Why '@/runner/env.ts' is needed
+
+Next.js has built-in support for loading env variables from .env* files into process.env.
+
+But env.ts is necessary to setup process.env for the Runner files since they're not a part of Next.js.
+
+Furthermore, env.ts should always be imported first, so that the other files ('./connection.ts', @/lib/utils/crypto.ts) can properly get process.env.* If 'connection.ts' is imported before env.ts, for example, then an error will be thrown since process.env wasn't set yet
+
+The reason crypto.ts can work outside of any set config() in the runner/ directory is because it's only called in server actions that are evaluated by the Next.js server, which already populated process.env. 

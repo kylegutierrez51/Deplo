@@ -1,18 +1,16 @@
-import { config } from 'dotenv';
-import path from 'path';
+// Assumes runner/env.ts has already run — it is the first import of the entrypoint.
+// Importing this module without that ordering throws even when .env is populated.
 
-config({ path: path.resolve(import.meta.dirname, '../.env') });
-
-const REDIS_HOST = process.env.REDIS_HOST ?? (() => {
+const REDIS_HOST = process.env.REDIS_HOST?.trim() || (() => {
   throw new Error("REDIS_HOST is not set");
 })();
 
-const REDIS_PORT = process.env.REDIS_PORT ?? (() => {
+const REDIS_PORT = process.env.REDIS_PORT?.trim() || (() => {
   throw new Error("REDIS_PORT is not set");
 })();
 
-export const CWD = process.env.CWD ?? (() => {
-  throw new Error("CWD not set");
+export const RUNNER_WORKSPACE_ROOT = process.env.RUNNER_WORKSPACE_ROOT?.trim() || (() => {
+  throw new Error("RUNNER_WORKSPACE_ROOT not set");
 })();
 
 export const connection = {
