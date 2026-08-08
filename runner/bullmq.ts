@@ -3,10 +3,9 @@ import { connection, RUNNER_WORKSPACE_ROOT } from './connection';
 import { Queue, Worker } from "bullmq";
 import { spawn } from 'child_process';
 import { randomUUID } from 'node:crypto';
-import type { CompressedStagePayload, ConfigJson } from "./types";
+import type { CompressedStagePayload, ConfigJson } from "@/lib/types";
 
-import { startRun, completeStage, failRun } from './runState';
-import { graphJson, configJson } from './sample';
+import { completeStage, failRun } from './runState';
 
 const stageQueue = new Queue("pipeline-stages", { connection });
 
@@ -30,9 +29,9 @@ async function enqueueReadyStages(runId: string, stageIds: string[], config: Con
       attempt: 0,
       command: stageConfig.command,
       cwd: RUNNER_WORKSPACE_ROOT,
-      timeout: stageConfig.timeout,
-      retries: stageConfig.retries,
-      env: stageConfig.env,
+      timeout: stageConfig.timeout || -1,
+      retries: stageConfig.retries || 0,
+      envVars: stageConfig.env_vars,
       secrets: stageConfig.secrets,
     });
   }
@@ -41,7 +40,7 @@ async function enqueueReadyStages(runId: string, stageIds: string[], config: Con
 const worker = new Worker<CompressedStagePayload>("pipeline-stages",
   async (job) => {
     return new Promise<void>((resolve, reject) => {
-      const env = { ...process.env, ...Object.fromEntries(job.data.env.map(({ key, value }) => [key, value])) };
+      const env = { ...process.env, ...Object.fromEntries(job.data.envVars.map(({ key, value }) => [key, value])) };
       const child = spawn(job.data.command, { shell: true, cwd: job.data.cwd, env });
 
       child.stdout.on('data', (chunk) => {
@@ -105,7 +104,7 @@ worker.on('error', (err) => {
 
 
 async function _triggerRun() {
-  const runId = randomUUID();
-  const readyStages = startRun(runId, graphJson, configJson);
-  await enqueueReadyStages(runId, readyStages, configJson);
+  const _runId = randomUUID();
+  // const readyStages = startRun(runId, graphJson, configJson);
+  // await enqueueReadyStages(runId, readyStages, configJson);
 }

@@ -1,5 +1,5 @@
 import { buildMaps } from "@/lib/pipeline/adjacency";
-import type { ConfigJson, GraphJson } from "./types";
+import type { ConfigJson, GraphJson } from "@/lib/types";
 
 type RunGraphState = {
   adjacency: Map<string, string[]>;

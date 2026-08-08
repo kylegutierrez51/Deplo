@@ -78,3 +78,40 @@ export type StageConfig = {
 }
 
 export type ConfigJson = Record<string, StageConfig>;
+
+/*
+===================================================
+Stage Payload -- BullMQ Runner
+===================================================
+*/
+
+export interface StagePayload {
+  runId: string;
+  definitionId: string;
+  pipelineId: string;
+  stageId: string;
+  stageName: string;
+  stageType: string;
+  command: string;
+  cwd: string;
+  timeout: number;
+  attempt: number;
+  maxRetries: number;
+  environmentId: string;
+  envVars: Record<string, string>[];
+  secrets: Record<string, string[]>; // environmentId -> secretId[]
+  commitSha: string;
+  branch: string;
+}
+
+export interface CompressedStagePayload {
+  runId: string;
+  stageId: string;
+  attempt: number;
+  command: string;
+  cwd: string;
+  timeout: number;
+  retries: number;
+  envVars: Record<string, string>[];
+  secrets: Record<string, string[]>; // environmentId -> secretId[]
+}
