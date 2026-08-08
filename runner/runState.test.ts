@@ -1,12 +1,15 @@
 import { startRun, completeStage, failRun } from './runState';
-import { configJson, graphJson } from './sample';
-import type { ConfigJson, GraphJson } from './types';
+import type { ConfigJson, GraphJson } from '@/lib/types';
 
 /*
- * runState is the runner's scheduler: it decides which stages become eligible as
- * others finish. It is pure in-memory bookkeeping, so it tests without Redis or a
- * shell — importantly, this file must never import runner/bullmq.ts, which opens
- * a Redis connection and calls triggerRun() at module load.
+ * runState is the runner's original scheduler: it decides which stages become eligible
+ * as others finish. It is pure in-memory bookkeeping, so it tests without Redis or a
+ * shell — importantly, this file must never import runner/bullmq.ts, which opens a
+ * Redis connection at module load.
+ *
+ * Superseded by runner/scheduler.ts, which recomputes readiness from the full outcome
+ * set rather than decrementing counters. So this file is kep until the DB-backed loop
+ * replaces bullmq.ts, which is runState's only remaining caller.
  *
  * The state is module-level and keyed by runId, so every test uses its own id
  * rather than relying on cleanup between cases.
@@ -53,10 +56,6 @@ describe('startRun', () => {
   it('returns nothing for a fully cyclic graph', () => {
     expect(startRun(freshRunId(), runnerGraph('a b', 'a>b b>a'), emptyConfig)).toEqual([]);
   });
-
-  it('starts the sample pipeline at install only', () => {
-    expect(startRun(freshRunId(), graphJson, configJson)).toEqual(['stage_install']);
-  });
 });
 
 describe('completeStage', () => {
@@ -99,19 +98,22 @@ describe('completeStage', () => {
 
   it('hands back the run config alongside the ready stages', () => {
     const runId = freshRunId();
-    startRun(runId, graphJson, configJson);
+    const config = { a: { command: 'npm run build', timeout: null, retries: null, env_vars: [], secrets: {} } } as ConfigJson;
+    startRun(runId, runnerGraph('a b', 'a>b'), config);
 
-    expect(completeStage(runId, 'stage_install')?.config).toBe(configJson);
+    expect(completeStage(runId, 'a')?.config).toBe(config);
   });
 
-  it('walks the sample pipeline through to deploy', () => {
+  it('walks a gated pipeline through to deploy', () => {
     const runId = freshRunId();
+    const pipeline = runnerGraph('install build test approve deploy',
+      'install>build install>test build>approve test>approve approve>deploy');
 
-    expect(startRun(runId, graphJson, configJson)).toEqual(['stage_install']);
-    expect(completeStage(runId, 'stage_install')?.ready.sort()).toEqual(['stage_build', 'stage_test']);
-    expect(completeStage(runId, 'stage_build')?.ready).toEqual([]);
-    expect(completeStage(runId, 'stage_test')?.ready).toEqual(['stage_approve']);
-    expect(completeStage(runId, 'stage_approve')?.ready).toEqual(['stage_deploy']);
+    expect(startRun(runId, pipeline, emptyConfig)).toEqual(['install']);
+    expect(completeStage(runId, 'install')?.ready.sort()).toEqual(['build', 'test']);
+    expect(completeStage(runId, 'build')?.ready).toEqual([]);
+    expect(completeStage(runId, 'test')?.ready).toEqual(['approve']);
+    expect(completeStage(runId, 'approve')?.ready).toEqual(['deploy']);
   });
 });
 
