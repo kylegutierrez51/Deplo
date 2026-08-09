@@ -99,17 +99,20 @@ function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): 
   });
 }
 
-/**
+/*
+==============================================================================================
  * Deploy stages with no Approval stage anywhere upstream.
  *
- * Any ancestor counts, not only the immediate parent. The runner enqueues a stage
- * only once every parent has completed (runState.completeStage) and never
- * auto-enqueues a command-less approval stage (bullmq.enqueueReadyStages), so an
- * ungranted approval stalls everything downstream of it transitively. One approval
+ * Any ancestor counts, not only the immediate parent. A stage becomes eligible only
+ * once every parent has succeeded (scheduler.readyStages), and an approval stage is
+ * never enqueued — runProcessor.advanceRun writes it AWAITING_APPROVAL and waits — so
+ * an ungranted approval stalls everything downstream of it transitively. One approval
  * ancestor is therefore enough to guarantee the gate the environment promises.
  *
  * A deploy stage with no parents at all fails, which is the point — nothing gates it.
- */
+==============================================================================================
+*/
+
 export function findUngatedDeployStages(edges: Edge[], nodes: CustomNode[]): CustomNode[] {
   const reverse = buildReverseAdjacency(edges);
   const typeById = new Map(nodes.map(node => [node.id, node.data.type]));
