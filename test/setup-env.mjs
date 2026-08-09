@@ -27,3 +27,17 @@ process.env.TZ = 'UTC';
 // 32 bytes as hex, the size AES-256-GCM requires. Test-only value.
 process.env.ENCRYPTION_KEY ??=
   '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+/*
+ * runner/connection.ts throws at module scope on any of these, and runner/db.ts imports
+ * it for RUNNER_WORKSPACE_ROOT — so a test that touches runner/db.ts fails at import
+ * without them. Same reasoning as ENCRYPTION_KEY above, and the same practical trigger:
+ * .env* is gitignored and the CI workflow exports neither, so the ??= is what CI and a
+ * fresh clone actually run on.
+ *
+ * Nothing connects to Redis in the unit tier — runner/db.ts only reads the workspace
+ * root — so these values are never dialled.
+ */
+process.env.REDIS_HOST ??= '127.0.0.1';
+process.env.REDIS_PORT ??= '6379';
+process.env.RUNNER_WORKSPACE_ROOT ??= '/tmp/deplo-test-workspaces';
