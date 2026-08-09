@@ -14,8 +14,8 @@
     "test:coverage": "jest --coverage",
     "test:integration": "jest -c jest.config.integration.mjs",
     "test:e2e": "playwright test",
-    "runner": "tsx watch runner/bullmq.ts",
-    "runner:start": "tsx runner/bullmq.ts",
+    "runner": "tsx watch runner/index.ts",
+    "runner:start": "tsx runner/index.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

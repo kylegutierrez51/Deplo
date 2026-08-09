@@ -9,7 +9,7 @@ Deplo is a CI/CD pipeline management UI: users draw a pipeline as a graph of sta
 - **`app/`** — Next.js App Router pages
 - **`components/`** — `ui/` reusable primitives, `layout/` app chrome, `flow/` shared ReactFlow pieces, `auth/`, and one directory per feature
 - **`lib/`** — data access (`lib/data`), server actions (`lib/actions`), pipeline serialization + graph validation (`lib/pipeline`), helpers (`lib/utils`), domain types
-- **`runner/`** — BullMQ worker that actually executes stages (standalone, not yet wired to the app — see below)
+- **`runner/`** — separate Node process (BullMQ workers) that executes stages and writes results back over Prisma — see below
 
 **Import paths**: `@/…` for anything outside your own directory, `./` for siblings. Nothing in `components/` should import from `app/`; the row components (`AuditRow`, `EnvironmentRow`, `PipelineRow`, `RunRow`) and `WebhookCardShell` still pull their styles from `app/<route>/*.module.css` and are the exception to clean up, not the pattern to copy.
 
@@ -115,11 +115,16 @@ A saved pipeline is split into two JSON columns on `PipelineDefinition`, and `li
 
 ## Runner
 
-`runner/` is a standalone BullMQ worker, **not yet connected to the app** — `runner/bullmq.ts` does not call `triggerRun()` at module load and nothing in `app/` imports it. The dependency runs one way — `runner/` imports from `lib/` (`runner/runState.ts` uses `buildMaps` from `lib/pipeline/adjacency.ts`), never the reverse. Treat wiring it to real pipelines as unfinished work.
+`runner/` is a separate Node process, started by `npm run runner` (`tsx runner/index.ts`) — not by Next, and not imported from `app/`. The dependency runs one way: `runner/` imports from `lib/`, never the reverse. Two BullMQ queues connect them, named once in `lib/queue/names.ts` because both sides need the strings.
 
-How it executes a run: `runState.ts` holds an in-memory `Map` of runId → dependency graph (adjacency + in-degree). `startRun` returns the stages with in-degree 0, those get enqueued, and each `completed` event calls `completeStage` to decrement dependents and enqueue whatever just became ready. State is per-run, so concurrent runs don't interfere — but it lives in process memory and does not survive a restart. Stages run via `spawn(command, { shell: true })` with env vars merged into `process.env`; approval stages have no command and are skipped by `enqueueReadyStages`.
+- **`pipeline-runs`** — "make progress on run X". The app produces these (`lib/queue/runs.ts`, called by `addPipelineRun`); the runner only consumes them.
+- **`pipeline-stages`** — "execute stage S of run R, attempt N". Produced and consumed by the runner alone. The payload is those three ids and **nothing else**: the worker loads config from Postgres, because Redis persists to disk and decrypted secrets in `job.data` would be readable via `HGETALL`.
 
-Note `runner/types.ts` defines its own `StageConfig`/`ConfigJson` shapes (`env` as an array, `secrets` as `string[]`) that differ from the editor's in `lib/types.ts` (`env_vars`, `secrets` keyed by environment id) — they are not interchangeable.
+State lives in `StageResult` rows, not in process memory. Each turn of the loop is read → decide → write → dispatch: `db.loadRunContext` reads, the pure `scheduler.ts` decides (`readyStages`/`runOutcome` recompute from the full outcome set rather than decrementing counters), and every write is a compare-and-swap — an `updateMany` whose `where` names the expected current status, returning `count === 1` when this caller won. That boolean is an *ownership* signal, never an error: `false` means another process got there first and the correct response is to do nothing. Dropping a guard status from a `where` clause silently reintroduces double-enqueue, which is what `runner/db.test.ts` exists to catch.
+
+The cycle is `runProcessor.advanceRun → enqueueStageJob → stageProcessor.processStage → db.finishStage → advanceRun`. All bookkeeping lives in the processor bodies, never in `worker.on('completed')` handlers — BullMQ does not await those, so a rejection there stops scheduling with no trace. Approval stages are written `AWAITING_APPROVAL` and never enqueued; nothing resumes them yet.
+
+Not yet done: retries, timeouts, secret resolution, log capture, the boot reaper, graceful shutdown, and the approve/reject actions.
 
 ## CSS
 
