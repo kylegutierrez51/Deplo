@@ -9,6 +9,7 @@ import type { Edge } from '@xyflow/react';
 import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
+import { enqueuePipelineRun } from '@/lib/queue/runs';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -226,7 +227,7 @@ async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promi
   }
 }
 
-export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
+export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState & { runId?: string }> {
   if (!environmentId) return {
     status: 'error',
     message: 'Select an environment to target.'
@@ -266,17 +267,22 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
     if (isReadyState.status === 'error') return isReadyState;
 
-    await prisma.pipelineRun.create({
+    const pipelineRun = await prisma.pipelineRun.create({
+      select: { id: true },
       data: {
         pipelineId, definitionId: latest.id, trigger: "MANUAL", triggeredById, environmentId
       }
     });
+
+    await enqueuePipelineRun(pipelineRun.id);
     
     revalidatePath('/pipelines');
+    revalidatePath('/runs');
 
     return {
       status: 'success',
-      message: 'Pipeline Run Triggered!'
+      message: 'Pipeline Run Triggered!',
+      runId: pipelineRun.id
     };
 
   } catch (error: unknown) {
@@ -293,7 +299,6 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
       message: 'Error triggering pipeline. Please try again.'
     }
   }
-
 }
 
 
