@@ -888,3 +888,31 @@ But env.ts is necessary to setup process.env for the Runner files since they're 
 Furthermore, env.ts should always be imported first, so that the other files ('./connection.ts', @/lib/utils/crypto.ts) can properly get process.env.* If 'connection.ts' is imported before env.ts, for example, then an error will be thrown since process.env wasn't set yet
 
 The reason crypto.ts can work outside of any set config() in the runner/ directory is because it's only called in server actions that are evaluated by the Next.js server, which already populated process.env. 
+
+===================================================================================================================================
+
+loadContextRun() orderBy() Explanation
+
+orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }]
+
+Initial Stages:
+      stages: [
+          { stageId: 'build', attempt: 1, status: 'RUNNING'   },
+          { stageId: 'install', attempt: 1, status: 'SUCCEEDED' },
+          { stageId: 'package', attempt: 1, status: 'PENDING'   },
+          { stageId: 'test', attempt: 1, status: 'QUEUED'    },
+        ],
+
+But if a stage ever retries, you get something like:
+
+    { stageId: 'test', attempt: 1, status: 'FAILED' }
+    { stageId: 'test', attempt: 2, status: 'SUCCEEDED' }
+
+
+  const outcomes = new Map<string, StageStatus>(
+    run.stages.map(stage => [stage.stageId, stage.status]),
+  );
+
+Because we order attempts by ascending order, 'outcomes' gets the stage with the highest attempt since that's added last, overwriting the lower attempt one.
+
+So outcomes returns the 'test' stage with attempt: 2 (succeeded) rather than the failed test run.
