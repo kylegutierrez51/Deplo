@@ -20,14 +20,14 @@ import type { Payload } from './stageQueue';
 // The processors receive a BullMQ Job; the payload is on job.data.
 const runWorker = new Worker<RunJobData>(RUN_QUEUE, 
   async (job) => {
-    processRun(job.data.runId)
+    await processRun(job.data.runId);
   }, { connection, concurrency: 5 }
 );
 
 // processRun ends by calling advanceRun itself, so there is nothing to chain here.
 const stageWorker = new Worker<Payload>(STAGE_QUEUE,
   async (job) => {
-    processStage(job.data)
+    await processStage(job.data);
   }, { connection, concurrency: 5 }
 );
 
