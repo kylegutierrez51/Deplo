@@ -14,6 +14,11 @@ export function getBranch(ref: string): string {
   return ref.slice(11);
 }
 
+export function truncateText(text: string | null, maxLength: number = 30): string | null {
+  if (!text) return null;
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+}
+
 
 
 /* Reserved labels are stored capitalized ('Approval', 'Deploy'), so compare normalized. */

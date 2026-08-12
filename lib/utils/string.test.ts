@@ -1,4 +1,4 @@
-import { capitalize, getRepoName, getBranch, matchReservedLabel } from '@/lib/utils/string';
+import { capitalize, getRepoName, getBranch, matchReservedLabel, truncateText } from '@/lib/utils/string';
 
 describe('capitalize', () => {
   it('uppercases the first character', () => {
@@ -62,6 +62,46 @@ describe('getBranch', () => {
 
   it('returns an empty string for a ref shorter than the prefix', () => {
     expect(getBranch('refs/')).toBe('');
+  });
+});
+
+describe('truncateText', () => {
+  it('returns text shorter than the budget unchanged', () => {
+    expect(truncateText('main')).toBe('main');
+  });
+
+  // The boundary is `>`, so a value of exactly the budget survives whole. Worth pinning:
+  // an off-by-one here would append an ellipsis to a string that fits.
+  it('leaves a value of exactly the budget alone', () => {
+    expect(truncateText('a'.repeat(30))).toBe('a'.repeat(30));
+  });
+
+  it('cuts at the budget and appends an ellipsis one character past it', () => {
+    expect(truncateText('a'.repeat(31))).toBe('a'.repeat(30) + '...');
+  });
+
+  it('measures the cut against the budget, not against the result', () => {
+    // 33 characters out, not 30 — the ellipsis is added to the slice rather than
+    // carved out of it, so callers sizing a column need to budget for it.
+    expect(truncateText('a'.repeat(50))).toHaveLength(33);
+  });
+
+  it('honours a custom budget', () => {
+    expect(truncateText('feature/runner-approval-stages', 7)).toBe('feature...');
+  });
+
+  it.each([
+    ['null', null],
+    ['an empty string', ''],
+  ])('returns null for %s, so the caller can fall back', (_label, input) => {
+    expect(truncateText(input)).toBeNull();
+  });
+
+  // Presentational only: it counts UTF-16 code units, so a slice can land mid-surrogate
+  // and produce a lone half. Harmless in a label, wrong anywhere a value is compared or
+  // written — which is why nothing passes a truncated value back to the server.
+  it('splits an astral character rather than preserving it', () => {
+    expect(truncateText('🚀'.repeat(20), 3)).toBe('🚀\ud83d...');
   });
 });
 
