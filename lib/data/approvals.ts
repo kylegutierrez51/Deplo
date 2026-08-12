@@ -6,16 +6,9 @@ import { getDuration } from '@/lib/utils/date';
 export type StageType = Lowercase<PrismaStageType>;
 export type StageStatus = Lowercase<PrismaStageStatus>;
 
-export type Stage = {
-  id: string;
-  stageType: StageType;
-  status: StageStatus;
-  name: string;
-  isApproval?: boolean;
-}
-
 export type Approval = {
   id: string;
+  stageId: string;
   runId: string;
   waitingTime: string;
   createdBy: string | null;
@@ -25,16 +18,8 @@ export type Approval = {
   commitMessage: string | null;
   environment: { type: EnvType; name: string } | null;
   branch: string | null;
-
-  /* below are stages */
-  stages: Stage[];
+  stagesComplete: string;
 }
-
-// build -> hammer-outline
-// test -> flask-outline
-// deploy -> rocket-outline
-// approval -> shield-outline
-// script -> code-outline
 
 type GithubWebhookPayload = { head_commit?: { message?: string } };
 
@@ -61,6 +46,7 @@ const approvalRunInclude = {
   stages: { orderBy: { createdAt: 'asc' as const } },
 };
 
+
 export async function getApprovals(): Promise<Approval[]> {
   const approvalStages = await prisma.stageResult.findMany({
     where: { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' },
@@ -74,8 +60,9 @@ export async function getApprovals(): Promise<Approval[]> {
     const { run } = approvalStage;
     return {
       id: approvalStage.id,
+      stageId: approvalStage.stageId,
       runId: run.id,
-      waitingTime: getDuration(approvalStage.createdAt),
+      waitingTime: getDuration(approvalStage.startedAt ?? approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,
       commitSha: run.commitSha,
@@ -85,47 +72,7 @@ export async function getApprovals(): Promise<Approval[]> {
         name: run.environment.name,
       } : null,
       branch: run.branch,
-      stages: run.stages.map((stage) => ({
-        id: stage.id,
-        stageType: stage.stageType.toLowerCase() as StageType,
-        status: stage.status.toLowerCase() as StageStatus,
-        name: stage.stageName,
-        isApproval: stage.stageType === 'APPROVAL',
-      })),
+      stagesComplete: run.stages.filter(stage => stage.status === "SUCCEEDED").length + '/' + run.stages.length
     };
   });
-}
-
-export async function getApprovalById(id: string): Promise<Approval | null> {
-  const approvalStage = await prisma.stageResult.findUnique({
-    where: { id },
-    include: { run: { include: approvalRunInclude } },
-  });
-
-  if (!approvalStage) return null;
-
-  const commitMessageByRunId = await getCommitMessagesByRunId([approvalStage.runId]);
-  const { run } = approvalStage;
-
-  return {
-    id: approvalStage.id,
-    runId: run.id,
-    waitingTime: getDuration(approvalStage.createdAt),
-    createdBy: run.triggeredBy?.name ?? null,
-    pipelineName: run.pipeline.name,
-    commitSha: run.commitSha,
-    commitMessage: commitMessageByRunId.get(run.id) ?? null,
-    environment: run.environment ? {
-      type: run.environment.type.toLowerCase() as EnvType,
-      name: run.environment.name,
-    } : null,
-    branch: run.branch,
-    stages: run.stages.map((stage) => ({
-      id: stage.id,
-      stageType: stage.stageType.toLowerCase() as StageType,
-      status: stage.status.toLowerCase() as StageStatus,
-      name: stage.stageName,
-      isApproval: stage.stageType === 'APPROVAL',
-    })),
-  };
 }

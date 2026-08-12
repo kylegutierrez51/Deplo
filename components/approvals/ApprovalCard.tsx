@@ -2,11 +2,12 @@ import styles from './approval.module.css'
 import ApprovalMeta from './ApprovalMeta';
 import ApprovalActions from './ApprovalActions';
 import Pill from '@/components/ui/Pill';
-import { Stage } from '@/lib/data/approvals';
 import type { EnvType } from '@/lib/types';
-import { capitalize } from '@/lib/utils/string';
+import { capitalize, truncateText } from '@/lib/utils/string';
 
 interface ApprovalCardProps {
+  id: string;
+  stageId: string;
   runId: string;
   pipelineName: string;
   environment: { type: EnvType; name: string } | null;
@@ -15,11 +16,10 @@ interface ApprovalCardProps {
   createdBy: string | null;
   branch: string | null;
   waitingTime: string;
-  stages: Stage[];
+  stagesComplete: string;
 }
 
-export default function ApprovalCard({ runId, pipelineName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stages }: ApprovalCardProps) {
-  const stagesComplete = String(stages.filter(stage => stage.status === "succeeded").length);
+export default function ApprovalCard({ id, stageId, runId, pipelineName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
 
   return (
     <div className={styles['approval-card']} data-approval-card>
@@ -32,7 +32,7 @@ export default function ApprovalCard({ runId, pipelineName, environment, commitS
               <>
                 <span className={styles.divider} aria-hidden="true" />
                 <div className={styles['environment']}>
-                  <span className={styles['env-name']}>{environment.name}</span>
+                  <span className={styles['env-name']}>{truncateText(environment.name)}</span>
                   <Pill variant={environment.type} label={capitalize(environment.type)} />
                 </div>
               </>
@@ -45,16 +45,16 @@ export default function ApprovalCard({ runId, pipelineName, environment, commitS
               <ion-icon name="git-commit-outline"></ion-icon>
               <span>{commitSha ?? 'None'}</span>
             </div>
-            <span className={styles.feature}>{commitMessage ?? 'No commit message'}</span>
+            <span className={styles.feature}>{truncateText(commitMessage) ?? 'No Commit Message'}</span>
           </div>
 
           <ApprovalMeta
-            createdBy={createdBy} branch={branch}
-            waitingTime={waitingTime} stagesComplete={stagesComplete + '/' + stages.length}
+            createdBy={truncateText(createdBy)} branch={truncateText(branch)}
+            waitingTime={waitingTime} stagesComplete={stagesComplete}
           />
         </div>
 
-        <ApprovalActions runId={runId} />
+        <ApprovalActions id={id} runId={runId} stageId={stageId} />
       </div>
     </div>
   )

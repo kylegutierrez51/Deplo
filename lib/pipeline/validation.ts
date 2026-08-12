@@ -35,13 +35,15 @@ export function findDanglingEdges(edges: Edge[], nodes: CustomNode[]): Edge[] {
   return edges.filter(edge => !ids.has(edge.source) || !ids.has(edge.target));
 }
 
-/**
+/*
+==============================================================================================
  * Kahn's algorithm: drain every stage whose dependencies are satisfied, and
  * whatever will not drain is held up by a cycle. Returns that cycle as a
  * readable path (`build → deploy → build`), or null when the graph is a DAG.
  *
  * Assumes every edge references a real node — run findDanglingEdges first, or a
  * phantom target inflates its own in-degree and reads as a cycle that isn't there.
+==============================================================================================
  */
 export function detectCycle(edges: Edge[], nodes: CustomNode[]): string[] | null {
   const { inDegree, adjacency } = buildMaps(edges, nodes);
@@ -67,12 +69,13 @@ export function detectCycle(edges: Edge[], nodes: CustomNode[]): string[] | null
   return describeCycle(stuck, edges, nodes);
 }
 
-/*
+/*==============================================================================================
  - Walks backwards from a stuck stage until it revisits one — that repeat is the cycle.
  - Backwards is what makes this terminate. A stage survives Kahn's only because an
  - incoming edge was never decremented, so it is guaranteed a stuck predecessor;
  - walking forwards can dead-end on a stage that merely hangs off a cycle
  - (A→B→C→A plus A→D leaves D stuck with nowhere to go).
+==============================================================================================
 */
 function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): string[] {
   const reverse = buildReverseAdjacency(edges);
