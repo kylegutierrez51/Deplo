@@ -1060,6 +1060,108 @@ graceTimer.unref() - prevents timeout from being reason runner refuses to exit a
 Once 'SIGTERM/SIGKILL' trigger the process to cleanup, the process calls the 'close' event (child.on('close')) before terminating
  - This means 'finish()' is called after 'deadline' executes
 
+
+============================================================================================
+============================================================================================
+============================================================================================
+
+
+killTree():
+
+The difference between the 2 if statements is reliant on whether 'detached' is set to true
+
+if process.platform === 'win32', detached is set to false
+else if process.platform is on POSIX, detached is set to true
+
+On POSIX the negative pid signals the process group, which `detached: true` above created. 
+
+On Windows, taskkill /T walks the tree by pid; there is no meaningful graceful stage there, so `force` is
+ignored and the second call (in the graceTimer timeout) simply finds nothing left to kill.
+
+============================================================================================
+
+
+
+        function killTree(child: ChildProcess, force: boolean): boolean {
+          if (child.pid === undefined) return false;
+
+          try {
+            if (process.platform === 'win32') {
+              if (child.exitCode !== null || child.signalCode !== null) return false;
+
+              const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+                windowsHide: true,
+                stdio: 'ignore',
+              });
+              killer.on('error', () => { });
+              killer.unref();
+            } else {
+              process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
+            }
+
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+
+1st case: process.platform !== 'win32':
+ - In 'deadline', the first call to killTree makes force false. This sets the signal in process.kill() to SIGTERM
+      - This gives the process 5 seconds to terminate before calling killTree with force: true, setting the signal to SIGKILL
+
+ - killTree(child, false) sets the child process's signal to SIGTERM. 
+ - If you had the "if (child.signalCode !== null)" guard before the try {} statement, for POSIX platforms, it would incorrectly return false because:
+
+          Under shell: true the direct child is the shell. 
+          The shell installs no signal handlers, so the graceful SIGTERM at the deadline always kills it instantly and sets child.signalCode. 
+          When the real command handles SIGTERM itself, it survives as a grandchild — and 5s later the grace timer's killTree(child, true) hit that guard, returned false, and never sent SIGKILL. 
+          The command lived on holding the stdout pipe, so the 'close' event doesn't fire
+          
+          The SIGTERM went to the whole process group, not just the shell.
+
+          process.kill(-pid, 'SIGTERM') signals every process in the group, so Node received it too — it just had process.on('SIGTERM', () => {}) installed and ignored it. The shell had no handler, so it died. 
+          Node then reaped the shell and set child.signalCode = 'SIGTERM'.
+
+          So that guard was reading the shell's death and concluding the tree was gone, at the exact moment the tree provably wasn't.
+
+
+
+2nd case: process.platform === 'win32':
+ - On the first call -- killTree(child, false), Windows kills the child process and its children.
+ - This means tha the second call -- killTree(child, true) typically doesn't ever call, but it definitely can
+
+ - The reason the guard is there -- if (child.exitCode !== null || child.signalCode !== null) return false : 
+
+          Windows recycles pids, so without the guard you risk killing an unrelated process.
+
+   Example:
+      1.  0ms   - Stage A spawns cmd.exe pid 14312
+      2.  250ms -	deadline → taskkill /pid 14312 /T /F → tree dies, exitCode set, handle closed, 14312 freed
+      3.  ~2s   -	Stage C (unrelated, healthy) spawns a build step — Windows hands it 14312
+      4.  5.25s - grace timer fires → taskkill /pid 14312 /T /F
+
+
+
+Extra Info on: process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
+ /*
+  * Deliberately not guarded on the child's exit state, the way the Windows branch is.
+  * The direct child is the *shell*, and it is the first thing to die: it installs no
+  * handlers, so the graceful SIGTERM always takes it down, setting child.signalCode
+  * immediately. A command that handles SIGTERM itself outlives it — which is the only
+  * situation the escalation exists for. Reading signalCode as "the tree is gone" would
+  * therefore suppress the SIGKILL in exactly the case that needs it, leaving the real
+  * command alive, still holding the run's workspace and the stdout pipe that 'close'
+  * is waiting on.
+  *
+  * The group is its own liveness test: a process group outlives its leader as long as
+  * any member is left, and signalling an empty one throws ESRCH, which the catch below
+  * reports as "there was nothing to kill".
+  */
+
+
+
+
 ===================================================================================================================================
 
 runner/stageProcessor processStage() Info

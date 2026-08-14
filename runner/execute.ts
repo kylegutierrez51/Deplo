@@ -138,7 +138,7 @@ export function execute(
  * stdout pipe open so 'close' never fires.
  *
  * The two platforms need different mechanisms, so both exist. On POSIX the negative pid
- * signals the process group, which `detached: true` above created. On Windows taskkill /T
+ * signals the process group, which `detached: true` above created. On Windows, taskkill /T
  * walks the tree by pid; there is no meaningful graceful stage there, so `force` is
  * ignored and the second call simply finds nothing left to kill.
  *
@@ -147,28 +147,32 @@ export function execute(
 ==============================================================================================
 */
 function killTree(child: ChildProcess, force: boolean): boolean {
-  // guard that if true, means the process was already deleted/ended
-  if (child.pid === undefined || child.exitCode !== null || child.signalCode !== null) return false;
+  // The one state with nothing to signal either way: spawn never got far enough to
+  // produce a pid, so there is no child and no group.
+  if (child.pid === undefined) return false;
 
   try {
     if (process.platform === 'win32') {
+      if (child.exitCode !== null || child.signalCode !== null) return false;
+
       const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
         windowsHide: true,
         // unref() releases the process handle but not the three stdio handles, and nothing
         // reads taskkill's output.
         stdio: 'ignore',
       });
-      // taskkill exits non-zero when the tree is already gone; that is not worth reporting,
-      // and an unhandled 'error' here would take the runner down.
+      // taskkill exits non-zero when the tree is already gone -- not worth reporting.
+      // But since it does, if that error isn't handled below, then the runner would terminate
       killer.on('error', () => { });
       killer.unref();
     } else {
+
       process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
     }
 
     return true;
   } catch {
-    // ESRCH: the tree exited between the guard above and the signal. Nothing to do.
+    // ESRCH: the last member of the group exited before the signal landed. Nothing to do.
     return false;
   }
 }
