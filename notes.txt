@@ -916,3 +916,148 @@ But if a stage ever retries, you get something like:
 Because we order attempts by ascending order, 'outcomes' gets the stage with the highest attempt since that's added last, overwriting the lower attempt one.
 
 So outcomes returns the 'test' stage with attempt: 2 (succeeded) rather than the failed test run.
+
+===================================================================================================================================
+
+@/runner/execute.ts 'createLineBuffer' sample:
+
+    write("Building...\r\nCompiling src/a.ts\r\n")
+      lines  = ["Building...","Compiling src/a.ts"]
+      partial= ""
+    write("Compiling src/b.ts\nWarn")
+      lines  = ["Building...","Compiling src/a.ts","Compiling src/b.ts"]
+      partial= "Warn"
+    write("ing: unused var\nDownloading 10%\rDownloading 100%\nDone\r\n")
+      lines  = ["Compiling src/b.ts","Warning: unused var","Downloading 10%\rDownloading 100%","Done"]
+      partial= ""
+    write("Exit code 0")
+      lines  = ["Compiling src/b.ts","Warning: unused var","Downloading 10%\rDownloading 100%","Done"]
+      partial= "Exit code 0"
+    flush() = "Warning: unused var\nDownloading 10%\rDownloading 100%\nDone\nExit code 0"
+
+
+The sample doesn't touch "if (partial.length > MAX_LINE_CHARS)"
+ - Just pretend that in the 2nd write() call, "Warn" is a string of more than 2000 chars. 
+ - If so, then:
+         lines = ["Building...","Compiling src/a.ts","Compiling src/b.ts", "Warn..."]
+         partial = ''
+
+===================================================================================================================================
+
+High Level Overview of runner/execute.ts -- execute() and killTree()
+
+
+============================================================================================
+    const child = spawn(command, {
+      shell: true,
+      cwd,
+      env,
+      // Makes the child a process-group leader so killTree can signal the group. Windows
+      // has no process groups in this sense, and `detached` there pops a console window,
+      // so it stays off — taskkill /T walks the tree instead.
+      detached: process.platform !== 'win32',
+      windowsHide: true,
+    });
+    
+'shell: true' makes the returned child the shell, not the command.
+'detached' is POSIX-only; on Windows it pops a console window.
+
+============================================================================================
+
+
+    child.stdout.on('data', chunk => {
+      const text = String(chunk);
+      log.write(text);
+      console.log(`[${command}] ${text}`);
+    });
+
+    child.stderr.on('data', chunk => {
+      const text = String(chunk);
+      log.write(text);
+      console.error(`[${command}] ${text}`);
+    });
+
+These are used to write text to the log so that it can be displayed to the user via the Run Detail log viewer.
+ - But for now, they're just printed to the runner's stdout/stderr
+
+============================================================================================
+
+
+    child.stdout.on('error', () => { });
+    child.stderr.on('error', () => { });
+
+    child.on('error', error => finish(() => reject(error)));
+
+Difference:
+ 1. 'child.on('error')' - process could not be started, killed, or messaged. Under 'shell: true', the reachable case is spawn failure, triggered by a bad cwd. 
+       - the 'close' event (child.on('close')) may never follow it
+
+ 2. 'child.[stdout/stderr].on('error', () => {})' - A read failure on the pipe handle. I/O error about ONE file descripter; says nothing about whether the process is alive.
+       - ECONNRESET when write end is destroyed while a read is in fight.
+       - EBADF if pipe handle goes invalid
+       - EPIPE on a broken pipe
+       - ONLY reachable because the child writes data to the runner's stdout (child.stdout.on('data'))
+
+============================================================================================
+
+
+    child.on('close', (exitCode, signal) => finish(() => resolve({
+      exitCode,
+      signal,
+      timedOut,
+      logSnippet: log.flush(),
+    })));
+
+This fires when the process ends, which can precede the last stdout chunk being read. 
+Waiting for the streams to close is what makes the snippet include the message a command printed on its way out.
+
+'close' requires the stdio streams to close, not just the process to die.
+If the signal (SIGTERM, SIGKILL) reached the shell but missed a grandchild holding the same stdout pipe, then the shell is gone but 'close' never fires
+ - This is why killTree() signals the process group (the negative pid in the else statement) rather than the shell alone
+
+============================================================================================
+
+    const finish = (settle: () => void) => {
+      if (settled) return;
+      settled = true;
+      running.delete(child);
+      clearTimeout(deadline);
+      clearTimeout(graceTimer);
+      settle();
+    };
+
+Used for both: 
+ - child.on('error') and child.on('close')
+
+ 1. "if (settled) return" - used since 'error' and 'close' can both fire for the sme child
+ 2. Clears the graceTimer and deadline, so that timers don't outlive the process.
+ 3. 'settle()' calls the callback function given to finish(). 
+      - In 'child.on('error')', the callback function is '() => reject(error)'
+      - In 'child.on('close'), the callback function is '() => resolve({ exitCode, signal, timedOut, logSnippet: log.flush() })'
+
+============================================================================================
+
+    const deadline = setTimeout(() => {
+      timedOut = killTree(child, false);
+      if (!timedOut) return;
+
+      graceTimer = setTimeout(() => killTree(child, true), KILL_GRACE_MS);
+
+      graceTimer.unref();
+    }, timeoutMs);
+
+Once a process times out, we must kill it.
+
+killTree(child, false) - 'false' gives a SIGTERM signal, which sets the graceTimer for 5 seconds.
+ - SIGTERM politely requests for a process to stop, allowing it to clean up its resources within 5 seconds
+
+killTree(child, true) - 'true' gives a SIGKILL signal, which forcefully kills the process, called if the process didn't clean up in the 5 seconds.
+ - 'SIGKILL' is executed directly by the kernel to terminate  aprocess immediately, preventing any cleanup or saving.
+
+graceTimer.unref() - prevents timeout from being reason runner refuses to exit at shutdown by removing the timeout from the event loop
+ - Without this, the runner would have to wait the full timeout out (5 seconds) before shutting down.
+
+Once 'SIGTERM/SIGKILL' trigger the process to cleanup, the process calls the 'close' event (child.on('close')) before terminating
+ - This means 'finish()' is called after 'deadline' executes
+
+===================================================================================================================================
