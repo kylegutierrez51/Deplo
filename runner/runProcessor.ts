@@ -2,6 +2,13 @@ import { loadRunContext, materializeStages, startRunIfQueued, claimStageForAppro
 import { runOutcome, readyStages } from './scheduler';
 import { enqueueStageJob } from './stageQueue';
 
+/*
+ * Applied to attempt 2 and beyond. Long enough that a transient cause — a briefly locked
+ * file, a registry hiccup — has a moment to clear, short enough that a ten-retry stage does
+ * not hold its run open for minutes on end.
+ */
+const RETRY_DELAY_MS = 5_000;
+
 
 
 export async function processRun(runId: string): Promise<void> {
@@ -36,11 +43,15 @@ export async function advanceRun(runId: string): Promise<void> {
     const node = context.graph.nodes.find(node => node.id === nodeId);
     if (!node) continue;
 
+    const attempt = context.attempts.get(nodeId) ?? 1;
+
     if (node.data.type !== 'approval') {
-      const queuedStage = await claimStageForQueue(runId, nodeId, 1);
-      if (queuedStage) await enqueueStageJob({ runId, stageId: nodeId, attempt: 1 });
+      const queuedStage = await claimStageForQueue(runId, nodeId, attempt);
+      if (queuedStage) {
+        await enqueueStageJob({ runId, stageId: nodeId, attempt }, attempt > 1 ? RETRY_DELAY_MS : 0);
+      }
     } else {
-      await claimStageForApproval(runId, nodeId, 1);
+      await claimStageForApproval(runId, nodeId, attempt);
     }
   }
 }
