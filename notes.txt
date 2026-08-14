@@ -1061,3 +1061,30 @@ Once 'SIGTERM/SIGKILL' trigger the process to cleanup, the process calls the 'cl
  - This means 'finish()' is called after 'deadline' executes
 
 ===================================================================================================================================
+
+runner/stageProcessor processStage() Info
+
+      if (outcome.status === 'FAILED' && retryable) {
+        await openRetry(job.runId, job.stageId, job.attempt);
+      }
+
+      await finishStage(job.runId, job.stageId, job.attempt, outcome);
+
+
+The retry row is opened BEFORE the failure is recorded, and the order is load-bearing.
+
+loadRunContext folds stage rows last-write-wins over ascending attempt, so the stage's
+reported status is whatever its highest attempt says. Writing FAILED first leaves a
+window in which that is the latest word — and the other four worker slots are live. A
+sibling finishing in that window calls advanceRun, runOutcome sees a failure-terminal
+stage, and the run is finalized FAILED with cancelPendingStages sweeping behind it. The
+retry then lands as an orphan row in a run nothing will ever advance again: the
+configured retry silently never happens.
+
+Opening attempt N+1 first means the stage goes straight from RUNNING to PENDING as far
+as any reader is concerned, and runOutcome never sees the failure at all. A crash
+between the two leaves attempt N stuck RUNNING, which is harmless — it is no longer the
+latest attempt — and is exactly what the boot reaper is for.
+   
+===================================================================================================================================
+

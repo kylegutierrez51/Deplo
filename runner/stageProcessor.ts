@@ -1,24 +1,44 @@
-import { loadRunContext, markStageRunning, finishStage } from "./db";
+import { loadRunContext, markStageRunning, finishStage, openRetry, type StageOutcome } from "./db";
 import type { Payload } from "./stageQueue";
-import { spawn } from 'node:child_process';
 import path from "node:path";
 import { RUNNER_WORKSPACE_ROOT } from './connection';
 import { advanceRun } from "./runProcessor";
+import { execute } from "./execute";
+import { resolveSecrets } from "./secrets";
+import type { CustomNode } from "@/lib/types";
+
+
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 1800s
+
+/*
+ * Stripped from the environment every command inherits.
+ *
+ * The child would otherwise get the runner's own process.env, which holds ENCRYPTION_KEY —
+ * the AES-256-GCM key for every secret in every environment — and DATABASE_URL. A pipeline
+ * command is arbitrary user-authored shell, so `echo $ENCRYPTION_KEY` would hand back the
+ * means to decrypt everything, making the per-environment scoping in secrets.ts pointless.
+ */
+const WITHHELD_FROM_COMMANDS = [
+  'ENCRYPTION_KEY', 'DATABASE_URL', 'AUTH_SECRET',
+  'NEXTAUTH_SECRET', 'NEXTAUTH_URL',
+  'REDIS_HOST', 'REDIS_PORT',
+];
 
 /*
 ==============================================================================================
- * Runs one stage and records what happened.
+ * Runs one attempt of one stage and records what happened.
  *
- * Resolves whether the command succeeded or failed — a non-zero exit is a recorded
- * outcome, not a job failure, and job options set attempts: 1 because retries are ours.
- * Once markStageRunning has been won, this function owns a RUNNING row, so every path
- * out of it has to write a terminal status; returning early would strand the stage and
- * deadlock everything downstream of it.
+ * Once markStageRunning has been won, this function owns a RUNNING row, so every path out of
+ * it has to write a terminal status — returning early would strand the stage and deadlock
+ * everything downstream of it. That is why the work below is funnelled through
+ * attemptStage, which reports failures instead of throwing them.
+ *
+ * A non-zero exit is a recorded outcome, not a job failure; job options set attempts: 1
+ * because retries are ours, written as attempt+1 rows.
 ==============================================================================================
 */
-
 export async function processStage(job: Payload): Promise<void> {
-  // Losing this CAS means the job is a redelivery, or another worker owns the row.
+  // If claimed is false, then the job is a redelivery or another worker owns the row.
   const claimed = await markStageRunning(job.runId, job.stageId, job.attempt);
   if (!claimed) return;
 
@@ -27,53 +47,93 @@ export async function processStage(job: Payload): Promise<void> {
   if (!context) return;
 
   const node = context.graph.nodes.find(node => node.id === job.stageId);
+  const { outcome, retryable } = await attemptStage(node, context.environmentId, job);
 
-  let exitCode: number | null = null;
-
-  if (!node?.data.command) {
-    console.error(`stage ${job.stageId} of run ${job.runId} has no command`);
-  } else {
-    const cwd = path.join(RUNNER_WORKSPACE_ROOT, job.runId);
-    const env = {
-      ...process.env,
-      ...Object.fromEntries((node.data.env_vars ?? []).map(({ key, value }) => [key, value])),
-    };
-
-    try {
-      exitCode = await execute(node.data.command, cwd, env);
-    } catch (error) {
-      console.error(`stage ${job.stageId} of run ${job.runId} could not be spawned:`, error);
-    }
+  if (outcome.status === 'FAILED' && retryable) {
+    await openRetry(job.runId, job.stageId, job.attempt);
   }
 
-  await finishStage(job.runId, job.stageId, job.attempt, exitCode === 0 ? 'SUCCEEDED' : 'FAILED', exitCode);
+  await finishStage(job.runId, job.stageId, job.attempt, outcome);
   await advanceRun(job.runId);
 }
 
+interface StageAttempt {
+  outcome: StageOutcome;
+  retryable: boolean;
+}
 
-
-/* 
+/*
 ==============================================================================================
- * Wraps spawn in a promise so the processor can await the child. Without this the
- * processor returns the moment the listeners are registered: BullMQ would mark the job
- * complete while the command was still running, making the concurrency limit meaningless
- * and leaving the bookkeeping to fire from a detached handler nobody awaits.
+ * Everything between owning the row and knowing the result. Never throws.
+ *
+ * `retryable` is the distinction between "the command ran and did not like what it found"
+ * and "we never got as far as running it". A non-zero exit or a timeout may well go
+ * differently next time, which is what the retry count was configured for. A secret that no
+ * longer exists or a workspace that has vanished will not fix itself, and burning ten
+ * attempts on it only buries the real message further up the Run Detail page.
 ==============================================================================================
- */
-function execute(command: string, cwd: string, env: NodeJS.ProcessEnv): Promise<number | null> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, { shell: true, cwd, env });
+*/
+async function attemptStage(
+  node: CustomNode | undefined,
+  environmentId: string | null,
+  job: Payload,
+): Promise<StageAttempt> {
+  const command = node?.data.command;
 
-    // Draining both pipes is not only for the logs. Nothing reads them by default, so a
-    // chatty command fills the OS pipe buffer and then blocks on write, forever.
-    child.stdout.on('data', chunk => console.log(`[${command}] ${chunk}`));
-    child.stderr.on('data', chunk => console.error(`[${command}] ${chunk}`));
+  if (!command) {
+    return {
+      outcome: { status: 'FAILED', exitCode: null, logSnippet: `Stage "${job.stageId}" has no command to run.` },
+      retryable: false,
+    };
+  }
 
-    // 'error' means the process could not be spawned at all, and 'exit' may never follow
-    // it — so without this the stage would hang. An unhandled 'error' also throws.
-    child.on('error', reject);
+  const timeoutMs = node.data.timeout && node.data.timeout > 0
+    ? node.data.timeout * 1000
+    : DEFAULT_TIMEOUT_MS;
 
-    // null when the child was killed by a signal rather than exiting on its own.
-    child.on('exit', code => resolve(code));
-  });
+  try {
+    // Resolved here rather than carried on the job: Redis persists to disk, so a decrypted
+    // value in job.data is a credential in an AOF file.
+    const secrets = await resolveSecrets(node.data.secrets ?? {}, environmentId);
+
+    const inherited = { ...process.env };
+    for (const key of WITHHELD_FROM_COMMANDS) delete inherited[key];
+
+    const env = {
+      ...inherited,
+      ...Object.fromEntries((node.data.env_vars ?? []).map(({ key, value }) => [key, value])),
+
+      // Last, so a selected secret wins a name collision with a plain env var.
+      ...secrets,
+    };
+
+    const result = await execute({
+      command,
+      cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
+      env,
+      timeoutMs,
+    });
+
+    return {
+      outcome: {
+        status: result.exitCode === 0 ? 'SUCCEEDED' : 'FAILED',
+        exitCode: result.exitCode,
+        // A killed command's own output rarely says why it stopped, and the exit code is
+        // null on POSIX, so without this line a timeout is indistinguishable from a crash.
+        logSnippet: result.timedOut
+          ? `${result.logSnippet}\n[stage exceeded its ${timeoutMs / 1000}s timeout and was terminated]`.trim()
+          : result.logSnippet,
+      },
+      retryable: true,
+    };
+  } catch (error: unknown) {
+    // Unresolvable secrets and a child that could not be spawned both land here.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`stage ${job.stageId} of run ${job.runId} could not run:`, message);
+
+    return {
+      outcome: { status: 'FAILED', exitCode: null, logSnippet: message },
+      retryable: false,
+    };
+  }
 }
