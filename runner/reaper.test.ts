@@ -1,6 +1,7 @@
 import { reapAbandonedWork } from './reaper';
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
+  findRunningStages, openRetry,
 } from './db';
 import { advanceRun, processRun } from './runProcessor';
 import { reclaimStageJob } from './stageQueue';
@@ -11,6 +12,7 @@ import { reclaimStageJob } from './stageQueue';
 jest.mock('./db', () => ({
   reapStaleStages: jest.fn(), findUnfinishedRuns: jest.fn(),
   findQueuedStages: jest.fn(), updateQueuedToPending: jest.fn(), failQueuedStage: jest.fn(),
+  findRunningStages: jest.fn(), openRetry: jest.fn(),
 }));
 jest.mock('./runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
 jest.mock('./stageQueue', () => ({ reclaimStageJob: jest.fn() }));
@@ -23,12 +25,17 @@ const failQueued = failQueuedStage as jest.MockedFunction<typeof failQueuedStage
 const removeJob = reclaimStageJob as jest.MockedFunction<typeof reclaimStageJob>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
 const start = processRun as jest.MockedFunction<typeof processRun>;
+const stranded = findRunningStages as jest.MockedFunction<typeof findRunningStages>;
+const retry = openRetry as jest.MockedFunction<typeof openRetry>;
 
 const runs = (...rows: { id: string, status: 'QUEUED' | 'RUNNING' }[]) =>
   unfinished.mockResolvedValue(rows as never);
 
 const queuedStages = (...rows: { runId: string, stageId: string, attempt: number }[]) =>
   queued.mockResolvedValue(rows as never);
+
+const runningStages = (...rows: { runId: string, stageId: string, attempt: number }[]) =>
+  stranded.mockResolvedValue(rows as never);
 
 const stage = { runId: 'run-1', stageId: 'build', attempt: 1 };
 
@@ -37,6 +44,8 @@ beforeEach(() => {
   reap.mockResolvedValue(0);
   runs();
   queuedStages();
+  runningStages();
+  retry.mockResolvedValue(true);
   removeJob.mockResolvedValue(true);
   requeue.mockResolvedValue(true);
   failQueued.mockResolvedValue(true);
@@ -114,6 +123,101 @@ it('keeps going when one run cannot be recovered', async () => {
 
   await expect(reapAbandonedWork()).resolves.toBeUndefined();
   expect(advance).toHaveBeenCalledWith('good-run');
+});
+
+/*
+ * A stage killed mid-command is the case the retry budget was configured for — a crashed
+ * runner says nothing about whether the command would have succeeded, so it is the most
+ * retryable failure there is. Without this pass a stage with maxRetries 3 gets none of them:
+ * reapStaleStages writes it terminally FAILED and the run pass finalizes the run behind it.
+ */
+describe('the running stage sweep', () => {
+  it('opens a retry for a stage the dead process left running', async () => {
+    runningStages(stage);
+
+    await reapAbandonedWork();
+
+    expect(retry).toHaveBeenCalledWith('run-1', 'build', 1);
+  });
+
+  /*
+   * The load-bearing ordering, and the same one processStage observes. openRetry's guard is
+   * `status: 'RUNNING'` — it reads the failed attempt to copy its denormalized columns and
+   * its budget off the row. Let reapStaleStages write FAILED first and that read matches
+   * nothing, so every retry silently reports a lost race and no stage is ever retried.
+   */
+  it('opens the retry before the abandoned row is failed', async () => {
+    runningStages(stage);
+    reap.mockResolvedValue(1);
+
+    await reapAbandonedWork();
+
+    expect(retry.mock.invocationCallOrder[0]).toBeLessThan(reap.mock.invocationCallOrder[0]);
+  });
+
+  /*
+   * The retry lands as a PENDING row, and only advanceRun turns a PENDING row into a job.
+   * Reopening after the run pass would leave the retry sitting there until something else
+   * happened to advance the run — which, at boot, is nothing.
+   */
+  it('opens retries before the runs are re-examined', async () => {
+    runningStages(stage);
+    runs({ id: 'run-1', status: 'RUNNING' });
+
+    await reapAbandonedWork();
+
+    expect(retry.mock.invocationCallOrder[0]).toBeLessThan(advance.mock.invocationCallOrder[0]);
+  });
+
+  // The attempt is half of what openRetry addresses: it opens attempt+1, so a hardcoded 1
+  // would try to reopen attempt 2 of a stage already on its third try — a P2002 that reads
+  // as a spent budget, leaving the stage with no retry at all.
+  it('addresses the stage by run, stage and attempt', async () => {
+    runningStages({ runId: 'run-1', stageId: 'build', attempt: 3 });
+
+    await reapAbandonedWork();
+
+    expect(retry).toHaveBeenCalledWith('run-1', 'build', 3);
+  });
+
+  // The budget lives in openRetry, which returns false once it is spent. The reaper does not
+  // second-guess that: the row is failed either way, and only the retry row differs.
+  it('still fails the row when no retry was opened', async () => {
+    runningStages(stage);
+    retry.mockResolvedValue(false);
+
+    await reapAbandonedWork();
+
+    expect(reap).toHaveBeenCalled();
+  });
+
+  it('opens no retries on a clean boot', async () => {
+    await reapAbandonedWork();
+
+    expect(retry).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when one stage cannot be reopened', async () => {
+    runningStages({ runId: 'run-1', stageId: 'bad', attempt: 1 }, { runId: 'run-1', stageId: 'good', attempt: 1 });
+    retry.mockRejectedValueOnce(new Error('postgres is unreachable'));
+
+    await expect(reapAbandonedWork()).resolves.toBeUndefined();
+    expect(retry).toHaveBeenCalledWith('run-1', 'good', 1);
+  });
+
+  /*
+   * Failing the rows is what unsticks the run; reopening them is the improvement on top. If
+   * the read that feeds the retries cannot be made, the reaper must still fall back to the
+   * behaviour it had before — a run finalized FAILED beats a run left hung forever.
+   */
+  it('still fails the abandoned rows when the running read fails', async () => {
+    stranded.mockRejectedValue(new Error('postgres is unreachable'));
+    runs({ id: 'run-1', status: 'RUNNING' });
+
+    await expect(reapAbandonedWork()).resolves.toBeUndefined();
+    expect(reap).toHaveBeenCalled();
+    expect(advance).toHaveBeenCalledWith('run-1');
+  });
 });
 
 /*
