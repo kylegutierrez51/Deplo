@@ -1,7 +1,8 @@
 import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingStages,
-  openRetry, reapStaleStages, findUnfinishedRuns,
+  openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
+  failQueuedStage,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -476,5 +477,50 @@ describe('the boot reaper queries', () => {
     expect(prismaMock.pipelineRun.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { status: { in: ['QUEUED', 'RUNNING'] } },
     }));
+  });
+
+  // The reaper builds a BullMQ job id out of exactly these three, so a select that drops one
+  // addresses a different attempt's job, or none — which the sweep reads as "never enqueued".
+  it('findQueuedStages selects the three fields the job id is built from', async () => {
+    prismaMock.stageResult.findMany.mockResolvedValue([] as never);
+
+    await findQueuedStages();
+
+    expect(prismaMock.stageResult.findMany).toHaveBeenCalledWith({
+      where: { status: 'QUEUED' },
+      select: { stageId: true, runId: true, attempt: true },
+    });
+  });
+
+  /*
+   * Both of these are compare-and-swaps like every other write in this file, and the QUEUED
+   * guard is the whole of it. Without it the reaper would overwrite a row that had moved on
+   * — the sweep runs before the workers start, but the row it read may already have been
+   * decided by the run pass, and a stage reset from RUNNING back to PENDING would be
+   * executed twice.
+   */
+  it.each([
+    ['updateQueuedToPending', () => updateQueuedToPending('run-1', 'a', 2), 'PENDING'],
+    ['failQueuedStage', () => failQueuedStage('run-1', 'a', 2), 'FAILED'],
+  ])('%s guards on QUEUED and addresses one attempt', async (_label, call, status) => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(1));
+
+    await call();
+
+    const [{ where, data }] = prismaMock.stageResult.updateMany.mock.calls[0];
+    expect(where).toEqual({ runId: 'run-1', stageId: 'a', attempt: 2, status: 'QUEUED' });
+    expect(data).toEqual(expect.objectContaining({ status }));
+  });
+
+  // A stage failed this way never ran at all, so the snippet is the only thing standing
+  // between the reader and a stage that appears to have failed for no reason.
+  it('failQueuedStage explains itself in the log snippet', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(1));
+
+    await failQueuedStage('run-1', 'a', 1);
+
+    expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual(
+      expect.objectContaining({ logSnippet: expect.stringContaining('queued'), finishedAt: expect.any(Date) }),
+    );
   });
 });
