@@ -2,7 +2,7 @@ import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
-  failQueuedStage,
+  failQueuedStage, findRunningStages,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -488,6 +488,19 @@ describe('the boot reaper queries', () => {
 
     expect(prismaMock.stageResult.findMany).toHaveBeenCalledWith({
       where: { status: 'QUEUED' },
+      select: { stageId: true, runId: true, attempt: true },
+    });
+  });
+
+  // openRetry addresses an attempt by exactly these three, and reads maxRetries off the row
+  // itself — so the select stays narrow here rather than duplicating the budget lookup.
+  it('findRunningStages selects the three fields openRetry addresses', async () => {
+    prismaMock.stageResult.findMany.mockResolvedValue([] as never);
+
+    await findRunningStages();
+
+    expect(prismaMock.stageResult.findMany).toHaveBeenCalledWith({
+      where: { status: 'RUNNING' },
       select: { stageId: true, runId: true, attempt: true },
     });
   });
