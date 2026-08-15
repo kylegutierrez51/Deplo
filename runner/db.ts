@@ -276,6 +276,13 @@ export async function findUnfinishedRuns(): Promise<{ id: string, status: RunSta
   });
 }
 
+export async function findRunningStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
+  return await prisma.stageResult.findMany({
+    where: { status: 'RUNNING' },
+    select: { stageId: true, runId: true, attempt: true },
+  });
+}
+
 export async function findQueuedStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
   return await prisma.stageResult.findMany({
     where: { status: 'QUEUED' },

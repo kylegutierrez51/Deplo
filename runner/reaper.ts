@@ -1,4 +1,7 @@
-import { reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage } from './db';
+import {
+  reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
+  findRunningStages, openRetry,
+} from './db';
 import { advanceRun, processRun } from './runProcessor';
 import { reclaimStageJob } from './stageQueue';
 
@@ -27,6 +30,8 @@ import { reclaimStageJob } from './stageQueue';
 ==============================================================================================
 */
 export async function reapAbandonedWork(): Promise<void> {
+  const retried = await retryRunningStages();
+
   let reaped = 0;
   try {
     reaped = await reapStaleStages();
@@ -44,11 +49,11 @@ export async function reapAbandonedWork(): Promise<void> {
     console.error('reaper: could not read the unfinished runs:', error);
   }
 
-  if (reaped === 0 && requeued === 0 && failed === 0 && runs.length === 0) return;
+  if (reaped === 0 && retried === 0 && requeued === 0 && failed === 0 && runs.length === 0) return;
 
   console.log(
-    `reaper: failed ${reaped} abandoned stage(s), requeued ${requeued} and failed ${failed} ` +
-    `orphaned stage(s), re-examining ${runs.length} run(s)`,
+    `reaper: failed ${reaped} abandoned stage(s) and reopened ${retried} of them, requeued ` +
+    `${requeued} and failed ${failed} orphaned stage(s), re-examining ${runs.length} run(s)`,
   );
 
   for (const run of runs) {
@@ -63,6 +68,29 @@ export async function reapAbandonedWork(): Promise<void> {
       console.error(`reaper: could not recover run ${run.id}:`, error);
     }
   }
+}
+
+
+async function retryRunningStages(): Promise<number> {
+  let retried = 0;
+
+  let runningStages: Awaited<ReturnType<typeof findRunningStages>> = [];
+  try {
+    runningStages = await findRunningStages();
+  } catch (error) {
+    console.error('reaper: could not read the abandoned RUNNING rows to retry them:', error);
+    return retried;
+  }
+
+  for (const { stageId, runId, attempt } of runningStages) {
+    try {
+      if (await openRetry(runId, stageId, attempt)) retried++;
+    } catch (error) {
+      console.error(`reaper: could not reopen stage ${stageId} of run ${runId}:`, error);
+    }
+  }
+
+  return retried;
 }
 
 
