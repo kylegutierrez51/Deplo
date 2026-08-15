@@ -241,12 +241,8 @@ export async function openRetry(runId: string, stageId: string, attempt: number)
  * is the status with no such second chance — maxStalledCount: 0 means BullMQ will not
  * re-execute the job, so nothing else is ever going to finish that row.
  *
- * Two QUEUED rows are not recovered by anything, and both are known gaps rather than
- * oversights: one whose job was already *active* when the process died (BullMQ fails a
- * stalled job under maxStalledCount: 0, and the row was written QUEUED in the gap before
- * markStageRunning committed), and any row at all if Redis is restarted without
- * persistence. Closing them means checking the queue for each job, which needs a Redis
- * round trip per row; deferred until it actually bites.
+ * QUEUED rows are handled separately, by the reaper's own pass over findQueuedStages —
+ * they need a Redis round trip per row that this statement cannot make.
  *
  * One statement, deliberately. Reading the ids first and then updating `id: { in: ids }`
  * needs two guards to cover the gap it opens — the id bound to skip rows that reached
@@ -273,11 +269,57 @@ export async function reapStaleStages(): Promise<number> {
 
 // Every run the scheduler might still owe a decision to, newest last. Used by the boot reaper.
 export async function findUnfinishedRuns(): Promise<{ id: string, status: RunStatus }[]> {
-  return prisma.pipelineRun.findMany({
+  return await prisma.pipelineRun.findMany({
     where: { status: { in: ['QUEUED', 'RUNNING'] } },
     select: { id: true, status: true },
     orderBy: { createdAt: 'asc' },
   });
+}
+
+export async function findQueuedStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
+  return await prisma.stageResult.findMany({
+    where: { status: 'QUEUED' },
+    select: { stageId: true, runId: true, attempt: true },
+  });
+}
+
+export async function updateQueuedToPending(runId: string, stageId: string, attempt: number): Promise<boolean> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: { runId, stageId, attempt, status: 'QUEUED' },
+    data: { status: 'PENDING'}
+  });
+
+  return count > 0;
+}
+
+/*
+==============================================================================================
+ * Fails a QUEUED row whose BullMQ job could not be taken back.
+ *
+ * The reaper resets a queued stage to PENDING so advanceRun can dispatch it again, which
+ * only works once the old job is gone from Redis — the job id is derived from
+ * runId/stageId/attempt, and BullMQ silently returns the existing job rather than enqueuing
+ * when that id is already in the keyspace. A job still locked by the dead process cannot be
+ * removed, so re-enqueuing would be a no-op and the row would sit QUEUED forever with
+ * nothing scheduled to move it.
+ *
+ * That job is not coming back either: maxStalledCount: 0 means the stalled checker stamps a
+ * failure reason on it and it fails without ever entering the processor. So the stage really
+ * did fail, and saying so out loud is what turns a silently hung run into one that finalizes
+ * and can be triggered again.
+==============================================================================================
+*/
+export async function failQueuedStage(runId: string, stageId: string, attempt: number): Promise<boolean> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: { runId, stageId, attempt, status: 'QUEUED' },
+    data: {
+      status: 'FAILED',
+      finishedAt: new Date(),
+      logSnippet: 'The runner stopped while this stage was queued, and its job could not be recovered.',
+    },
+  });
+
+  return count === 1;
 }
 
 export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | 'FAILED'): Promise<boolean> {

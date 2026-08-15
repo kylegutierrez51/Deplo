@@ -1190,3 +1190,66 @@ latest attempt — and is exactly what the boot reaper is for.
    
 ===================================================================================================================================
 
+reapQueuedStages() explanation
+
+          async function reapQueuedStages(): Promise<{ requeued: number, failed: number }> {
+            let requeued = 0;
+            let failed = 0;
+
+            let queuedStages: Awaited<ReturnType<typeof findQueuedStages>> = [];
+            try {
+              queuedStages = await findQueuedStages();
+            } catch (error) {
+              console.error('reaper: could not read the queued stage rows:', error);
+              return { requeued, failed };
+            }
+
+            for (const { stageId, runId, attempt } of queuedStages) {
+              try {
+                if (await reclaimStageJob({ stageId, runId, attempt })) {
+                  if (await updateQueuedToPending(runId, stageId, attempt)) requeued++;
+                } else if (await failQueuedStage(runId, stageId, attempt)) {
+                  failed++;
+                }
+              } catch (error) {
+                console.error(`reaper: could not recover stage ${stageId} of run ${runId}:`, error);
+              }
+            }
+
+            return { requeued, failed };
+          }
+
+
+advanceRun:
+  1. claimStageForQueue   row: PENDING → QUEUED        (Postgres commit)
+  2. enqueueStageJob      job created, state `waiting`  (Redis)
+       ↓
+  3. worker fetches it    job: waiting → active, worker takes a 30s lock
+  4. markStageRunning     row: QUEUED → RUNNING         (Postgres commit)
+
+
+Died between	Job's actual state	        Left alone, does it recover?
+1 and 2	      doesn't exist	              No — nothing will ever dispatch it
+2 and 3	      waiting (or delayed)        in Redis	Yes — Redis kept it, delivered on restart
+3 and 4	      active, holding a lock	    No — stalled-failed without ever running
+
+
+Case 1. 
+  For 1-2, the stage is claimed for queue but doesn't get enqueued, leaving an orphaned stage that will never get enqueued.
+
+  reapQueuedStages() handles this by finding the queued stages, calling reclaimStageJob() (which returns true on the 1st if statement even if the job isnt found there) and reverting it from 'queued' to 'pending' so it can be enqueued again
+
+Case 2. 
+ For 2-3, Redis keeps the job and because a lock wasn't put on it by the stageWorker, reapQueuedStages() does exactly what Case 1 does except 'reclaimStageJob()' actually removes the job from the stage queue
+
+Case 3.
+ For 3-4, a 30s lock was put on the job, so the 1st if statement in 'reclaimStageJob()' returns false, meaning the job cannot be removed
+
+          const client = await stageQueue.client;
+          await client.del(`${stageQueue.toKey(jobId)}:lock`);
+
+          return await removeStageJob(jobId);
+ 
+ The next 2 lines then attempt to delete the lock, and if successful, removeStageJob(jobId) returns true, so it sets the previously locked job from 'QUEUED' to 'PENDING'
+
+ If reclaimStageJob() returns false: That job will be failed by the stalled checker and will never run, so the row is failed rather than reset: reverting it from 'QUEUED' to 'PENDING' would re-enqueue the job witbt be same jobId that's still in the keyspace, leaving the stage hung with nothing scheduled to move it. So we just fail that stage.

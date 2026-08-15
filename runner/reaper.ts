@@ -1,5 +1,6 @@
-import { reapStaleStages, findUnfinishedRuns } from './db';
+import { reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage } from './db';
 import { advanceRun, processRun } from './runProcessor';
+import { reclaimStageJob } from './stageQueue';
 
 /*
 ==============================================================================================
@@ -26,20 +27,29 @@ import { advanceRun, processRun } from './runProcessor';
 ==============================================================================================
 */
 export async function reapAbandonedWork(): Promise<void> {
-  const reaped = await reapStaleStages();
+  let reaped = 0;
+  try {
+    reaped = await reapStaleStages();
+  } catch (error) {
+    console.error('reaper: could not fail the abandoned RUNNING rows:', error);
+  }
 
-  /*
-   * Every unfinished run, not only the ones with a stage just reaped. A crash in the window
-   * between finishStage and advanceRun leaves a run whose stages are all terminal and whose
-   * status is still RUNNING — no stale row to find, and nothing that will ever finalize it.
-   * Both entry points recompute from the full outcome set and are idempotent, so calling
-   * them on a run that was genuinely fine costs nothing.
-   */
-  const runs = await findUnfinishedRuns();
+  const { requeued, failed } = await reapQueuedStages();
 
-  if (reaped === 0 && runs.length === 0) return;
 
-  console.log(`reaper: failed ${reaped} abandoned stage(s), re-examining ${runs.length} run(s)`);
+  let runs: Awaited<ReturnType<typeof findUnfinishedRuns>> = [];
+  try {
+    runs = await findUnfinishedRuns();
+  } catch (error) {
+    console.error('reaper: could not read the unfinished runs:', error);
+  }
+
+  if (reaped === 0 && requeued === 0 && failed === 0 && runs.length === 0) return;
+
+  console.log(
+    `reaper: failed ${reaped} abandoned stage(s), requeued ${requeued} and failed ${failed} ` +
+    `orphaned stage(s), re-examining ${runs.length} run(s)`,
+  );
 
   for (const run of runs) {
     // Per run, so one unreadable definition cannot stop the rest of the queue from being
@@ -53,4 +63,58 @@ export async function reapAbandonedWork(): Promise<void> {
       console.error(`reaper: could not recover run ${run.id}:`, error);
     }
   }
+}
+
+
+/*
+==============================================================================================
+ * Decides every QUEUED stage row against the queue, because the row alone cannot say which
+ * of three things happened to its job when the runner died.
+ *
+ * The job never existed — the process died between claimStageForQueue committing and
+ * enqueueStageJob returning. Or it is still sitting in Redis, waiting or delayed, and would
+ * be delivered perfectly well on its own. Or it was already active, in which case
+ * maxStalledCount: 0 has BullMQ fail it without ever entering the processor.
+ *
+ * Only the middle one recovers unaided, and nothing on the row distinguishes it from the
+ * other two — which is why this costs a round trip each. reclaimStageJob collapses all
+ * three: it frees the job id, breaking the dead process's lock when it has to, and once no
+ * job holds that id the row goes back to PENDING and the run pass dispatches it again.
+ * Re-adding without freeing the id first is the trap, since the id is derived from
+ * runId/stageId/attempt and BullMQ answers a known id by enqueuing nothing.
+ *
+ * failQueuedStage is the fallback for a job that is somehow still locked after the break,
+ * which at boot means something outside this process's model is holding it — most likely
+ * the second runner the single-process assumption says does not exist. Failing the row is
+ * the safe reading: it never runs the command twice, and it finalizes the run instead of
+ * leaving it hung with nothing scheduled to move it.
+ *
+ * Per row, so one unreachable job cannot strand the others or stop the boot.
+==============================================================================================
+ */
+async function reapQueuedStages(): Promise<{ requeued: number, failed: number }> {
+  let requeued = 0;
+  let failed = 0;
+
+  let queuedStages: Awaited<ReturnType<typeof findQueuedStages>> = [];
+  try {
+    queuedStages = await findQueuedStages();
+  } catch (error) {
+    console.error('reaper: could not read the queued stage rows:', error);
+    return { requeued, failed };
+  }
+
+  for (const { stageId, runId, attempt } of queuedStages) {
+    try {
+      if (await reclaimStageJob({ stageId, runId, attempt })) {
+        if (await updateQueuedToPending(runId, stageId, attempt)) requeued++;
+      } else if (await failQueuedStage(runId, stageId, attempt)) {
+        failed++;
+      }
+    } catch (error) {
+      console.error(`reaper: could not recover stage ${stageId} of run ${runId}:`, error);
+    }
+  }
+
+  return { requeued, failed };
 }
