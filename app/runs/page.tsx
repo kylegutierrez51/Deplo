@@ -15,6 +15,8 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
   const { mode, id, } = await searchParams;
   const runs = await getRuns();
 
+  const activeRuns = runs.filter(r => r.status === 'running').length;
+
   const record = id ? await getRunById(id) : undefined;
 
   const modal =
@@ -32,7 +34,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
         <Subheader
           title="Run History"
           subtitle="All pipeline executions across your projects."
-          badge={{ count: 3, label: 'Active' }}>
+          badge={activeRuns > 0 ? { count: activeRuns, label: 'Active' } : undefined}>
         </Subheader>
 
         {runs.length > 0 &&
