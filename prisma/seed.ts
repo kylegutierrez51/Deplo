@@ -7,8 +7,6 @@ import prisma from "@/lib/prisma";
 import {
   UserRole,
   EnvironmentType,
-  RunStatus,
-  RunTrigger,
   WebhookEventStatus,
   EventType,
   AuditAction,
@@ -172,7 +170,7 @@ async function main() {
     stageSeeds.map((s) => [
       s.id,
       {
-        command: s.command ?? null,
+        command: s.command ? ('cd /d "%PROJECT_DIR%" && ' + s.command) : null,
         timeout: s.timeout ?? null,
         retries: s.retries ?? null,
         env_vars: [],
@@ -180,29 +178,13 @@ async function main() {
       },
     ])
   );
-  const definition = await prisma.pipelineDefinition.create({
+  await prisma.pipelineDefinition.create({
     data: {
       pipelineId: pipeline.id,
       version: 1,
       graphJson,
       configJson,
       createdById: userByName.get("coco")?.id ?? null,
-    },
-  });
-
-  // ── Pipeline Run ─────────────────────────────────────────────────
-  // One run, in exactly the state triggerPipelineRun leaves behind: QUEUED with
-  // no StageResult rows. The runner materializes the stages when it picks it up.
-  const run = await prisma.pipelineRun.create({
-    data: {
-      pipelineId: pipeline.id,
-      definitionId: definition.id,
-      status: RunStatus.QUEUED,
-      trigger: RunTrigger.MANUAL,
-      commitSha: "a1b2c3d",
-      branch: "main",
-      environmentId: envByName.get("staging")!.id,
-      triggeredById: userByName.get("coco")?.id ?? null,
     },
   });
 
@@ -261,7 +243,6 @@ async function main() {
   // here claims an approval, a completion or a cancellation.
   const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; user: string | null; actor?: string }[] = [
     { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "coco" },
-    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: run.id, resourceLabel: "verify-and-build @ a1b2c3d", user: "coco" },
     { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },
     { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (prod)", user: "sarah.chen" },
     { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (dev)", user: "marcus.coco" },
