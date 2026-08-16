@@ -10,11 +10,23 @@ import { ToastProvider, useToast } from '@/components/ui/toast/ToastContext';
 const TOTAL_DURATION = 3000;
 const EXIT_DURATION = 200;
 
+// An explicit factory rather than a bare jest.mock: automocking next/navigation
+// loads the real module to introspect it and drags in Next's server runtime.
+let mockPathname = '/pipelines/p1';
+jest.mock('next/navigation', () => ({ usePathname: () => mockPathname }));
+
 const renderToasts = () => renderHook(() => useToast(), { wrapper: ToastProvider });
 
 const advance = (ms: number) => act(() => { jest.advanceTimersByTime(ms); });
 
-beforeEach(() => { jest.useFakeTimers(); });
+// usePathname reads the module-level value, so moving it and re-rendering is
+// what a client-side navigation looks like from inside the provider.
+const navigateTo = (pathname: string, rerender: () => void) => {
+  mockPathname = pathname;
+  rerender();
+};
+
+beforeEach(() => { jest.useFakeTimers(); mockPathname = '/pipelines/p1'; });
 afterEach(() => { jest.useRealTimers(); });
 
 describe('useToast', () => {
@@ -113,7 +125,7 @@ describe('sticky toasts', () => {
   // indefinitely rather than scrolling past.
   it('never expires on its own', () => {
     const { result } = renderToasts();
-    act(() => { result.current.showToast('Save failed', 'close-circle-outline', { sticky: true }); });
+    act(() => { result.current.showToast('Save failed', 'close-circle-outline', undefined, { sticky: true }); });
 
     advance(TOTAL_DURATION * 100);
 
@@ -123,7 +135,7 @@ describe('sticky toasts', () => {
 
   it('does not schedule any timers', () => {
     const { result } = renderToasts();
-    act(() => { result.current.showToast('Save failed', 'close-circle-outline', { sticky: true }); });
+    act(() => { result.current.showToast('Save failed', 'close-circle-outline', undefined, { sticky: true }); });
 
     expect(jest.getTimerCount()).toBe(0);
   });
@@ -132,7 +144,7 @@ describe('sticky toasts', () => {
     const { result } = renderToasts();
 
     act(() => {
-      result.current.showToast('Save failed', 'close-circle-outline', { sticky: true });
+      result.current.showToast('Save failed', 'close-circle-outline', undefined, { sticky: true });
       result.current.showToast('Saved', 'checkmark-circle-outline');
     });
     advance(TOTAL_DURATION);
@@ -155,7 +167,7 @@ describe('dismissToast', () => {
 
   it('dismisses a sticky toast, which nothing else would', () => {
     const { result } = renderToasts();
-    act(() => { result.current.showToast('Save failed', 'close-circle-outline', { sticky: true }); });
+    act(() => { result.current.showToast('Save failed', 'close-circle-outline', undefined, { sticky: true }); });
 
     act(() => { result.current.dismissToast(0); });
     advance(EXIT_DURATION);
@@ -202,7 +214,7 @@ describe('dismissToast', () => {
    */
   it('does not schedule a second exit timer when dismissed twice', () => {
     const { result } = renderToasts();
-    act(() => { result.current.showToast('Save failed', 'close-circle-outline', { sticky: true }); });
+    act(() => { result.current.showToast('Save failed', 'close-circle-outline', undefined, { sticky: true }); });
 
     act(() => { result.current.dismissToast(0); });
     advance(EXIT_DURATION / 2);
@@ -216,8 +228,8 @@ describe('dismissStickyToasts', () => {
   it('dismisses every sticky toast', () => {
     const { result } = renderToasts();
     act(() => {
-      result.current.showToast('a', 'close-circle-outline', { sticky: true });
-      result.current.showToast('b', 'close-circle-outline', { sticky: true });
+      result.current.showToast('a', 'close-circle-outline', undefined, { sticky: true });
+      result.current.showToast('b', 'close-circle-outline', undefined, { sticky: true });
     });
 
     act(() => { result.current.dismissStickyToasts(); });
@@ -231,7 +243,7 @@ describe('dismissStickyToasts', () => {
   it('leaves non-sticky toasts running', () => {
     const { result } = renderToasts();
     act(() => {
-      result.current.showToast('sticky', 'close-circle-outline', { sticky: true });
+      result.current.showToast('sticky', 'close-circle-outline', undefined, { sticky: true });
       result.current.showToast('transient', 'checkmark-circle-outline');
     });
 
@@ -254,5 +266,80 @@ describe('dismissStickyToasts', () => {
     const { result } = renderToasts();
 
     expect(() => act(() => { result.current.dismissStickyToasts(); })).not.toThrow();
+  });
+});
+
+/*
+ * A sticky toast reports on work the user started on this page, so it stops
+ * making sense once they leave. The provider sits above the route in
+ * providers.tsx and therefore survives navigation, which is exactly why it has
+ * to clear these itself.
+ */
+describe('navigation', () => {
+  it('dismisses a sticky toast when the pathname changes', () => {
+    const { result, rerender } = renderToasts();
+    act(() => { result.current.showToast('Run failed', 'close-circle-outline', undefined, { sticky: true }); });
+
+    navigateTo('/runs/run-1', rerender);
+
+    // No advance() first: the exit animation would otherwise play out on the
+    // page the user just landed on, which reads as a glitch rather than a
+    // dismissal, so the toast goes immediately.
+    expect(result.current.toasts).toEqual([]);
+  });
+
+  it('keeps a sticky toast when the pathname is unchanged', () => {
+    const { result, rerender } = renderToasts();
+    act(() => { result.current.showToast('Run failed', 'close-circle-outline', undefined, { sticky: true }); });
+
+    // The ?id=&mode= modals push a new URL without changing the pathname, so a
+    // re-render on the same path must leave the report standing.
+    navigateTo('/pipelines/p1', rerender);
+
+    expect(result.current.toasts).toHaveLength(1);
+  });
+
+  it('dismisses every sticky toast at once', () => {
+    const { result, rerender } = renderToasts();
+    act(() => {
+      result.current.showToast('a', 'close-circle-outline', undefined, { sticky: true });
+      result.current.showToast('b', 'close-circle-outline', undefined, { sticky: true });
+    });
+
+    navigateTo('/runs/run-1', rerender);
+
+    expect(result.current.toasts).toEqual([]);
+  });
+
+  it('leaves a non-sticky toast running, still on its own schedule', () => {
+    const { result, rerender } = renderToasts();
+    act(() => { result.current.showToast('Saved', 'checkmark-circle-outline'); });
+
+    navigateTo('/runs/run-1', rerender);
+    expect(result.current.toasts.map(t => t.text)).toEqual(['Saved']);
+
+    advance(TOTAL_DURATION);
+    expect(result.current.toasts).toEqual([]);
+  });
+
+  /*
+   * Navigating during the exit animation leaves that removal timer pending
+   * against a toast the navigation already dropped. Clearing it eagerly would
+   * mean calling clearTimeout during render, and a render React discards would
+   * then strand a dismissed toast in `exiting` forever -- so the timer is left
+   * to drain instead, and what matters is that draining is inert.
+   */
+  it('lets the exit timer of a toast dismissed just before navigating drain harmlessly', () => {
+    const { result, rerender } = renderToasts();
+    act(() => { result.current.showToast('Run failed', 'close-circle-outline', undefined, { sticky: true }); });
+    act(() => { result.current.dismissToast(0); });
+
+    navigateTo('/runs/run-1', rerender);
+    expect(result.current.toasts).toEqual([]);
+
+    advance(EXIT_DURATION);
+
+    expect(result.current.toasts).toEqual([]);
+    expect(jest.getTimerCount()).toBe(0);
   });
 });
