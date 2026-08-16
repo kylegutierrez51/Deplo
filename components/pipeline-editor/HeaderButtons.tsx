@@ -28,7 +28,9 @@ export default function HeaderButtons() {
       showToast(
         result.message,
         failed ? 'close-circle-outline' : 'checkmark-circle-outline',
-        `/runs/${result.runId}`,
+        // Only a successful trigger has a run to link to; every error path
+        // returns a message and no runId.
+        result.runId ? `/runs/${result.runId}` : undefined,
         { sticky: true },
       );
     });
