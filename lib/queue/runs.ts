@@ -57,9 +57,9 @@ function runQueue(): Queue<RunJobData> {
  * BullMQ silently returns the existing job rather than enqueuing when a jobId is already
  * in the keyspace — which is what makes a retried enqueue harmless, but also means two
  * approvals on the same run sharing the tag 'approval' would drop the second one. Pass
- * something like `approval:${stageId}`.
+ * something like `approval-${stageId}`.
 ==============================================================================================
 */
 export async function enqueuePipelineRun(runId: string, tag = 'trigger'): Promise<void> {
-  await runQueue().add(`run-${runId}`, { runId }, { jobId: `${runId}:${tag}` });
+  await runQueue().add(`run-${runId}`, { runId }, { jobId: `${runId}-${tag}` });
 }

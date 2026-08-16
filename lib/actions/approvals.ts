@@ -29,7 +29,7 @@ export async function approveOrRejectStage(id: string, runId: string, stageId: s
       message: 'This approval has already been decided.'
     }
 
-    await enqueuePipelineRun(runId, `approval:${stageId}`);
+    await enqueuePipelineRun(runId, `approval-${stageId}`);
 
     revalidatePath('/approvals');
     revalidatePath('/runs');

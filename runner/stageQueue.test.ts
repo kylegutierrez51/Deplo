@@ -40,7 +40,7 @@ describe('enqueueStageJob', () => {
   it('derives the job id from run, stage and attempt', async () => {
     await enqueueStageJob(stage);
 
-    expect(add.mock.calls[0][2]).toEqual(expect.objectContaining({ jobId: 'run-1:build:2' }));
+    expect(add.mock.calls[0][2]).toEqual(expect.objectContaining({ jobId: 'run-1-build-2' }));
   });
 
   // attempts: 1 because retries are ours — a new row per attempt, not a BullMQ re-execution.
@@ -95,13 +95,13 @@ describe('reclaimStageJob', () => {
 
     await reclaimStageJob(stage);
 
-    expect(del).toHaveBeenCalledWith('bull:pipeline-stages:run-1:build:2:lock');
+    expect(del).toHaveBeenCalledWith('bull:pipeline-stages:run-1-build-2:lock');
   });
 
   it('removes by the same id it would enqueue under', async () => {
     await reclaimStageJob(stage);
 
-    expect(remove).toHaveBeenCalledWith('run-1:build:2');
+    expect(remove).toHaveBeenCalledWith('run-1-build-2');
   });
 
   // Still locked after the orphan was deleted means something outside this process's model

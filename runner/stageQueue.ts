@@ -12,7 +12,7 @@ export interface Payload {
 
 const stageQueue = new Queue(STAGE_QUEUE, { connection });
 
-const stageJobId = ({ runId, stageId, attempt }: Payload) => `${runId}:${stageId}:${attempt}`;
+const stageJobId = ({ runId, stageId, attempt }: Payload) => `${runId}-${stageId}-${attempt}`;
 
 export async function enqueueStageJob(payload: Payload, delayMs = 0) {
   await stageQueue.add(`stage-${payload.stageId}`, payload, {
