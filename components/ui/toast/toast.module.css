@@ -15,6 +15,7 @@
 .toast-flex {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
   padding: var(--space-sm);
   background-color: var(--dark-clr-2);
@@ -31,14 +32,12 @@
    icon aligns to the first line instead of centering against the whole block, and the
    width is capped — the base rule has no max-width because a notification never needed one. */
 .sticky {
-  align-items: flex-start;
   max-width: min(420px, calc(100vw - var(--space-lg) * 2));
 }
 
-.sticky .toast-icon ion-icon {
+.sticky .toast-icon ion-icon, .sticky .link-icon ion-icon {
   /* nudged onto the cap height of the first line */
   display: block;
-  margin-top: 1px;
 }
 
 .toast-text {
@@ -100,6 +99,10 @@
   font-size: 25px;
 }
 
+.link-icon ion-icon[name="open-outline"] {
+  font-size: 20px;
+  color: var(--blue-clr);
+}
 .toast-icon ion-icon[name="checkmark-circle-outline"] {
   color: var(--pill-succeeded-text);
 }
