@@ -28,7 +28,8 @@ export default function HeaderButtons() {
       showToast(
         result.message,
         failed ? 'close-circle-outline' : 'checkmark-circle-outline',
-        { sticky: failed },
+        result.runId ? `/runs/${result.runId}` : undefined,
+        { sticky: true },
       );
     });
   }
