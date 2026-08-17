@@ -2,6 +2,20 @@ import nextJest from 'next/jest.js';
 
 process.env.TZ = 'UTC';
 
+/*
+ * Forced, not defaulted. Jest sets NODE_ENV='test' only when nothing has set it
+ * already, and next/jest picks which .env files to load from that value — 'test'
+ * loads .env.test ahead of .env, anything else never looks at .env.test at all.
+ *
+ * So a caller that already has NODE_ENV set silently redirects this tier at the
+ * database in .env. That is not hypothetical: the runner dotenv-loads .env (which
+ * defines NODE_ENV) and hands a copy to every stage command, so `npm run
+ * test:integration` as a pipeline stage resolves DATABASE_URL to the development
+ * database and trips the guard in test/integration/setup.ts. Which .env file this
+ * tier reads is not the caller's to decide.
+ */
+process.env.NODE_ENV = 'test';
+
 const createJestConfig = nextJest({ dir: './' });
 
 /*

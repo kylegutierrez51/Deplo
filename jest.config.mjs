@@ -11,6 +11,15 @@ import nextJest from 'next/jest.js';
  */
 process.env.TZ = 'UTC';
 
+/*
+ * Same reasoning as TZ: pinned so the tier cannot be steered by whatever launched
+ * it. Jest sets NODE_ENV='test' only when it is not already set, and next/jest
+ * chooses which .env files to load from it — a caller with NODE_ENV=development in
+ * its own environment (the runner, which dotenv-loads .env and passes it to every
+ * stage command) would have these tests read .env instead of .env.test.
+ */
+process.env.NODE_ENV = 'test';
+
 // `dir` points next/jest at the app root so it can load next.config.ts (for the
 // SWC transform flags, including reactCompiler) and the .env files.
 const createJestConfig = nextJest({ dir: './' });
