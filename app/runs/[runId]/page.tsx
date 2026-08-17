@@ -6,12 +6,15 @@ import FilterSelect from "@/components/ui/filters/FilterSelect";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import Pill from '@/components/ui/Pill';
 import RunTabs from "./RunTabs";
-import { getRunDetailById } from "@/lib/data/run-detail";
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import PipelineGraph from "@/components/run-detail/PipelineGraph";
+import { getRunDetailById } from "@/lib/data/run-detail";
 
 interface RunDetailPageProps {
   params: Promise<{ runId: string }>;
 }
+
+const REFRESH_INTERVAL_MS = 5000;
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { runId } = await params;
@@ -26,6 +29,8 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
       <Sidebar activeItem="run-detail" />
 
       <main className={`page-content ${styles['run-main']}`}>
+
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} enabled={['queued', 'running'].includes(run.status)}/>
 
         <RunDetailCard
           pipelineName={run.pipelineName}

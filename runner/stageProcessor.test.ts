@@ -180,8 +180,17 @@ describe('the command environment', () => {
    * environment, so `echo $ENCRYPTION_KEY` in any stage would hand back the means to
    * decrypt all of them — and make the per-environment scoping in secrets.ts pointless.
    * DATABASE_URL is the same story one step removed.
+   *
+   * The names are spelled out here rather than imported from WITHHELD_FROM_COMMANDS on
+   * purpose. Iterating the list under test would only prove the runner strips whatever the
+   * list happens to say, so deleting an entry would delete its own coverage and stay green.
+   * Written out, this is a second copy that has to be edited deliberately.
    */
-  it.each(['ENCRYPTION_KEY', 'DATABASE_URL', 'AUTH_SECRET'])(
+  it.each([
+    'ENCRYPTION_KEY', 'DATABASE_URL', 'AUTH_SECRET',
+    'NEXTAUTH_SECRET', 'NEXTAUTH_URL',
+    'REDIS_HOST', 'REDIS_PORT',
+  ])(
     'withholds %s from the command', async (variable) => {
       process.env[variable] = 'should-not-reach-the-child';
 
@@ -189,6 +198,29 @@ describe('the command environment', () => {
 
       expect(spawned().env).not.toHaveProperty(variable);
     });
+
+  /*
+   * On the same list for a different reason, so it is pinned separately: NODE_ENV is not a
+   * secret and the case above would misfile it.
+   *
+   * Node tooling sets NODE_ENV only when nothing already has, which makes an inherited value
+   * an override that wins rather than a default a command falls back to. runner/env.ts
+   * dotenv-loads .env, so the runner has one to pass on, and passing it on made `next build`
+   * in a stage bundle React's development build and fail prerendering /_global-error, and
+   * made `jest` skip .env.test and point the integration tier at the development database.
+   * Neither reported the real cause.
+   *
+   * Note that nothing is written to process.env here: jest.config.mjs pins NODE_ENV at
+   * module scope, so the leak this guards against is already set up by the time this runs.
+   */
+  it('withholds NODE_ENV so a command chooses its own mode', async () => {
+    // The premise — without a value on the runner there would be nothing to leak.
+    expect(process.env.NODE_ENV).toBeDefined();
+
+    await processStage(job);
+
+    expect(spawned().env).not.toHaveProperty('NODE_ENV');
+  });
 
   it('still passes the ambient environment a command actually needs', async () => {
     await processStage(job);

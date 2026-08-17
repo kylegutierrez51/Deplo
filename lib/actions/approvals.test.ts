@@ -176,8 +176,8 @@ describe('waking the runner', () => {
     await approveOrRejectStage('row-a', 'run-1', 'gate-a', true);
     await approveOrRejectStage('row-b', 'run-1', 'gate-b', true);
 
-    expect(enqueue).toHaveBeenNthCalledWith(1, 'run-1', 'approval:gate-a');
-    expect(enqueue).toHaveBeenNthCalledWith(2, 'run-1', 'approval:gate-b');
+    expect(enqueue).toHaveBeenNthCalledWith(1, 'run-1', 'approval-gate-a');
+    expect(enqueue).toHaveBeenNthCalledWith(2, 'run-1', 'approval-gate-b');
   });
 
   // A floating enqueue would let this rejection escape as an unhandled rejection while the

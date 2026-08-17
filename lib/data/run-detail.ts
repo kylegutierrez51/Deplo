@@ -35,10 +35,13 @@ export type JobCounts = {
   unapproved: number;
 };
 
-type StageResultNode = Omit<CustomNode, 'data'> & {
+export type StageResultNode = Omit<CustomNode, 'data'> & {
   data: CustomNode['data'] & {
     duration: string;
     status: JobStatus;
+    attempt: number;
+    maxAttempts: number;
+    secretKeys: string[];
   };
 }
 
@@ -190,7 +193,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       environment: { select: { name: true, type: true } },
       triggeredBy: { select: { name: true } },
       definition: { select: { graphJson: true, configJson: true } },
-      stages: { orderBy: { createdAt: 'asc' } },
+      stages:  { orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }] } // matches loadRunContext()
     },
   });
 
@@ -203,12 +206,20 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     status: s.status,
   }));
 
-  const detailedNodes = addNodeDetails(nodes, run.stages);
-
-  const [runNumber, commitMessage] = await Promise.all([
+  const [runNumber, commitMessage, secrets] = await Promise.all([
     prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
     getCommitMessage(run.id),
+    run.environmentId
+      ? prisma.secret.findMany({ where: { environmentId: run.environmentId }, select: { id: true, key: true } })
+      : Promise.resolve([]),
   ]);
+
+  const detailedNodes = addNodeDetails(
+    nodes,
+    run.stages,
+    new Map(secrets.map((s) => [s.id, s.key])),
+    run.environmentId,
+  );
 
   return {
     runNumber,
@@ -236,17 +247,41 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
   };
 }
 
-function addNodeDetails(nodes: CustomNode[], stages: StageResult[]): StageResultNode[] {
+/**
+ * Folds the per-attempt StageResult rows onto their graph nodes.
+ *
+ * stages arrives ordered [stageId asc, attempt asc], so building the Map is
+ * last-write-wins and the row kept for a stageId is its *highest* attempt —
+ * which is exactly the row `attempt`/`maxAttempts` should report.
+ *
+ * secretKeyById resolves node.data.secrets (which stores ids only) to keys.
+ * environmentId is the run's own environment: the editor keeps stale entries
+ * for previously selected environments, so only that key is read.
+ */
+export function addNodeDetails(
+  nodes: CustomNode[],
+  stages: StageResult[],
+  secretKeyById: Map<string, string>,
+  environmentId: string | null,
+): StageResultNode[] {
   const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
 
   return nodes.map((node) => {
     const stage = stageByStageId.get(node.id);
+    const secretIds = environmentId ? node.data.secrets?.[environmentId] ?? [] : [];
+
     return {
       ...node,
       data: {
         ...node.data,
         duration: stage?.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—',
         status: stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending',
+        attempt: stage?.attempt ?? 1,
+        // node.data.retries - falls back to the definition for a stage that doesn't have a stageResult row yet
+        maxAttempts: (stage?.maxRetries ?? node.data.retries ?? 0) + 1,
+        // A secret deleted after the run was triggered no longer resolves — drop it
+        // rather than rendering a dangling id.
+        secretKeys: secretIds.map((id) => secretKeyById.get(id)).filter((key): key is string => Boolean(key)),
       },
     };
   });

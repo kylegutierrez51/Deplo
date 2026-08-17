@@ -37,7 +37,7 @@ beforeAll(() => {
   // Guard against someone running this against the database they develop in.
   if (/\bdeplo\b(?!.*test)/.test(process.env.DATABASE_URL) && !process.env.ALLOW_UNSAFE_TEST_DB) {
     throw new Error(
-      `Refusing to truncate ${process.env.DATABASE_URL}: it does not look like a test database. ` +
+      `Refusing to truncate DATABASE_URL: it does not look like a test database. ` +
       'Point DATABASE_URL at one, or set ALLOW_UNSAFE_TEST_DB=1 if you are sure.',
     );
   }

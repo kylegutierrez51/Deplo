@@ -43,7 +43,7 @@ const approvalRunInclude = {
   pipeline: { select: { name: true } },
   environment: { select: { type: true, name: true } },
   triggeredBy: { select: { name: true } },
-  stages: { orderBy: { createdAt: 'asc' as const } },
+  stages: { orderBy: [{ stageId: 'asc' as const }, { attempt: 'asc' as const }] },
 };
 
 
@@ -58,6 +58,11 @@ export async function getApprovals(): Promise<Approval[]> {
 
   return approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
+
+    const latestStages = run.stages.map((s) => ({
+      status: s.status,
+    })); // excludes stages that retried -- like loadRunContext() does
+
     return {
       id: approvalStage.id,
       stageId: approvalStage.stageId,
@@ -72,7 +77,7 @@ export async function getApprovals(): Promise<Approval[]> {
         name: run.environment.name,
       } : null,
       branch: run.branch,
-      stagesComplete: run.stages.filter(stage => stage.status === "SUCCEEDED").length + '/' + run.stages.length
+      stagesComplete: latestStages.filter(s => s.status === "SUCCEEDED").length + '/' + latestStages.length
     };
   });
 }
