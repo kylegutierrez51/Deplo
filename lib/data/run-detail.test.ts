@@ -1,6 +1,6 @@
-import { countJobs, buildLogFilters, buildLogs, type StageLite } from '@/lib/data/run-detail';
+import { countJobs, buildLogFilters, buildLogs, addNodeDetails, type StageLite } from '@/lib/data/run-detail';
 import type { CustomNode } from '@/lib/types';
-import type { StageStatus as PrismaStageStatus } from '@/generated/prisma';
+import type { StageStatus as PrismaStageStatus, StageResult } from '@/generated/prisma';
 
 // The helpers under test are pure, but they live in a module that imports the
 // Prisma singleton at top level, which constructs a PrismaPg adapter and pulls
@@ -217,5 +217,183 @@ describe('buildLogs', () => {
 
   it('returns nothing for no stages', () => {
     expect(buildLogs([])).toEqual([]);
+  });
+});
+
+describe('addNodeDetails', () => {
+  /*
+   * addNodeDetails folds the per-attempt StageResult rows onto their graph
+   * nodes so the Run Detail graph and its stage panel can read one object.
+   * Callers pass rows already ordered [stageId asc, attempt asc] — that
+   * ordering is what makes the highest attempt win, so the tests below feed
+   * them in that order deliberately.
+   */
+  const row = (over: Partial<StageResult> = {}): StageResult => ({
+    id: 'sr1',
+    runId: 'run1',
+    stageId: 'a',
+    stageName: 'build',
+    stageType: 'CUSTOM',
+    status: 'SUCCEEDED',
+    exitCode: 0,
+    logSnippet: null,
+    command: 'npm run build',
+    attempt: 1,
+    maxRetries: 0,
+    approvedById: null,
+    approvedAt: null,
+    startedAt: new Date('2026-01-01T00:00:00Z'),
+    finishedAt: new Date('2026-01-01T00:00:30Z'),
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    ...over,
+  });
+
+  const secretNode = (secrets: Record<string, string[]>): CustomNode => ({
+    id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'build', secrets },
+  });
+
+  describe('status and duration', () => {
+    it('maps the stage status onto the node', () => {
+      const [n] = addNodeDetails([node('a')], [row({ status: 'RUNNING', finishedAt: null })], new Map(), null);
+
+      expect(n.data.status).toBe('running');
+    });
+
+    it('measures the duration between the row start and finish', () => {
+      const [n] = addNodeDetails([node('a')], [row()], new Map(), null);
+
+      expect(n.data.duration).toBe('30s');
+    });
+
+    it('measures a still-running stage against now', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-01-01T00:02:00Z'));
+
+      const [n] = addNodeDetails([node('a')], [row({ status: 'RUNNING', finishedAt: null })], new Map(), null);
+      expect(n.data.duration).toBe('2m');
+
+      jest.useRealTimers();
+    });
+
+    // A queued run has graph nodes but no rows yet.
+    it('reports a node with no stage row as pending with no duration', () => {
+      const [n] = addNodeDetails([node('a')], [], new Map(), null);
+
+      expect(n.data.status).toBe('pending');
+      expect(n.data.duration).toBe('—');
+    });
+
+    it('preserves the definition data already on the node', () => {
+      const configured: CustomNode = {
+        id: 'a', position: { x: 0, y: 0 },
+        data: { type: 'deploy', name: 'ship', command: 'npm run deploy', timeout: 900 },
+      };
+
+      const [n] = addNodeDetails([configured], [], new Map(), null);
+
+      expect(n.data).toMatchObject({ type: 'deploy', name: 'ship', command: 'npm run deploy', timeout: 900 });
+    });
+
+    it('ignores a stage row with no matching node', () => {
+      const nodes = addNodeDetails([node('a')], [row({ stageId: 'ghost', status: 'FAILED' })], new Map(), null);
+
+      expect(nodes).toHaveLength(1);
+      expect(nodes[0].data.status).toBe('pending');
+    });
+  });
+
+  describe('attempts', () => {
+    // A retry is a new row, not a re-run, so a retried stage has several rows
+    // for one stageId. The last one in ascending-attempt order is the truth.
+    it('reports the highest attempt and that row status', () => {
+      const [n] = addNodeDetails(
+        [node('a')],
+        [row({ attempt: 1, status: 'FAILED' }), row({ attempt: 2, status: 'RUNNING', finishedAt: null })],
+        new Map(), null,
+      );
+
+      expect(n.data.attempt).toBe(2);
+      expect(n.data.status).toBe('running');
+    });
+
+    it('reports attempt 1 for a stage that has not started', () => {
+      expect(addNodeDetails([node('a')], [], new Map(), null)[0].data.attempt).toBe(1);
+    });
+
+    // maxRetries counts retries *after* the first try, so maxRetries: 2 means
+    // attempts 1–3.
+    it('derives maxAttempts from the row maxRetries', () => {
+      const [n] = addNodeDetails([node('a')], [row({ maxRetries: 2 })], new Map(), null);
+
+      expect(n.data.maxAttempts).toBe(3);
+    });
+
+    // Nothing has denormalized maxRetries onto a row yet, so the definition is
+    // the only source.
+    it('falls back to the definition retries when there is no row', () => {
+      const configured: CustomNode = {
+        id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', retries: 1 },
+      };
+
+      const [n] = addNodeDetails([configured], [], new Map(), null);
+
+      expect(n.data).toMatchObject({ attempt: 1, maxAttempts: 2 });
+    });
+
+    it('reports a single attempt when neither the row nor the definition sets retries', () => {
+      expect(addNodeDetails([node('a')], [], new Map(), null)[0].data.maxAttempts).toBe(1);
+    });
+
+    // The row is what the runner actually budgeted; the definition may have
+    // been edited into a later version since.
+    it('prefers the row maxRetries over the definition retries', () => {
+      const configured: CustomNode = {
+        id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', retries: 5 },
+      };
+
+      const [n] = addNodeDetails([configured], [row({ maxRetries: 1 })], new Map(), null);
+
+      expect(n.data.maxAttempts).toBe(2);
+    });
+  });
+
+  describe('secret keys', () => {
+    const keys = new Map([['s1', 'API_KEY'], ['s2', 'DATABASE_URL']]);
+
+    it('resolves the selected secret ids to keys', () => {
+      const [n] = addNodeDetails([secretNode({ env1: ['s1', 's2'] })], [], keys, 'env1');
+
+      expect(n.data.secretKeys).toEqual(['API_KEY', 'DATABASE_URL']);
+    });
+
+    // The editor keeps entries for previously selected environments, so reading
+    // the whole map would leak the wrong environment's secrets into the panel.
+    it('reads only the run environment entry', () => {
+      const [n] = addNodeDetails([secretNode({ env1: ['s1'], env2: ['s2'] })], [], keys, 'env1');
+
+      expect(n.data.secretKeys).toEqual(['API_KEY']);
+    });
+
+    // A secret deleted after the run was triggered no longer resolves.
+    it('drops an id with no matching secret', () => {
+      const [n] = addNodeDetails([secretNode({ env1: ['s1', 'gone'] })], [], keys, 'env1');
+
+      expect(n.data.secretKeys).toEqual(['API_KEY']);
+    });
+
+    it('resolves nothing for a run with no environment', () => {
+      const [n] = addNodeDetails([secretNode({ env1: ['s1'] })], [], keys, null);
+
+      expect(n.data.secretKeys).toEqual([]);
+    });
+
+    it('resolves nothing when the stage selected no secrets', () => {
+      expect(addNodeDetails([node('a')], [], keys, 'env1')[0].data.secretKeys).toEqual([]);
+    });
+
+    it('resolves nothing when the run environment has no entry', () => {
+      const [n] = addNodeDetails([secretNode({ env2: ['s2'] })], [], keys, 'env1');
+
+      expect(n.data.secretKeys).toEqual([]);
+    });
   });
 });
