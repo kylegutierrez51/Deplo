@@ -11,17 +11,25 @@ import { fromDefinition } from "@/lib/pipeline/definition";
 import { Edge } from "@xyflow/react";
 
 export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';
+
 export type LogStatus = 'succeeded' | 'failed' | 'running';
 
-export type LogLine = { lineNumber: number; timestamp: string; content: string };
+export type LogLine = { lineNumber: number; content: string };
 
 export type JobLog = {
+  stageId: string;
   jobName: string;
   command: string;
   status: LogStatus;
   duration: string;
   lines: LogLine[];
 };
+
+export type LogFilters = {
+  value: string; 
+  label: string;
+  status: JobStatus;
+}
 
 export type JobCounts = {
   total: number;
@@ -61,7 +69,8 @@ export type RunDetail = {
   duration: string;
   timeAgo: string;
   jobCounts: JobCounts;
-  logFilters: { value: string; label: string }[];
+  logFilters: LogFilters[];
+  logs: JobLog[];
 };
 
 const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
@@ -71,6 +80,12 @@ const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
   FAILED: 'failed',
   CANCELLED: 'cancelled',
 };
+
+const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+  RUNNING: 'running'
+}
 
 const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   WEBHOOK: 'webhook',
@@ -88,12 +103,6 @@ const STAGE_STATUS_TO_JOB_STATUS: Record<PrismaStageStatus, JobStatus> = {
   APPROVED: 'approved',
   UNAPPROVED: 'unapproved',
   CANCELLED: 'cancelled',
-};
-
-const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
-  SUCCEEDED: 'succeeded',
-  FAILED: 'failed',
-  RUNNING: 'running',
 };
 
 export type StageLite = {
@@ -133,49 +142,55 @@ export function countJobs(nodes: CustomNode[], stages: StageLite[]): JobCounts {
   return counts;
 }
 
-/** One filter option per stage defined in graphJson, in pipeline order. */
-export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): { value: string; label: string }[] {
-  const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  return nodes.map((node) => {
-    const stage = stageByStageId.get(node.id);
-    const status = stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending';
-    return { value: node.id, label: `${node.data.name ?? ''} - ${status}` };
-  });
+export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): LogFilters[] {
+  const statusByStageId = new Map<string, LogStatus>();
+
+  for (const stage of stages) {
+    const status = LOG_ELIGIBLE_STATUS[stage.status];
+    if (!status) continue;
+    statusByStageId.set(stage.stageId, status);
+  }
+
+  const filteredNodes: LogFilters[] = [];
+
+  for (const node of nodes) {
+    const status = statusByStageId.get(node.id);
+    if (!status) continue;
+    filteredNodes.push({ value: node.id, label: node.data.name ?? '', status });
+  }
+
+  return filteredNodes;
 }
 
-type StageForLogs = {
-  stageName: string;
-  command: string | null;
-  logSnippet: string | null;
-  status: PrismaStageStatus;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-};
+export function buildLogs(stages: StageResult[]): JobLog[] {
+  const filteredStages =  new Map<string, { stage: StageResult; status: LogStatus }>();
+  
+  for (const stage of stages) {
+    const status = LOG_ELIGIBLE_STATUS[stage.status];
+    if (!status) continue;
+    filteredStages.set(stage.stageId, { stage, status });
+  }
 
-/**
- * One JobLog per stage that has actually produced output (a command and/or
- * a logSnippet) and is in a terminal-or-running state. logSnippet has no
- * per-line timestamp data in the schema, so LogLine.timestamp is always ''.
- */
-export function buildLogs(stages: StageForLogs[]): JobLog[] {
-  return stages
-    .filter((stage) => (stage.command || stage.logSnippet) && LOG_ELIGIBLE_STATUS[stage.status])
-    .map((stage) => {
-      const status = LOG_ELIGIBLE_STATUS[stage.status]!;
-      const duration = stage.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—';
-      const lines: LogLine[] = (stage.logSnippet ?? '')
-        .split('\n')
-        .filter((line) => line.length > 0)
-        .map((content, index) => ({ lineNumber: index + 1, timestamp: '', content }));
+  const loggedStages: JobLog[] = [];
 
-      return {
-        jobName: stage.stageName,
-        command: stage.command ?? '',
-        status,
-        duration,
-        lines,
-      };
+  for (const { stage, status } of filteredStages.values()) {
+    const { stageName, command, startedAt, finishedAt, logSnippet } = stage;
+
+    loggedStages.push({
+      stageId: stage.stageId,
+      jobName: stageName, 
+      command: command ?? '',
+      status,
+      duration: finishedAt
+        ? getDuration(startedAt!, finishedAt)
+        : startedAt
+          ? getDuration(startedAt)
+          : '—',
+      lines: formatLines(logSnippet)
     });
+  }
+
+  return loggedStages;
 }
 
 type GithubWebhookPayload = { head_commit?: { message?: string } };
@@ -243,11 +258,13 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
         : '—',
     timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
     jobCounts: countJobs(nodes, stagesLite),
-    logFilters: buildLogFilters(nodes, stagesLite),
+    logFilters: buildLogFilters(nodes.filter(n => n.data.type !== 'approval'), stagesLite),
+    logs: buildLogs(run.stages)
   };
 }
 
-/**
+/*
+==============================================================================================
  * Folds the per-attempt StageResult rows onto their graph nodes.
  *
  * stages arrives ordered [stageId asc, attempt asc], so building the Map is
@@ -257,6 +274,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
  * secretKeyById resolves node.data.secrets (which stores ids only) to keys.
  * environmentId is the run's own environment: the editor keeps stale entries
  * for previously selected environments, so only that key is read.
+==============================================================================================
  */
 export function addNodeDetails(
   nodes: CustomNode[],
@@ -285,4 +303,25 @@ export function addNodeDetails(
       },
     };
   });
+}
+
+export function formatLines(logSnippet: string | null): LogLine[] {
+  if (!logSnippet) return [];
+
+  let start = 0;
+
+  const lines: LogLine[] = [];
+
+  for (let i = 0; i < logSnippet.length; i++) {
+    if (logSnippet[i] === '\n') {
+      lines.push({ lineNumber: lines.length + 1, content: logSnippet.slice(start, i)});
+      start = i + 1;
+    }
+  }
+
+  if (start < logSnippet.length) {
+    lines.push({ lineNumber: lines.length + 1, content: logSnippet.slice(start)});
+  }
+
+  return lines;
 }
