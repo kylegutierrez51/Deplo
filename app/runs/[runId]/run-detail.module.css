@@ -87,64 +87,6 @@ Log Viewer
 
 /*
 ====================================================================================
-Filters
-====================================================================================
-*/
-
-.logs .filters {
-  margin-bottom: var(--space-md);
-}
-
-.filters-bar {
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.input-group {
-  position: relative;
-  width: 25%;
-  min-width: 350px;
-}
-
-.input-group ion-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--icon-clr);
-  pointer-events: none; /* clicks go through the search icon */
-  font-size: 16px;
-}
-
-/* offset text so it doesn't overlap the search icon */
-.input-group input {
-  padding-left: 34px;
-}
-
-.select-group {
-  position: relative;
-}
-
-/* custom chevron arrow */
-.select-group::after {
-  content: '';
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--icon-clr);
-  pointer-events: none;
-}
-
-/*
-====================================================================================
 Run Detail Media Queries
 ====================================================================================
 */
@@ -223,17 +165,9 @@ Run Detail Media Queries
 */
 @media (max-width: 768px) {
   /* --- Job status pills --- */
-
   .job-statuses {
     flex-wrap: wrap;
     gap: var(--space-sm);
-  }
-
-  /* --- Filters (Logs tab) --- */
-
-  .input-group {
-    width: 40%;
-    min-width: 200px;
   }
 }
 
@@ -248,24 +182,5 @@ Run Detail Media Queries
   .run-main,
   .run-main:global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Filters (Logs tab) --- */
-
-  .input-group {
-    width: 100%;
-  }
-
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  .input-group input {
-    min-height: 44px;
   }
 }
