@@ -1,18 +1,10 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 
-/** Matches the "last ~50 lines" the StageResult.logSnippet column documents. */
 export const LOG_SNIPPET_LINES = 50;
 
-/** How long a command gets to clean up after SIGTERM before SIGKILL. POSIX only — see killTree. */
 const KILL_GRACE_MS = 5_000;
-
-/*
- * A single line is truncated past this. maxLines alone bounds the line *count* and not the
- * memory: one command emitting a minified bundle or a base64 artifact with no newline in it
- * grows the pending line without limit and takes the runner down — along with every other
- * stage running concurrently.
- */
 const MAX_LINE_CHARS = 2_000;
+const SNAPSHOT_INTERVAL_MS = 2_000;
 
 /*
  * Every child currently running, so shutdown can take them down with it.
@@ -25,7 +17,6 @@ const MAX_LINE_CHARS = 2_000;
  */
 const running = new Set<ChildProcess>();
 
-/** Terminates every in-flight command. Called by the entrypoint on the way out. */
 export function killAllChildren(): void {
   for (const child of running) killTree(child, true);
 }
@@ -36,11 +27,12 @@ export interface ExecuteOptions {
   env: NodeJS.ProcessEnv;
   timeoutMs: number;
   maxLines?: number;
+  onSnapshot?: (logSnippet: string) => void;
+  snapshotMs?: number;
 }
 
 export interface ExecuteResult {
   exitCode: number | null;
-  /** Set when the child was terminated by a signal instead of exiting on its own. */
   signal: NodeJS.Signals | null;
   timedOut: boolean;
   logSnippet: string;
@@ -53,11 +45,15 @@ export interface ExecuteResult {
  * Resolves for any outcome the command itself produced, including a non-zero exit and a
  * timeout — those are results the processor records, not errors. It rejects only when the
  * child could not be started at all, which is the one case with nothing to report.
- *
 ==============================================================================================
 */
 export function execute(
-  { command, cwd, env, timeoutMs, maxLines = LOG_SNIPPET_LINES }: ExecuteOptions,
+  {
+    command, cwd, env, timeoutMs,
+    maxLines = LOG_SNIPPET_LINES,
+    onSnapshot,
+    snapshotMs = SNAPSHOT_INTERVAL_MS,
+  }: ExecuteOptions,
 ): Promise<ExecuteResult> {
   return new Promise((resolve, reject) => {
     const log = createLineBuffer(maxLines);
@@ -91,12 +87,28 @@ export function execute(
       graceTimer.unref(); // prevents timer from being reason runner refuses to exit at shutdown
     }, timeoutMs);
 
+
+    let lastSent = '';
+
+    const snapshots = onSnapshot && setInterval(() => {
+      const tail = log.peek();
+      if (tail === lastSent) return;
+
+      lastSent = tail;
+      onSnapshot(tail);
+    }, snapshotMs);
+
+    snapshots?.unref(); // same reasoning as graceTimer above
+
     const finish = (settle: () => void) => {
       if (settled) return;
       settled = true;
       running.delete(child);
       clearTimeout(deadline);
       clearTimeout(graceTimer);
+      // Every settle path funnels through here, which is what stops a snapshot from firing
+      // against a row finishStage has already written terminal.
+      clearInterval(snapshots);
       settle();
     };
 
@@ -191,17 +203,18 @@ function createLineBuffer(maxLines: number) {
   return {
     write(chunk: string) {
       const parts = (partial + chunk).split('\n');
-      // The trailing piece has no newline yet, so it is not a complete line — hold it
-      // until the next chunk arrives or the stream closes.
       partial = parts.pop() ?? '';
       for (const line of parts) push(truncate(line.replace(/\r$/, ''))); // regex strips hidden Windows-style line at end of text (\r)
 
-      // A command can emit megabytes without ever writing a newline, and the held piece
-      // would grow with all of it. Once it is past what would be kept anyway, bank it.
       if (partial.length > MAX_LINE_CHARS) {
         push(truncate(partial));
         partial = '';
       }
+    },
+
+    peek(): string {
+      const all = partial ? [...lines, truncate(partial)] : lines;
+      return all.slice(-maxLines).join('\n');
     },
 
     flush(): string {

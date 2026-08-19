@@ -176,6 +176,20 @@ export async function finishStage(runId: string, stageId: string, attempt: numbe
   return count === 1;
 }
 
+export async function recordStageProgress(
+  runId: string,
+  stageId: string,
+  attempt: number,
+  logSnippet: string,
+): Promise<boolean> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: { runId, stageId, attempt, status: 'RUNNING' },
+    data: { logSnippet },
+  });
+
+  return count === 1;
+}
+
 
 /*
 ==============================================================================================
@@ -232,39 +246,41 @@ export async function openRetry(runId: string, stageId: string, attempt: number)
 ==============================================================================================
  * Fails every stage row left RUNNING by a process that is no longer alive.
  *
- * ASSUMES A SINGLE RUNNER PROCESS. Called once at boot, before either worker starts
- * consuming. With a second runner active this would fail that runner's live stages, because
- * a row gives no way to tell "abandoned by a dead process" from "owned by a living one".
- *
- * Deliberately not QUEUED: a waiting BullMQ job survives in Redis and is delivered on
- * restart, so failing that row would kill a stage that was about to run correctly. RUNNING
- * is the status with no such second chance — maxStalledCount: 0 means BullMQ will not
- * re-execute the job, so nothing else is ever going to finish that row.
- *
  * QUEUED rows are handled separately, by the reaper's own pass over findQueuedStages —
  * they need a Redis round trip per row that this statement cannot make.
  *
- * One statement, deliberately. Reading the ids first and then updating `id: { in: ids }`
- * needs two guards to cover the gap it opens — the id bound to skip rows that reached
- * RUNNING after the read, and a status guard to skip snapshot rows that left it — and
- * READ COMMITTED already gives both for free: the UPDATE's snapshot is taken at statement
- * start so a row that turns RUNNING later is never visited, and a row concurrently moved
- * off RUNNING has the `where` re-evaluated against the new version before it is locked.
- * The two-statement form also does not buy back the single-process assumption, since a
- * second runner's already-RUNNING stage is equally visible to the read.
+ * Use Raw SQL since the note variable has to be *appended* to
+ * each row's own logSnippet rather than assigned over it: recordStageProgress has been
+ * saving that stage's output every couple of seconds precisely so it survives a crash, and
+ * overwriting it here would discard the only record of how far the command got, on exactly
+ * the rows someone opens the run to read. Prisma's updateMany cannot express that, because
+ * a `data` value is a constant where this needs an expression over the existing column.
+ * Going through the client would mean one update per row and the gap described above, so
+ * the statement moves to SQL rather than the sweep losing its single-statement property.
 ==============================================================================================
 */
 export async function reapStaleStages(): Promise<number> {
-  const { count } = await prisma.stageResult.updateMany({
-    where: { status: 'RUNNING' },
-    data: {
-      status: 'FAILED',
-      finishedAt: new Date(),
-      logSnippet: 'The runner stopped while this stage was running, so its result was lost.',
-    },
-  });
+  const note = 'The runner stopped while this stage was running, so its result was lost.';
 
-  return count;
+  /*
+   * CHR(10) - equivalent to a newline
+   *
+   * NOW() AT TIME ZONE 'UTC' rather than NOW(): finishedAt is TIMESTAMP(3) without a zone
+   * and Prisma stores UTC in it, so a bare NOW() would land the session's local time in a
+   * column every other writer fills with UTC.
+   * 
+   * The ELSE concatenates '\n{note}' to logSnippet
+   */
+  return await prisma.$executeRaw`
+    UPDATE "stage_results"
+    SET "status" = 'FAILED'::"StageStatus",
+        "finishedAt" = NOW() AT TIME ZONE 'UTC',
+        "logSnippet" = CASE
+          WHEN "logSnippet" IS NULL OR "logSnippet" = '' THEN ${note}::text
+          ELSE "logSnippet" || CHR(10) || ${note}::text
+        END
+    WHERE "status" = 'RUNNING'::"StageStatus"
+  `;
 }
 
 // Every run the scheduler might still owe a decision to, newest last. Used by the boot reaper.

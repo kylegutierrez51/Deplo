@@ -1,4 +1,7 @@
-import { loadRunContext, markStageRunning, finishStage, openRetry, type StageOutcome } from "./db";
+import {
+  loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress,
+  type StageOutcome,
+} from "./db";
 import type { Payload } from "./stageQueue";
 import path from "node:path";
 import { RUNNER_WORKSPACE_ROOT } from './connection';
@@ -107,11 +110,24 @@ async function attemptStage(
       ...secrets,
     };
 
+    let savingProgress = false;
+
     const result = await execute({
       command,
       cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
       env,
       timeoutMs,
+      onSnapshot: tail => {
+        if (savingProgress) return;
+        savingProgress = true;
+
+        recordStageProgress(job.runId, job.stageId, job.attempt, tail)
+          .catch(error => console.error(
+            `stage ${job.stageId} of run ${job.runId}: log progress not saved:`,
+            error instanceof Error ? error.message : error,
+          ))
+          .finally(() => { savingProgress = false; });
+      },
     });
 
     return {
