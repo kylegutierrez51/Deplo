@@ -1,30 +1,23 @@
 import styles from './log-viewer.module.css'
 import LogLine from './LogLine';
+import type { JobLog, LogStatus } from '@/lib/data/run-detail';
 
-type Status = 'succeeded' | 'failed' | 'running';
-type LogLineData = { lineNumber: number, timestamp: string, content: string };
 
-interface LogViewerProps {
-  jobName: string;
-  command: string;
-  status: Status;
-  duration: string;
-  lines: LogLineData[];
-}
-
-const iconName: Record<Status, string> = {
+const iconName: Record<LogStatus, string> = {
   succeeded: 'checkmark-circle-outline',
   running:   'sync-outline',
   failed:    'close-circle-outline',
 };
 
-const footerText: Record<Status, string> = {
+const footerText: Record<LogStatus, string> = {
   succeeded: 'Process exited with code 0',
   failed:    'Process exited with code 1',
   running:   'Running...',
 };
 
-export default function LogViewer({ jobName, command, status, duration, lines }: LogViewerProps) {
+export default function LogViewer({ log }: { log: JobLog }) {
+  const { status, jobName, command, duration, lines } = log;
+
   return (
     <div className={styles['log-viewer']}>
 
@@ -42,9 +35,7 @@ export default function LogViewer({ jobName, command, status, duration, lines }:
           <LogLine
             key={index}
             lineNumber={line.lineNumber}
-            timestamp={line.timestamp}
             content={line.content}
-            logPrompt={line.content === command}
           />
         ))}
       </div>
