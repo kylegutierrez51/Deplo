@@ -1253,3 +1253,19 @@ Case 3.
  The next 2 lines then attempt to delete the lock, and if successful, removeStageJob(jobId) returns true, so it sets the previously locked job from 'QUEUED' to 'PENDING'
 
  If reclaimStageJob() returns false: That job will be failed by the stalled checker and will never run, so the row is failed rather than reset: reverting it from 'QUEUED' to 'PENDING' would re-enqueue the job witbt be same jobId that's still in the keyspace, leaving the stage hung with nothing scheduled to move it. So we just fail that stage.
+
+===================================================================================================================================
+
+FilterListBox.tsx
+
+  const [selected, setSelected] = useState(
+    () => options.find((option) => option.value === defaultValue)?.value ?? options[0]?.value ?? '',
+  );
+
+  const selectedOption = options.find((option) => option.value === selected) ?? options[0];
+  const selectedValue = selectedOption?.value ?? '';
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selectedValue)); 
+  
+That last line ensures that even if the 'options' list changes in order and re-renders, that the stage the user is currently viewing doesn't jump to another stage (e.g. -- 'test' was index 0, but 'options' changes so that 'build' is index 0 - this line still ensures that the user still looks at 'test')
+
+So the only thing that changes is the order of the stages in the filter, which (for the Run Detail page) is based on the order the user created the nodes in the Pipeline Editor (via @/lib/data/run-detail.ts -- buildLogFilters() 2nd for loop)
