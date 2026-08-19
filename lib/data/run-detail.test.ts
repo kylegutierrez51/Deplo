@@ -173,6 +173,7 @@ describe('buildLogs', () => {
       stageId: 'a',
       jobName: 'build',
       command: 'npm run build',
+      attempt: 1,
       status: 'succeeded',
       duration: '30s',
       lines: [
@@ -207,25 +208,27 @@ describe('buildLogs', () => {
    * rule addNodeDetails applies to the graph node.
    */
   describe('the retry fold', () => {
-    it('keeps the highest attempt when a stage has several rows', () => {
+    it('keeps both attempts when a stage has several rows', () => {
       const logs = buildLogs([
         logged({ attempt: 1, status: 'FAILED', logSnippet: 'first try' }),
         logged({ attempt: 2, status: 'SUCCEEDED', logSnippet: 'second try' }),
       ]);
 
-      expect(logs).toHaveLength(1);
-      expect(logs[0].status).toBe('succeeded');
-      expect(logs[0].lines).toEqual([{ lineNumber: 1, content: 'second try' }]);
+      expect(logs).toHaveLength(2);
+      expect(logs[0].status).toBe('failed');
+      expect(logs[0].lines).toEqual([{ lineNumber: 1, content: 'first try' }]);
+      expect(logs[1].status).toBe('succeeded');
+      expect(logs[1].lines).toEqual([{ lineNumber: 1, content: 'second try' }]);
     });
 
-    it('keeps one panel per stage id', () => {
+    it('keeps all panels per stage id', () => {
       const logs = buildLogs([
         logged({ stageId: 'a', stageName: 'build', attempt: 1 }),
         logged({ stageId: 'a', stageName: 'build', attempt: 2 }),
         logged({ stageId: 'b', stageName: 'test', attempt: 1 }),
       ]);
 
-      expect(logs.map(l => l.jobName)).toEqual(['build', 'test']);
+      expect(logs.map(l => l.jobName)).toEqual(['build', 'build', 'test']);
     });
 
     /*
@@ -272,16 +275,9 @@ describe('buildLogs', () => {
       expect(buildLogs([logged({ logSnippet: null, status: 'RUNNING', finishedAt: null })])[0].lines).toEqual([]);
     });
 
-    /*
-     * The status filter is the only filter, so a row with nothing to show still
-     * produces a panel - an empty header over an empty body. The previous
-     * implementation also required `command || logSnippet`. Pinned as-is because
-     * whether such a row can exist depends on validation guaranteeing a command,
-     * not on anything this function enforces.
-     */
     it('still emits a panel for a row with neither a command nor a snippet', () => {
       expect(buildLogs([logged({ command: null, logSnippet: null })])).toEqual([
-        { stageId: 'a', jobName: 'build', command: '', status: 'succeeded', duration: '30s', lines: [] },
+        { stageId: 'a', attempt: 1, jobName: 'build', command: '', status: 'succeeded', duration: '30s', lines: [] },
       ]);
     });
   });

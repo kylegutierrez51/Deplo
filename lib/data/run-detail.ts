@@ -20,6 +20,7 @@ export type JobLog = {
   stageId: string;
   jobName: string;
   command: string;
+  attempt: number;
   status: LogStatus;
   duration: string;
   lines: LogLine[];
@@ -163,23 +164,24 @@ export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): LogFi
 }
 
 export function buildLogs(stages: StageResult[]): JobLog[] {
-  const filteredStages =  new Map<string, { stage: StageResult; status: LogStatus }>();
+  const filteredStages = [];
   
   for (const stage of stages) {
     const status = LOG_ELIGIBLE_STATUS[stage.status];
     if (!status) continue;
-    filteredStages.set(stage.stageId, { stage, status });
+    filteredStages.push({ stage, status });
   }
 
   const loggedStages: JobLog[] = [];
 
-  for (const { stage, status } of filteredStages.values()) {
-    const { stageName, command, startedAt, finishedAt, logSnippet } = stage;
+  for (const { stage, status } of filteredStages) {
+    const { stageId, stageName, command, attempt, startedAt, finishedAt, logSnippet } = stage;
 
     loggedStages.push({
-      stageId: stage.stageId,
+      stageId: stageId,
       jobName: stageName, 
       command: command ?? '',
+      attempt,
       status,
       duration: finishedAt
         ? getDuration(startedAt!, finishedAt)
