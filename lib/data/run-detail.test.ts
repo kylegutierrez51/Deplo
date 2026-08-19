@@ -295,15 +295,7 @@ describe('buildLogs', () => {
     expect(logs.map(l => l.jobName)).toEqual(['test', 'build']);
   });
 });
-In lib/data/run-detail.test.ts, cover the rewritten buildLogs and formatLines.
 
-The old buildLogs cases were stale: its signature moved from a structural StageForLogs to a whole StageResult, and LogLine lost its timestamp field. Replaced rather than adapted, and the StageResult fixture is hoisted so buildLogs and addNodeDetails share one.
-
-buildLogFilters is updated too, since it now applies the same LOG_ELIGIBLE_STATUS filter as buildLogs and drops a node with no eligible row instead of reporting it as pending.
-
-Two TODO(bug) cases pin defects rather than behaviour: formatLines splits on '\n' alone, so CRLF output keeps a trailing '\r' on every line, and panels come out in stageId order while the filter dropdown uses graphJson order.
-
-Co-Authored-By: Claude Opus 5 noreply@anthropic.com
 describe('formatLines', () => {
   const contents = (snippet: string | null) => formatLines(snippet).map(l => l.content);
 
