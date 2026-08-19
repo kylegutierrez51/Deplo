@@ -46,7 +46,7 @@
 .rdc-num {
   font-size: var(--font-size-lg);
   color: var(--subtitle-clr);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .rdc-status {
@@ -101,7 +101,7 @@
 
 .rdc-commit-hash {
   color: var(--blue-clr);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: inherit;
 }
 

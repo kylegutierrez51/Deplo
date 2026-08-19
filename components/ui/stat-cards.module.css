@@ -36,7 +36,7 @@ Cards
 }
 
 .card-detail .card-name {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono);
 }
 
 /* Approvals */

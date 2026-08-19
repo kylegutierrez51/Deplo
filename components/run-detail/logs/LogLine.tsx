@@ -1,4 +1,4 @@
-import styles from './log-line.module.css'
+import styles from './log-line.module.css';
 
 interface LogLineProps {
   lineNumber: number;
