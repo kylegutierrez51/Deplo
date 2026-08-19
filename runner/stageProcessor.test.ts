@@ -1,5 +1,5 @@
 import { processStage } from './stageProcessor';
-import { loadRunContext, markStageRunning, finishStage, openRetry } from './db';
+import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress } from './db';
 import { execute } from './execute';
 import { resolveSecrets } from './secrets';
 import { advanceRun } from './runProcessor';
@@ -17,6 +17,7 @@ jest.mock('./db', () => ({
   markStageRunning: jest.fn(),
   finishStage: jest.fn(),
   openRetry: jest.fn(),
+  recordStageProgress: jest.fn(),
 }));
 jest.mock('./execute', () => ({ execute: jest.fn() }));
 jest.mock('./secrets', () => ({ resolveSecrets: jest.fn() }));
@@ -41,6 +42,7 @@ const retry = openRetry as jest.MockedFunction<typeof openRetry>;
 const run = execute as jest.MockedFunction<typeof execute>;
 const secrets = resolveSecrets as jest.MockedFunction<typeof resolveSecrets>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
+const progress = recordStageProgress as jest.MockedFunction<typeof recordStageProgress>;
 
 const job = { runId: 'run-1', stageId: 'build', attempt: 1 };
 
@@ -75,6 +77,7 @@ beforeEach(() => {
   finish.mockResolvedValue(true);
   retry.mockResolvedValue(true);
   secrets.mockResolvedValue({});
+  progress.mockResolvedValue(true);
   context();
   exited(0);
   jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -408,5 +411,60 @@ describe('failures that never reached the command', () => {
 
     expect(run).not.toHaveBeenCalled();
     expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED' }));
+  });
+});
+
+/*
+ * execute() hands over the tail every couple of seconds while the command is still running,
+ * and this is where it gets persisted. The property under test is containment: a stage's
+ * outcome must not depend in any way on whether those writes worked.
+ */
+describe('progress snapshots', () => {
+  /** Drives the callback the way execute()'s timer would, from inside the command. */
+  const emitting = (...tails: string[]) =>
+    run.mockImplementation((async (options: Parameters<typeof execute>[0]) => {
+      for (const tail of tails) options.onSnapshot?.(tail);
+      return { exitCode: 0, signal: null, timedOut: false, logSnippet: tails.at(-1) ?? '' };
+    }) as never);
+
+  // setTimeout, not setImmediate: this suite runs under jsdom, which has no setImmediate.
+  const flushMicrotasks = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  it('persists a tail against this run, stage and attempt', async () => {
+    emitting('half way');
+
+    await processStage({ runId: 'run-1', stageId: 'build', attempt: 2 });
+
+    expect(progress).toHaveBeenCalledWith('run-1', 'build', 2, 'half way');
+  });
+
+  /*
+   * The callback runs on a timer, so a rejection inside it has no owner: unhandled, it takes
+   * the whole runner down with it. A database hiccup while a command is running must cost
+   * nothing more than a missing log line.
+   */
+  it('does not fail the stage when the progress write rejects', async () => {
+    progress.mockRejectedValue(new Error('connection terminated'));
+    emitting('half way');
+
+    await expect(processStage(job)).resolves.toBeUndefined();
+    await flushMicrotasks();
+
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'SUCCEEDED' }));
+  });
+
+  /*
+   * Two writes in flight at once can commit out of order, which leaves the *older* tail as
+   * the row's last word until the next tick corrects it. Skipping the tick instead is free:
+   * the buffer is not consumed by a snapshot, so the next one carries everything anyway.
+   */
+  it('skips a tick while the previous write is still in flight', async () => {
+    progress.mockReturnValue(new Promise<boolean>(() => { }));
+    emitting('first', 'second');
+
+    await processStage(job);
+
+    expect(progress).toHaveBeenCalledTimes(1);
+    expect(progress).toHaveBeenCalledWith('run-1', 'build', 1, 'first');
   });
 });

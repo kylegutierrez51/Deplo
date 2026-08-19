@@ -109,6 +109,102 @@ describe('the log snippet', () => {
   });
 });
 
+/*
+ * Between markStageRunning and finishStage the row's logSnippet is null, so a stage that
+ * has been building for four minutes shows the Run Detail page nothing at all. The buffer
+ * already holds the tail; these snapshots are what get it out of the runner's memory and
+ * into the row while the command is still running.
+ *
+ * execute never awaits the callback and never lets it fail: persisting a log tail must not
+ * be able to delay a command or turn a passing stage into a failed one.
+ */
+describe('progress snapshots', () => {
+  const collect = () => {
+    const seen: string[] = [];
+    return { seen, onSnapshot: (tail: string) => { seen.push(tail); } };
+  };
+
+  const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  it('reports the tail while the command is still running', async () => {
+    const { seen, onSnapshot } = collect();
+
+    const { logSnippet } = await run(
+      node("console.log('early');setTimeout(function(){console.log('late')},700)"),
+      { onSnapshot, snapshotMs: 100 },
+    );
+
+    // The whole point, and the reason it is seen[0] rather than a count: a tail holding
+    // 'early' and not yet 'late' could only have been observed while the command was
+    // still running. How many ticks land after that is a matter of scheduling, so
+    // asserting on the later ones would only pin the machine's timing.
+    expect(seen[0]).toBe('early');
+    expect(logSnippet).toBe('early\nlate');
+  }, 20_000);
+
+  /*
+   * A tick that re-sends an unchanged tail is a pure write of a text column for nothing.
+   * With concurrency: 5 and a 2s interval that is otherwise five needless updates every
+   * two seconds for the entire length of a quiet stage.
+   */
+  it('does not repeat a tail that has not changed', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(
+      node("console.log('once');setTimeout(function(){},600)"),
+      { onSnapshot, snapshotMs: 50 },
+    );
+
+    expect(seen).toEqual(['once']);
+  }, 20_000);
+
+  it('reports nothing at all for a command that never prints', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(node('setTimeout(function(){},400)'), { onSnapshot, snapshotMs: 50 });
+
+    expect(seen).toEqual([]);
+  }, 20_000);
+
+  /*
+   * The timer is cleared on every settle path. A snapshot that fires after finishStage has
+   * written the terminal row would be a stale, shorter tail landing on a finished stage —
+   * the RUNNING guard in recordStageProgress rejects it, but leaving the timer alive means
+   * a pointless query per tick forever, since nothing else would ever stop it.
+   */
+  it('stops firing once the command has exited', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(node("console.log('done')"), { onSnapshot, snapshotMs: 50 });
+    const atExit = seen.length;
+
+    await settle(300);
+
+    expect(seen).toHaveLength(atExit);
+  }, 20_000);
+
+  /*
+   * Snapshots must read the buffer without consuming it. flush() banks the partial-line
+   * remainder into lines and clears it, so a tick landing mid-line would split one line of
+   * output into two in the *final* snippet — the snapshot silently corrupting the thing it
+   * was only supposed to observe. Below, 'abc' is still partial when two ticks pass.
+   */
+  it('does not split a line that a tick lands in the middle of', async () => {
+    const { onSnapshot } = collect();
+
+    const { logSnippet } = await run(
+      node("process.stdout.write('abc');setTimeout(function(){process.stdout.write('def')},400)"),
+      { onSnapshot, snapshotMs: 100 },
+    );
+
+    expect(logSnippet).toBe('abcdef');
+  }, 20_000);
+
+  it('runs no timer at all when no callback is given', async () => {
+    expect((await run(node("console.log('x')"), { snapshotMs: 10 })).logSnippet).toBe('x');
+  });
+});
+
 describe('timeouts', () => {
   /*
    * Nothing is asserted about exitCode or signal: POSIX reports null plus SIGKILL, Windows
