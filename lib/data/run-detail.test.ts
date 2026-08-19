@@ -1,4 +1,4 @@
-import { countJobs, buildLogFilters, buildLogs, addNodeDetails, type StageLite } from '@/lib/data/run-detail';
+import { countJobs, buildLogFilters, buildLogs, formatLines, addNodeDetails, type StageLite } from '@/lib/data/run-detail';
 import type { CustomNode } from '@/lib/types';
 import type { StageStatus as PrismaStageStatus, StageResult } from '@/generated/prisma';
 
@@ -20,6 +20,28 @@ const node = (id: string, name = id): CustomNode => ({
 });
 
 const stage = (stageId: string, status: PrismaStageStatus): StageLite => ({ stageId, status });
+
+/* buildLogs and addNodeDetails both take whole StageResult rows, so they share this. */
+const row = (over: Partial<StageResult> = {}): StageResult => ({
+  id: 'sr1',
+  runId: 'run1',
+  stageId: 'a',
+  stageName: 'build',
+  stageType: 'CUSTOM',
+  status: 'SUCCEEDED',
+  exitCode: 0,
+  logSnippet: null,
+  command: 'npm run build',
+  attempt: 1,
+  maxRetries: 0,
+  approvedById: null,
+  approvedAt: null,
+  startedAt: new Date('2026-01-01T00:00:00Z'),
+  finishedAt: new Date('2026-01-01T00:00:30Z'),
+  createdAt: new Date('2026-01-01T00:00:00Z'),
+  ...over,
+});
+
 
 describe('countJobs', () => {
   it('counts every node in the graph as total, stage row or not', () => {
@@ -90,26 +112,42 @@ describe('countJobs', () => {
 });
 
 describe('buildLogFilters', () => {
-  it('emits one option per node in pipeline order, not stage order', () => {
+  /*
+   * The dropdown lists the stages the log pane can actually show, so it applies
+   * the same status filter buildLogs does: a node with no eligible row is left
+   * out entirely rather than listed as pending. The two must agree, or the filter
+   * offers a stage with no panel behind it.
+   */
+  it('emits one option per eligible node in pipeline order, not stage order', () => {
     const nodes = [node('n3', 'deploy'), node('n1', 'build'), node('n2', 'test')];
+    const stages = [stage('n1', 'SUCCEEDED'), stage('n2', 'RUNNING'), stage('n3', 'FAILED')];
 
-    expect(buildLogFilters(nodes, []).map(f => f.value)).toEqual(['n3', 'n1', 'n2']);
+    expect(buildLogFilters(nodes, stages).map(f => f.value)).toEqual(['n3', 'n1', 'n2']);
   });
 
-  it('labels an option with the stage name and its job status', () => {
+  /*
+   * The status rides alongside the label rather than inside it: FilterListbox
+   * renders it as a Pill, so a label that spelled the status out would print it
+   * twice. Every JobStatus is also a PillVariant, which is what makes that work.
+   */
+  it('labels an option with the bare stage name and reports its job status beside it', () => {
     const filters = buildLogFilters([node('n1', 'build')], [stage('n1', 'SUCCEEDED')]);
 
-    expect(filters[0]).toEqual({ value: 'n1', label: 'build - succeeded' });
+    expect(filters[0]).toEqual({ value: 'n1', label: 'build', status: 'succeeded' });
   });
 
-  it('falls back to pending when the stage has not started', () => {
-    expect(buildLogFilters([node('n1', 'build')], [])[0].label).toBe('build - pending');
+  it.each(['SUCCEEDED', 'FAILED', 'RUNNING'] as const)('lists a %s stage', (status) => {
+    expect(buildLogFilters([node('n1', 'build')], [stage('n1', status)])).toHaveLength(1);
   });
 
-  it('renders the hyphenated form of AWAITING_APPROVAL', () => {
-    const filters = buildLogFilters([node('n1', 'gate')], [stage('n1', 'AWAITING_APPROVAL')]);
+  it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED', 'CANCELLED'] as const)(
+    'omits a %s stage, which has no log panel behind it', (status) => {
+      expect(buildLogFilters([node('n1', 'build')], [stage('n1', status)])).toEqual([]);
+    });
 
-    expect(filters[0].label).toBe('gate - awaiting-approval');
+  // A queued run has graph nodes but no StageResult rows at all.
+  it('omits a node with no stage row', () => {
+    expect(buildLogFilters([node('n1', 'build')], [])).toEqual([]);
   });
 
   // fromDefinition omits `name` entirely when it was never set, so the ?? ''
@@ -117,7 +155,7 @@ describe('buildLogFilters', () => {
   it('renders an empty name rather than "undefined"', () => {
     const unnamed = { id: 'n1', position: { x: 0, y: 0 }, data: { type: 'custom' as const } };
 
-    expect(buildLogFilters([unnamed], [])[0].label).toBe(' - pending');
+    expect(buildLogFilters([unnamed], [stage('n1', 'SUCCEEDED')])[0].label).toBe('');
   });
 
   it('returns no options for an empty graph', () => {
@@ -126,97 +164,202 @@ describe('buildLogFilters', () => {
 });
 
 describe('buildLogs', () => {
-  const logStage = (over: Partial<Parameters<typeof buildLogs>[0][number]> = {}) => ({
-    stageName: 'build',
-    command: 'npm run build',
-    logSnippet: 'line one\nline two',
-    status: 'SUCCEEDED' as PrismaStageStatus,
-    startedAt: new Date('2026-01-01T00:00:00Z'),
-    finishedAt: new Date('2026-01-01T00:00:30Z'),
-    ...over,
-  });
+  const logged = (over: Partial<StageResult> = {}) => row({ logSnippet: 'line one\nline two', ...over });
 
-  it('builds a log entry per eligible stage', () => {
-    const [log] = buildLogs([logStage()]);
+  it('maps an eligible row onto a log panel', () => {
+    const [log] = buildLogs([logged()]);
 
     expect(log).toEqual({
+      stageId: 'a',
       jobName: 'build',
       command: 'npm run build',
       status: 'succeeded',
       duration: '30s',
       lines: [
-        { lineNumber: 1, timestamp: '', content: 'line one' },
-        { lineNumber: 2, timestamp: '', content: 'line two' },
+        { lineNumber: 1, content: 'line one' },
+        { lineNumber: 2, content: 'line two' },
       ],
     });
   });
 
-  it.each(['SUCCEEDED', 'FAILED', 'RUNNING'] as const)('includes a %s stage', (status) => {
-    expect(buildLogs([logStage({ status })])).toHaveLength(1);
+  it.each(['SUCCEEDED', 'FAILED'] as const)('includes a %s stage', (status) => {
+    expect(buildLogs([logged({ status })])).toHaveLength(1);
   });
 
-  // An approval gate or a stage that never ran has nothing to show.
+  it('includes a RUNNING stage', () => {
+    expect(buildLogs([logged({ status: 'RUNNING', finishedAt: null })])).toHaveLength(1);
+  });
+
+  // An approval gate or a stage that never ran has no output to show.
   it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED', 'CANCELLED'] as const)(
     'excludes a %s stage', (status) => {
-      expect(buildLogs([logStage({ status })])).toEqual([]);
+      expect(buildLogs([logged({ status })])).toEqual([]);
     });
 
-  it('excludes a stage with neither a command nor a snippet', () => {
-    expect(buildLogs([logStage({ command: null, logSnippet: null })])).toEqual([]);
+  it('returns nothing for no stages', () => {
+    expect(buildLogs([])).toEqual([]);
   });
 
-  it('includes a stage that has a command but produced no output yet', () => {
-    const [log] = buildLogs([logStage({ logSnippet: null, status: 'RUNNING', finishedAt: null })]);
+  /*
+   * A retry is a new row, not a re-run, so an eligible stage can arrive as several
+   * rows. Callers pass them ordered [stageId asc, attempt asc] and the Map fold is
+   * last-write-wins, which makes the highest attempt the one panel shown - the same
+   * rule addNodeDetails applies to the graph node.
+   */
+  describe('the retry fold', () => {
+    it('keeps the highest attempt when a stage has several rows', () => {
+      const logs = buildLogs([
+        logged({ attempt: 1, status: 'FAILED', logSnippet: 'first try' }),
+        logged({ attempt: 2, status: 'SUCCEEDED', logSnippet: 'second try' }),
+      ]);
 
-    expect(log.lines).toEqual([]);
+      expect(logs).toHaveLength(1);
+      expect(logs[0].status).toBe('succeeded');
+      expect(logs[0].lines).toEqual([{ lineNumber: 1, content: 'second try' }]);
+    });
+
+    it('keeps one panel per stage id', () => {
+      const logs = buildLogs([
+        logged({ stageId: 'a', stageName: 'build', attempt: 1 }),
+        logged({ stageId: 'a', stageName: 'build', attempt: 2 }),
+        logged({ stageId: 'b', stageName: 'test', attempt: 1 }),
+      ]);
+
+      expect(logs.map(l => l.jobName)).toEqual(['build', 'test']);
+    });
+
+    /*
+     * openRetry writes attempt N+1 as PENDING *before* recording the failure on
+     * attempt N, so during that window the only eligible row is the failed one.
+     * The panel therefore still shows attempt N while addNodeDetails - which folds
+     * every row, not just the eligible ones - already reads the stage as pending.
+     */
+    it('falls back to the last eligible attempt when the newest row is not eligible yet', () => {
+      const logs = buildLogs([
+        logged({ attempt: 1, status: 'FAILED', logSnippet: 'first try' }),
+        logged({ attempt: 2, status: 'PENDING', logSnippet: null }),
+      ]);
+
+      expect(logs).toHaveLength(1);
+      expect(logs[0].status).toBe('failed');
+    });
   });
 
-  it('includes a stage that produced output but has no recorded command', () => {
-    const [log] = buildLogs([logStage({ command: null })]);
+  describe('duration', () => {
+    it('measures a finished stage between its start and finish', () => {
+      expect(buildLogs([logged()])[0].duration).toBe('30s');
+    });
 
-    expect(log.command).toBe('');
+    it('measures a still-running stage against now', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-01-01T00:02:00Z'));
+
+      expect(buildLogs([logged({ status: 'RUNNING', finishedAt: null })])[0].duration).toBe('2m');
+
+      jest.useRealTimers();
+    });
+
+    it('renders an em dash when the stage never started', () => {
+      expect(buildLogs([logged({ startedAt: null, finishedAt: null })])[0].duration).toBe('—');
+    });
   });
 
-  it('drops blank lines so the gutter numbering stays contiguous', () => {
-    const [log] = buildLogs([logStage({ logSnippet: 'one\n\n\ntwo\n' })]);
+  describe('missing fields', () => {
+    it('renders a row with no recorded command as an empty command', () => {
+      expect(buildLogs([logged({ command: null })])[0].command).toBe('');
+    });
 
-    expect(log.lines.map(l => l.content)).toEqual(['one', 'two']);
-    expect(log.lines.map(l => l.lineNumber)).toEqual([1, 2]);
+    it('renders a stage that has a command but no output yet as an empty body', () => {
+      expect(buildLogs([logged({ logSnippet: null, status: 'RUNNING', finishedAt: null })])[0].lines).toEqual([]);
+    });
+
+    /*
+     * The status filter is the only filter, so a row with nothing to show still
+     * produces a panel - an empty header over an empty body. The previous
+     * implementation also required `command || logSnippet`. Pinned as-is because
+     * whether such a row can exist depends on validation guaranteeing a command,
+     * not on anything this function enforces.
+     */
+    it('still emits a panel for a row with neither a command nor a snippet', () => {
+      expect(buildLogs([logged({ command: null, logSnippet: null })])).toEqual([
+        { stageId: 'a', jobName: 'build', command: '', status: 'succeeded', duration: '30s', lines: [] },
+      ]);
+    });
   });
 
-  // The schema stores logSnippet as one blob with no per-line timestamps.
-  it('leaves every timestamp blank', () => {
-    const [log] = buildLogs([logStage({ logSnippet: 'a\nb\nc' })]);
-
-    expect(log.lines.every(l => l.timestamp === '')).toBe(true);
-  });
-
-  it('renders an em dash when the stage never started', () => {
-    const [log] = buildLogs([logStage({ startedAt: null })]);
-
-    expect(log.duration).toBe('—');
-  });
-
-  it('measures a still-running stage against now', () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-01-01T00:02:00Z'));
-
-    const [log] = buildLogs([logStage({ status: 'RUNNING', finishedAt: null })]);
-    expect(log.duration).toBe('2m');
-
-    jest.useRealTimers();
-  });
-
-  it('preserves stage order', () => {
+  it('emits panels in row order rather than graph order', () => {
     const logs = buildLogs([
-      logStage({ stageName: 'test' }),
-      logStage({ stageName: 'build' }),
+      logged({ stageId: 'a-test', stageName: 'test' }),
+      logged({ stageId: 'b-build', stageName: 'build' }),
     ]);
 
     expect(logs.map(l => l.jobName)).toEqual(['test', 'build']);
   });
+});
+In lib/data/run-detail.test.ts, cover the rewritten buildLogs and formatLines.
 
-  it('returns nothing for no stages', () => {
-    expect(buildLogs([])).toEqual([]);
+The old buildLogs cases were stale: its signature moved from a structural StageForLogs to a whole StageResult, and LogLine lost its timestamp field. Replaced rather than adapted, and the StageResult fixture is hoisted so buildLogs and addNodeDetails share one.
+
+buildLogFilters is updated too, since it now applies the same LOG_ELIGIBLE_STATUS filter as buildLogs and drops a node with no eligible row instead of reporting it as pending.
+
+Two TODO(bug) cases pin defects rather than behaviour: formatLines splits on '\n' alone, so CRLF output keeps a trailing '\r' on every line, and panels come out in stageId order while the filter dropdown uses graphJson order.
+
+Co-Authored-By: Claude Opus 5 noreply@anthropic.com
+describe('formatLines', () => {
+  const contents = (snippet: string | null) => formatLines(snippet).map(l => l.content);
+
+  it('splits a snippet on newlines', () => {
+    expect(contents('one\ntwo\nthree')).toEqual(['one', 'two', 'three']);
+  });
+
+  it('numbers the lines from one, contiguously', () => {
+    expect(formatLines('one\ntwo\nthree').map(l => l.lineNumber)).toEqual([1, 2, 3]);
+  });
+
+  it('keeps a snippet with no newline as a single line', () => {
+    expect(formatLines('just the one')).toEqual([{ lineNumber: 1, content: 'just the one' }]);
+  });
+
+  it('returns nothing for a null snippet', () => {
+    expect(formatLines(null)).toEqual([]);
+  });
+
+  it('returns nothing for an empty snippet', () => {
+    expect(formatLines('')).toEqual([]);
+  });
+
+  // A command's output almost always ends in a newline; that terminator closes the
+  // last line rather than opening an empty one.
+  it('does not add an empty line for a trailing newline', () => {
+    expect(contents('one\ntwo\n')).toEqual(['one', 'two']);
+  });
+
+  /*
+   * Blank lines survive, and the gutter still counts contiguously. This reverses
+   * the previous implementation, which dropped them - a log's blank lines are its
+   * own output, and dropping them silently misreports what the command printed.
+   */
+  it('preserves blank lines between content', () => {
+    expect(contents('one\n\n\ntwo\n')).toEqual(['one', '', '', 'two']);
+    expect(formatLines('one\n\n\ntwo\n').map(l => l.lineNumber)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('reads a lone newline as a single empty line', () => {
+    expect(contents('\n')).toEqual(['']);
+  });
+
+  it('keeps leading and trailing whitespace on a line', () => {
+    expect(contents('  indented  \nplain')).toEqual(['  indented  ', 'plain']);
+  });
+
+  /*
+   * TODO(bug): only '\n' terminates a line, so CRLF output leaves a '\r' on the end
+   * of every line's content. The runner spawns with `shell: true` and the dev box is
+   * Windows, so this is reachable - and it silently breaks LogLine's `$` prompt,
+   * which LogViewer decides with `line.content === command`: 'npm run build\r' never
+   * equals 'npm run build'. Asserted as-is so the suite goes red when it is fixed.
+   */
+  it('leaves the carriage return on each line of CRLF output', () => {
+    expect(contents('one\r\ntwo\r\n')).toEqual(['one\r', 'two\r']);
   });
 });
 
@@ -228,26 +371,6 @@ describe('addNodeDetails', () => {
    * ordering is what makes the highest attempt win, so the tests below feed
    * them in that order deliberately.
    */
-  const row = (over: Partial<StageResult> = {}): StageResult => ({
-    id: 'sr1',
-    runId: 'run1',
-    stageId: 'a',
-    stageName: 'build',
-    stageType: 'CUSTOM',
-    status: 'SUCCEEDED',
-    exitCode: 0,
-    logSnippet: null,
-    command: 'npm run build',
-    attempt: 1,
-    maxRetries: 0,
-    approvedById: null,
-    approvedAt: null,
-    startedAt: new Date('2026-01-01T00:00:00Z'),
-    finishedAt: new Date('2026-01-01T00:00:30Z'),
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-    ...over,
-  });
-
   const secretNode = (secrets: Record<string, string[]>): CustomNode => ({
     id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'build', secrets },
   });
