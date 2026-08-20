@@ -246,6 +246,59 @@ describe('keyboard operation', () => {
 });
 
 /*
+ * The listbox is capped at a max-height and scrolls, but DOM focus never leaves the
+ * trigger — the active row is named by aria-activedescendant and painted by a class,
+ * and a browser scrolls for neither. Nothing above can catch this: jsdom does no
+ * layout, so the row is never really out of view and the assertions have to be about
+ * the call itself. Test the two things that carry the behaviour — that it targets the
+ * row that just became active, and that it asks for 'nearest', which is what keeps a
+ * row already on screen from jumping the list under the pointer.
+ */
+describe('keeping the active row in view', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('scrolls the row that ArrowDown just activated', async () => {
+    const scrollIntoView = jest.spyOn(Element.prototype, 'scrollIntoView');
+    const { user } = await open();
+    const rows = screen.getAllByRole('option');
+    scrollIntoView.mockClear();
+
+    await user.keyboard('{ArrowDown}');
+
+    expect(scrollIntoView.mock.instances.at(-1)).toBe(rows[1]);
+  });
+
+  it('scrolls the row End jumps to', async () => {
+    const scrollIntoView = jest.spyOn(Element.prototype, 'scrollIntoView');
+    const { user } = await open();
+    const rows = screen.getAllByRole('option');
+    scrollIntoView.mockClear();
+
+    await user.keyboard('{End}');
+
+    expect(scrollIntoView.mock.instances.at(-1)).toBe(rows[2]);
+  });
+
+  it('scrolls no further than it has to', async () => {
+    const scrollIntoView = jest.spyOn(Element.prototype, 'scrollIntoView');
+    const { user } = await open();
+
+    await user.keyboard('{ArrowDown}');
+
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest' });
+  });
+
+  it('brings the selected row into view when the list opens on it', async () => {
+    const scrollIntoView = jest.spyOn(Element.prototype, 'scrollIntoView');
+    const { user, trigger } = setup({ defaultValue: 'n3' });
+
+    await user.click(trigger);
+
+    expect(scrollIntoView.mock.instances.at(-1)).toBe(screen.getAllByRole('option')[2]);
+  });
+});
+
+/*
  * The Run Detail page polls with router.refresh(), which re-executes the server
  * component and reconciles the result into the existing tree - this component keeps
  * its state while its `options` prop changes underneath it. Stages become eligible

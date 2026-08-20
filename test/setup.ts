@@ -36,6 +36,14 @@ if (typeof window !== 'undefined') {
     } as DOMRect;
   };
 
+  /*
+   * jsdom does no layout, so it implements no scrolling method at all — the property
+   * is absent rather than a no-op, and `?.` does not help because the object it is
+   * called on exists. FilterListbox calls it to keep its active row in view. Defined
+   * on the prototype so a test that cares can jest.spyOn it.
+   */
+  Element.prototype.scrollIntoView = function scrollIntoView() { };
+
   // @xyflow/react calls this on nodes it is about to transform.
   if (!global.DOMMatrixReadOnly) {
     // @ts-expect-error — minimal stand-in, only the fields ReactFlow reads.
