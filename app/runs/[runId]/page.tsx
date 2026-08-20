@@ -29,11 +29,15 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
 
       <main className={`page-content ${styles['run-main']}`}>
 
-        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} enabled={['queued', 'running'].includes(run.status)}/>
+        <AutoRefresh
+          intervalMs={REFRESH_INTERVAL_MS}
+          enabled={['queued', 'running'].includes(run.status) || run.jobCounts.running > 0}
+        />
 
         <RunDetailShell
           header={
             <RunDetailCard
+              id={runId}
               pipelineName={run.pipelineName}
               runNumber={run.runNumber}
               status={run.status}
