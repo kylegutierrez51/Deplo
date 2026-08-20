@@ -26,6 +26,46 @@ Page Shell
 
 /*
 ===============================
+Run Header (collapsible)
+===============================
+*/
+
+/*
+  Collapses the run detail card without unmounting it, so nothing inside remounts and
+  the reader keeps whatever they were looking at.
+
+  grid-template-rows: 1fr -> 0fr is what makes the height animatable: the card's height
+  is responsive and unknown here, so max-height would need a magic number that clips it
+  at some viewport width.
+
+  .run-header-inner does the clipping, and it has to exist. overflow: hidden gives it a
+  block formatting context, which contains .run-detail-card's 40px margin-bottom inside
+  the animated row; on the wrapper itself that margin would sit outside the collapsing
+  track and leave a 40px gap behind the hidden card.
+*/
+.run-header {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 200ms ease;
+}
+
+.run-header[data-collapsed='true'] {
+  grid-template-rows: 0fr;
+}
+
+.run-header-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-header {
+    transition: none;
+  }
+}
+
+/*
+===============================
 Overview
 ===============================
 */

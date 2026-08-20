@@ -1,6 +1,12 @@
 .run-detail-card {
   width: 100%;
-  align-self: center;
+  /* 
+   * Auto margins rather than align-self: center -- the card now sits inside .run-header-inner
+   * (a block), where align-self has nothing to act on. The 2 margins centers it under any
+   * parent.
+   */
+  margin-left: auto;
+  margin-right: auto;
   max-width: var(--width-xl);
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-gray-clr);

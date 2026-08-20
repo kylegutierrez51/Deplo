@@ -4,7 +4,7 @@ import Sidebar from "@/components/layout/sidebar/Sidebar";
 import RunDetailCard from "@/components/run-detail/RunDetailCard";
 import LogsTab from "@/components/run-detail/logs/LogsTab";
 import Pill from '@/components/ui/Pill';
-import RunTabs from "./RunTabs";
+import RunDetailShell from "./RunDetailShell";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import PipelineGraph from "@/components/run-detail/PipelineGraph";
 import { getRunDetailById } from "@/lib/data/run-detail";
@@ -31,22 +31,23 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} enabled={['queued', 'running'].includes(run.status)}/>
 
-        <RunDetailCard
-          pipelineName={run.pipelineName}
-          runNumber={run.runNumber}
-          status={run.status}
-          environment={run.environment}
-          commitHash={run.commitHash}
-          commitMessage={run.commitMessage}
-          branch={run.branch}
-          repo={run.repo}
-          trigger={run.trigger}
-          triggeredBy={run.triggeredBy}
-          duration={run.duration}
-          timeAgo={run.timeAgo}
-        />
-
-        <RunTabs
+        <RunDetailShell
+          header={
+            <RunDetailCard
+              pipelineName={run.pipelineName}
+              runNumber={run.runNumber}
+              status={run.status}
+              environment={run.environment}
+              commitHash={run.commitHash}
+              commitMessage={run.commitMessage}
+              branch={run.branch}
+              repo={run.repo}
+              trigger={run.trigger}
+              triggeredBy={run.triggeredBy}
+              duration={run.duration}
+              timeAgo={run.timeAgo}
+            />
+          }
           overview={
             <>
               <div className={styles['job-statuses']}>
