@@ -3,7 +3,6 @@
 import { useState } from "react";
 import styles from "./logs-tab.module.css";
 import FilterListbox from "@/components/ui/filters/FilterListbox";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
 import LogViewer from "./LogViewer";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import { JobLog, LogFilters } from "@/lib/data/run-detail";
@@ -15,12 +14,14 @@ interface LogsTabProps {
 
 export default function LogsTab({ logs, logFilters }: LogsTabProps) {
   const [selectedLogIndex, setSelectedLogIndex] = useState(logFilters[0]?.value);
-  const [attemptOverride, setAttemptOverride] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState<number | null>(null);
 
   const attemptsForStage = logs.filter(l => l.stageId === selectedLogIndex).map(l => l.attempt);
   const highestAttempt = attemptsForStage.length ? Math.max(...attemptsForStage) : 0;
 
-  const attempt = attemptOverride ?? highestAttempt;
+  if (attempt === null && attemptsForStage.length) setAttempt(highestAttempt);
+  
+  if (selectedLogIndex === undefined && logFilters.length) setSelectedLogIndex(logFilters[0].value);
 
   const selectedLog = logs.find(l => l.stageId === selectedLogIndex && l.attempt === attempt);
 
@@ -36,28 +37,31 @@ export default function LogsTab({ logs, logFilters }: LogsTabProps) {
             options={logFilters}
             setFilteredOption={(val) => {
               setSelectedLogIndex(val);
-              setAttemptOverride(null);
+              setAttempt(null);
             }}
           />
-          <FilterSelect
+          <FilterListbox
+            key={selectedLogIndex}
             id={"attempts"} name={"attempts"}
-            value={String(attempt)}
-            onChange={(val) => setAttemptOverride(Number(val))}
+            styles={styles}
+            defaultValue={attempt ? String(attempt) : undefined}
+            setFilteredOption={(val) => setAttempt(Number(val))}
             options={
               attemptsForStage.map((n) => (
-                { value: String(n), label: `Attempt ${n}`}
+                { value: String(n), label: `Attempt ${n}` }
               ))
-            } />
+            }
+          />
           <SearchInput
             placeholder={"Search logs..."}
             styles={styles} />
         </div>
       </div>
 
-      {selectedLog && 
+      {selectedLog &&
         <LogViewer
           log={selectedLog}
-        />  
+        />
       }
     </>
   )

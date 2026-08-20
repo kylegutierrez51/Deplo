@@ -100,6 +100,16 @@ The page picks a `{ mode, record }` shape and renders a `<XModalController>`, wh
 
 `app/providers.tsx` wraps the tree in `SessionProvider` + `ToastProvider`; reach toasts via `useToast()`.
 
+## Auto-Refresh
+
+Nothing pushes. `revalidatePath` is request-scoped — it writes to an AsyncLocalStorage store that only exists while Next is handling a request, and delivers its effect in that request's response. The runner is a different process with no request, so the call throws there; and even in the app process it can only refresh the tab that called it. Pages showing state someone else owns therefore poll: `components/ui/AutoRefresh.tsx` calls `router.refresh()` on a timer, renders nothing, and skips a hidden tab. `router.refresh()` re-executes the server component and reconciles the result into the existing tree, so client state, focus and scroll position all survive. `enabled` is for pages that reach a terminal state — the run page turns it off once the run is no longer `queued`/`running`; a queue page leaves it on, since a new item can arrive at any time.
+
+**Surviving the refresh is exactly what lets client state go stale against it**, and `LogsTab` is where that shows: `logs` and `logFilters` grow underneath state the refresh deliberately preserves. The rule there is that whatever the reader is looking at survives — a retry opening is the runner's news, not a request to take them somewhere else.
+
+So `LogsTab` **seeds** its state rather than deriving it. `attempt` is `null` until the selected stage has attempts to choose from, then takes the newest one *once* and holds it until the reader picks another or switches stage. Deriving it as `attempt ?? highestAttempt` is what pulls `LogViewer` off the attempt mid-read: the moment a retry row reaches `RUNNING` it becomes log-eligible, the next poll recomputes the highest attempt, and the viewer follows it. `selectedLogIndex` seeds the same way for the same reason — a tab opened on a still-queued run mounts with no stages at all, and the `useState` initializer only reads them once. Both seeds are conditional `setState` calls in the render body, not effects: React re-runs the component before committing, so no frame paints the stale value, and the condition is what stops them looping.
+
+The attempts `FilterListbox` keeps its own copy of that value and reads `defaultValue` exactly once, in its `useState` initializer, so it must be remounted whenever the value moves without it. It is keyed on the stage id — the one case where the attempt changes for a reason other than the reader choosing it. **Do not widen that key to include the attempt.** It would remount whenever a new attempt appeared, snapping the trigger forward while `attempt` still held a choice the reader made deliberately — overriding an explicit selection rather than merely failing to follow an implicit one. If a third reason to move the value ever turns up, the fix is a controlled mode on `FilterListbox`, a `value` prop that wins over its internal `selected`, not a bigger key.
+
 ## Pipeline Definitions
 
 A saved pipeline is split into two JSON columns on `PipelineDefinition`, and `lib/pipeline/definition.ts` owns both directions:
@@ -143,8 +153,6 @@ An abandoned `RUNNING` row is on the retryable side of that split, and `retryRun
 `Queue.remove` reports success both for a job it removed and for one that was never there, and reports failure only for a job still *locked*. **`reclaimStageJob` deletes that lock and retries, and it is only safe because of when it runs.** The lock is a key with a 30s `lockDuration`, so after a crash it outlives its owner and a quick restart finds it held; deleting the lock of a job a *live* worker is processing is the corruption `Queue.remove` refuses to perform, and the only thing ruling that out is that `reapAbandonedWork` runs before `worker.run()` under the single-runner assumption. Call it from anywhere else and a running stage's keys vanish under it. A job still locked after the break is outside that model, and its row is failed rather than reset.
 
 Remaining gap: the reaper runs only at boot, so a run stalled by a transient Postgres or Redis error stays stalled until someone restarts the runner. Every phase is individually wrapped, since all of this happens before `worker.run()` and an unhandled rejection would stop the runner from booting rather than merely leaving work unrecovered.
-
-Not yet done: attempt ordering in `lib/data/run-detail.ts` and `lib/data/approvals.ts` (which still counts rows, so a retried stage double-counts in `stagesComplete`), auto-refresh on the run page, and navigate-to-run on trigger. Out of scope by design: cancel, webhook-triggered runs, full log storage, git checkout, multi-runner.
 
 ## CSS
 
