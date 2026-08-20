@@ -2,7 +2,7 @@ import styles from "./audit.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import ExportButton from "@/components/layout/subheader/ExportButton";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
@@ -43,7 +43,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
               <div className={styles['filters-bar']}>
                 <SearchInput
                   placeholder={"Search events, users, resources..."} />
-                <FilterSelect
+                <FilterListbox
                   id={"actions"} name={"actions"}
                   options={
                     [
@@ -56,7 +56,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
                       { value: "settings", label: "Settings" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"status"} name={"status"}
                   options={
                     [
@@ -67,7 +67,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
                       { value: "90days", label: "Last 90 days" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"recency"} name={"recency"}
                   options={
                     [

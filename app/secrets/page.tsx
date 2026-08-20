@@ -2,7 +2,7 @@ import styles from "./secrets.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
@@ -43,7 +43,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Filter by key or notes..."} />
-                <FilterSelect
+                <FilterListbox
                   id={"environment"} name={"environment"}
                   options={[
                     { value: "all", label: "All environment types" },

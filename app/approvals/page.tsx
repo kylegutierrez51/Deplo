@@ -2,7 +2,7 @@ import styles from "./approvals.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import StatCards from "@/components/ui/StatCards";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/ui/pagination/Pagination";
@@ -62,7 +62,7 @@ export default async function Approvals() {
                   <SearchInput
                     placeholder={"Search by pipeline, repo, branch, user..."}
                     styles={styles} />
-                  <FilterSelect
+                  <FilterListbox
                     id={"environment"} name={"environment"}
                     styles={styles}
                     options={
@@ -75,7 +75,7 @@ export default async function Approvals() {
                         { value: "custom", label: "Custom" },
                       ]
                     } />
-                  <FilterSelect
+                  <FilterListbox
                     id={"recency"} name={"recency"}
                     styles={styles}
                     options={

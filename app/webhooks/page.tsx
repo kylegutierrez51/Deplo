@@ -2,7 +2,7 @@ import styles from "./webhooks.module.css"
 import Subheader from "@/components/layout/subheader/Subheader"
 import AddButton from '@/components/layout/subheader/AddButton';
 import Sidebar from "@/components/layout/sidebar/Sidebar"
-import FilterSelect from "@/components/ui/filters/FilterSelect"
+import FilterListbox from "@/components/ui/filters/FilterListbox"
 import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/WebhookCard";
@@ -44,14 +44,14 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
               <div className={styles.filters}>
                 <div className={styles['filters-bar']}>
                   <SearchInput placeholder={"Search webhooks..."} />
-                  <FilterSelect
+                  <FilterListbox
                     id={"active"} name={"active"}
                     options={[
                       { value: "all", label: "All Statuses" },
                       { value: "active", label: "Active" },
                       { value: "inactive", label: "Inactive" }
                     ]} />
-                  <FilterSelect
+                  <FilterListbox
                     id={"recency"} name={"recency"}
                     options={[
                       { value: "most-recent", label: "Most recently registered" },
