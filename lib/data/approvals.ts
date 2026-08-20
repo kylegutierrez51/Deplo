@@ -59,9 +59,9 @@ export async function getApprovals(): Promise<Approval[]> {
   return approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
 
-    const latestStages = run.stages.map((s) => ({
-      status: s.status,
-    })); // excludes stages that retried -- like loadRunContext() does
+    const latestStages = new Map<string, PrismaStageStatus>(
+      run.stages.map(s => [s.stageId, s.status])
+    ); // includes only most recent attempt for each stage -- like loadRunContext() does
 
     return {
       id: approvalStage.id,
@@ -77,7 +77,7 @@ export async function getApprovals(): Promise<Approval[]> {
         name: run.environment.name,
       } : null,
       branch: run.branch,
-      stagesComplete: latestStages.filter(s => s.status === "SUCCEEDED").length + '/' + latestStages.length
+      stagesComplete: new Map([...latestStages].filter(([_, status]) => ["SUCCEEDED", "APPROVED"].includes(status))).size + '/' + latestStages.size
     };
   });
 }
