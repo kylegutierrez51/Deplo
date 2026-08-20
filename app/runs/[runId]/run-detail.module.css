@@ -113,9 +113,10 @@ Log Viewer
 .logs {
   margin-top: var(--space-xl);
   flex: 1;
-  min-height: 0; /* lets flex child shrink below its content size */
-  overflow-y: auto;
+  min-height: 0; /* lets this flex child shrink below its content size */
   padding-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
 
   /* Without .page-layout's cap the log viewers would span the full ~1560px.
      Long monospace lines want more than --width-xl, but not edge to edge. */
@@ -190,10 +191,11 @@ Run Detail Media Queries
     min-height: 380px;
   }
 
+  /* Content-sized from here down, so the viewer grows and the page scrolls
+     instead of the viewer scrolling inside a fixed-height column. */
   .logs {
     flex: none;
     min-height: auto;
-    overflow-y: visible;
   }
 }
 

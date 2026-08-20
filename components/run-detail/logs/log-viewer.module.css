@@ -1,6 +1,18 @@
 .log-viewer {
   width: 100%;
+
+  /* Fills what .logs has left after the filters bar, and shrinks with it — which is
+     how the viewer stays inside the viewport whether or not the run header is
+     collapsed. min-height: 0 is what lets it shrink below its content size. */
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
   border-radius: var(--radius-lg);
+  /* Clips the body's corners to the radius. The body scrolls, not this box, so
+     nothing is lost to it. */
   overflow: hidden;
   border: 1px solid var(--color-border-dark);
   font-family: var(--font-jetbrains-mono), monospace;
@@ -8,6 +20,7 @@
 }
 
 .log-header {
+  flex: none; /* the body absorbs the slack, never the header */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -67,9 +80,13 @@
 .log-body {
   background-color: #0d1117;
   padding: var(--space-sm) 0;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .log-footer {
+  flex: none;
   padding: var(--space-sm) 18px;
   background-color: #0d1117;
   border-top: 1px solid var(--color-border-dark);
@@ -103,17 +120,6 @@ Log Viewer Media Queries
      480px
 */
 
-
-/*
-  Base correction (no media query)
-  .log-viewer uses overflow: hidden for border-radius clipping, which also
-  clips long log lines at any viewport width. Override only the x-axis so
-  lines scroll horizontally instead of being cut off. Vertical overflow and
-  border-radius corner clipping are unaffected.
-*/
-.log-viewer {
-  overflow-x: auto;
-}
 
 /* 
 ============================================================

@@ -318,9 +318,15 @@ textarea {
 
 ::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* The box where a horizontal and a vertical scrollbar meet. */
+::-webkit-scrollbar-corner {
   background: transparent;
 }
 
