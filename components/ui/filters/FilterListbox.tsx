@@ -15,7 +15,7 @@ interface FilterListboxProps {
   id: string;
   name: string;
   options: FilterListboxOption[];
-  setFilteredOption: (value: string) => void;
+  setFilteredOption?: (value: string) => void;
   defaultValue?: string;
   styles?: Record<string, string>;
   responsive?: boolean;
@@ -26,6 +26,7 @@ function pillLabel(status: PillVariant): string {
   return status === 'awaiting-approval' ? 'Awaiting' : capitalize(status);
 }
 
+const optionId = (id: string, index: number) => `${id}-option-${index}`;
 
 export default function FilterListbox({
   id,
@@ -39,6 +40,7 @@ export default function FilterListbox({
   const [selected, setSelected] = useState(
     () => options.find((option) => option.value === defaultValue)?.value ?? options[0]?.value ?? '',
   );
+
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -50,7 +52,6 @@ export default function FilterListbox({
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selectedValue));
 
   const listboxId = `${id}-listbox`;
-  const optionId = (index: number) => `${id}-option-${index}`;
 
   /*
    * A pointer that lands outside dismisses the popup. pointerdown rather than
@@ -68,12 +69,19 @@ export default function FilterListbox({
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [open]);
 
+
+  // When a user scrolls down via 'Down Arrow', this ensures the active filter isn't out of view since .listbox caps at a max height
+  useEffect(() => {
+    if (!open) return;
+    document.getElementById(optionId(id, activeIndex))?.scrollIntoView({ block: 'nearest' });
+  }, [open, id, activeIndex]);
+
   const openList = () => {
     setActiveIndex(selectedIndex);
     setOpen(true);
   };
 
-  /* Escape and a committed choice both return the caret to the trigger; an outside click does not. */
+  // Escape and a committed choice both return the caret to the trigger; an outside click does not.
   const closeAndFocus = () => {
     setOpen(false);
     triggerRef.current?.focus();
@@ -83,8 +91,8 @@ export default function FilterListbox({
     const option = options[index];
     if (option) {
       setSelected(option.value);
-      setFilteredOption(option.value);
-    } 
+      setFilteredOption?.(option.value);
+    }
     closeAndFocus();
   };
 
@@ -125,6 +133,7 @@ export default function FilterListbox({
         break;
       case 'Tab':
         setOpen(false);
+        commit(activeIndex);
         break;
     }
   };
@@ -145,7 +154,7 @@ export default function FilterListbox({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
-        aria-activedescendant={open ? optionId(activeIndex) : undefined}
+        aria-activedescendant={open ? optionId(id, activeIndex) : undefined}
         className={own.trigger}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onKeyDown}
@@ -161,7 +170,7 @@ export default function FilterListbox({
           {options.map((option, index) => (
             <li
               key={option.value}
-              id={optionId(index)}
+              id={optionId(id, index)}
               role="option"
               aria-selected={option.value === selectedValue}
               className={`${own.option}${index === activeIndex ? ` ${own.active}` : ''}`}
