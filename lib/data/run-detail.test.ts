@@ -1,4 +1,5 @@
-import { countJobs, buildLogFilters, buildLogs, formatLines, addNodeDetails, type StageLite } from '@/lib/data/run-detail';
+import { countJobs, buildLogFilters, buildLogs, formatLines, addNodeDetails, type StageLite, hasReadableLogs
+} from '@/lib/data/run-detail';
 import type { CustomNode } from '@/lib/types';
 import type { StageStatus as PrismaStageStatus, StageResult } from '@/generated/prisma';
 
@@ -19,7 +20,17 @@ const node = (id: string, name = id): CustomNode => ({
   id, position: { x: 0, y: 0 }, data: { type: 'custom', name },
 });
 
-const stage = (stageId: string, status: PrismaStageStatus): StageLite => ({ stageId, status });
+const stage = (
+  stageId: string,
+  status: PrismaStageStatus,
+  over: Partial<StageLite> = {},
+): StageLite => ({
+  stageId,
+  status,
+  startedAt: new Date('2026-01-01T00:00:00Z'),
+  logSnippet: 'line one',
+  ...over,
+});
 
 /* buildLogs and addNodeDetails both take whole StageResult rows, so they share this. */
 const row = (over: Partial<StageResult> = {}): StageResult => ({
@@ -140,10 +151,28 @@ describe('buildLogFilters', () => {
     expect(buildLogFilters([node('n1', 'build')], [stage('n1', status)])).toHaveLength(1);
   });
 
-  it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED', 'CANCELLED'] as const)(
+  it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED'] as const)(
     'omits a %s stage, which has no log panel behind it', (status) => {
       expect(buildLogFilters([node('n1', 'build')], [stage('n1', status)])).toEqual([]);
     });
+
+  /*
+   * CANCELLED is the one status that depends on more than itself. A stage stopped mid
+   * command kept whatever it had already written and is worth reading; the ones cancelRun
+   * swept never ran at all, and there are usually far more of those.
+   */
+  it('lists a cancelled stage that ran and left output behind', () => {
+    expect(buildLogFilters([node('n1', 'build')], [stage('n1', 'CANCELLED')])).toHaveLength(1);
+  });
+
+  it.each([
+    ['never started', { startedAt: null }],
+    ['produced no output', { logSnippet: null }],
+    ['wrote nothing before it was stopped', { logSnippet: '[run cancelled]' }],
+    ['did neither', { startedAt: null, logSnippet: null }],
+  ])('omits a cancelled stage that %s', (_label, over) => {
+    expect(buildLogFilters([node('n1', 'build')], [stage('n1', 'CANCELLED', over)])).toEqual([]);
+  });
 
   // A queued run has graph nodes but no StageResult rows at all.
   it('omits a node with no stage row', () => {
@@ -192,10 +221,51 @@ describe('buildLogs', () => {
   });
 
   // An approval gate or a stage that never ran has no output to show.
-  it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED', 'CANCELLED'] as const)(
+  it.each(['PENDING', 'QUEUED', 'AWAITING_APPROVAL', 'APPROVED', 'UNAPPROVED'] as const)(
     'excludes a %s stage', (status) => {
       expect(buildLogs([logged({ status })])).toEqual([]);
     });
+
+  it('includes a cancelled stage that ran and left output behind', () => {
+    expect(buildLogs([logged({ status: 'CANCELLED' })])).toHaveLength(1);
+  });
+
+  it.each([
+    ['never started', { startedAt: null }],
+    ['produced no output', { logSnippet: null }],
+    ['wrote nothing before it was stopped', { logSnippet: '[run cancelled]' }],
+  ])('excludes a cancelled stage that %s', (_label, over) => {
+    expect(buildLogs([logged({ status: 'CANCELLED', ...over })])).toEqual([]);
+  });
+
+  /*
+   * The two builders answer the same question and must not drift. LogsTab pairs a filter to
+   * its panel by stageId, so a panel with no matching filter is unreachable — the reader
+   * would have a log the dropdown never offers.
+   */
+  it.each([
+    ['ran and left output', { startedAt: new Date(), logSnippet: 'out' }, true],
+    ['never started', { startedAt: null, logSnippet: 'out' }, false],
+    ['produced no output', { startedAt: new Date(), logSnippet: null }, false],
+    ['wrote nothing before it was stopped', { startedAt: new Date(), logSnippet: '[run cancelled]' }, false],
+  ])('agrees with buildLogFilters about a cancelled stage that %s', (_label, over, listed) => {
+    /*
+     * Both builders read the same two columns off the same row, which is the point: the
+     * judgement lives in one predicate rather than in whoever assembled the argument. An
+     * earlier version passed booleans it computed itself here, and quietly went on
+     * asserting the old rule after the real one changed.
+     */
+    const stageRow = row({ stageId: 'n1', status: 'CANCELLED', ...over });
+
+    const panels = buildLogs([stageRow]).length;
+    const options = buildLogFilters(
+      [node('n1', 'build')],
+      [stage('n1', 'CANCELLED', { startedAt: stageRow.startedAt, logSnippet: stageRow.logSnippet })],
+    ).length;
+
+    expect(panels).toBe(options);
+    expect(panels === 1).toBe(listed);
+  });
 
   it('returns nothing for no stages', () => {
     expect(buildLogs([])).toEqual([]);
@@ -506,5 +576,41 @@ describe('addNodeDetails', () => {
 
       expect(n.data.secretKeys).toEqual([]);
     });
+  });
+});
+
+/*
+ * A cancelled stage always has a snippet, because stageProcessor appends the note to
+ * whatever the command had written. On a stage that wrote nothing the note is the whole
+ * snippet, and a panel holding one bracketed line restating the status the dropdown already
+ * shows is worse than no panel at all.
+ *
+ * The note is stripped rather than compared against, so this survives a command whose own
+ * output happens to end where the note begins.
+ */
+describe('hasReadableLogs', () => {
+  it.each([
+    ['nothing at all', null],
+    ['an empty string', ''],
+    ['only whitespace', '   \n  '],
+    ['only the cancel note', '[run cancelled]'],
+    ['the note with the newline that preceded it', '\n[run cancelled]'],
+    ['the note surrounded by whitespace', '  [run cancelled]  '],
+  ])('reports no readable logs for %s', (_label, snippet) => {
+    expect(hasReadableLogs(snippet)).toBe(false);
+  });
+
+  it.each([
+    ['plain output', 'npm ci finished'],
+    ['output followed by the note', 'npm ci finished\n[run cancelled]'],
+    ['a single character', 'x'],
+  ])('reports readable logs for %s', (_label, snippet) => {
+    expect(hasReadableLogs(snippet)).toBe(true);
+  });
+
+  // The note is the runner's, not the reader's: it is stripped wherever it sits, so output
+  // that arrived after it is still output.
+  it('keeps output that follows the note', () => {
+    expect(hasReadableLogs('[run cancelled]\ntrailing line')).toBe(true);
   });
 });
