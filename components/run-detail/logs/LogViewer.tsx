@@ -7,12 +7,14 @@ const iconName: Record<LogStatus, string> = {
   succeeded: 'checkmark-circle-outline',
   running:   'sync-outline',
   failed:    'close-circle-outline',
+  cancelled: 'ban-outline',
 };
 
 const footerText: Record<LogStatus, string> = {
   succeeded: 'Process exited with code 0',
   failed:    'Process exited with code 1',
   running:   'Running...',
+  cancelled: 'Process cancelled.'
 };
 
 export default function LogViewer({ log }: { log: JobLog }) {
@@ -23,7 +25,11 @@ export default function LogViewer({ log }: { log: JobLog }) {
 
       <div className={styles['log-header']}>
         <div className={styles['log-header-left']}>
-          <ion-icon name={iconName[status]} className={`${styles['log-job-icon']} ${styles[status]}`}></ion-icon>
+          <ion-icon
+            name={iconName[status]}
+            data-status={status}
+            className={styles['log-job-icon']}
+          ></ion-icon>
           <span className={styles['log-job-name']}>{jobName}</span>
           <span className={styles['log-job-cmd']}>{command}</span>
         </div>
