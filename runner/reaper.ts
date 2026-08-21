@@ -1,6 +1,6 @@
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
-  findRunningStages, openRetry,
+  findRunningStages, openRetry, cancelOrphanedStages,
 } from './db';
 import { advanceRun, processRun } from './runProcessor';
 import { reclaimStageJob } from './stageQueue';
@@ -30,6 +30,13 @@ import { reclaimStageJob } from './stageQueue';
 ==============================================================================================
 */
 export async function reapAbandonedWork(): Promise<void> {
+  let orphaned = 0;
+  try {
+    orphaned = await cancelOrphanedStages();
+  } catch (error) {
+    console.error('reaper: could not close out the stages of cancelled runs:', error);
+  }
+
   const retried = await retryRunningStages();
 
   let reaped = 0;
@@ -49,11 +56,12 @@ export async function reapAbandonedWork(): Promise<void> {
     console.error('reaper: could not read the unfinished runs:', error);
   }
 
-  if (reaped === 0 && retried === 0 && requeued === 0 && failed === 0 && runs.length === 0) return;
+  if (reaped === 0 && retried === 0 && requeued === 0 && failed === 0 && orphaned === 0 && runs.length === 0) return;
 
   console.log(
     `reaper: failed ${reaped} abandoned stage(s) and reopened ${retried} of them, requeued ` +
-    `${requeued} and failed ${failed} orphaned stage(s), re-examining ${runs.length} run(s)`,
+    `${requeued} and failed ${failed} orphaned stage(s), cancelled ${orphaned} stage(s) of ` +
+    `cancelled run(s), re-examining ${runs.length} run(s)`,
   );
 
   for (const run of runs) {

@@ -1,5 +1,6 @@
 import {
   loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress,
+  isRunCancelled,
   type StageOutcome,
 } from "./db";
 import type { Payload } from "./stageQueue";
@@ -9,9 +10,12 @@ import { advanceRun } from "./runProcessor";
 import { execute } from "./execute";
 import { resolveSecrets } from "./secrets";
 import type { CustomNode } from "@/lib/types";
+import { CANCELLED_NOTE } from "@/lib/stage-notes";
 
 
 const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 1800s
+
+const CANCEL_POLL_MS = 2_000;
 
 /*
  * Stripped from the environment every command inherits.
@@ -112,23 +116,54 @@ async function attemptStage(
 
     let savingProgress = false;
 
-    const result = await execute({
-      command,
-      cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
-      env,
-      timeoutMs,
-      onSnapshot: tail => {
-        if (savingProgress) return;
-        savingProgress = true;
 
-        recordStageProgress(job.runId, job.stageId, job.attempt, tail)
-          .catch(error => console.error(
-            `stage ${job.stageId} of run ${job.runId}: log progress not saved:`,
-            error instanceof Error ? error.message : error,
-          ))
-          .finally(() => { savingProgress = false; });
-      },
-    });
+    const abort = new AbortController();
+
+    const cancelWatch = setInterval(() => {
+      isRunCancelled(job.runId)
+        .then(cancelled => { if (cancelled) abort.abort(); })
+        .catch(error => console.error(
+          `stage ${job.stageId} of run ${job.runId}: cancel check failed:`,
+          error instanceof Error ? error.message : error,
+        ));
+    }, CANCEL_POLL_MS);
+
+    cancelWatch.unref(); // same reasoning as the timers in execute.ts
+
+    let result;
+    try {
+      result = await execute({
+        command,
+        cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
+        env,
+        timeoutMs,
+        signal: abort.signal,
+        onSnapshot: tail => {
+          if (savingProgress) return;
+          savingProgress = true;
+
+          recordStageProgress(job.runId, job.stageId, job.attempt, tail)
+            .catch(error => console.error(
+              `stage ${job.stageId} of run ${job.runId}: log progress not saved:`,
+              error instanceof Error ? error.message : error,
+            ))
+            .finally(() => { savingProgress = false; });
+        },
+      });
+    } finally {
+      clearInterval(cancelWatch);
+    }
+
+    if (result.cancelled) {
+      return {
+        outcome: {
+          status: 'CANCELLED',
+          exitCode: result.exitCode,
+          logSnippet: `${result.logSnippet}\n${CANCELLED_NOTE}`.trim(),
+        },
+        retryable: false,
+      };
+    }
 
     return {
       outcome: {

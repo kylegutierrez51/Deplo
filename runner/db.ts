@@ -16,7 +16,7 @@ const STAGE_TYPE_MAP: Record<StageType, PrismaStageType> = {
 
 /** What execute() produced, in the shape finishStage writes. */
 export interface StageOutcome {
-  status: 'SUCCEEDED' | 'FAILED';
+  status: 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
   exitCode: number | null;
   logSnippet: string | null;
 }
@@ -50,11 +50,8 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
       definition: { select: { graphJson: true, configJson: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
-        // Load-bearing, and paired with the fold below: that fold is last-write-wins, so
-        // ascending attempt is what makes "last" mean "the latest attempt". Ordering by
-        // createdAt instead would be undefined for two rows written in the same
-        // millisecond, and a stage that failed and then succeeded on retry could report
-        // FAILED — killing a run that actually recovered.
+        // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
+        // by sorting from lowest -> highest attempt for each stage.
         orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }],
       },
     },
@@ -62,8 +59,6 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
 
   if (!run) return null;
 
-  // Keyed by stageId — the graph's node id — never by the StageResult row's own cuid,
-  // which the scheduler has no way to match against graph.nodes.
   const outcomes = new Map<string, StageStatus>(
     run.stages.map(stage => [stage.stageId, stage.status]),
   );
@@ -359,6 +354,41 @@ export async function cancelPendingStages(runId: string): Promise<number> {
   const { count } = await prisma.stageResult.updateMany({
     where: { runId, status: 'PENDING', },
     data: { status: 'CANCELLED' }
+  });
+
+  return count;
+}
+
+export async function isRunCancelled(runId: string): Promise<boolean> {
+  const run = await prisma.pipelineRun.findUnique({
+    where: { id: runId },
+    select: { status: true },
+  });
+
+  return run?.status === 'CANCELLED';
+}
+
+/*
+==============================================================================================
+ * Closes out every stage still open on a run that was cancelled, for the boot reaper.
+ *
+ * cancelRun sweeps the stages it can reach and leaves the RUNNING one to the runner, which
+ * kills the command and writes the row itself. A runner that died in between leaves that row
+ * RUNNING on a CANCELLED run — and retryRunningStages would hand it a fresh PENDING attempt
+ * that nothing will ever dispatch, since advanceRun early-returns on a cancelled run.
+ *
+ * Runs first in reapAbandonedWork so these rows are already terminal by the time the
+ * RUNNING and QUEUED passes read them, which is what keeps those passes free of any
+ * special-casing for cancellation. Also repairs the window between cancelRun's two writes.
+==============================================================================================
+*/
+export async function cancelOrphanedStages(): Promise<number> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: {
+      run: { status: 'CANCELLED' },
+      status: { in: ['PENDING', 'QUEUED', 'RUNNING', 'AWAITING_APPROVAL'] },
+    },
+    data: { status: 'CANCELLED', finishedAt: new Date() },
   });
 
   return count;
