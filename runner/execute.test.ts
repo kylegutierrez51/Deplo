@@ -1,10 +1,10 @@
 /**
  * @jest-environment node
  *
- * The one file in the unit tier that overrides jest.config.mjs's global jsdom. Everything
- * else in lib/ and runner/ is environment-neutral; execute.ts is not, and jsdom's timer
- * shim returns a plain number with no unref(), so the timeout cases would fail against a
- * detail of the test environment rather than of the code.
+ * One of two files in the unit tier that override jest.config.mjs's global jsdom — the other
+ * is stageProcessor.test.ts, for the same reason. jsdom's timer shim returns a plain number
+ * with no unref(), so the timeout cases would fail against a detail of the test environment
+ * rather than of the code.
  */
 import { execute, killAllChildren } from './execute';
 import { mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
@@ -272,6 +272,25 @@ describe('killing the process tree', () => {
 
   const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  /*
+   * Waits for the grandchild to actually be writing, rather than guessing at a delay. Two
+   * node startups plus an interval tick is not a fixed cost: under the full suite this box
+   * runs 38 workers at once, and a sleep long enough on an idle machine is not long enough
+   * on a loaded one. Everything below the abort is meaningless until the marker exists.
+   */
+  const waitForOutput = async (file: string, timeoutMs = 15_000) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      try {
+        if ((await stat(file)).size > 0) return;
+      } catch { /* not created yet */ }
+      await settle(50);
+    }
+
+    throw new Error(`the grandchild never wrote to ${file}`);
+  };
+
   let workspace: string;
 
   beforeEach(async () => { workspace = await mkdtemp(path.join(tmpdir(), 'deplo-tree-')); });
@@ -294,6 +313,99 @@ describe('killing the process tree', () => {
     await settle(700);
     expect((await stat(marker)).size).toBe(afterKill);
   }, 30_000);
+
+  /*
+   * The same proof for the cancel path. Cancelling shares killTree with the timeout, but it
+   * reaches it through a different trigger, and a version that signalled only the shell
+   * would leave the real command running in the run's workspace — the exact failure the
+   * timeout case above exists to rule out.
+   */
+  it('stops a grandchild when the signal aborts, not only the shell', async () => {
+    const script = path.join(workspace, 'parent.cjs');
+    const marker = path.join(workspace, 'alive.txt');
+    await writeFile(script, PARENT_SCRIPT);
+
+    const abort = new AbortController();
+    const pending = run(`"${process.execPath}" "${script}" "${marker}"`, {
+      timeoutMs: 60_000,
+      signal: abort.signal,
+    });
+
+    await waitForOutput(marker);
+    abort.abort();
+
+    const { cancelled, timedOut } = await pending;
+    expect(cancelled).toBe(true);
+    // Distinct from a timeout: the deadline was 60s and never came close to firing.
+    expect(timedOut).toBe(false);
+
+    // waitForOutput already proved it was alive, so this only records where it stopped.
+    const afterKill = (await stat(marker)).size;
+
+    await settle(700);
+    expect((await stat(marker)).size).toBe(afterKill);
+  }, 30_000);
+});
+
+/*
+ * Cancelling is a recorded outcome, like a timeout — the promise resolves with a flag rather
+ * than rejecting, because the stage still has a row to write and a log tail worth keeping.
+ */
+describe('cancellation', () => {
+  const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  it('settles a long-running command when the signal aborts', async () => {
+    const abort = new AbortController();
+    const pending = run(node('setTimeout(()=>{},30000)'), { timeoutMs: 60_000, signal: abort.signal });
+
+    await settle(400);
+    abort.abort();
+
+    expect((await pending).cancelled).toBe(true);
+  }, 20_000);
+
+  // Kept from the buffer the same way a timeout's is: whatever the command managed to say
+  // before it was stopped is the only account of how far it got.
+  it('keeps the output the command produced before it was stopped', async () => {
+    const abort = new AbortController();
+    const pending = run(
+      node("process.stdout.write('before the cancel');setTimeout(()=>{},30000)"),
+      { timeoutMs: 60_000, signal: abort.signal },
+    );
+
+    await settle(500);
+    abort.abort();
+
+    expect((await pending).logSnippet).toContain('before the cancel');
+  }, 20_000);
+
+  // A signal already aborted when execute is called never fires the event, so it is handled
+  // at spawn instead — without that the command would run to completion uncancelled.
+  it('kills a command whose signal was already aborted', async () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    expect((await run(node('setTimeout(()=>{},30000)'), { timeoutMs: 60_000, signal: abort.signal })).cancelled)
+      .toBe(true);
+  }, 20_000);
+
+  /*
+   * Read from whether a signal was actually delivered, not from whether abort was called.
+   * The abort can land in the gap between the command exiting and 'close' arriving, and
+   * reporting a clean run as cancelled would contradict the exit code sitting beside it.
+   */
+  it('leaves cancelled false for a command that finished on its own', async () => {
+    const abort = new AbortController();
+    const result = await run(node('process.exit(0)'), { timeoutMs: 10_000, signal: abort.signal });
+
+    abort.abort();
+
+    expect(result).toEqual(expect.objectContaining({ exitCode: 0, cancelled: false }));
+  });
+
+  it('leaves cancelled false when no signal is passed at all', async () => {
+    expect((await run(node('process.exit(0)'))).cancelled).toBe(false);
+  });
 });
 
 /*

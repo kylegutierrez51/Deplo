@@ -1,7 +1,7 @@
 import { reapAbandonedWork } from './reaper';
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
-  findRunningStages, openRetry,
+  findRunningStages, openRetry, cancelOrphanedStages,
 } from './db';
 import { advanceRun, processRun } from './runProcessor';
 import { reclaimStageJob } from './stageQueue';
@@ -12,7 +12,7 @@ import { reclaimStageJob } from './stageQueue';
 jest.mock('./db', () => ({
   reapStaleStages: jest.fn(), findUnfinishedRuns: jest.fn(),
   findQueuedStages: jest.fn(), updateQueuedToPending: jest.fn(), failQueuedStage: jest.fn(),
-  findRunningStages: jest.fn(), openRetry: jest.fn(),
+  findRunningStages: jest.fn(), openRetry: jest.fn(), cancelOrphanedStages: jest.fn(),
 }));
 jest.mock('./runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
 jest.mock('./stageQueue', () => ({ reclaimStageJob: jest.fn() }));
@@ -27,6 +27,7 @@ const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
 const start = processRun as jest.MockedFunction<typeof processRun>;
 const stranded = findRunningStages as jest.MockedFunction<typeof findRunningStages>;
 const retry = openRetry as jest.MockedFunction<typeof openRetry>;
+const cancelOrphans = cancelOrphanedStages as jest.MockedFunction<typeof cancelOrphanedStages>;
 
 const runs = (...rows: { id: string, status: 'QUEUED' | 'RUNNING' }[]) =>
   unfinished.mockResolvedValue(rows as never);
@@ -46,6 +47,7 @@ beforeEach(() => {
   queuedStages();
   runningStages();
   retry.mockResolvedValue(true);
+  cancelOrphans.mockResolvedValue(0);
   removeJob.mockResolvedValue(true);
   requeue.mockResolvedValue(true);
   failQueued.mockResolvedValue(true);
@@ -307,5 +309,46 @@ describe('the queued stage sweep', () => {
 
     await expect(reapAbandonedWork()).resolves.toBeUndefined();
     expect(advance).toHaveBeenCalledWith('run-1');
+  });
+});
+
+/*
+ * cancelRun leaves the RUNNING stage to the runner, which kills the command and writes the
+ * row. A runner that died in between leaves that row RUNNING under a CANCELLED run, and this
+ * pass is what closes it.
+ */
+describe('stages left open on a cancelled run', () => {
+  it('closes them before anything else looks at them', async () => {
+    cancelOrphans.mockResolvedValue(2);
+    runningStages(stage);
+
+    await reapAbandonedWork();
+
+    /*
+     * The ordering is the assertion. retryRunningStages reads every RUNNING row regardless
+     * of its run, and openRetry would hand one on a cancelled run a fresh PENDING attempt
+     * that nothing will ever dispatch — advanceRun early-returns on a cancelled run, so the
+     * row would sit there under a Cancelled heading forever.
+     */
+    expect(cancelOrphans.mock.invocationCallOrder[0])
+      .toBeLessThan(stranded.mock.invocationCallOrder[0]);
+  });
+
+  // Every phase is individually wrapped: this all runs before worker.run(), so an unhandled
+  // rejection stops the runner from booting rather than merely leaving work unrecovered.
+  it('boots anyway when the sweep fails', async () => {
+    cancelOrphans.mockRejectedValue(new Error('database unreachable'));
+    runs({ id: 'run-1', status: 'RUNNING' });
+
+    await expect(reapAbandonedWork()).resolves.toBeUndefined();
+    expect(advance).toHaveBeenCalledWith('run-1');
+  });
+
+  it('counts them in the summary it logs', async () => {
+    cancelOrphans.mockResolvedValue(3);
+
+    await reapAbandonedWork();
+
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('cancelled 3 stage(s)'));
   });
 });
