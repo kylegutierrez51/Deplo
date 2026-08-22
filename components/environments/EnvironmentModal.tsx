@@ -6,7 +6,7 @@ import { useEffect, useState, useActionState } from 'react';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from "@/lib/actions/environments";
 import type { FormState, EnvType } from '@/lib/types';
 import Modal from '@/components/ui/modals/Modal';
-import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import Pill from '@/components/ui/Pill';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import envStyles from './environment-modal.module.css';
@@ -68,7 +68,7 @@ export default function EnvironmentModal({
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
   const [createState, createFormAction] = useActionState(addEnvironment, initialState);
   const [editState, editFormAction] = useActionState(updateEnvironment, initialState);
-  const [isDeleteModalVisible, setisDeleteModalVisible] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   useEffect(() => {
     if (createState.status === 'success') {
@@ -92,15 +92,25 @@ export default function EnvironmentModal({
   }, [editState]);
 
   const handleDeleteClose = () => {
-    setisDeleteModalVisible(false);
+    setDeleteModal(false);
     onEditOrDeleteClose();
+  }
+
+  const deleteRecord = async () => {
+    const deletedRecord = await deleteEnvironment(id);
+    if (deletedRecord.status === 'success') {
+      onDelete();
+    }
+    else if (deletedRecord.status === 'error') {
+      onError(deletedRecord.message);
+    }
   }
 
   const title = mode === 'view' ? 'Environment' : (name ? 'Edit Environment' : 'Add Environment');
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setisDeleteModalVisible(true)}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setDeleteModal(true)}>Delete</button>
       <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
@@ -142,22 +152,12 @@ export default function EnvironmentModal({
               </div>
             </div>
 
-            <div
-              className={styles.approvalToggleBox}
-              onClick={() => setApprovalEnabled(v => !v)}
-            >
-              <div className={styles.toggleOption}>
-                <span className={`${styles.toggleSwitch} ${approvalEnabled ? styles.toggleSwitchOn : ''}`}></span>
-                <div className={styles.toggleContent}>
-                  <div className={styles.toggleTitle}>
-                    <ion-icon name="lock-closed-outline"></ion-icon>
-                    Require approval for deploys
-                  </div>
-                  <p className={styles.toggleDescription}>
-                    Pipeline runs targeting this environment will pause at a manual approval gate before executing deploy stages.
-                  </p>
-                </div>
-              </div>
+            <div className={styles.item}>
+              <label>Deploy approval</label>
+              <span className={styles.secrets}>
+                <ion-icon name={requireApproval ? 'lock-closed-outline' : 'lock-open-outline'}></ion-icon>
+                {requireApproval ? 'Required' : 'Not required'}
+              </span>
             </div>
 
             <div className={styles['item-flex']}>
@@ -214,7 +214,7 @@ export default function EnvironmentModal({
                     Require approval for deploys
                   </div>
                   <p className={styles.toggleDescription}>
-                    Pipeline runs targeting this environment will pause at a manual approval gate before executing deploy stages.
+                    Pipeline runs targeting this environment will be rejected unless every deploy stage has an approval stage upstream.
                   </p>
                 </div>
               </div>
@@ -222,8 +222,9 @@ export default function EnvironmentModal({
           </>
         )}
       </Modal>
-      {isDeleteModalVisible && 
-        <DeleteConfirmationModal id={id} recordLabel={"Environment"} onDelete={onDelete} onDeleteClose={handleDeleteClose} onError={onError} deleteRecord={deleteEnvironment} />
+
+      {deleteModal &&
+        <ConfirmationModal message={'Delete this Environment?'} action={"Delete"} handleConfirmation={deleteRecord} onClose={handleDeleteClose} timeoutMs={2000} />
       }
     </>
   );
