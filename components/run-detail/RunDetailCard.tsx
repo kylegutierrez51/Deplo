@@ -84,7 +84,7 @@ export default function RunDetailCard({ id, pipelineName, runNumber, status, env
           </div>
         </div>
 
-        <RunDetailActions id={id} status={status} />
+        <RunDetailActions id={id} status={status} env={environment} />
 
       </div>
     </div>
