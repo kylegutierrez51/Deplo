@@ -8,11 +8,12 @@ import type {
 import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
 import { getDuration } from "@/lib/utils/date";
 import { fromDefinition } from "@/lib/pipeline/definition";
+import { CANCELLED_NOTE } from "@/lib/stage-notes";
 import { Edge } from "@xyflow/react";
 
 export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';
 
-export type LogStatus = 'succeeded' | 'failed' | 'running';
+export type LogStatus = 'succeeded' | 'failed' | 'running' | 'cancelled';
 
 export type LogLine = { lineNumber: number; content: string };
 
@@ -85,8 +86,18 @@ const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
 const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
   SUCCEEDED: 'succeeded',
   FAILED: 'failed',
-  RUNNING: 'running'
+  RUNNING: 'running',
+  CANCELLED: 'cancelled'
 }
+
+// stages previously running that got cancelled have concatenated '\n[run cancelled]" to the logSnippet. If that's the only line the logSnippet has, don't display the stage's logs.
+export const hasReadableLogs = (logSnippet: string | null): boolean =>
+  !!logSnippet && logSnippet.replace(CANCELLED_NOTE, '').trim().length > 0;
+
+// needed since 'failQueuedStage()' marks a stage as 'FAILED' with no 'startedAt' date.
+// the first condition allows 'running', 'succeeded', 'cancelled' stages. the 2nd allows cancelled stages only if they have started and have logs.
+const isLoggable = (status: PrismaStageStatus, hasStarted: boolean, hasLogs: boolean): boolean =>
+  status !== 'CANCELLED' || (hasStarted && hasLogs);
 
 const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   WEBHOOK: 'webhook',
@@ -108,6 +119,8 @@ const STAGE_STATUS_TO_JOB_STATUS: Record<PrismaStageStatus, JobStatus> = {
 
 export type StageLite = {
   stageId: string;
+  startedAt: Date | null;
+  logSnippet: string | null;
   status: PrismaStageStatus;
 };
 
@@ -148,7 +161,7 @@ export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): LogFi
 
   for (const stage of stages) {
     const status = LOG_ELIGIBLE_STATUS[stage.status];
-    if (!status) continue;
+    if (!status || !isLoggable(stage.status, !!stage.startedAt, hasReadableLogs(stage.logSnippet))) continue;
     statusByStageId.set(stage.stageId, status);
   }
 
@@ -168,7 +181,7 @@ export function buildLogs(stages: StageResult[]): JobLog[] {
   
   for (const stage of stages) {
     const status = LOG_ELIGIBLE_STATUS[stage.status];
-    if (!status) continue;
+    if (!status || !isLoggable(stage.status, !!stage.startedAt, hasReadableLogs(stage.logSnippet))) continue;
     filteredStages.push({ stage, status });
   }
 
@@ -220,6 +233,8 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
 
   const stagesLite: StageLite[] = run.stages.map((s) => ({
     stageId: s.stageId,
+    startedAt: s.startedAt,
+    logSnippet: s.logSnippet,
     status: s.status,
   }));
 
@@ -258,7 +273,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       : run.startedAt
         ? getDuration(run.startedAt)
         : '—',
-    timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
+    timeAgo: getDuration(run.createdAt),
     jobCounts: countJobs(nodes, stagesLite),
     logFilters: buildLogFilters(nodes.filter(n => n.data.type !== 'approval'), stagesLite),
     logs: buildLogs(run.stages)

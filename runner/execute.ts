@@ -29,12 +29,14 @@ export interface ExecuteOptions {
   maxLines?: number;
   onSnapshot?: (logSnippet: string) => void;
   snapshotMs?: number;
+  signal?: AbortSignal;
 }
 
 export interface ExecuteResult {
   exitCode: number | null;
   signal: NodeJS.Signals | null;
   timedOut: boolean;
+  cancelled: boolean;
   logSnippet: string;
 }
 
@@ -53,11 +55,13 @@ export function execute(
     maxLines = LOG_SNIPPET_LINES,
     onSnapshot,
     snapshotMs = SNAPSHOT_INTERVAL_MS,
+    signal,
   }: ExecuteOptions,
 ): Promise<ExecuteResult> {
   return new Promise((resolve, reject) => {
     const log = createLineBuffer(maxLines);
     let timedOut = false;
+    let cancelled = false;
     let settled = false;
 
     const child = spawn(command, {
@@ -75,17 +79,24 @@ export function execute(
 
     let graceTimer: NodeJS.Timeout | undefined;
 
-    const deadline = setTimeout(() => {
-      // Set from whether a signal was actually delivered, not unconditionally: the deadline
-      // can fire in the gap between the command exiting and 'close' arriving, and reporting
-      // a clean run as timed out would append a note contradicting its own exit code.
-      timedOut = killTree(child, false);
-      if (!timedOut) return;
+    // used by both 'deadline' and 'onAbort' for timeouts and cancels
+    const terminate = (): boolean => {
+      if (!killTree(child, false)) return false;
 
       graceTimer = setTimeout(() => killTree(child, true), KILL_GRACE_MS);
-
       graceTimer.unref(); // prevents timer from being reason runner refuses to exit at shutdown
-    }, timeoutMs);
+
+      return true;
+    };
+
+    const deadline = setTimeout(() => { timedOut = terminate(); }, timeoutMs);
+
+    const onAbort = () => { cancelled = terminate(); };
+
+    // handle a signal already aborted before 'execute()' was called.
+    if (signal?.aborted) cancelled = terminate();
+
+    else signal?.addEventListener('abort', onAbort, { once: true });
 
 
     let lastSent = '';
@@ -106,9 +117,8 @@ export function execute(
       running.delete(child);
       clearTimeout(deadline);
       clearTimeout(graceTimer);
-      // Every settle path funnels through here, which is what stops a snapshot from firing
-      // against a row finishStage has already written terminal.
       clearInterval(snapshots);
+      signal?.removeEventListener('abort', onAbort);
       settle();
     };
 
@@ -130,11 +140,11 @@ export function execute(
 
     child.on('error', error => finish(() => reject(error)));
 
-    
-    child.on('close', (exitCode, signal) => finish(() => resolve({
+    child.on('close', (exitCode, signalCode) => finish(() => resolve({
       exitCode,
-      signal,
+      signal: signalCode,
       timedOut,
+      cancelled,
       logSnippet: log.flush(),
     })));
   });
@@ -178,7 +188,6 @@ function killTree(child: ChildProcess, force: boolean): boolean {
       killer.on('error', () => { });
       killer.unref();
     } else {
-
       process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
     }
 

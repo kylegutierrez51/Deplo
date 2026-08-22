@@ -2,7 +2,7 @@ import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
-  failQueuedStage, findRunningStages, recordStageProgress,
+  failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -589,5 +589,71 @@ describe('the boot reaper queries', () => {
     expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual(
       expect.objectContaining({ logSnippet: expect.stringContaining('queued'), finishedAt: expect.any(Date) }),
     );
+  });
+});
+
+describe('isRunCancelled', () => {
+  const runStatus = (status: string | null) =>
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(
+      status === null ? null : { status } as never,
+    );
+
+  it('reads only the status, off the run id', async () => {
+    runStatus('RUNNING');
+
+    await isRunCancelled('run-1');
+
+    expect(prismaMock.pipelineRun.findUnique).toHaveBeenCalledWith({
+      where: { id: 'run-1' },
+      select: { status: true },
+    });
+  });
+
+  it.each(['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED'])('reports false for %s', async (status) => {
+    runStatus(status);
+
+    expect(await isRunCancelled('run-1')).toBe(false);
+  });
+
+  it('reports true for CANCELLED', async () => {
+    runStatus('CANCELLED');
+
+    expect(await isRunCancelled('run-1')).toBe(true);
+  });
+
+  // The row went with the run by cascade, and processStage's own loadRunContext guard is
+  // what handles that. Reporting a deletion as a cancellation would kill the command for
+  // the wrong reason and write a note that is not true.
+  it('reports false for a run that no longer exists', async () => {
+    runStatus(null);
+
+    expect(await isRunCancelled('run-1')).toBe(false);
+  });
+});
+
+describe('cancelOrphanedStages', () => {
+  /*
+   * Every non-terminal status, filtered by the *run's* status rather than the stage's own.
+   * RUNNING belongs here even though cancelRun deliberately leaves it alone: this pass only
+   * ever sees a row the runner abandoned, since a live runner writes it itself.
+   */
+  it('closes out every unfinished stage of a cancelled run', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(4));
+
+    await cancelOrphanedStages();
+
+    expect(prismaMock.stageResult.updateMany).toHaveBeenCalledWith({
+      where: {
+        run: { status: 'CANCELLED' },
+        status: { in: ['PENDING', 'QUEUED', 'RUNNING', 'AWAITING_APPROVAL'] },
+      },
+      data: { status: 'CANCELLED', finishedAt: expect.any(Date) },
+    });
+  });
+
+  it('reports how many rows it closed', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(4));
+
+    expect(await cancelOrphanedStages()).toBe(4);
   });
 });

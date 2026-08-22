@@ -40,11 +40,11 @@
   flex-shrink: 0;
 }
 
-.log-job-icon.succeeded {
+.log-job-icon[data-status='succeeded'] {
   color: #3fb950;
 }
 
-.log-job-icon.running {
+.log-job-icon[data-status='running'] {
   color: var(--blue-clr);
   animation: rdc-spin 1.2s linear infinite;
 }
@@ -54,8 +54,17 @@
   to { transform: rotate(360deg); }
 }
 
-.log-job-icon.failed {
+.log-job-icon[data-status='failed'] {
   color: var(--pill-failed-text);
+}
+
+/*
+ * The same slate the cancelled Pill uses, so one status reads as one colour wherever it
+ * appears. Deliberately the quietest of the four: a cancelled stage stopped because someone
+ * asked it to, so it should not compete with a real failure for attention.
+ */
+.log-job-icon[data-status='cancelled'] {
+  color: var(--pill-cancelled-text);
 }
 
 .log-job-name {
@@ -107,6 +116,10 @@
 
 .log-footer span.failed {
   color: var(--pill-failed-text);
+}
+
+.log-footer span.cancelled {
+  color: var(--pill-cancelled-text);
 }
 
 /*
