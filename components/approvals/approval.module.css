@@ -50,6 +50,13 @@ Approval Card
   font-size: 18px;
 }
 
+.top-row .run-num {
+  font-size: var(--font-size-lg);
+  color: var(--subtitle-clr);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-weight: 300;
+}
+
 .top-row .divider {
   width: 1px;
   height: 16px;
@@ -173,6 +180,36 @@ Approval Card
 .approve-btn {
   white-space: nowrap;
 }
+
+/*
+Passed to ConfirmationModal as buttonStyles. Decoration only -- padding, border
+width/style, radius and type come from the base `button` rule in
+confirmation-modal.module.css, which deliberately sets none of the properties
+below.
+*/
+.confirmation-ghost-btn {
+  color: var(--red-ghost-inert-clr);
+  border-color: var(--red-ghost-inert-clr);
+  background-color: transparent;
+}
+
+.confirmation-btn {
+  color: var(--red-text);
+  border-color: var(--red-btn-border-clr);
+  background-color: transparent;
+}
+
+.confirmation-btn:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+/* Cancel Button Environment Label */
+.meta-label {
+  margin-right: var(--space-sm);
+  color: #ffffff;
+}
+
+
 
 /*
 =====================================================================================
