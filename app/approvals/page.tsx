@@ -30,6 +30,7 @@ export default async function Approvals() {
             subtitle="Pipeline runs waiting for manual approval before proceeding."
           />
 
+          {/* always re-render Approvals page every 10s to detect if approval stages are present, otherwise user will have to refresh page to see new approval stages */}
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
           {approvals.length > 0 &&
