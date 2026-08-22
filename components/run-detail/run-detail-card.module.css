@@ -195,6 +195,12 @@
   font-size: 16px;
 }
 
+/* Cancel Button Environment Label */
+.meta-label {
+  margin-right: var(--space-sm);
+  color: #ffffff;
+}
+
 /*
 ====================================================================================
 Run Detail Media Queries

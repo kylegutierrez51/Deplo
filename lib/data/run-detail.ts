@@ -273,7 +273,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       : run.startedAt
         ? getDuration(run.startedAt)
         : '—',
-    timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
+    timeAgo: getDuration(run.createdAt),
     jobCounts: countJobs(nodes, stagesLite),
     logFilters: buildLogFilters(nodes.filter(n => n.data.type !== 'approval'), stagesLite),
     logs: buildLogs(run.stages)
