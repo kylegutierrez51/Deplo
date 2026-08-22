@@ -1,5 +1,13 @@
+/**
+ * @jest-environment node
+ *
+ * Like execute.ts, stageProcessor.ts is not environment-neutral: it unrefs the interval that
+ * watches for a cancellation, and jsdom's timer shim returns a plain number with no unref().
+ * Under jsdom every case here would fail on a detail of the test environment rather than of
+ * the code.
+ */
 import { processStage } from './stageProcessor';
-import { loadRunContext, markStageRunning, finishStage, openRetry } from './db';
+import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from './db';
 import { execute } from './execute';
 import { resolveSecrets } from './secrets';
 import { advanceRun } from './runProcessor';
@@ -17,6 +25,8 @@ jest.mock('./db', () => ({
   markStageRunning: jest.fn(),
   finishStage: jest.fn(),
   openRetry: jest.fn(),
+  recordStageProgress: jest.fn(),
+  isRunCancelled: jest.fn(),
 }));
 jest.mock('./execute', () => ({ execute: jest.fn() }));
 jest.mock('./secrets', () => ({ resolveSecrets: jest.fn() }));
@@ -41,6 +51,8 @@ const retry = openRetry as jest.MockedFunction<typeof openRetry>;
 const run = execute as jest.MockedFunction<typeof execute>;
 const secrets = resolveSecrets as jest.MockedFunction<typeof resolveSecrets>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
+const progress = recordStageProgress as jest.MockedFunction<typeof recordStageProgress>;
+const cancelled = isRunCancelled as jest.MockedFunction<typeof isRunCancelled>;
 
 const job = { runId: 'run-1', stageId: 'build', attempt: 1 };
 
@@ -62,7 +74,7 @@ const context = (node = stageNode(), environmentId: string | null = 'env-1') =>
   } as never);
 
 const exited = (exitCode: number | null, over: Record<string, unknown> = {}) =>
-  run.mockResolvedValue({ exitCode, signal: null, timedOut: false, logSnippet: '', ...over } as never);
+  run.mockResolvedValue({ exitCode, signal: null, timedOut: false, cancelled: false, logSnippet: '', ...over } as never);
 
 /** What was written as this attempt's terminal state. */
 const recorded = () => finish.mock.calls[0][3];
@@ -75,6 +87,8 @@ beforeEach(() => {
   finish.mockResolvedValue(true);
   retry.mockResolvedValue(true);
   secrets.mockResolvedValue({});
+  progress.mockResolvedValue(true);
+  cancelled.mockResolvedValue(false);
   context();
   exited(0);
   jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -408,5 +422,162 @@ describe('failures that never reached the command', () => {
 
     expect(run).not.toHaveBeenCalled();
     expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED' }));
+  });
+});
+
+/*
+ * execute() hands over the tail every couple of seconds while the command is still running,
+ * and this is where it gets persisted. The property under test is containment: a stage's
+ * outcome must not depend in any way on whether those writes worked.
+ */
+describe('progress snapshots', () => {
+  /** Drives the callback the way execute()'s timer would, from inside the command. */
+  const emitting = (...tails: string[]) =>
+    run.mockImplementation((async (options: Parameters<typeof execute>[0]) => {
+      for (const tail of tails) options.onSnapshot?.(tail);
+      return { exitCode: 0, signal: null, timedOut: false, logSnippet: tails.at(-1) ?? '' };
+    }) as never);
+
+  // setTimeout, not setImmediate: this suite runs under jsdom, which has no setImmediate.
+  const flushMicrotasks = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  it('persists a tail against this run, stage and attempt', async () => {
+    emitting('half way');
+
+    await processStage({ runId: 'run-1', stageId: 'build', attempt: 2 });
+
+    expect(progress).toHaveBeenCalledWith('run-1', 'build', 2, 'half way');
+  });
+
+  /*
+   * The callback runs on a timer, so a rejection inside it has no owner: unhandled, it takes
+   * the whole runner down with it. A database hiccup while a command is running must cost
+   * nothing more than a missing log line.
+   */
+  it('does not fail the stage when the progress write rejects', async () => {
+    progress.mockRejectedValue(new Error('connection terminated'));
+    emitting('half way');
+
+    await expect(processStage(job)).resolves.toBeUndefined();
+    await flushMicrotasks();
+
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'SUCCEEDED' }));
+  });
+
+  /*
+   * Two writes in flight at once can commit out of order, which leaves the *older* tail as
+   * the row's last word until the next tick corrects it. Skipping the tick instead is free:
+   * the buffer is not consumed by a snapshot, so the next one carries everything anyway.
+   */
+  it('skips a tick while the previous write is still in flight', async () => {
+    progress.mockReturnValue(new Promise<boolean>(() => { }));
+    emitting('first', 'second');
+
+    await processStage(job);
+
+    expect(progress).toHaveBeenCalledTimes(1);
+    expect(progress).toHaveBeenCalledWith('run-1', 'build', 1, 'first');
+  });
+});
+
+/*
+ * Cancelling has to reach a command that is already executing, and the row it leaves behind
+ * is the reader's only account of what happened to it.
+ *
+ * The property that matters most here is the one that is easiest to lose: a cancellation
+ * must not spend the retry budget. openRetry firing would open attempt 2 of a stage on a run
+ * that advanceRun will never touch again, stranding a PENDING row under a Cancelled run.
+ */
+describe('cancellation', () => {
+  const wasCancelled = () =>
+    exited(null, { cancelled: true, logSnippet: 'partial output' });
+
+  it('hands execute an abort signal to watch', async () => {
+    context();
+    exited(0);
+
+    await processStage(job);
+
+    expect(spawned().signal).toBeInstanceOf(AbortSignal);
+  });
+
+  /*
+   * The join between the two halves, and the only case that exercises the poll actually
+   * firing. Everywhere else execute is a mock that resolves before the first tick, so the
+   * abort never gets a chance — each half can pass while the wire between them is cut.
+   *
+   * execute stands in for a command that runs until something stops it: the only shape that
+   * can observe an abort at all.
+   */
+  it('aborts the running command once the run reads cancelled', async () => {
+    context();
+    cancelled.mockResolvedValue(true);
+
+    run.mockImplementation(({ signal }) => new Promise(resolve => {
+      signal?.addEventListener('abort', () => resolve({
+        exitCode: null, signal: null, timedOut: false, cancelled: true,
+        logSnippet: 'stopped mid-command',
+      }), { once: true });
+    }) as never);
+
+    // Real timers, and so a real ~2s wait: the poll interval is a module constant with no
+    // seam to shorten it, and jest's fake timers deadlock against the unref'd interval.
+    await processStage(job);
+
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'CANCELLED' }));
+    expect(recorded().logSnippet).toContain('stopped mid-command');
+  }, 15_000);
+
+  it('records the stage as CANCELLED rather than FAILED', async () => {
+    context();
+    wasCancelled();
+
+    await processStage(job);
+
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'CANCELLED' }));
+  });
+
+  // The tail is the only record of how far the command got before it was stopped.
+  it('keeps the output alongside a note saying why it stopped', async () => {
+    context();
+    wasCancelled();
+
+    await processStage(job);
+
+    expect(recorded().logSnippet).toContain('partial output');
+    expect(recorded().logSnippet).toContain('run cancelled');
+  });
+
+  // The heart of it: a cancellation is the one failure that must never be retried.
+  it('does not open a retry', async () => {
+    context(stageNode({ retries: 5 }));
+    wasCancelled();
+
+    await processStage(job);
+
+    expect(retry).not.toHaveBeenCalled();
+  });
+
+  // Still a terminal write on a row this call owns, cancelled or not — the deadlock the
+  // rest of this suite guards against does not care why the stage ended.
+  it('still writes a terminal status and advances the run', async () => {
+    context();
+    wasCancelled();
+
+    await processStage(job);
+
+    expect(finish).toHaveBeenCalled();
+    expect(advance).toHaveBeenCalledWith('run-1');
+  });
+
+  // A database blip on the poll must not take the runner down: the check runs from a timer,
+  // where an unhandled rejection has no owner.
+  it('survives a cancel check that rejects', async () => {
+    context();
+    cancelled.mockRejectedValue(new Error('database unreachable'));
+    exited(0);
+
+    await expect(processStage(job)).resolves.toBeUndefined();
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'SUCCEEDED' }));
   });
 });

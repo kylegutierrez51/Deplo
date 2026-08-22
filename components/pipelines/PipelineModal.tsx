@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";
 import Modal from '@/components/ui/modals/Modal';
-import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
 import Pill from '@/components/ui/Pill';
@@ -64,7 +64,7 @@ export default function PipelineModal({
 }: PipelineModalProps) {
   const [pills, setPills] = useState<string[]>(branchFilters);
   const branchInputRef = useRef<HTMLInputElement>(null);
-  const [isDeleteModalVisible, setisDeleteModalVisible] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
   const [createState, createFormAction] = useActionState(addPipeline, initialState);
   const [editState, editFormAction] = useActionState(updatePipeline, initialState);
 
@@ -89,8 +89,18 @@ export default function PipelineModal({
   }, [editState]);
 
   const handleDeleteClose = () => {
-    setisDeleteModalVisible(false);
+    setDeleteModal(false);
     onEditOrDeleteClose();
+  }
+
+  const deleteRecord = async () => {
+    const deletedRecord = await deletePipeline(id);
+    if (deletedRecord.status === 'success') {
+      onDelete();
+    }
+    else if (deletedRecord.status === 'error') {
+      onError(deletedRecord.message);
+    }
   }
 
   const handleBranchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -108,7 +118,7 @@ export default function PipelineModal({
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setisDeleteModalVisible(true)}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setDeleteModal(true)}>Delete</button>
       {/* Grouped so .footer's space-between still sees two children and keeps Delete on the far edge */}
       <div className={styles.footerActions}>
         <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit Details</button>
@@ -162,7 +172,7 @@ export default function PipelineModal({
 
             {description && (
               <div className={styles.item}>
-                <label>Description <span className={styles.optionalBadge}>optional</span></label>
+                <label>Description</label>
                 <span>{description}</span>
               </div>
             )}
@@ -237,8 +247,8 @@ export default function PipelineModal({
         )}
       </Modal>
 
-      {isDeleteModalVisible &&
-        <DeleteConfirmationModal id={id} recordLabel={"Pipeline"} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deletePipeline} onError={onError}/>
+      {deleteModal &&
+        <ConfirmationModal message={'Delete this Pipeline?'} action={"Delete"} handleConfirmation={deleteRecord} onClose={handleDeleteClose} timeoutMs={2000} />
       }
     </>
   );

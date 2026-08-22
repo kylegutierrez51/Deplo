@@ -16,7 +16,7 @@ const STAGE_TYPE_MAP: Record<StageType, PrismaStageType> = {
 
 /** What execute() produced, in the shape finishStage writes. */
 export interface StageOutcome {
-  status: 'SUCCEEDED' | 'FAILED';
+  status: 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
   exitCode: number | null;
   logSnippet: string | null;
 }
@@ -50,11 +50,8 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
       definition: { select: { graphJson: true, configJson: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
-        // Load-bearing, and paired with the fold below: that fold is last-write-wins, so
-        // ascending attempt is what makes "last" mean "the latest attempt". Ordering by
-        // createdAt instead would be undefined for two rows written in the same
-        // millisecond, and a stage that failed and then succeeded on retry could report
-        // FAILED — killing a run that actually recovered.
+        // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
+        // by sorting from lowest -> highest attempt for each stage.
         orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }],
       },
     },
@@ -62,8 +59,6 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
 
   if (!run) return null;
 
-  // Keyed by stageId — the graph's node id — never by the StageResult row's own cuid,
-  // which the scheduler has no way to match against graph.nodes.
   const outcomes = new Map<string, StageStatus>(
     run.stages.map(stage => [stage.stageId, stage.status]),
   );
@@ -176,6 +171,20 @@ export async function finishStage(runId: string, stageId: string, attempt: numbe
   return count === 1;
 }
 
+export async function recordStageProgress(
+  runId: string,
+  stageId: string,
+  attempt: number,
+  logSnippet: string,
+): Promise<boolean> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: { runId, stageId, attempt, status: 'RUNNING' },
+    data: { logSnippet },
+  });
+
+  return count === 1;
+}
+
 
 /*
 ==============================================================================================
@@ -232,39 +241,41 @@ export async function openRetry(runId: string, stageId: string, attempt: number)
 ==============================================================================================
  * Fails every stage row left RUNNING by a process that is no longer alive.
  *
- * ASSUMES A SINGLE RUNNER PROCESS. Called once at boot, before either worker starts
- * consuming. With a second runner active this would fail that runner's live stages, because
- * a row gives no way to tell "abandoned by a dead process" from "owned by a living one".
- *
- * Deliberately not QUEUED: a waiting BullMQ job survives in Redis and is delivered on
- * restart, so failing that row would kill a stage that was about to run correctly. RUNNING
- * is the status with no such second chance — maxStalledCount: 0 means BullMQ will not
- * re-execute the job, so nothing else is ever going to finish that row.
- *
  * QUEUED rows are handled separately, by the reaper's own pass over findQueuedStages —
  * they need a Redis round trip per row that this statement cannot make.
  *
- * One statement, deliberately. Reading the ids first and then updating `id: { in: ids }`
- * needs two guards to cover the gap it opens — the id bound to skip rows that reached
- * RUNNING after the read, and a status guard to skip snapshot rows that left it — and
- * READ COMMITTED already gives both for free: the UPDATE's snapshot is taken at statement
- * start so a row that turns RUNNING later is never visited, and a row concurrently moved
- * off RUNNING has the `where` re-evaluated against the new version before it is locked.
- * The two-statement form also does not buy back the single-process assumption, since a
- * second runner's already-RUNNING stage is equally visible to the read.
+ * Use Raw SQL since the note variable has to be *appended* to
+ * each row's own logSnippet rather than assigned over it: recordStageProgress has been
+ * saving that stage's output every couple of seconds precisely so it survives a crash, and
+ * overwriting it here would discard the only record of how far the command got, on exactly
+ * the rows someone opens the run to read. Prisma's updateMany cannot express that, because
+ * a `data` value is a constant where this needs an expression over the existing column.
+ * Going through the client would mean one update per row and the gap described above, so
+ * the statement moves to SQL rather than the sweep losing its single-statement property.
 ==============================================================================================
 */
 export async function reapStaleStages(): Promise<number> {
-  const { count } = await prisma.stageResult.updateMany({
-    where: { status: 'RUNNING' },
-    data: {
-      status: 'FAILED',
-      finishedAt: new Date(),
-      logSnippet: 'The runner stopped while this stage was running, so its result was lost.',
-    },
-  });
+  const note = 'The runner stopped while this stage was running, so its result was lost.';
 
-  return count;
+  /*
+   * CHR(10) - equivalent to a newline
+   *
+   * NOW() AT TIME ZONE 'UTC' rather than NOW(): finishedAt is TIMESTAMP(3) without a zone
+   * and Prisma stores UTC in it, so a bare NOW() would land the session's local time in a
+   * column every other writer fills with UTC.
+   * 
+   * The ELSE concatenates '\n{note}' to logSnippet
+   */
+  return await prisma.$executeRaw`
+    UPDATE "stage_results"
+    SET "status" = 'FAILED'::"StageStatus",
+        "finishedAt" = NOW() AT TIME ZONE 'UTC',
+        "logSnippet" = CASE
+          WHEN "logSnippet" IS NULL OR "logSnippet" = '' THEN ${note}::text
+          ELSE "logSnippet" || CHR(10) || ${note}::text
+        END
+    WHERE "status" = 'RUNNING'::"StageStatus"
+  `;
 }
 
 // Every run the scheduler might still owe a decision to, newest last. Used by the boot reaper.
@@ -343,6 +354,41 @@ export async function cancelPendingStages(runId: string): Promise<number> {
   const { count } = await prisma.stageResult.updateMany({
     where: { runId, status: 'PENDING', },
     data: { status: 'CANCELLED' }
+  });
+
+  return count;
+}
+
+export async function isRunCancelled(runId: string): Promise<boolean> {
+  const run = await prisma.pipelineRun.findUnique({
+    where: { id: runId },
+    select: { status: true },
+  });
+
+  return run?.status === 'CANCELLED';
+}
+
+/*
+==============================================================================================
+ * Closes out every stage still open on a run that was cancelled, for the boot reaper.
+ *
+ * cancelRun sweeps the stages it can reach and leaves the RUNNING one to the runner, which
+ * kills the command and writes the row itself. A runner that died in between leaves that row
+ * RUNNING on a CANCELLED run — and retryRunningStages would hand it a fresh PENDING attempt
+ * that nothing will ever dispatch, since advanceRun early-returns on a cancelled run.
+ *
+ * Runs first in reapAbandonedWork so these rows are already terminal by the time the
+ * RUNNING and QUEUED passes read them, which is what keeps those passes free of any
+ * special-casing for cancellation. Also repairs the window between cancelRun's two writes.
+==============================================================================================
+*/
+export async function cancelOrphanedStages(): Promise<number> {
+  const { count } = await prisma.stageResult.updateMany({
+    where: {
+      run: { status: 'CANCELLED' },
+      status: { in: ['PENDING', 'QUEUED', 'RUNNING', 'AWAITING_APPROVAL'] },
+    },
+    data: { status: 'CANCELLED', finishedAt: new Date() },
   });
 
   return count;

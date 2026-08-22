@@ -1,5 +1,5 @@
 .stage-sidebar label {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono);
   font-size: var(--font-size-lg);
 }
 

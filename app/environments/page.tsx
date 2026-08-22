@@ -2,7 +2,7 @@ import styles from './env.module.css';
 import Sidebar from "@/components/layout/sidebar/Sidebar"
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from "@/components/layout/subheader/AddButton";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import EnvironmentRow from '@/components/environments/EnvironmentRow';
@@ -41,7 +41,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Search environments..."} />
-                <FilterSelect
+                <FilterListbox
                   id={"environment"} name={"environment"}
                   options={[
                     { value: "all", label: "All environment types" },
@@ -51,7 +51,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
                     { value: "preview", label: "Preview" },
                     { value: "custom", label: "Custom" },
                   ]} />
-                <FilterSelect
+                <FilterListbox
                   id={"status"} name={"status"}
                   options={[
                     { value: "all", label: "All time" },

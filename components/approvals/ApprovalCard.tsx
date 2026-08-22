@@ -10,6 +10,7 @@ interface ApprovalCardProps {
   stageId: string;
   runId: string;
   pipelineName: string;
+  runNumber: number;
   environment: { type: EnvType; name: string } | null;
   commitSha: string | null;
   commitMessage: string | null;
@@ -19,7 +20,7 @@ interface ApprovalCardProps {
   stagesComplete: string;
 }
 
-export default function ApprovalCard({ id, stageId, runId, pipelineName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
+export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumber, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
 
   return (
     <div className={styles['approval-card']} data-approval-card>
@@ -28,6 +29,7 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, environ
         <div className={styles['approvals-detail']}>
           <div className={styles['top-row']}>
             <span>{pipelineName}</span>
+            <span className={styles['run-num']}>#{runNumber}</span>
             {environment ? (
               <>
                 <span className={styles.divider} aria-hidden="true" />
@@ -54,7 +56,7 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, environ
           />
         </div>
 
-        <ApprovalActions id={id} runId={runId} stageId={stageId} />
+        <ApprovalActions id={id} runId={runId} stageId={stageId} env={environment} />
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
-  failQueuedStage, findRunningStages,
+  failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -285,6 +285,34 @@ describe('the stage compare-and-swaps', () => {
     expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual({ status: 'QUEUED' });
   });
 
+  /*
+   * The mid-command tails execute()'s snapshot timer produces land here, and the RUNNING
+   * guard is the entire reason they are safe. A snapshot is dispatched from a timer, so one
+   * can still be in flight when the command exits; without the guard it would overwrite the
+   * terminal row finishStage just wrote, replacing the final tail with an older, shorter one
+   * and taking the timeout note with it.
+   */
+  it('recordStageProgress guards on RUNNING and addresses one attempt', async () => {
+    await recordStageProgress('run-1', 'a', 3, 'compiling');
+
+    expect(where()).toEqual({ runId: 'run-1', stageId: 'a', attempt: 3, status: 'RUNNING' });
+  });
+
+  // The snippet and nothing else. Writing status or finishedAt from a progress update would
+  // enter it into a race over the fields that decide the run's outcome.
+  it('recordStageProgress writes the tail alone', async () => {
+    await recordStageProgress('run-1', 'a', 1, 'compiling');
+
+    expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual({ logSnippet: 'compiling' });
+  });
+
+  // Not an error: the stage finished while this tail was in flight, so it is simply stale.
+  it('recordStageProgress reports a snapshot that arrived too late', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(0));
+
+    expect(await recordStageProgress('run-1', 'a', 1, 'stale')).toBe(false);
+  });
+
   it.each([
     ['won', 1, true],
     ['lost', 0, false],
@@ -421,47 +449,73 @@ describe('openRetry', () => {
 });
 
 describe('the boot reaper queries', () => {
+  const reaperSql = () => (prismaMock.$executeRaw.mock.calls[0][0] as unknown as string[]).join('?');
+
+  /*
+   * Raw SQL has to name the physical table, and the model name is not it: @@map in
+   * schema.prisma makes StageResult live in `stage_results`. Nothing else in the unit tier
+   * can catch this, because Prisma is mocked and a wrong name only fails against a real
+   * database -- at boot, in the recovery path, which is the worst place to find out.
+   */
+  it('addresses the mapped table name rather than the model name', async () => {
+    prismaMock.$executeRaw.mockResolvedValue(0 as never);
+
+    await reapStaleStages();
+
+    expect(reaperSql()).toContain('"stage_results"');
+  });
+
   it('reports nothing reaped on a clean boot', async () => {
-    prismaMock.stageResult.updateMany.mockResolvedValue(updated(0));
+    prismaMock.$executeRaw.mockResolvedValue(0 as never);
 
     expect(await reapStaleStages()).toBe(0);
   });
 
   /*
-   * One statement, and the whole selection lives in its `where` — two assertions in one
-   * because with a single query they are the same fact.
+   * One statement, and the whole selection lives in its WHERE.
    *
    * RUNNING and nothing else: a QUEUED row's BullMQ job survives in Redis and is delivered
    * on restart, so reaping it would fail a stage that was about to run correctly.
    *
-   * And one statement rather than two: reading the ids first and updating `id: { in: ids }`
-   * needs an id bound *and* a status guard purely to cover the gap between the two reads,
-   * where a single UPDATE has no such gap — READ COMMITTED snapshots at statement start, so
-   * a row that turns RUNNING later is never visited, and a row concurrently moved off
-   * RUNNING has the `where` re-evaluated before it is locked. Splitting this back into a
-   * read plus a scoped write is the regression the call count pins.
+   * And one statement rather than a read plus a write per row. READ COMMITTED snapshots at
+   * statement start, so a row that turns RUNNING later is never visited, and a row moved off
+   * RUNNING concurrently has the WHERE re-evaluated before it is locked. Splitting this into
+   * a findMany and N updates is the regression the call counts pin.
    */
-  it('sweeps every RUNNING row, and only those, in a single update', async () => {
-    prismaMock.stageResult.updateMany.mockResolvedValue(updated(2));
+  it('sweeps every RUNNING row, and only those, in a single statement', async () => {
+    prismaMock.$executeRaw.mockResolvedValue(2 as never);
 
     expect(await reapStaleStages()).toBe(2);
 
-    expect(prismaMock.stageResult.updateMany).toHaveBeenCalledTimes(1);
+    expect(prismaMock.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prismaMock.stageResult.updateMany).not.toHaveBeenCalled();
     expect(prismaMock.stageResult.findMany).not.toHaveBeenCalled();
-    expect(prismaMock.stageResult.updateMany.mock.calls[0][0].where).toEqual({ status: 'RUNNING' });
+    expect(reaperSql()).toContain("'RUNNING'");
   });
 
   // logSnippet is the only place the person looking at the failed run will see a reason.
   // Without it the stage reads as a command that failed, rather than one that never
   // reported back.
   it('explains itself in the log snippet', async () => {
-    prismaMock.stageResult.updateMany.mockResolvedValue(updated(1));
+    prismaMock.$executeRaw.mockResolvedValue(1 as never);
 
     await reapStaleStages();
 
-    expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual(
-      expect.objectContaining({ status: 'FAILED', logSnippet: expect.stringContaining('runner') }),
-    );
+    expect(String(prismaMock.$executeRaw.mock.calls[0][1])).toContain('runner');
+  });
+
+  /*
+   * Appends rather than assigns, and that is the whole reason recordStageProgress exists.
+   * Those snapshots were saved every couple of seconds so the stage's output would survive
+   * the process dying; overwriting the column here would throw away the only record of how
+   * far the command actually got, on exactly the rows someone opens the run to read.
+   */
+  it('keeps whatever the stage had already printed', async () => {
+    prismaMock.$executeRaw.mockResolvedValue(1 as never);
+
+    await reapStaleStages();
+
+    expect(reaperSql()).toContain('"logSnippet" ||');
   });
 
   /*
@@ -535,5 +589,71 @@ describe('the boot reaper queries', () => {
     expect(prismaMock.stageResult.updateMany.mock.calls[0][0].data).toEqual(
       expect.objectContaining({ logSnippet: expect.stringContaining('queued'), finishedAt: expect.any(Date) }),
     );
+  });
+});
+
+describe('isRunCancelled', () => {
+  const runStatus = (status: string | null) =>
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(
+      status === null ? null : { status } as never,
+    );
+
+  it('reads only the status, off the run id', async () => {
+    runStatus('RUNNING');
+
+    await isRunCancelled('run-1');
+
+    expect(prismaMock.pipelineRun.findUnique).toHaveBeenCalledWith({
+      where: { id: 'run-1' },
+      select: { status: true },
+    });
+  });
+
+  it.each(['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED'])('reports false for %s', async (status) => {
+    runStatus(status);
+
+    expect(await isRunCancelled('run-1')).toBe(false);
+  });
+
+  it('reports true for CANCELLED', async () => {
+    runStatus('CANCELLED');
+
+    expect(await isRunCancelled('run-1')).toBe(true);
+  });
+
+  // The row went with the run by cascade, and processStage's own loadRunContext guard is
+  // what handles that. Reporting a deletion as a cancellation would kill the command for
+  // the wrong reason and write a note that is not true.
+  it('reports false for a run that no longer exists', async () => {
+    runStatus(null);
+
+    expect(await isRunCancelled('run-1')).toBe(false);
+  });
+});
+
+describe('cancelOrphanedStages', () => {
+  /*
+   * Every non-terminal status, filtered by the *run's* status rather than the stage's own.
+   * RUNNING belongs here even though cancelRun deliberately leaves it alone: this pass only
+   * ever sees a row the runner abandoned, since a live runner writes it itself.
+   */
+  it('closes out every unfinished stage of a cancelled run', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(4));
+
+    await cancelOrphanedStages();
+
+    expect(prismaMock.stageResult.updateMany).toHaveBeenCalledWith({
+      where: {
+        run: { status: 'CANCELLED' },
+        status: { in: ['PENDING', 'QUEUED', 'RUNNING', 'AWAITING_APPROVAL'] },
+      },
+      data: { status: 'CANCELLED', finishedAt: expect.any(Date) },
+    });
+  });
+
+  it('reports how many rows it closed', async () => {
+    prismaMock.stageResult.updateMany.mockResolvedValue(updated(4));
+
+    expect(await cancelOrphanedStages()).toBe(4);
   });
 });

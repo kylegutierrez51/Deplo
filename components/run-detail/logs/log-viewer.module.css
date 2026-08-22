@@ -1,13 +1,26 @@
 .log-viewer {
   width: 100%;
+
+  /* Fills what .logs has left after the filters bar, and shrinks with it — which is
+     how the viewer stays inside the viewport whether or not the run header is
+     collapsed. min-height: 0 is what lets it shrink below its content size. */
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
   border-radius: var(--radius-lg);
+  /* Clips the body's corners to the radius. The body scrolls, not this box, so
+     nothing is lost to it. */
   overflow: hidden;
   border: 1px solid var(--color-border-dark);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 400;
 }
 
 .log-header {
+  flex: none; /* the body absorbs the slack, never the header */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,11 +40,11 @@
   flex-shrink: 0;
 }
 
-.log-job-icon.succeeded {
+.log-job-icon[data-status='succeeded'] {
   color: #3fb950;
 }
 
-.log-job-icon.running {
+.log-job-icon[data-status='running'] {
   color: var(--blue-clr);
   animation: rdc-spin 1.2s linear infinite;
 }
@@ -41,35 +54,48 @@
   to { transform: rotate(360deg); }
 }
 
-.log-job-icon.failed {
+.log-job-icon[data-status='failed'] {
   color: var(--pill-failed-text);
+}
+
+/*
+ * The same slate the cancelled Pill uses, so one status reads as one colour wherever it
+ * appears. Deliberately the quietest of the four: a cancelled stage stopped because someone
+ * asked it to, so it should not compete with a real failure for attention.
+ */
+.log-job-icon[data-status='cancelled'] {
+  color: var(--pill-cancelled-text);
 }
 
 .log-job-name {
   font-size: var(--font-size-body);
   font-weight: 700;
   color: #e6edf3;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .log-job-cmd {
   font-size: var(--font-size-sm);
   color: #7d8590;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .log-duration {
   font-size: var(--font-size-sm);
   color: #7d8590;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .log-body {
   background-color: #0d1117;
   padding: var(--space-sm) 0;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .log-footer {
+  flex: none;
   padding: var(--space-sm) 18px;
   background-color: #0d1117;
   border-top: 1px solid var(--color-border-dark);
@@ -77,7 +103,7 @@
 
 .log-footer span {
   font-size: var(--font-size-sm);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .log-footer span.succeeded {
@@ -92,6 +118,10 @@
   color: var(--pill-failed-text);
 }
 
+.log-footer span.cancelled {
+  color: var(--pill-cancelled-text);
+}
+
 /*
 ====================================================================================
 Log Viewer Media Queries
@@ -103,17 +133,6 @@ Log Viewer Media Queries
      480px
 */
 
-
-/*
-  Base correction (no media query)
-  .log-viewer uses overflow: hidden for border-radius clipping, which also
-  clips long log lines at any viewport width. Override only the x-axis so
-  lines scroll horizontally instead of being cut off. Vertical overflow and
-  border-radius corner clipping are unaffected.
-*/
-.log-viewer {
-  overflow-x: auto;
-}
 
 /* 
 ============================================================

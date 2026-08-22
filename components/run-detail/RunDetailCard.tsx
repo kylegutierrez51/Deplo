@@ -5,6 +5,7 @@ import { capitalize } from '@/lib/utils/string';
 import type { RunStatus, EnvType } from '@/lib/types';
 
 interface RunDetailCardProps {
+  id: string;
   pipelineName: string;
   runNumber: number;
   status: RunStatus;
@@ -19,7 +20,7 @@ interface RunDetailCardProps {
   timeAgo: string;
 }
 
-export default function RunDetailCard({ pipelineName, runNumber, status, environment, commitHash, commitMessage, branch, repo, trigger, triggeredBy, duration, timeAgo }: RunDetailCardProps) {
+export default function RunDetailCard({ id, pipelineName, runNumber, status, environment, commitHash, commitMessage, branch, repo, trigger, triggeredBy, duration, timeAgo }: RunDetailCardProps) {
   return (
     <div className={styles['run-detail-card']}>
       <div className={styles['rdc-inner']}>
@@ -83,7 +84,7 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
           </div>
         </div>
 
-        <RunDetailActions />
+        <RunDetailActions id={id} status={status} env={environment} />
 
       </div>
     </div>

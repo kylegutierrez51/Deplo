@@ -10,6 +10,7 @@ export type Approval = {
   id: string;
   stageId: string;
   runId: string;
+  runNumber: number;
   waitingTime: string;
   createdBy: string | null;
   /* below come from runId in PipelineRun model */
@@ -46,6 +47,22 @@ const approvalRunInclude = {
   stages: { orderBy: [{ stageId: 'asc' as const }, { attempt: 'asc' as const }] },
 };
 
+async function getRunNumbersById(
+  runs: { id: string, pipelineId: string, createdAt: Date }[]
+): Promise<Map<string, number>> {
+  const unique = [...new Map(runs.map((run) => [run.id, run])).values()];
+
+  const counts = await prisma.$transaction(
+    unique.map((run) => (
+      prisma.pipelineRun.count({
+        where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } }
+      })
+    )
+  ));
+
+  return new Map(unique.map((run, i) => [run.id, counts[i]]));
+}
+
 
 export async function getApprovals(): Promise<Approval[]> {
   const approvalStages = await prisma.stageResult.findMany({
@@ -54,19 +71,26 @@ export async function getApprovals(): Promise<Approval[]> {
     include: { run: { include: approvalRunInclude } },
   });
 
-  const commitMessageByRunId = await getCommitMessagesByRunId(approvalStages.map((a) => a.runId));
+
+  const runs = approvalStages.map((a) => a.run);
+
+  const [commitMessageByRunId, runNumberById ] = await Promise.all([
+    getCommitMessagesByRunId(approvalStages.map((a) => a.runId)),
+    getRunNumbersById(runs)
+  ])
 
   return approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
 
-    const latestStages = run.stages.map((s) => ({
-      status: s.status,
-    })); // excludes stages that retried -- like loadRunContext() does
+    const latestStages = new Map<string, PrismaStageStatus>(
+      run.stages.map(s => [s.stageId, s.status])
+    ); // includes only most recent attempt for each stage -- like loadRunContext() does
 
     return {
       id: approvalStage.id,
       stageId: approvalStage.stageId,
       runId: run.id,
+      runNumber: runNumberById.get(run.id) ?? 1,
       waitingTime: getDuration(approvalStage.startedAt ?? approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,
@@ -77,7 +101,7 @@ export async function getApprovals(): Promise<Approval[]> {
         name: run.environment.name,
       } : null,
       branch: run.branch,
-      stagesComplete: latestStages.filter(s => s.status === "SUCCEEDED").length + '/' + latestStages.length
+      stagesComplete: new Map([...latestStages].filter(([_, status]) => ["SUCCEEDED", "APPROVED"].includes(status))).size + '/' + latestStages.size
     };
   });
 }

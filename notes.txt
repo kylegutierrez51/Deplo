@@ -1253,3 +1253,111 @@ Case 3.
  The next 2 lines then attempt to delete the lock, and if successful, removeStageJob(jobId) returns true, so it sets the previously locked job from 'QUEUED' to 'PENDING'
 
  If reclaimStageJob() returns false: That job will be failed by the stalled checker and will never run, so the row is failed rather than reset: reverting it from 'QUEUED' to 'PENDING' would re-enqueue the job witbt be same jobId that's still in the keyspace, leaving the stage hung with nothing scheduled to move it. So we just fail that stage.
+
+===================================================================================================================================
+
+FilterListBox.tsx
+
+  const [selected, setSelected] = useState(
+    () => options.find((option) => option.value === defaultValue)?.value ?? options[0]?.value ?? '',
+  );
+
+  const selectedOption = options.find((option) => option.value === selected) ?? options[0];
+  const selectedValue = selectedOption?.value ?? '';
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selectedValue)); 
+  
+That last line ensures that even if the 'options' list changes in order and re-renders, that the stage the user is currently viewing doesn't jump to another stage (e.g. -- 'test' was index 0, but 'options' changes so that 'build' is index 0 - this line still ensures that the user still looks at 'test')
+
+So the only thing that changes is the order of the stages in the filter, which (for the Run Detail page) is based on the order the user created the nodes in the Pipeline Editor (via @/lib/data/run-detail.ts -- buildLogFilters() 2nd for loop)
+
+===================================================================================================================================
+
+LogsTab.tsx
+
+
+  if (attempt === null && attemptsForStage.length) setAttempt(highestAttempt);
+
+
+  if (selectedLogIndex === undefined && logFilters.length) setSelectedLogIndex(logFilters[0].value);
+
+
+
+  Both of these seed state the first time the data to seed it from arrives, rather than
+  deriving it every render. AutoRefresh re-runs the server component on a timer and
+  reconciles into this tree, so `logs` and `logFilters` grow underneath state that
+  survives — and a derived `attempt ?? highestAttempt` would follow a retry the moment
+  it opened, pulling LogViewer off the attempt the reader was in the middle of. null
+  means "nothing chosen for this stage yet": take the newest attempt available once,
+  then hold it until the reader picks another or the stage changes.
+
+  The 2nd if statement exists because if 'logFilters' is initally empty on the first render (which happens when the run is queued), then 'selectedLogIndex' will be undefined and since 'selectedLog' fetches the log based on 'selectedLogIndex', the LogViewer wouldn't show logs until the user clicks on a stage in the filter (since 'selectedLog' renders LogViewer but uses 'selectedLogIndex')
+
+
+
+
+
+
+    <FilterListbox
+      key={selectedLogIndex}
+      id={"attempts"} name={"attempts"}
+      styles={styles}
+      defaultValue={attempt ? String(attempt) : undefined}
+      setFilteredOption={(val) => setAttempt(Number(val))}
+      options={
+        attemptsForStage.map((n) => (
+          { value: String(n), label: `Attempt ${n}` }
+        ))
+      }
+    />   
+
+    defaultValue is read once by the useState initializer, so when a user switches to another stage that had maybe 9 attempts, it still shows 'Attempt 1' even though it should show the highest attempt. 
+
+    The fix is the key prop. Keying it to the selectedLogIndex (the selected stage) remounts the component, which re-reads defaultValue off the stage the user just picked. This always ensures that the highest attempt is selected on any stage the user picks.
+
+   defaultValue is read once, by the useState initializer — so without a new
+   identity this keeps the attempt it was showing for the previous stage while
+   LogViewer moves on to the new one. Keying it to the stage remounts it, which
+   re-reads defaultValue off the stage the user just picked.
+            
+============================================================================================
+
+LogViewer ion-icon fix:
+
+Previously: 
+
+      <ion-icon 
+        name={iconName[status]} 
+        className={`${styles['log-job-icon']} ${styles[status]}`}
+      ></ion-icon>
+
+Issue: 
+1. Enter the Run Detail page for the first time.
+2. Go to the Logs tab, and the ion icon shows for the first stage in the log filter.
+3. Decide to switch to another stage via the log filter.
+4. But the ion-icon completely disappears (ion-icon isn't hydrated)
+5. If you go back to the stage that rendered it initially, the ion-icon is gone too.
+
+
+New Implementation:
+
+          <ion-icon
+            name={iconName[status]}
+            data-status={status}
+            className={styles['log-job-icon']}
+          ></ion-icon>
+
+Why it fixes the issue:
+
+    React owns 'class' via 'className'. When 'status' changes, that string changes, 
+    so React rewrites the entire class attribute (removing 'md hydrated' as shown from DevTools). 
+    Since LogViewer isn't keyed, React reuses the same DOM node rather than creating a fresh one.
+
+  Steps:
+
+    1. Works on first view — React writes className at mount, then the runtime appends its classes.
+    2. Disappears on switching stage — first className change wipes hydrated.
+    3. Still gone when you switch back — a custom element upgrades exactly once. Nothing re-adds them ever.
+
+    So remove 'status' off of className to keep the class string constant, so that React never touches the 'className' attribute after mount.
+
+    Move it to a custom 'data-status' attribute to render out the ion-icons

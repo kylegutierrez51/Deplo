@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils/date"
 import type { FormState, EnvType } from "@/lib/types.ts";
 import type { Environment } from "@/lib/data/environments";
 import Modal from '@/components/ui/modals/Modal';
-import DeleteConfirmationModal from "@/components/ui/modals/DeleteConfirmationModal";
+import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import secretStyles from './secret-modal.module.css';
 import Pill from '@/components/ui/Pill';
@@ -66,7 +66,7 @@ export default function SecretModal({
     environments?.find(env => env.name === environmentName)?.id ?? null
   );
   const [openMatches, setOpenMatches] = useState(false);
-  const [isDeleteModalVisible, setisDeleteModalVisible] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
   const [createState, createFormAction] = useActionState(addSecret, initialState);
   const [editState, editFormAction] = useActionState(updateSecret, initialState);
 
@@ -91,8 +91,18 @@ export default function SecretModal({
   }, [editState]);
 
   const handleDeleteClose = () => {
-    setisDeleteModalVisible(false);
+    setDeleteModal(false);
     onEditOrDeleteClose();
+  }
+
+  const deleteRecord = async () => {
+    const deletedRecord = await deleteSecret(id);
+    if (deletedRecord.status === 'success') {
+      onDelete();
+    }
+    else if (deletedRecord.status === 'error') {
+      onError(deletedRecord.message);
+    }
   }
 
   const matches = () => {
@@ -115,7 +125,7 @@ export default function SecretModal({
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setisDeleteModalVisible(true)}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setDeleteModal(true)}>Delete</button>
       <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
@@ -282,8 +292,8 @@ export default function SecretModal({
         )}
       </Modal>
 
-      {isDeleteModalVisible &&
-        <DeleteConfirmationModal id={id} recordLabel={"Secret"} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deleteSecret} onError={onError} />
+      {deleteModal &&
+        <ConfirmationModal message={'Delete this Secret?'} action={"Delete"} handleConfirmation={deleteRecord} onClose={handleDeleteClose} timeoutMs={2000} />
       }
     </>
   );

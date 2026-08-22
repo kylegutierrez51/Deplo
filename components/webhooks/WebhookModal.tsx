@@ -5,11 +5,10 @@ import { formatDate } from '@/lib/utils/date';
 import type { FormState } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
 import Modal from '@/components/ui/modals/Modal';
-import DeleteConfirmationModal from '@/components/ui/modals/DeleteConfirmationModal';
-import RegenerateSecretModal from './RegenerateSecretModal';
+import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
-import { addWebhook, updateWebhook, deleteWebhook } from '@/lib/actions/webhooks';
+import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
@@ -71,8 +70,8 @@ export default function WebhookModal({
   );
   const [openMatches, setOpenMatches] = useState(false);
 
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [isRegenerateModalVisible, setIsRegenerateModalVisible] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [regenerateModal, setRegenerateModal] = useState(false);
   const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [revealedSecretVisible, setRevealedSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -101,8 +100,35 @@ export default function WebhookModal({
   }, [editState]);
 
   const handleDeleteClose = () => {
-    setIsDeleteModalVisible(false);
+    setDeleteModal(false);
     onEditOrDeleteClose();
+  }
+
+  const deleteRecord = async () => {
+    const deletedRecord = await deleteWebhook(id);
+    if (deletedRecord.status === 'success') {
+      onDelete();
+    }
+    else if (deletedRecord.status === 'error') {
+      onError(deletedRecord.message);
+    }
+  }
+
+  const onRegenerate=(newSecret: string) => {
+    setRevealedSecret(newSecret);
+    setRevealedSecretVisible(false);
+    setRegenerateModal(false);
+  }
+
+
+  const handleRegenerate = async () => {
+    const result = await regenerateWebhookSecret(id);
+    if (result.status === 'success' && result.secret) {
+      onRegenerate(result.secret);
+    }
+    else if (result.status === 'error') {
+      onError(result.message);
+    }
   }
 
   const handleBranchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -144,7 +170,7 @@ export default function WebhookModal({
 
   const footer = mode === 'view' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setIsDeleteModalVisible(true)}>Delete</button>
+      <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setDeleteModal(true)}>Delete</button>
       <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit</button>
     </>
   ) : (mode === 'create' ? (
@@ -174,7 +200,7 @@ export default function WebhookModal({
 
             {filters.length > 0 && (
               <div className={styles.fieldGroup}>
-                <label>Branch filters <span className={styles.optionalBadge}>optional</span></label>
+                <label>Branch filters</label>
                 <div className={styles.branchPills}>
                   {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
                 </div>
@@ -183,19 +209,14 @@ export default function WebhookModal({
 
             <div className={styles.fieldGroup}>
               <label>Trigger events</label>
-              <div className={styles.eventCards}>
-                {EVENT_DEFS.map(({ key, label, desc }) => (
-                  <div key={key} className={`${styles.eventCard} ${selectedEvents.includes(key) ? styles.eventCardChecked : ''}`}>
-                    <div className={styles.eventCardCheckbox}>
-                      <span className={`${styles.customCheckbox} ${selectedEvents.includes(key) ? styles.customCheckboxChecked : ''}`}></span>
-                    </div>
-                    <div className={styles.eventCardContent}>
-                      <span className={styles.eventName}>{label}</span>
-                      <span className={styles.eventDesc}>{desc}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {selectedEvents.length > 0 ? (
+                <div className={styles.branchPills}>
+                  {EVENT_DEFS.filter(e => selectedEvents.includes(e.key))
+                    .map(e => <span key={e.key} className={styles.branchPill}>{e.label}</span>)}
+                </div>
+              ) : (
+                <span className={styles.emptyValue}>None — this webhook won&apos;t trigger</span>
+              )}
             </div>
 
             <div className={styles['item-flex']}>
@@ -340,7 +361,7 @@ export default function WebhookModal({
                   <ion-icon name="information-circle-outline"></ion-icon>
                   The signing secret can&apos;t be viewed again after creation. Regenerate it if it may have been compromised.
                 </p>
-                <button type="button" className={styles.regenerateSecretBtn} onClick={() => setIsRegenerateModalVisible(true)}>
+                <button type="button" className={styles.regenerateSecretBtn} onClick={() => setRegenerateModal(true)}>
                   <ion-icon name="refresh-outline"></ion-icon>
                   Regenerate secret
                 </button>
@@ -374,21 +395,17 @@ export default function WebhookModal({
         )}
       </Modal>
 
-      {isDeleteModalVisible &&
-        <DeleteConfirmationModal id={id} recordLabel={"Webhook"} onDelete={onDelete} onDeleteClose={handleDeleteClose} deleteRecord={deleteWebhook} onError={onError} />
+      {deleteModal && !regenerateModal &&
+        <ConfirmationModal message={'Delete this Webhook?'} action={"Delete"} handleConfirmation={deleteRecord} onClose={handleDeleteClose} timeoutMs={2000} />
       }
 
-      {isRegenerateModalVisible &&
-        <RegenerateSecretModal
-          id={id}
-          onRegenerate={(newSecret) => {
-            setRevealedSecret(newSecret);
-            setRevealedSecretVisible(false);
-            setIsRegenerateModalVisible(false);
-          }}
-          onRegenerateClose={() => setIsRegenerateModalVisible(false)}
-          onError={onError}
-        />
+      {regenerateModal && !deleteModal &&
+        <ConfirmationModal 
+          message={"Regenerate this webhook's secret? The current secret will stop validating deliveries immediately"} 
+          action={"Regenerate"} 
+          handleConfirmation={handleRegenerate} 
+          onClose={() => setRegenerateModal(false)} 
+          timeoutMs={2000} />
       }
     </>
   );

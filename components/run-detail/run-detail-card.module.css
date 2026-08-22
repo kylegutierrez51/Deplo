@@ -1,6 +1,12 @@
 .run-detail-card {
   width: 100%;
-  align-self: center;
+  /* 
+   * Auto margins rather than align-self: center -- the card now sits inside .run-header-inner
+   * (a block), where align-self has nothing to act on. The 2 margins centers it under any
+   * parent.
+   */
+  margin-left: auto;
+  margin-right: auto;
   max-width: var(--width-xl);
   background-color: var(--dark-clr-2);
   border: 1px solid var(--light-gray-clr);
@@ -46,7 +52,7 @@
 .rdc-num {
   font-size: var(--font-size-lg);
   color: var(--subtitle-clr);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .rdc-status {
@@ -101,7 +107,7 @@
 
 .rdc-commit-hash {
   color: var(--blue-clr);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: inherit;
 }
 
@@ -187,6 +193,12 @@
 .rdc-btn-cancel ion-icon,
 .rdc-btn-rerun ion-icon {
   font-size: 16px;
+}
+
+/* Cancel Button Environment Label */
+.meta-label {
+  margin-right: var(--space-sm);
+  color: #ffffff;
 }
 
 /*

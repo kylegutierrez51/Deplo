@@ -2,7 +2,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Open Sans", sans-serif;
+  font-family: var(--font-open-sans), sans-serif;
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
@@ -99,6 +99,9 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --red-btn-border-clr: #f87171;
   --red-btn-hover-clr: rgba(248, 113, 113, 0.14);
 
+  --red-ghost-inert-clr: #804646;
+  --green-ghost-inert-clr: #2f6b2f;
+  --gray-ghost-inert-clr: #5a5a5a;
 
 
   /* Spacing */
@@ -118,7 +121,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --z-context-menu: 300;
   --z-modal: 1000;
   --z-toast: 2000;
-  --z-delete-confirm: 3000;
+  --z-confirmation-modal: 3000;
   --z-profile: 9999;
 
   /* Typography */
@@ -318,9 +321,15 @@ textarea {
 
 ::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* The box where a horizontal and a vertical scrollbar meet. */
+::-webkit-scrollbar-corner {
   background: transparent;
 }
 

@@ -72,12 +72,17 @@ test('deletes a pipeline after the confirmation arms', async ({ page }) => {
   // The modal footer's Delete only opens the confirmation.
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
-  // DeleteConfirmationModal keeps its own Delete inert for three seconds, so
-  // the confirmation has to be scoped separately from the footer button.
-  const confirmation = page.locator('[class*="delete-container"]');
+  // ConfirmationModal keeps its own Delete inert until it arms — 2s here, since
+  // PipelineModal passes timeoutMs={2000} — so the confirmation has to be scoped
+  // separately from the footer button, which carries the same name.
+  const confirmation = page.locator('[class*="confirmation-container"]');
   await expect(confirmation).toBeVisible();
-  await page.waitForTimeout(3200);
-  await confirmation.getByRole('button', { name: 'Delete', exact: true }).click();
+
+  // The unarmed button renders `disabled` rather than merely looking inert, so
+  // wait for the state itself instead of sleeping past the delay.
+  const confirm = confirmation.getByRole('button', { name: 'Delete', exact: true });
+  await expect(confirm).toBeEnabled();
+  await confirm.click();
 
   await expect(page).toHaveURL('/pipelines');
   await expect(page.getByText(name)).toHaveCount(0);

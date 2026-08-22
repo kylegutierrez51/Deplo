@@ -1,10 +1,10 @@
 /**
  * @jest-environment node
  *
- * The one file in the unit tier that overrides jest.config.mjs's global jsdom. Everything
- * else in lib/ and runner/ is environment-neutral; execute.ts is not, and jsdom's timer
- * shim returns a plain number with no unref(), so the timeout cases would fail against a
- * detail of the test environment rather than of the code.
+ * One of two files in the unit tier that override jest.config.mjs's global jsdom — the other
+ * is stageProcessor.test.ts, for the same reason. jsdom's timer shim returns a plain number
+ * with no unref(), so the timeout cases would fail against a detail of the test environment
+ * rather than of the code.
  */
 import { execute, killAllChildren } from './execute';
 import { mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
@@ -109,6 +109,102 @@ describe('the log snippet', () => {
   });
 });
 
+/*
+ * Between markStageRunning and finishStage the row's logSnippet is null, so a stage that
+ * has been building for four minutes shows the Run Detail page nothing at all. The buffer
+ * already holds the tail; these snapshots are what get it out of the runner's memory and
+ * into the row while the command is still running.
+ *
+ * execute never awaits the callback and never lets it fail: persisting a log tail must not
+ * be able to delay a command or turn a passing stage into a failed one.
+ */
+describe('progress snapshots', () => {
+  const collect = () => {
+    const seen: string[] = [];
+    return { seen, onSnapshot: (tail: string) => { seen.push(tail); } };
+  };
+
+  const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  it('reports the tail while the command is still running', async () => {
+    const { seen, onSnapshot } = collect();
+
+    const { logSnippet } = await run(
+      node("console.log('early');setTimeout(function(){console.log('late')},700)"),
+      { onSnapshot, snapshotMs: 100 },
+    );
+
+    // The whole point, and the reason it is seen[0] rather than a count: a tail holding
+    // 'early' and not yet 'late' could only have been observed while the command was
+    // still running. How many ticks land after that is a matter of scheduling, so
+    // asserting on the later ones would only pin the machine's timing.
+    expect(seen[0]).toBe('early');
+    expect(logSnippet).toBe('early\nlate');
+  }, 20_000);
+
+  /*
+   * A tick that re-sends an unchanged tail is a pure write of a text column for nothing.
+   * With concurrency: 5 and a 2s interval that is otherwise five needless updates every
+   * two seconds for the entire length of a quiet stage.
+   */
+  it('does not repeat a tail that has not changed', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(
+      node("console.log('once');setTimeout(function(){},600)"),
+      { onSnapshot, snapshotMs: 50 },
+    );
+
+    expect(seen).toEqual(['once']);
+  }, 20_000);
+
+  it('reports nothing at all for a command that never prints', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(node('setTimeout(function(){},400)'), { onSnapshot, snapshotMs: 50 });
+
+    expect(seen).toEqual([]);
+  }, 20_000);
+
+  /*
+   * The timer is cleared on every settle path. A snapshot that fires after finishStage has
+   * written the terminal row would be a stale, shorter tail landing on a finished stage —
+   * the RUNNING guard in recordStageProgress rejects it, but leaving the timer alive means
+   * a pointless query per tick forever, since nothing else would ever stop it.
+   */
+  it('stops firing once the command has exited', async () => {
+    const { seen, onSnapshot } = collect();
+
+    await run(node("console.log('done')"), { onSnapshot, snapshotMs: 50 });
+    const atExit = seen.length;
+
+    await settle(300);
+
+    expect(seen).toHaveLength(atExit);
+  }, 20_000);
+
+  /*
+   * Snapshots must read the buffer without consuming it. flush() banks the partial-line
+   * remainder into lines and clears it, so a tick landing mid-line would split one line of
+   * output into two in the *final* snippet — the snapshot silently corrupting the thing it
+   * was only supposed to observe. Below, 'abc' is still partial when two ticks pass.
+   */
+  it('does not split a line that a tick lands in the middle of', async () => {
+    const { onSnapshot } = collect();
+
+    const { logSnippet } = await run(
+      node("process.stdout.write('abc');setTimeout(function(){process.stdout.write('def')},400)"),
+      { onSnapshot, snapshotMs: 100 },
+    );
+
+    expect(logSnippet).toBe('abcdef');
+  }, 20_000);
+
+  it('runs no timer at all when no callback is given', async () => {
+    expect((await run(node("console.log('x')"), { snapshotMs: 10 })).logSnippet).toBe('x');
+  });
+});
+
 describe('timeouts', () => {
   /*
    * Nothing is asserted about exitCode or signal: POSIX reports null plus SIGKILL, Windows
@@ -176,6 +272,25 @@ describe('killing the process tree', () => {
 
   const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  /*
+   * Waits for the grandchild to actually be writing, rather than guessing at a delay. Two
+   * node startups plus an interval tick is not a fixed cost: under the full suite this box
+   * runs 38 workers at once, and a sleep long enough on an idle machine is not long enough
+   * on a loaded one. Everything below the abort is meaningless until the marker exists.
+   */
+  const waitForOutput = async (file: string, timeoutMs = 15_000) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      try {
+        if ((await stat(file)).size > 0) return;
+      } catch { /* not created yet */ }
+      await settle(50);
+    }
+
+    throw new Error(`the grandchild never wrote to ${file}`);
+  };
+
   let workspace: string;
 
   beforeEach(async () => { workspace = await mkdtemp(path.join(tmpdir(), 'deplo-tree-')); });
@@ -198,6 +313,99 @@ describe('killing the process tree', () => {
     await settle(700);
     expect((await stat(marker)).size).toBe(afterKill);
   }, 30_000);
+
+  /*
+   * The same proof for the cancel path. Cancelling shares killTree with the timeout, but it
+   * reaches it through a different trigger, and a version that signalled only the shell
+   * would leave the real command running in the run's workspace — the exact failure the
+   * timeout case above exists to rule out.
+   */
+  it('stops a grandchild when the signal aborts, not only the shell', async () => {
+    const script = path.join(workspace, 'parent.cjs');
+    const marker = path.join(workspace, 'alive.txt');
+    await writeFile(script, PARENT_SCRIPT);
+
+    const abort = new AbortController();
+    const pending = run(`"${process.execPath}" "${script}" "${marker}"`, {
+      timeoutMs: 60_000,
+      signal: abort.signal,
+    });
+
+    await waitForOutput(marker);
+    abort.abort();
+
+    const { cancelled, timedOut } = await pending;
+    expect(cancelled).toBe(true);
+    // Distinct from a timeout: the deadline was 60s and never came close to firing.
+    expect(timedOut).toBe(false);
+
+    // waitForOutput already proved it was alive, so this only records where it stopped.
+    const afterKill = (await stat(marker)).size;
+
+    await settle(700);
+    expect((await stat(marker)).size).toBe(afterKill);
+  }, 30_000);
+});
+
+/*
+ * Cancelling is a recorded outcome, like a timeout — the promise resolves with a flag rather
+ * than rejecting, because the stage still has a row to write and a log tail worth keeping.
+ */
+describe('cancellation', () => {
+  const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  it('settles a long-running command when the signal aborts', async () => {
+    const abort = new AbortController();
+    const pending = run(node('setTimeout(()=>{},30000)'), { timeoutMs: 60_000, signal: abort.signal });
+
+    await settle(400);
+    abort.abort();
+
+    expect((await pending).cancelled).toBe(true);
+  }, 20_000);
+
+  // Kept from the buffer the same way a timeout's is: whatever the command managed to say
+  // before it was stopped is the only account of how far it got.
+  it('keeps the output the command produced before it was stopped', async () => {
+    const abort = new AbortController();
+    const pending = run(
+      node("process.stdout.write('before the cancel');setTimeout(()=>{},30000)"),
+      { timeoutMs: 60_000, signal: abort.signal },
+    );
+
+    await settle(500);
+    abort.abort();
+
+    expect((await pending).logSnippet).toContain('before the cancel');
+  }, 20_000);
+
+  // A signal already aborted when execute is called never fires the event, so it is handled
+  // at spawn instead — without that the command would run to completion uncancelled.
+  it('kills a command whose signal was already aborted', async () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    expect((await run(node('setTimeout(()=>{},30000)'), { timeoutMs: 60_000, signal: abort.signal })).cancelled)
+      .toBe(true);
+  }, 20_000);
+
+  /*
+   * Read from whether a signal was actually delivered, not from whether abort was called.
+   * The abort can land in the gap between the command exiting and 'close' arriving, and
+   * reporting a clean run as cancelled would contradict the exit code sitting beside it.
+   */
+  it('leaves cancelled false for a command that finished on its own', async () => {
+    const abort = new AbortController();
+    const result = await run(node('process.exit(0)'), { timeoutMs: 10_000, signal: abort.signal });
+
+    abort.abort();
+
+    expect(result).toEqual(expect.objectContaining({ exitCode: 0, cancelled: false }));
+  });
+
+  it('leaves cancelled false when no signal is passed at all', async () => {
+    expect((await run(node('process.exit(0)'))).cancelled).toBe(false);
+  });
 });
 
 /*
