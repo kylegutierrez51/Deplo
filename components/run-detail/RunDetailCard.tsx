@@ -46,7 +46,7 @@ export default function RunDetailCard({ id, pipelineName, runNumber, status, env
                 </div>
               </>
             ) : (
-              <span className={styles['rdc-meta-item']}>None</span>
+              <span className={styles['rdc-meta-item']}>No Environment Found</span>
             )}
           </div>
 

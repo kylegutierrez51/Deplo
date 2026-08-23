@@ -11,7 +11,7 @@ const STAGE_TYPES = [
 
 const EM_DASH = '—';
 
-export default function StageDetailView({ node }: { node: StageResultNode }) {
+export default function StageDetailView({ node, envPresent }: { node: StageResultNode, envPresent: boolean }) {
   const { type, status, name, label, command, timeout, retries, env_vars, attempt, maxAttempts, secretKeys } = node.data;
   const stageType: StageType = type ?? 'custom';
   const envVars = env_vars ?? [];
@@ -40,11 +40,11 @@ export default function StageDetailView({ node }: { node: StageResultNode }) {
         </div>
 
         {status === 'awaiting-approval' &&
-        <div className={styles['approval-link-container']}>
-          <Link href="/approvals" target="_blank" className={styles['approval-link']}>
-            Go to Approval Page
-          </Link>
-        </div>
+          <div className={styles['approval-link-container']}>
+            <Link href="/approvals" target="_blank" className={styles['approval-link']}>
+              Go to Approval Page
+            </Link>
+          </div>
 
         }
 
@@ -120,8 +120,10 @@ export default function StageDetailView({ node }: { node: StageResultNode }) {
                     </div>
                   </div>
                 ))
-                : <div className={styles.empty}>No secrets selected.</div>
-              }
+                : (envPresent === true ?
+                  <div className={styles.empty}>No secrets selected.</div>
+                  : <div className={styles.empty}>Since the environment was not found, secrets for this stage may have been deleted.</div>
+                )}
             </div>
           </>
         }

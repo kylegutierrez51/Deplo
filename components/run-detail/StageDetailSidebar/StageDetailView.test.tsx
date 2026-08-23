@@ -34,7 +34,12 @@ const node = (data: Partial<StageResultNode['data']> = {}): StageResultNode => (
   },
 });
 
-const setup = (data: Partial<StageResultNode['data']> = {}) => render(<StageDetailView node={node(data)} />);
+/*
+ * envPresent defaults to true — the ordinary case, where the run still has the environment
+ * its secrets were selected from. Only the cases that are about its absence pass it.
+ */
+const setup = (data: Partial<StageResultNode['data']> = {}, envPresent = true) =>
+  render(<StageDetailView node={node(data)} envPresent={envPresent} />);
 
 describe('configuration fields', () => {
   it.each([
@@ -121,6 +126,46 @@ describe('empty values', () => {
     setup({ secretKeys: [] });
 
     expect(screen.getByText('No secrets selected.')).toBeInTheDocument();
+  });
+});
+
+/*
+ * An empty secret list has two quite different causes, and the run's environment is what
+ * tells them apart.
+ *
+ * lib/data/run-detail.ts reads a stage's secret ids out of node.data.secrets keyed by the
+ * run's own environmentId, so a run with no environment resolves to [] for every stage no
+ * matter what the definition selected. That is indistinguishable from a stage that simply
+ * selected nothing — unless the view is told which it is looking at, which is all
+ * envPresent is for. Saying "No secrets selected." over a run whose environment has gone
+ * is the view asserting something it cannot know.
+ */
+describe('secrets against a missing environment', () => {
+  it('says the environment was not found when the run has none', () => {
+    setup({ secretKeys: [] }, false);
+
+    expect(screen.getByText(/the environment was not found/)).toBeInTheDocument();
+    expect(screen.queryByText('No secrets selected.')).not.toBeInTheDocument();
+  });
+
+  it('says nothing was selected when the environment is still there', () => {
+    setup({ secretKeys: [] }, true);
+
+    expect(screen.getByText('No secrets selected.')).toBeInTheDocument();
+    expect(screen.queryByText(/the environment was not found/)).not.toBeInTheDocument();
+  });
+
+  /*
+   * The branch is reached only by the empty list. Keys that did resolve are the same keys
+   * whatever the flag says — and a stage that has secrets to show is proof the environment
+   * was found, so the notice would contradict the list printed directly beneath it.
+   */
+  it('leaves resolved secret keys alone regardless of the flag', () => {
+    setup({ secretKeys: ['API_KEY'] }, false);
+
+    expect(screen.getByText('API_KEY')).toBeInTheDocument();
+    expect(screen.queryByText(/the environment was not found/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No secrets selected.')).not.toBeInTheDocument();
   });
 });
 

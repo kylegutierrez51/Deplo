@@ -18,7 +18,7 @@ const edgeTypes = {
   customEdge: CustomEdge
 }
 
-export default function PipelineGraph({nodes, edges} : { nodes: StageResultNode[], edges: Edge[] }) {
+export default function PipelineGraph({nodes, edges, envPresent} : { nodes: StageResultNode[], edges: Edge[], envPresent: boolean }) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
@@ -52,7 +52,7 @@ export default function PipelineGraph({nodes, edges} : { nodes: StageResultNode[
       </ReactFlow>
 
       <aside className={`${styles['stage-sidebar']}${sidebarOpen ? ` ${styles.open}` : ''}`}>
-        <StageDetailSidebar key={selectedNodeId} node={selectedNode} onClose={() => setSidebarOpen(false)} />
+        <StageDetailSidebar key={selectedNodeId} node={selectedNode} envPresent={envPresent} onClose={() => setSidebarOpen(false)} />
       </aside>
     </>
   );

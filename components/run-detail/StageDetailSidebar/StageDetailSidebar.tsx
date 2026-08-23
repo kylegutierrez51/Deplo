@@ -4,10 +4,11 @@ import type { StageResultNode } from '@/lib/data/run-detail';
 
 interface StageDetailSidebarProps {
   node: StageResultNode | undefined;
+  envPresent: boolean;
   onClose: () => void;
 }
 
-export default function StageDetailSidebar({ node, onClose }: StageDetailSidebarProps) {
+export default function StageDetailSidebar({ node, envPresent, onClose }: StageDetailSidebarProps) {
   if (!node) return null;
 
   return (
@@ -21,7 +22,7 @@ export default function StageDetailSidebar({ node, onClose }: StageDetailSidebar
         </button>
       </div>
 
-      <StageDetailView key={node.id} node={node} />
+      <StageDetailView key={node.id} node={node} envPresent={envPresent} />
     </>
   )
 }

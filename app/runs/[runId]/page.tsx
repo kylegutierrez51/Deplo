@@ -66,7 +66,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                 {run.jobCounts.cancelled > 0 && <Pill variant="cancelled" label={`${run.jobCounts.cancelled} Cancelled`} />}
               </div>
               <div className={styles.graph}>
-                <PipelineGraph nodes={run.nodes} edges={run.edges} />
+                <PipelineGraph nodes={run.nodes} edges={run.edges} envPresent={run.environment ? true : false} />
               </div>
             </>
           }
