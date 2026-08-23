@@ -32,8 +32,13 @@ const toast = useToast as jest.MockedFunction<typeof useToast>;
 const showToast = jest.fn();
 const dismissStickyToasts = jest.fn();
 
-/** The `link` argument of the most recent showToast call. */
-const linkArg = () => showToast.mock.calls.at(-1)?.[2];
+/*
+ * The `link` of the most recent showToast call. It reads off the single props object
+ * rather than a positional slot, and the difference is not cosmetic here: this file
+ * mocks the whole ToastContext module, so `showToast` is a bare jest.fn() whose calls
+ * TypeScript never checks. Nothing but this assertion notices if the shape drifts.
+ */
+const linkArg = () => showToast.mock.calls.at(-1)?.[0]?.link;
 
 function setup() {
   useGraph.mockReturnValue({
