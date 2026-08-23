@@ -24,10 +24,31 @@ export async function approveOrRejectStage(id: string, runId: string, stageId: s
       data: { status: approved ? 'APPROVED' : 'UNAPPROVED', approvedById, approvedAt: new Date(), finishedAt: new Date() },
     });
 
-    if (count === 0) return {
-      status: 'error',
-      message: 'This approval has already been decided.'
+    if (count === 0) {
+      const stage = await prisma.stageResult.findUnique({
+        where: { id },
+        select: { status: true, run: { select: { status: true } } }
+      });
+
+      revalidatePath('/approvals');
+
+      if (stage?.status === 'CANCELLED') return {
+        status: 'error',
+        message: stage.run.status === 'CANCELLED'
+          ? 'This run was cancelled, so the approval is no longer needed.'
+          : 'This run already failed at another stage, so the approval is no longer needed.'
+      };
+
+      return {
+        status: 'error',
+        message: 'This approval has already been decided.'
+      }
     }
+
+
+
+
+
 
     await enqueuePipelineRun(runId, `approval-${stageId}`);
 
@@ -35,9 +56,9 @@ export async function approveOrRejectStage(id: string, runId: string, stageId: s
     revalidatePath('/runs');
     revalidatePath(`/runs/${runId}`);
 
-    return { 
-      status: 'success', 
-      message: `Stage ${approved ? 'approved' : 'rejected'}` 
+    return {
+      status: 'success',
+      message: `Stage ${approved ? 'approved' : 'rejected'}`
     };
 
   } catch (error: unknown) {

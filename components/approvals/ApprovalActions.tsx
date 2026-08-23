@@ -25,8 +25,12 @@ export default function ApprovalActions({ id, runId, stageId, env }: ApprovalAct
   const approveOrReject = async (approved: boolean) => {    
     startApproveOrRejectTransition(async () => {
       const result = await approveOrRejectStage(id, runId, stageId, approved);
-      showToast(result.message, result.status === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline');
+      showToast({ 
+        text: result.message, 
+        icon: result.status === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline',
+        options: result.status !== 'success' ? { totalDuration: 7000 } : undefined });
     });
+
     if (approved) setApprovalModal(false);
     else setRejectModal(false);
   }
