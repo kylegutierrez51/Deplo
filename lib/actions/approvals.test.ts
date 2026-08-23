@@ -4,6 +4,10 @@ import { approveOrRejectStage } from '@/lib/actions/approvals';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
+import type {
+  RunStatus as PrismaRunStatus,
+  StageStatus as PrismaStageStatus,
+} from '@/generated/prisma/client';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -31,6 +35,10 @@ jest.mock('@/lib/queue/runs', () => ({
  * The bell is the only thing that resumes the run. A decision that is written but never
  * enqueued strands the run forever with no UI path back, because the stage no longer
  * matches getApprovals' AWAITING_APPROVAL filter and its card is gone.
+ *
+ * What `count === 0` cannot say is *why* it lost, so a second read runs — on that branch
+ * only — to turn one number back into the three situations it collapses. See the block
+ * below for what each one is and why the difference reaches the user at all.
  */
 
 const revalidate = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
@@ -39,6 +47,12 @@ const enqueue = enqueuePipelineRun as jest.MockedFunction<typeof enqueuePipeline
 /** How many rows the CAS matched: 1 won the race, 0 lost it. */
 const matched = (count: number) =>
   prismaMock.stageResult.updateMany.mockResolvedValue({ count } as never);
+
+/** What the read on the losing branch finds: the row as it stands now, or nothing. */
+const found = (status: PrismaStageStatus | null, runStatus: PrismaRunStatus = 'RUNNING') =>
+  prismaMock.stageResult.findUnique.mockResolvedValue(
+    (status === null ? null : { status, run: { status: runStatus } }) as never,
+  );
 
 const decide = (approved: boolean) => approveOrRejectStage('row-1', 'run-1', 'deploy-gate', approved);
 const approve = () => decide(true);
@@ -128,15 +142,76 @@ describe('the compare-and-swap', () => {
       finishedAt: expect.any(Date),
     }));
   });
+
+  // The read below is a diagnosis for the caller that lost, and it belongs to that branch:
+  // a winner already knows what it wrote, and moving the read above the CAS would put a
+  // check-then-act window back in front of the write and bill every approval for it.
+  it('reads nothing back when it won', async () => {
+    await approve();
+
+    expect(prismaMock.stageResult.findUnique).not.toHaveBeenCalled();
+  });
 });
 
+/*
+ * count === 0 means the row was not AWAITING_APPROVAL when this call landed. Not an error
+ * condition — the caller simply did not win — but it collapses three different endings
+ * into one number, and only one of them is another reviewer getting there first. The other
+ * two are the run ending underneath a card the 10s poll had not caught up with:
+ * cancelPendingAndAwaitingStages writes CANCELLED over every approval on a run that was
+ * cancelled or that failed at some other stage, and telling that reader their decision was
+ * taken by somebody else is a lie about the likeliest way this misses.
+ *
+ * So the row is read back — on this branch only. Reading before the CAS would reopen the
+ * check-then-act window the CAS exists to close, and would cost a round trip on every
+ * successful approval to serve the one that already lost.
+ */
 describe('losing the race', () => {
-  // count === 0 means the row was not AWAITING_APPROVAL when this call landed — another
-  // reviewer decided it first, or the page was stale. Not an error condition: the caller
-  // simply did not win, and the honest report is that the decision already happened.
-  beforeEach(() => { matched(0); });
+  beforeEach(() => {
+    matched(0);
+    found('APPROVED');
+  });
 
-  it('reports that the approval was already decided', async () => {
+  it('looks the row up by id, and asks the run for its status in the same query', async () => {
+    await reject();
+
+    expect(prismaMock.stageResult.findUnique).toHaveBeenCalledWith({
+      where: { id: 'row-1' },
+      select: { status: true, run: { select: { status: true } } },
+    });
+  });
+
+  it.each<PrismaStageStatus>(['APPROVED', 'UNAPPROVED'])(
+    'reports a %s row as already decided', async (status) => {
+      found(status);
+
+      expect(await reject()).toEqual({
+        status: 'error',
+        message: 'This approval has already been decided.',
+      });
+    });
+
+  /*
+   * CANCELLED says the run ended without this stage, but not which ending it was — the
+   * sweep writes the same status either way. The run's own status is the only thing that
+   * separates them, which is why it is selected alongside rather than left to a second
+   * query on a branch that has already paid for one.
+   */
+  it.each<[PrismaRunStatus, string]>([
+    ['CANCELLED', 'This run was cancelled, so the approval is no longer needed.'],
+    ['FAILED', 'This run already failed at another stage, so the approval is no longer needed.'],
+  ])('explains a cancelled stage on a %s run instead of blaming a reviewer',
+    async (runStatus, message) => {
+      found('CANCELLED', runStatus);
+
+      expect(await reject()).toEqual({ status: 'error', message });
+    });
+
+  // The read can miss outright: the ids are client-supplied, and a deleted run takes its
+  // stage rows with it. Nothing more specific is knowable, so the default stands.
+  it('falls back to the decided message when the row is gone', async () => {
+    found(null);
+
     expect(await reject()).toEqual({
       status: 'error',
       message: 'This approval has already been decided.',
@@ -146,16 +221,33 @@ describe('losing the race', () => {
   // The important half. A rejection that lost the race must not wake the run on behalf of
   // a decision it did not make — and this is the case that reading `count` exists to
   // catch, since updateMany reports a miss rather than throwing the way update would.
-  it('does not wake the runner', async () => {
+  it.each<PrismaStageStatus>(['APPROVED', 'CANCELLED'])(
+    'does not wake the runner over a %s row', async (status) => {
+      found(status, 'CANCELLED');
+
+      await reject();
+
+      expect(enqueue).not.toHaveBeenCalled();
+    });
+
+  /*
+   * The card that produced this call is stale by definition, and returning an error does
+   * not remove it: without a revalidate the reader is told the approval is gone while its
+   * buttons stay on screen for up to another AutoRefresh tick, which reads as the button
+   * being broken rather than as the run having moved on. Message and card leave together.
+   */
+  it('revalidates the queue the stale card is still sitting in', async () => {
     await reject();
 
-    expect(enqueue).not.toHaveBeenCalled();
+    expect(revalidate).toHaveBeenCalledWith('/approvals');
   });
 
-  it('does not revalidate, so the page it re-renders is not a lie', async () => {
+  // And only that one. Nothing was written, so the run pages show exactly what they showed
+  // before — re-rendering them would be claiming a change this call did not make.
+  it('leaves the run pages alone, having written nothing', async () => {
     await reject();
 
-    expect(revalidate).not.toHaveBeenCalled();
+    expect(revalidate).toHaveBeenCalledTimes(1);
   });
 });
 
