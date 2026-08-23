@@ -30,9 +30,11 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
       if (!readyToCancel()) return;
       const result = await cancelRun(id);
 
-      showToast(
-        result.message,
-        result.status !== 'success' ? 'close-circle-outline' : 'checkmark-circle-outline',
+      showToast({
+        text: result.message,
+        icon: result.status !== 'success' ? 'close-circle-outline' : 'checkmark-circle-outline',
+      }
+
       );
       setCancelModal(false);
     });
@@ -44,11 +46,13 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
       const result = await retryRun(id);
       const failed = result.status !== 'success';
 
-      showToast(
-        result.message,
-        failed ? 'close-circle-outline' : 'checkmark-circle-outline',
-        result.runId ? `/runs/${result.runId}` : undefined,
-        { sticky: true },
+      showToast({
+        text: result.message,
+        icon: failed ? 'close-circle-outline' : 'checkmark-circle-outline',
+        link: result.runId ? `/runs/${result.runId}` : undefined,
+        options: { sticky: true },
+      }
+
       );
     });
   }

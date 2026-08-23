@@ -31,16 +31,27 @@ export default function CrudModalController<T extends { id: string }, Extra exte
   const onClose = () => router.push(basePath); // clear modal query params
 
   const onCreate = () => {
-    toast.showToast("Created " + recordLabel, 'checkmark-circle-outline');
+    toast.showToast({
+      text: "Created " + recordLabel,
+      icon: 'checkmark-circle-outline'
+    });
+
     onClose();
   }
 
   const onError = (message: string) => {
-    toast.showToast(message, 'close-circle-outline');
+    toast.showToast({
+      text: message,
+      icon: 'close-circle-outline'
+    });
   }
 
   const onDelete = () => {
-    toast.showToast("Deleted " + recordLabel, 'trash-outline');
+    toast.showToast({
+      text: "Deleted " + recordLabel,
+      icon: 'trash-outline'
+    });
+
     onClose();
   }
 
@@ -52,7 +63,10 @@ export default function CrudModalController<T extends { id: string }, Extra exte
       setModalKey(k => k + 1); // remounts component, resets edit mode back to view mode
       router.push(`${basePath}?id=${record?.id}`);
       router.refresh();  // reruns server component (app/secrets/page.tsx) so the table reflects the edit
-      toast.showToast("Edited " + recordLabel, 'create-outline');
+      toast.showToast({
+        text: "Edited " + recordLabel,
+        icon: 'create-outline'
+      });
     } else {
       onClose();
     }

@@ -13,14 +13,23 @@ interface ToastItem {
   sticky: boolean;
 }
 
-type ShowToastOptions = { sticky?: boolean };
+type ShowToastOptions = { sticky?: boolean; totalDuration?: number } | undefined;
+
+interface ShowToastProps {
+  text: string;
+  icon: ToastIcon;
+  link?: string;
+  options?: ShowToastOptions;
+}
 
 interface ToastContextValue {
   toasts: ToastItem[];
-  showToast: (text: string, icon: ToastIcon, link?: string, options?: ShowToastOptions) => void;
+  showToast: ({ text, icon, link, options }: ShowToastProps) => void;
   dismissToast: (id: number) => void;
   dismissStickyToasts: () => void;
 }
+
+
 
 const TOTAL_DURATION = 3000;
 const EXIT_DURATION = 200;
@@ -54,15 +63,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     timers.current.set(id, [removeTimer]);
   }
 
-  function showToast(text: string, icon: ToastIcon, link?: string, options?: ShowToastOptions) {
+  function showToast({ text, icon, link, options }: ShowToastProps) {
     const id = nextId.current++;
     const sticky = options?.sticky ?? false;
+    const totalDuration = options?.totalDuration ?? TOTAL_DURATION;
 
     setToasts(prev => [...prev, { id, text, link, icon, exiting: false, sticky }]);
 
     if (sticky) return; // sticky toasts never schedules timers
 
-    const exitTimer = setTimeout(() => remove(id), TOTAL_DURATION - EXIT_DURATION);
+    const exitTimer = setTimeout(() => remove(id), totalDuration - EXIT_DURATION);
 
     timers.current.set(id, [exitTimer]);
   }

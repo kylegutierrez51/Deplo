@@ -14,7 +14,10 @@ export default function HeaderButtons() {
 
   const handleSave = () => startSaveTransition(async () => {
     const result = await savePipelineDefinition(pipelineId, nodes, edges);
-    showToast(result.message, result.status === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline');
+    showToast({
+      text: result.message, 
+      icon: result.status === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline'
+    });
   });
 
   const handleRun = () => {
@@ -25,12 +28,12 @@ export default function HeaderButtons() {
       const result = await addPipelineRun(pipelineId, selectedEnvironmentId, nodes, edges);
       const failed = result.status !== 'success';
 
-      showToast(
-        result.message,
-        failed ? 'close-circle-outline' : 'checkmark-circle-outline',
-        result.runId ? `/runs/${result.runId}` : undefined,
-        { sticky: true },
-      );
+      showToast({
+        text: result.message,
+        icon: failed ? 'close-circle-outline' : 'checkmark-circle-outline',
+        link: result.runId ? `/runs/${result.runId}` : undefined,
+        options: { sticky: true },
+      });
     });
   }
 
