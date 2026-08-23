@@ -309,12 +309,10 @@ describe('runNumber', () => {
     expect(rows.map((row) => row.runNumber)).toEqual([4, 9]);
   });
 
-  // Defensive: the map lookup cannot miss for a run that was just counted, but the
-  // fallback is what the row reports if it ever does.
-  it('falls back to the first run when no count comes back', async () => {
+  it('returns null when no count comes back', async () => {
     const [row] = await withCounts([]);
 
-    expect(row.runNumber).toBe(1);
+    expect(row.runNumber).toBe(null);
   });
 });
 

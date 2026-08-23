@@ -10,9 +10,10 @@ export type Approval = {
   id: string;
   stageId: string;
   runId: string;
-  runNumber: number;
+  runNumber: number | null;
   waitingTime: string;
   createdBy: string | null;
+  stageName: string;
   /* below come from runId in PipelineRun model */
   pipelineName: string;
   commitSha: string | null;
@@ -90,10 +91,11 @@ export async function getApprovals(): Promise<Approval[]> {
       id: approvalStage.id,
       stageId: approvalStage.stageId,
       runId: run.id,
-      runNumber: runNumberById.get(run.id) ?? 1,
+      runNumber: runNumberById.get(run.id) ?? null,
       waitingTime: getDuration(approvalStage.startedAt ?? approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,
+      stageName: approvalStage.stageName,
       commitSha: run.commitSha,
       commitMessage: commitMessageByRunId.get(run.id) ?? null,
       environment: run.environment ? {

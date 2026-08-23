@@ -8,6 +8,7 @@ import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/ui/pagination/Pagination";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getApprovals } from "@/lib/data/approvals";
+import { Suspense } from "react";
 
 const REFRESH_INTERVAL_MS = 10_000;
 
@@ -81,10 +82,11 @@ export default async function Approvals() {
                   <div key={a.id} className={styles['approval-card-wrapper']}>
                     <ApprovalCard
                       id={a.id}
-                      runNumber={a.runNumber}
+                      runNumber={a.runNumber ?? null}
                       stageId={a.stageId}
                       runId={a.runId}
                       pipelineName={a.pipelineName}
+                      stageName={a.stageName}
                       environment={a.environment}
                       commitSha={a.commitSha}
                       commitMessage={a.commitMessage}
@@ -96,8 +98,10 @@ export default async function Approvals() {
                   </div>
                 ))}
               </div>
+              <Suspense>
+                <Pagination showing="1-4" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+              </Suspense>
 
-              <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
             </>
           }
         </div>

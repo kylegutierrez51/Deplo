@@ -82,6 +82,14 @@ Approval Card
   gap: var(--space-lg);
 }
 
+.feature-info .stage-name {
+  color: var(--subtitle-clr);
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .feature-info .feature-id {
   display: flex;
   align-items: center;

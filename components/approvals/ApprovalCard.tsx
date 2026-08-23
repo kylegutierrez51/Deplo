@@ -10,7 +10,8 @@ interface ApprovalCardProps {
   stageId: string;
   runId: string;
   pipelineName: string;
-  runNumber: number;
+  runNumber: number | null;
+  stageName: string;
   environment: { type: EnvType; name: string } | null;
   commitSha: string | null;
   commitMessage: string | null;
@@ -20,7 +21,7 @@ interface ApprovalCardProps {
   stagesComplete: string;
 }
 
-export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumber, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
+export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumber, stageName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
 
   return (
     <div className={styles['approval-card']} data-approval-card>
@@ -29,7 +30,7 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumb
         <div className={styles['approvals-detail']}>
           <div className={styles['top-row']}>
             <span>{pipelineName}</span>
-            <span className={styles['run-num']}>#{runNumber}</span>
+            {runNumber && <span className={styles['run-num']}>#{runNumber}</span>}
             {environment ? (
               <>
                 <span className={styles.divider} aria-hidden="true" />
@@ -42,7 +43,9 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumb
               <Pill variant="idle" label="None" />
             )}
           </div>
+
           <div className={styles['feature-info']}>
+            <p className={styles['stage-name']}>{stageName}</p>
             <div className={styles['feature-id']}>
               <ion-icon name="git-commit-outline"></ion-icon>
               <span>{commitSha ?? 'None'}</span>
