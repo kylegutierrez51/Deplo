@@ -1,6 +1,6 @@
 import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
-  claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAndAwaitingStages,
+  claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAwaitingQueuedStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
   failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
 } from './db';
@@ -323,23 +323,29 @@ describe('the stage compare-and-swaps', () => {
   });
 });
 
-describe('cancelPendingAndAwaitingStages', () => {
+describe('cancelPendingAwaitingQueuedStages', () => {
   /*
-   * Deliberately not QUEUED or RUNNING: those stages cannot actually be stopped without
-   * a cancel mechanism, and recording them as CANCELLED would be a lie.
+   * Deliberately not RUNNING: that row has a command and a process behind it, and only the
+   * stage worker that owns them can write its real outcome.
    *
-   * AWAITING_APPROVAL belongs with PENDING for the same reason it is excluded from that
-   * pair — nothing is executing, so the row can simply be closed. Leaving it out strands
-   * the approval in getApprovals' queue after the run it gates has already failed, with
-   * its card offering a decision that can no longer change anything.
+   * AWAITING_APPROVAL belongs with PENDING for the same reason RUNNING is excluded —
+   * nothing is executing, so the row can simply be closed. Leaving it out strands the
+   * approval in getApprovals' queue after the run it gates has already failed, with its
+   * card offering a decision that can no longer change anything.
+   *
+   * QUEUED is what let a retry outlive its run: advanceRun claims a fresh retry row to
+   * QUEUED and enqueues it while the run is still RUNNING, and a sibling exhausting its
+   * budget a second later finalizes the run over the top. Sweeping the row here is what
+   * makes the job already sitting in Redis a no-op — markStageRunning guards on QUEUED,
+   * so it loses its compare-and-swap and processStage returns without running anything.
    */
-  it('sweeps the PENDING and AWAITING_APPROVAL rows of one run', async () => {
+  it('sweeps the PENDING, QUEUED and AWAITING_APPROVAL rows of one run', async () => {
     prismaMock.stageResult.updateMany.mockResolvedValue(updated(2));
 
-    await cancelPendingAndAwaitingStages('run-1');
+    await cancelPendingAwaitingQueuedStages('run-1');
 
     expect(prismaMock.stageResult.updateMany).toHaveBeenCalledWith({
-      where: { runId: 'run-1', status: { in: ['PENDING', 'AWAITING_APPROVAL'] } },
+      where: { runId: 'run-1', status: { in: ['PENDING', 'AWAITING_APPROVAL', 'QUEUED'] } },
       data: { status: 'CANCELLED' },
     });
   });
@@ -348,7 +354,7 @@ describe('cancelPendingAndAwaitingStages', () => {
   it('reports how many rows it cancelled', async () => {
     prismaMock.stageResult.updateMany.mockResolvedValue(updated(3));
 
-    expect(await cancelPendingAndAwaitingStages('run-1')).toBe(3);
+    expect(await cancelPendingAwaitingQueuedStages('run-1')).toBe(3);
   });
 });
 
@@ -359,11 +365,12 @@ describe('openRetry', () => {
     ...over,
   });
 
-  const opened = () => prismaMock.stageResult.create.mock.calls[0][0].data;
+  const call = () => prismaMock.pipelineRun.update.mock.calls[0][0];
+  const opened = () => (call().data.stages as { create: Record<string, unknown> }).create;
 
   beforeEach(() => {
     prismaMock.stageResult.findFirst.mockResolvedValue(failedRow() as never);
-    prismaMock.stageResult.create.mockResolvedValue({} as never);
+    prismaMock.pipelineRun.update.mockResolvedValue({} as never);
   });
 
   /*
@@ -372,13 +379,33 @@ describe('openRetry', () => {
    * again. See the ordering note in stageProcessor.processStage. The guard is what says
    * this caller still owns the attempt: a row already resolved by someone else must not be
    * handed another go.
+   *
+   * The run's status is read here too, but only as an early-out — the guard that actually
+   * holds is the one on the write below.
    */
-  it('only retries an attempt this caller still owns', async () => {
+  it('only retries an attempt this caller still owns, on a run still running', async () => {
     await openRetry('run-1', 'a', 1);
 
     expect(prismaMock.stageResult.findFirst).toHaveBeenCalledWith({
-      where: { runId: 'run-1', stageId: 'a', attempt: 1, status: 'RUNNING' },
+      where: { runId: 'run-1', stageId: 'a', attempt: 1, status: 'RUNNING', run: { status: 'RUNNING' } },
     });
+  });
+
+  /*
+   * The reason the insert goes through pipelineRun.update at all, and the regression test
+   * for the bug that put it there: two stages finishing a second apart, the first opening
+   * a retry while the second finalizes the run FAILED over the top, leaving a PENDING row
+   * that advanceRun will never dispatch because the run is no longer RUNNING.
+   *
+   * Naming the status in the same statement as the insert is what closes that — reading it
+   * first and inserting second leaves a window a sibling can land in. Drop this from the
+   * where clause and every test below still passes.
+   */
+  it('makes the run still being RUNNING part of the insert itself', async () => {
+    await openRetry('run-1', 'a', 1);
+
+    expect(call().where).toEqual({ id: 'run-1', status: 'RUNNING' });
+    expect(prismaMock.stageResult.create).not.toHaveBeenCalled();
   });
 
   // A new row rather than a mutation: the failed attempt keeps its own exit code and log
@@ -387,8 +414,16 @@ describe('openRetry', () => {
     await openRetry('run-1', 'a', 1);
 
     expect(opened()).toEqual(expect.objectContaining({
-      runId: 'run-1', stageId: 'a', attempt: 2, status: 'PENDING',
+      stageId: 'a', attempt: 2, status: 'PENDING',
     }));
+  });
+
+  // The nested create takes runId from the run being updated. Passing it explicitly is a
+  // type error, and this is the line that says so on purpose rather than by omission.
+  it('leaves runId to the relation rather than setting it', async () => {
+    await openRetry('run-1', 'a', 1);
+
+    expect(opened()).not.toHaveProperty('runId');
   });
 
   // Copied from the row, not re-read from the graph: the row is what materializeStages
@@ -422,16 +457,16 @@ describe('openRetry', () => {
 
     await openRetry('run-1', 'a', 1);
 
-    expect(prismaMock.stageResult.create).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.update).not.toHaveBeenCalled();
   });
 
   // Either the run was deleted mid-flight and cascaded, or this caller no longer owns the
-  // attempt. Nothing to retry and nothing to report in either case.
+  // attempt, or the run is no longer RUNNING. Nothing to retry and nothing to report.
   it('does nothing when the attempt is not there to retry', async () => {
     prismaMock.stageResult.findFirst.mockResolvedValue(null as never);
 
     expect(await openRetry('run-1', 'a', 1)).toBe(false);
-    expect(prismaMock.stageResult.create).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.update).not.toHaveBeenCalled();
   });
 
   /*
@@ -439,17 +474,23 @@ describe('openRetry', () => {
    * means two callers racing to open attempt 2 produce one row and one P2002. Treating
    * that as an error would fail the job and retry the whole processor; treating it as a
    * lost race is the same ownership signal every updateMany in this file returns.
+   *
+   * P2025 is the same signal from the other guard: the run stopped being RUNNING between
+   * the read and the write, which is precisely the race the where clause exists to lose.
    */
-  it('reports a lost race rather than throwing when the retry already exists', async () => {
-    prismaMock.stageResult.create.mockRejectedValue(prismaError('P2002'));
+  it.each([
+    ['the retry already exists', 'P2002'],
+    ['the run finalized between the read and the write', 'P2025'],
+  ])('reports a lost race rather than throwing when %s', async (_label, code) => {
+    prismaMock.pipelineRun.update.mockRejectedValue(prismaError(code));
 
     expect(await openRetry('run-1', 'a', 1)).toBe(false);
   });
 
-  // Only P2002 is an ownership signal. Anything else is a real fault and must reach the
-  // worker, or a broken database looks exactly like a spent retry budget.
+  // Only P2002 and P2025 are ownership signals. Anything else is a real fault and must
+  // reach the worker, or a broken database looks exactly like a spent retry budget.
   it('rethrows any other Prisma failure', async () => {
-    prismaMock.stageResult.create.mockRejectedValue(prismaError('P2003'));
+    prismaMock.pipelineRun.update.mockRejectedValue(prismaError('P2003'));
 
     await expect(openRetry('run-1', 'a', 1)).rejects.toThrow();
   });
