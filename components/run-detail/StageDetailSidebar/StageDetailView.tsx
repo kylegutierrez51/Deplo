@@ -1,6 +1,7 @@
 import styles from './stage-detail-sidebar.module.css';
 import type { StageResultNode } from '@/lib/data/run-detail';
 import type { StageType } from '@/lib/types';
+import Link from 'next/link';
 
 const STAGE_TYPES = [
   { type: 'custom', label: 'Custom', icon: 'flask-outline' },
@@ -11,7 +12,7 @@ const STAGE_TYPES = [
 const EM_DASH = '—';
 
 export default function StageDetailView({ node }: { node: StageResultNode }) {
-  const { type, name, label, command, timeout, retries, env_vars, attempt, maxAttempts, secretKeys } = node.data;
+  const { type, status, name, label, command, timeout, retries, env_vars, attempt, maxAttempts, secretKeys } = node.data;
   const stageType: StageType = type ?? 'custom';
   const envVars = env_vars ?? [];
 
@@ -37,6 +38,16 @@ export default function StageDetailView({ node }: { node: StageResultNode }) {
             ))}
           </div>
         </div>
+
+        {status === 'awaiting-approval' &&
+        <div className={styles['approval-link-container']}>
+          <Link href="/approvals" target="_blank" className={styles['approval-link']}>
+            Go to Approval Page
+          </Link>
+        </div>
+
+        }
+
 
         {stageType !== 'approval' &&
           <>

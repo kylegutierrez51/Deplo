@@ -43,6 +43,23 @@
   margin-bottom: var(--space-lg);
 }
 
+.approval-link-container {
+  margin-top: var(--space-xl);
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.approval-link {
+  padding: 20px 0;
+  flex: 1;
+  text-align: center;
+  background-color: var(--header-clr);
+  border-radius: 10px;
+  font-weight: bold;
+}
+
 .stage-title {
   display: flex;
   align-items: center;

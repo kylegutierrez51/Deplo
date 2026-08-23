@@ -22,7 +22,7 @@ export default function PresentableStage(props: NodeProps<PresentableStage>) {
             </div>
           }
           {props.data.name ? <p className={styles['stage-name']} title={props.data.name}>{props.data.name}</p> :
-            <p className={styles['stage-name']}>New Stage</p>
+            <p className={styles['stage-name']}>Stage</p>
           }
         </div>
         {props.data.duration && <p className={styles['stage-duration']}>{props.data.duration}</p>}
