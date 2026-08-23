@@ -1,4 +1,4 @@
-import { loadRunContext, materializeStages, startRunIfQueued, claimStageForApproval, claimStageForQueue, finalizeRun, cancelPendingStages } from './db';
+import { loadRunContext, materializeStages, startRunIfQueued, claimStageForApproval, claimStageForQueue, finalizeRun, cancelPendingAndAwaitingStages } from './db';
 import { runOutcome, readyStages } from './scheduler';
 import { enqueueStageJob } from './stageQueue';
 
@@ -32,7 +32,7 @@ export async function advanceRun(runId: string): Promise<void> {
   if (outcome) {
     const finalized = await finalizeRun(runId, outcome);
     if (finalized && outcome === 'FAILED') {
-      await cancelPendingStages(runId);
+      await cancelPendingAndAwaitingStages(runId);
     }
     return;
   }

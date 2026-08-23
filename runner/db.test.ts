@@ -1,6 +1,6 @@
 import {
   loadRunContext, materializeStages, startRunIfQueued, claimStageForQueue,
-  claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingStages,
+  claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAndAwaitingStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
   failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
 } from './db';
@@ -323,16 +323,23 @@ describe('the stage compare-and-swaps', () => {
   });
 });
 
-describe('cancelPendingStages', () => {
-  // Deliberately not QUEUED or RUNNING: those stages cannot actually be stopped without
-  // a cancel mechanism, and recording them as CANCELLED would be a lie.
-  it('sweeps only the PENDING rows of one run', async () => {
+describe('cancelPendingAndAwaitingStages', () => {
+  /*
+   * Deliberately not QUEUED or RUNNING: those stages cannot actually be stopped without
+   * a cancel mechanism, and recording them as CANCELLED would be a lie.
+   *
+   * AWAITING_APPROVAL belongs with PENDING for the same reason it is excluded from that
+   * pair — nothing is executing, so the row can simply be closed. Leaving it out strands
+   * the approval in getApprovals' queue after the run it gates has already failed, with
+   * its card offering a decision that can no longer change anything.
+   */
+  it('sweeps the PENDING and AWAITING_APPROVAL rows of one run', async () => {
     prismaMock.stageResult.updateMany.mockResolvedValue(updated(2));
 
-    await cancelPendingStages('run-1');
+    await cancelPendingAndAwaitingStages('run-1');
 
     expect(prismaMock.stageResult.updateMany).toHaveBeenCalledWith({
-      where: { runId: 'run-1', status: 'PENDING' },
+      where: { runId: 'run-1', status: { in: ['PENDING', 'AWAITING_APPROVAL'] } },
       data: { status: 'CANCELLED' },
     });
   });
@@ -341,7 +348,7 @@ describe('cancelPendingStages', () => {
   it('reports how many rows it cancelled', async () => {
     prismaMock.stageResult.updateMany.mockResolvedValue(updated(3));
 
-    expect(await cancelPendingStages('run-1')).toBe(3);
+    expect(await cancelPendingAndAwaitingStages('run-1')).toBe(3);
   });
 });
 

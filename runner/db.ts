@@ -350,9 +350,9 @@ export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | '
 }
 
 // Doesn't set 'QUEUED' / 'RUNNING' statuses to 'CANCELLED' -- those finish on their own
-export async function cancelPendingStages(runId: string): Promise<number> {
+export async function cancelPendingAndAwaitingStages(runId: string): Promise<number> {
   const { count } = await prisma.stageResult.updateMany({
-    where: { runId, status: 'PENDING', },
+    where: { runId, status: { in: ['PENDING', 'AWAITING_APPROVAL'] } },
     data: { status: 'CANCELLED' }
   });
 
