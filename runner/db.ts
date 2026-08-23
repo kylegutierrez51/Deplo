@@ -190,48 +190,69 @@ export async function recordStageProgress(
 ==============================================================================================
  * Opens the next attempt of a stage whose command has just failed, as a new PENDING row.
  *
- * A new row rather than a mutation of the current one, so the Run Detail page can still show
- * what the earlier attempt did — its exit code and its log tail are the reason anyone looks.
+ * Creates a new row rather than a mutation of the current one, so the Run Detail page can
+ * show what the earlier attempt did in the Logs.
  * It also keeps every compare-and-swap addressing exactly one row: `where` names an attempt,
  * so the ownership signal never blurs across two of them.
- *
- * Called while `attempt` is still RUNNING and before it is written FAILED — see the ordering
- * note in stageProcessor.processStage, which is what stops a sibling from finalizing the run
- * in between. The RUNNING guard below is the other half of that: it says the caller still
- * owns this attempt, so a row already resolved by someone else cannot be given another go.
- *
- * Returns whether a new PENDING row now exists because of this call. `false` covers both
- * "the retry budget is spent" and "another caller opened it first", and the caller wants the
- * same thing in either case — record the failure and let the scheduler decide.
+ * 
+ * The first query ensures that it only retries the stage if the Run is still 'RUNNING'.
+ * The second query still checks if the Run is 'RUNNING' 
+ * incase another job called `finalizeRun()` in between the 2 queries.
+ * 
+ * The first and second queries prevent runs from showing up as 'PENDING' even when a 
+ * Run is failed.
+ * 
+ * Returns whether a new PENDING row now exists because of this call. `false` covers "the
+ * retry budget is spent", "another caller opened it first" and "the run is no longer
+ * RUNNING" alike, and the caller wants the same thing in every case — record the failure and
+ * let the scheduler decide.
  *
  * The budget is `attempt <= maxRetries`: maxRetries 2 means attempts 1, 2 and 3, so two
  * retries after the first try. maxRetries 0 — the default — never retries.
+ * 
+ * MORE DETAILED INFO -- Why the 2nd query exists:
+ * The write goes through pipelineRun.update rather than stageResult.create so that guard is
+ * part of the same statement as the insert, the way every updateMany in this file names the
+ * status it expects. Reading the run status first and inserting second would leave the
+ * window open — a few milliseconds instead of a few seconds, but with concurrency: 5 that is
+ * exactly the kind of gap a sibling lands in. The filter on the findFirst is the cheap
+ * early-out; this `where` is the one that actually holds. P2025 is what it reports when the
+ * run has moved on, and is a lost race like any other.
 ==============================================================================================
 */
 export async function openRetry(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const failed = await prisma.stageResult.findFirst({
-    where: { runId, stageId, attempt, status: 'RUNNING' },
+    where: { runId, stageId, attempt, status: 'RUNNING', run: { status: 'RUNNING' } },
   });
 
   if (!failed || attempt > failed.maxRetries) return false;
 
   try {
-    await prisma.stageResult.create({
+    await prisma.pipelineRun.update({
+      where: { id: runId, status: 'RUNNING' },
       data: {
-        runId,
-        stageId,
-        stageName: failed.stageName,
-        stageType: failed.stageType,
-        command: failed.command,
-        maxRetries: failed.maxRetries,
-        attempt: attempt + 1,
-        status: 'PENDING',
+        stages: {
+          create: {
+            stageId,
+            stageName: failed.stageName,
+            stageType: failed.stageType,
+            command: failed.command,
+            maxRetries: failed.maxRetries,
+            attempt: attempt + 1,
+            status: 'PENDING',
+          },
+        },
       },
     });
 
     return true;
   } catch (error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return false;
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2002: another caller opened attempt+1 first. P2025: the run is no longer RUNNING,
+      // or went away entirely and took this stage's rows with it by cascade.
+      if (error.code === 'P2002' || error.code === 'P2025') return false;
+    }
+
     throw error;
   }
 }
@@ -304,7 +325,7 @@ export async function findQueuedStages(): Promise<{ stageId: string, runId: stri
 export async function updateQueuedToPending(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
     where: { runId, stageId, attempt, status: 'QUEUED' },
-    data: { status: 'PENDING'}
+    data: { status: 'PENDING' }
   });
 
   return count > 0;
@@ -349,10 +370,24 @@ export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | '
   return count === 1;
 }
 
-// Doesn't set 'QUEUED' / 'RUNNING' statuses to 'CANCELLED' -- those finish on their own
-export async function cancelPendingAndAwaitingStages(runId: string): Promise<number> {
+/*
+==============================================================================================
+ * Closes out the stages of a run that has just finalized FAILED, matching the sweep
+ * cancelRun already does from the app side.
+ * 
+ * Without cancelling 'QUEUED', if 1 stage gets 'QUEUED' right as the Run fails, 
+ * them that 1 stage will run normally.
+ * However, by cancelling 'QUEUED' stages, when that 1 stage gets enqueued 
+ * and calls `processStage()`, `markedStageRunning()` will find that it's 'CANCELLED' 
+ * and return early, preventing an unnecessary stage from executing.
+ *
+ * RUNNING is still left alone — that row has a command and a process behind it, and the
+ * stage worker that owns them is the only thing that can write its real outcome.
+==============================================================================================
+*/
+export async function cancelPendingAwaitingQueuedStages(runId: string): Promise<number> {
   const { count } = await prisma.stageResult.updateMany({
-    where: { runId, status: { in: ['PENDING', 'AWAITING_APPROVAL'] } },
+    where: { runId, status: { in: ['PENDING', 'AWAITING_APPROVAL', 'QUEUED'] } },
     data: { status: 'CANCELLED' }
   });
 

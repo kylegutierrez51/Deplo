@@ -158,7 +158,7 @@ describe('the compare-and-swap', () => {
  * condition — the caller simply did not win — but it collapses three different endings
  * into one number, and only one of them is another reviewer getting there first. The other
  * two are the run ending underneath a card the 10s poll had not caught up with:
- * cancelPendingAndAwaitingStages writes CANCELLED over every approval on a run that was
+ * cancelPendingAwaitingQueuedStages writes CANCELLED over every approval on a run that was
  * cancelled or that failed at some other stage, and telling that reader their decision was
  * taken by somebody else is a lie about the likeliest way this misses.
  *
