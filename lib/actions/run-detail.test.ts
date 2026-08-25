@@ -234,17 +234,25 @@ describe('waking the runner', () => {
   });
 
   /*
-   * TODO(bug): the row is already committed when the enqueue fails, and nothing undoes it.
-   * The retry sits at QUEUED forever — the reaper only re-enters unfinished runs at boot,
-   * so it recovers this one only if someone restarts the runner. Pinned as a known cost,
-   * the same window approvals.test.ts documents on its own enqueue.
+   * The row is committed before the enqueue, so a queue that cannot be reached would leave
+   * the retry at QUEUED with no job behind it — and RETRYABLE refuses to re-run anything
+   * unfinished, so it could not even be retried from the page it appears on. Discarding it
+   * is what stops a failed trigger from leaving a run nobody can do anything with.
    */
-  it('leaves the new run written when the enqueue fails', async () => {
+  it('discards the new run when the enqueue fails', async () => {
     enqueue.mockRejectedValue(new Error('redis unreachable'));
 
     await retry();
 
-    expect(prismaMock.pipelineRun.create).toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.delete).toHaveBeenCalledWith({ where: { id: 'run-2' } });
+  });
+
+  // The queue is what failed, so the message has to say so — "please try again" over a
+  // Redis that is down sends someone round the same loop.
+  it('names the queue in the message when the enqueue fails', async () => {
+    enqueue.mockRejectedValue(new Error('redis unreachable'));
+
+    expect((await retry()).message).toMatch(/job queue/);
   });
 });
 

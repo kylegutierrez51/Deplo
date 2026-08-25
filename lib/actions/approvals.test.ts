@@ -68,6 +68,7 @@ beforeEach(() => {
   setSession();
   matched(1);
   jest.spyOn(console, 'log').mockImplementation(() => { });
+  jest.spyOn(console, 'error').mockImplementation(() => { });
 });
 
 afterEach(() => { jest.restoreAllMocks(); });
@@ -272,20 +273,72 @@ describe('waking the runner', () => {
     expect(enqueue).toHaveBeenNthCalledWith(2, 'run-1', 'approval-gate-b');
   });
 
-  // A floating enqueue would let this rejection escape as an unhandled rejection while the
-  // action reported success — the run stranded, the user told it resumed.
-  it('waits for the enqueue instead of leaving it in flight', async () => {
+  /*
+   * The decision is what the user asked for and it has already committed, so the enqueue —
+   * which is only how the runner is told — must not be able to turn it into a failure.
+   *
+   * Reporting the error was the bug: "Please try again" over a write that landed sends the
+   * user back to an approval that then answers "This approval has already been decided",
+   * so one click produced two contradictory messages.
+   */
+  it('reports the decision as successful even when the enqueue fails', async () => {
     enqueue.mockRejectedValue(new Error('redis unreachable'));
 
-    expect((await approve()).status).toBe('error');
+    const result = await approve();
+
+    expect(result.status).toBe('success');
+    expect(result.message).toBe('Stage approved');
+  });
+
+  // Still revalidated: the stage's status changed whatever the queue did, and the approval
+  // card has to stop being offered.
+  it('revalidates the affected paths even when the enqueue fails', async () => {
+    enqueue.mockRejectedValue(new Error('redis unreachable'));
+
+    await approve();
+
+    expect(revalidate).toHaveBeenCalledWith('/approvals');
+    expect(revalidate).toHaveBeenCalledWith('/runs/run-1');
   });
 
   /*
-   * TODO(bug): the decision is already committed by the time the enqueue fails, and there
-   * is no undo. The stage no longer matches getApprovals' AWAITING_APPROVAL filter, so its
-   * card disappears and no button remains to retry with — the run waits forever at RUNNING.
-   * The plan defers the fix (a boot reaper, or an outbox) and accepts the window; this pins
-   * it as a known cost rather than a surprise.
+   * Swallowed, not floated — the distinction the original version of this test was written
+   * to protect. A promise left in flight rejects with no handler attached, and an unhandled
+   * rejection in the server process is a crash rather than a log line. Catching it locally
+   * keeps that property while letting the action report what actually happened.
+   */
+  it('does not let the rejection escape as an unhandled rejection', async () => {
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+
+    try {
+      enqueue.mockRejectedValue(new Error('redis unreachable'));
+
+      await approve();
+      await new Promise(resolve => setTimeout(resolve, 20));
+
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off('unhandledRejection', unhandled);
+    }
+  });
+
+  /*
+   * The decision is committed by the time the enqueue fails, and there is still no undo —
+   * nor should there be. The stage no longer matches getApprovals' AWAITING_APPROVAL
+   * filter, so its card is gone and no button remains to retry with, but the decision
+   * itself was correct and rewriting it would throw away a real answer over a Redis blip.
+   *
+   * This used to leave the run waiting at RUNNING forever, recoverable only by restarting
+   * the runner. runner/sweeper.ts closes it: the run is RUNNING with an APPROVED stage and
+   * nothing scheduled, so the sweep re-enters it once it has been still past the grace
+   * period and advanceRun dispatches whatever the approval unblocked. That is what makes
+   * reporting success honest rather than optimistic — the enqueue failing is a delay, not
+   * a loss.
+   *
+   * Deliberately not discarded the way a failed *trigger* is. There the row was a run that
+   * had never begun and deleting it lost nothing; here the run is underway and the write
+   * is a decision a person made.
    */
   it('leaves the decision written when the enqueue fails', async () => {
     enqueue.mockRejectedValue(new Error('redis unreachable'));

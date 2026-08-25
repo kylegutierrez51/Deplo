@@ -9,7 +9,7 @@ import type { Edge } from '@xyflow/react';
 import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
-import { enqueuePipelineRun } from '@/lib/queue/runs';
+import { enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -274,8 +274,12 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
       }
     });
 
-    await enqueuePipelineRun(pipelineRun.id);
-    
+    // Takes the row back rather than leaving it stranded at QUEUED — see run-trigger.ts.
+    if (!await enqueueOrDiscardRun(pipelineRun.id)) return {
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.'
+    }
+
     revalidatePath('/pipelines');
     revalidatePath('/runs');
 

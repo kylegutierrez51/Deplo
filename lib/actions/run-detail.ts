@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
 import { auth } from '@/auth';
-import { enqueuePipelineRun } from '@/lib/queue/runs';
+import { enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
 
 const RETRYABLE: Record<PrismaRunStatus, boolean> = {
   QUEUED: false, RUNNING: false, SUCCEEDED: true, FAILED: true, CANCELLED: true
@@ -49,7 +49,11 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       }
     });
 
-    await enqueuePipelineRun(retry.id);
+    // Takes the row back rather than leaving it stranded at QUEUED — see run-trigger.ts.
+    if (!await enqueueOrDiscardRun(retry.id)) return {
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.'
+    }
 
     revalidatePath('/runs');
     revalidatePath(`/runs/${id}`);

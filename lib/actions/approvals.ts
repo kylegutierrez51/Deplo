@@ -46,11 +46,14 @@ export async function approveOrRejectStage(id: string, runId: string, stageId: s
     }
 
 
-
-
-
-
-    await enqueuePipelineRun(runId, `approval-${stageId}`);
+    try {
+      await enqueuePipelineRun(runId, `approval-${stageId}`);
+    } catch (error: unknown) {
+      console.error(
+        `the decision on stage ${stageId} of run ${runId} was committed but could not be enqueued:`,
+        error instanceof Error ? error.message : error,
+      );
+    }
 
     revalidatePath('/approvals');
     revalidatePath('/runs');
