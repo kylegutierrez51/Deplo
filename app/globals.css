@@ -104,6 +104,12 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --gray-ghost-inert-clr: #5a5a5a;
 
 
+  /* Warning — a notice about the system rather than about the record on screen */
+  --warning-text: #fb923c;
+  --warning-bg: #fb923c14;
+  --warning-border: #fb923c4d;
+
+
   /* Spacing */
   --space-xs: 5px;
   --space-sm: 10px;
@@ -114,6 +120,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --space-gap-md: 12px;
 
   /* Z-Index */
+  --z-graph-overlay: 5;
   --z-sidebar: 100;
   --z-stage-sidebar: 100;
   --z-header: 100;

@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq';
 import { queueConnection } from './connection';
 import { RUN_QUEUE } from './names';
+import { withTimeout } from './timeout';
 
 /*
 ==============================================================================================
@@ -28,7 +29,7 @@ const globalForQueue = global as unknown as {
  * Lazy because queueConnection() throws on missing env and must not run at import time.
 ==============================================================================================
  */
-function runQueue(): Queue<RunJobData> {
+export function runQueue(): Queue<RunJobData> {
   globalForQueue.runQueue ??= new Queue<RunJobData>(RUN_QUEUE, {
     connection: queueConnection(),
     defaultJobOptions: {
@@ -49,6 +50,19 @@ function runQueue(): Queue<RunJobData> {
 }
 
 /*
+ * Long enough that a slow round trip or a moment of reconnecting is not mistaken for an
+ * outage, short enough that the person who pressed Run gets an answer rather than a page
+ * that never finishes rendering.
+ *
+ * A timed-out 'runQueue().add()' is not a cancelled one. ioredis still holds the buffered command and will
+ * flush it if Redis comes back, so the job can appear minutes later. That is harmless in
+ * both directions: a trigger has by then discarded its run row, and processRun early-returns
+ * on a run it cannot load, while an approval's late job simply advances the run the same way
+ * the sweeper would have.
+ */
+const ENQUEUE_TIMEOUT_MS = 5_000;
+
+/*
 ==============================================================================================
  * Tells the runner there is progress to make on a run. Called once by addPipelineRun
  * when the row is created, and again by each approval decision once those land.
@@ -61,5 +75,9 @@ function runQueue(): Queue<RunJobData> {
 ==============================================================================================
 */
 export async function enqueuePipelineRun(runId: string, tag = 'trigger'): Promise<void> {
-  await runQueue().add(`run-${runId}`, { runId }, { jobId: `${runId}-${tag}` });
+  await withTimeout(
+    runQueue().add(`run-${runId}`, { runId }, { jobId: `${runId}-${tag}` }),
+    ENQUEUE_TIMEOUT_MS,
+    `enqueue of run ${runId}`,
+  );
 }

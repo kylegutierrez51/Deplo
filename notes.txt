@@ -1,5 +1,3 @@
-Notes to help assist my own learning
-
 
 CSS Modules
 
@@ -165,67 +163,6 @@ The following information contains a plan to implement the Pill Component, which
   'processed' | 'ignored' | 'push' | 'pull-request' | 'webhook' | 'manual' | 
   'api' | 'total' | 'approval'; label: string }
 </Information>
-
-===================================================================================================================================
-
-PRISMA TO DO LIST
-
-
-
-Schema columns/relations with no UI yet
- - AuditLog: metadata Json? — never rendered, not even as expandable detail.
-
- - StageResult.exitCode, .logSnippet, .command, .attempt, .maxRetries, .approvedById, .approvedAt — LogViewer.tsx hardcodes the command string instead of using command/logSnippet; retry tracking (attempt/maxRetries) and approval metadata never surface on stage/job views.
-
-
-Enum coverage gaps
- - StageStatus (8 values: PENDING, QUEUED, RUNNING, SUCCESS, FAILED, SKIPPED, AWAITING_APPROVAL, CANCELLED): LogViewer.tsx:6 only handles 3 (succeeded|failed|running), JobNode.tsx:14-16 only handles 5 (missing SKIPPED, AWAITING_APPROVAL, CANCELLED) — notable since AWAITING_APPROVAL is central to the approvals feature.
-
-
-
-Type/shape mismatches
- - components/run-detail/RunDetailCard.tsx types triggeredBy and environment as plain strings ("sarah.chen", "Production"), but in the schema these are relations (PipelineRun.triggeredBy → User?, PipelineRun.environment → Environment?) requiring a join, not a flat display name.
-
-
-
-
-Finished Tasks:
-
-UI data that the schema doesn't have
- - app/environments/page.tsx:69,82,95,... — "Created By" column shows coco. Environment has no createdById/user relation.
-
- - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
-
- - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
-
- - app/pipelines/page.tsx:64,68,74,80,86,92 — the pipelines list also has an "Environment Type" column attached to each pipeline row. But Pipeline has no relation to Environment at all (only PipelineRun.environmentId does). Either this column belongs on the runs view instead, or Pipeline needs some notion of a target/default environment.
-
- - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
-
- - app/audit/page.tsx:67 — Action shown as "Run Completed". AuditAction has RUN_CANCELLED but nothing for a successful/completed run — no enum value maps to this label.
-
- - components/WebhookCard.tsx:5-11 (used in app/webhooks/page.tsx) — props are repo, status: 'Active'|'Inactive', triggers, lastDelivery, registeredAgo, and branchFilters. None of these exist on WebhookEvent (which models individual delivery records, not the registered webhook). The schema seems to be missing a Webhook/registration model entirely — WebhookEvent alone can't supply this card's data.
-
-
-
-
-Schema columns/relations with no UI yet
- - Environment.createdAt — only updatedAt ("Last Updated") has a column.
-
- - Pipeline.description, .isActive, .branchFilter, .createdAt/.updatedAt — never shown.
-
-
-
-Type/shape mismatches
- - components/pipeline-editor/StageSidebar/StageTypeGrid.tsx lets users pick a stage type (build/test/deploy/approval — confirmed by the "manual-approval" stage in app/runs/[runId]/page.tsx:34), but nothing in the schema records stage type — neither PipelineDefinition.configJson nor StageResult has a type/kind column or enum. Given StageStatus already defines AWAITING_APPROVAL, the schema seems to assume approval stages exist but has no column identifying which stages are which (today that'd be buried in opaque configJson).
-
-
-
-
-Info:
-
-      Derived values (not gaps — just noting they're computed, not missing columns)
-      - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
 
 ===================================================================================================================================
 
@@ -417,25 +354,6 @@ Line 3:
  - Returns a copy of the sidebar element and returns a copy of it with the 2 props put in (open, onToggle)
 
 This is all needed because otherwise the Sidebar can't get those 2 props, which Pipeline Editor relies on for the sidebar to work properly.
-
-===================================================================================================================================
-
-HideStagesButton.tsx
-
-toggle function:
-
-          function toggle(e: React.MouseEvent<HTMLButtonElement>) {
-            const card = e.currentTarget.closest('[data-approval-card]');
-            const stages = card?.querySelector<HTMLElement>('[data-stages-row]');
-            stages?.classList.toggle(styles['stages--hidden']);
-            setHidden((prev) => !prev);
-          }
-
- - 1st line gets the top div wrapper of ApprovalCard
- - 2nd line gets the .stages div
- - 3rd line toggles the .stages div off/on
- - 4th line updates the useState to update the text to show either the up or down arrow and "Show Stages" or "Hide Stages"
-
 
 ===================================================================================================================================
 EnvironmentModal:
@@ -1361,3 +1279,93 @@ Why it fixes the issue:
     So remove 'status' off of className to keep the class string constant, so that React never touches the 'className' attribute after mount.
 
     Move it to a custom 'data-status' attribute to render out the ion-icons
+
+===================================================================================================================================
+
+Explanation of 'maxRetriesPerRequest: null' in @/runner/connection.ts -> 'stageQueue().add()'
+
+
+
+
+      maxRetriesPerRequest: 20 -- default value
+
+
+When a run progresses and enqueues a stage, it calls 'stageQueue().add()'.
+
+
+If Redis is shut down, then 'stageQueue().add()' makes ioredis:
+
+ 1. Put a command into an in-memory offlineQueue -- Only IF Redis was started before and then died during the runner. 
+      - If Redis was dead from the start, then no command is ever issued in an offlineQueue, so ignore 2 and 3.
+
+ 2. Start reconnecting to Redis on a custom BullMQ backoff
+
+ 3. Flushes the buffer (with the command) by sending the command once a connection to Redis succeeds within multiples of 21 (maxRetriesPerRequest + 1) attempts.
+
+
+
+However, if a connection to Redis doesn't succeed within 21 attempts, ioredis still keeps reconnecting, but commands made within those 21 attempts are entirely rejected, which empty the buffer. 
+
+      - This means that even when redis starts up, any calls to 'stageQueue().add()' made within those 21 attempts are lost, since the jobs were never added.
+          - In the actual application when Redis is down, this would mean that a stage like 'npm run lint', which gets enqueued to the stage runner -- via 'stageQueue.add()' -- when it's QUEUED, will stay 'QUEUED' forever until the runner is shutdown and restarted because it will inevitably use up 21 attempts.
+
+          - By use up 21 attempts, I mean that it'll try reconnecting 21 times, not that 'stageQueue().add()' gets called 21 times -- it only gets called once, put in the offlineQueue, and move on while ioredis tries to reconnect.
+      
+      - However, once it reaches those 21 attempts, if you call 'stageQueue().add()' and Redis comes back within the next 21 attempts (by attempt 42 and so on (63, 84, ...)), the command it buffered will go through and 'stageQueue().add()' will be executed.
+
+
+
+'maxRetriesPerRequest: null'
+ - Makes it so that any call to 'stageQueue().add()' is guaranteed to go through whenever Redis starts again, even if those calls were made hours ago.
+
+
+===================================================================================================================================
+
+Why @/lib/queue/connection.ts doesn't need 'maxRetriesPerRequest: null' -- 'runQueue().add()'
+
+
+
+
+The 2 places that call 'runQueue.add()' are the 2 server actions: 'addPipelineRun()' and 'retryRun()', 
+and those ensure that if 'runWorker().add()' times out, that the pipeline run is deleted. 
+ - This means that even when Redis comes back on and adds the run, it just returns early on 'loadRunContext(runId)' since its runId can't be found
+
+
+The only reason it's kept for now is to just make both connection files consistent and make an @/lib/actions/approval.ts 'enqueuePipelineRun()' call
+survive an outage.
+ - Since the sweeper enqueues 'RUNNING' runs every 60 seconds, it's unneeded in @/lib/actions/approval.ts.
+
+===================================================================================================================================
+
+
+withTimeout(), 'runQueue().add()', 'stageQueue().add(), 'runQueue().getWorkersCount()'
+
+withTimeout() -> Whenever Redis is shut down, this ensures that it returns 
+ - Used only with Next.js (for `addPipelineRun()`, `retryRun()`, and health.ts probe()), which prevents a server component from not re-rendering and a server action from hanging entirely.
+ - `addPipelineRun()` and `retryRun()` use `enqueueOrDiscardRun()`, which deletes a pipelineRun from a database if it exceeds the timeout in `withTimeout()`
+
+
+ - For `runQueue().add()`, the withTimeout() wrap does NOT make ioredis abandon the command, it just makes Nextjs stop waiting for it, so that the user can see results on the frontend. This means that when Redis goes up, it will create a job for the run.
+     - HOWEVER, because `addPipelineRun()` and `retryRun()` call `enqueueOrDiscardRun()`, which discards a run that timed out via `withTimeout()`, it means that when the job loads and goes to 'processStage()', it calls 'loadRunContext(runId)' and returns early since the runId doesn't exist.
+
+
+ - 'stageQueue().add()' isn't wrapped in withTimeout() on purpose, so `advanceRun()` suspends at 'await enqueueStageJob():
+      1. This is because the runner has nothing else to do -- its entire purpose is reliant on making stages execute. If Redis is down, then there's nothing the runner can do besides wait.
+
+
+
+
+
+runQueue().getWorkersCount() -- counts Redis clients whose connection name is 'bull:<base64 queue name>, which the runWorker's blocking connection registers on connect. With one runner up, that means it returns 1. It's a proxy for 'is a consumer attached?', not an inspection of the actual instance of the runWorker object
+
+ - This returns 0 if:
+    1. The runner process isn't running
+    2. The runner is alive but can't reach Redis, meaning the runWorker process is up but its blocking connection is down, so it isn't in 'CLIENT LIST'
+    3. Redis was just restarted -- in the time that it takes to reconnect, it will return 0
+    4. The runWorker recycles its blocking connection roughly every 30s, and for about a second its gone.
+    5. A redis provider that doesn't support 'CLIENT SETNAME'
+    6. App and runner pointed at different redis instances or disagreeing on queue name / prefix
+
+
+
+===================================================================================================================================

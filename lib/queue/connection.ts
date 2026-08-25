@@ -35,5 +35,22 @@ export function queueConnection(): ConnectionOptions {
     throw new Error(`REDIS_PORT is not a valid port: ${process.env.REDIS_PORT ?? '<unset>'}`);
   }
 
-  return { host, port };
+  return { host, port, maxRetriesPerRequest: null };
 }
+
+/* 
+ * maxRetriesPerRequest: null -- ensures every 'runWorker().add()' call (in 'enqueuePipelineRun()') 
+ * goes through whenever Redis returns from a shutdown, regardless of how long it has been.
+ * 
+ * HOWEVER, it's actually unneeded: the 2 places that call 'enqueuePipelineRun()' are the 2 server
+ * actions: 'addPipelineRun()' and 'retryRun()', and those ensure that if 'runWorker().add()' 
+ * times out, that the pipeline run is deleted. 
+ * 
+ * It's only used in @/lib/actions/approvals.ts, which calls 'enqueuePipelineRun()' without
+ * ensuring that 'runWorker().add()' deletes the run if it times out. But in a very soon commit,
+ * this will be entirely unnecessary since a sweeper, which enqueues RUNNING pipeline runs every
+ * ~60 seconds, will be added.
+ * 
+ * Despite being unnecessary, it's kept to keep both connection files consistent and make
+ * an approval's 'enqueuePipelineRun()' call survive an outage.
+ */

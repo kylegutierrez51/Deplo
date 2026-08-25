@@ -78,3 +78,16 @@ export type StageConfig = {
 }
 
 export type ConfigJson = Record<string, StageConfig>;
+
+
+/*
+===================================================
+Runner availability
+===================================================
+*/
+
+// no-workers: 'npm run runner' hasn't started
+// unreachable: redis is down
+export type RunnerAvailability =
+  | { available: true }
+  | { available: false; reason: 'no-workers' | 'unreachable' };

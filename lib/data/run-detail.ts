@@ -95,7 +95,7 @@ export const hasReadableLogs = (logSnippet: string | null): boolean =>
   !!logSnippet && logSnippet.replace(CANCELLED_NOTE, '').trim().length > 0;
 
 // needed since 'failQueuedStage()' marks a stage as 'FAILED' with no 'startedAt' date.
-// the first condition allows 'running', 'succeeded', 'cancelled' stages. the 2nd allows cancelled stages only if they have started and have logs.
+// the first condition allows 'running', 'succeeded', 'failed' stages. the 2nd allows 'cancelled' stages only if they have started and have logs.
 const isLoggable = (status: PrismaStageStatus, hasStarted: boolean, hasLogs: boolean): boolean =>
   status !== 'CANCELLED' || (hasStarted && hasLogs);
 
