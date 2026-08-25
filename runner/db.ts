@@ -308,6 +308,29 @@ export async function findUnfinishedRuns(): Promise<{ id: string, status: RunSta
   });
 }
 
+/*
+==============================================================================================
+ * Every unfinished run that has been sitting still long enough to be worth re-entering, for the periodic sweep in sweeper.ts.
+ *
+ * QUEUED is measured from createdAt and RUNNING from startedAt, which is the last moment
+ * either status is known to have been written. Neither is a record of progress — a stage can
+ * legitimately run for half an hour without either column moving — so a long stage is swept
+ * repeatedly and costs one query each time it is.
+==============================================================================================
+*/
+export async function findStalledRuns(cutoff: Date): Promise<{ id: string, status: RunStatus }[]> {
+  return await prisma.pipelineRun.findMany({
+    where: {
+      OR: [
+        { status: 'QUEUED', createdAt: { lt: cutoff } },
+        { status: 'RUNNING', startedAt: { lt: cutoff } },
+      ],
+    },
+    select: { id: true, status: true },
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
 export async function findRunningStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
   return await prisma.stageResult.findMany({
     where: { status: 'RUNNING' },

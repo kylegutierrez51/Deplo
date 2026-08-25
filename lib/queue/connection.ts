@@ -47,10 +47,8 @@ export function queueConnection(): ConnectionOptions {
  * times out, that the pipeline run is deleted. 
  * 
  * It's only used in @/lib/actions/approvals.ts, which calls 'enqueuePipelineRun()' without
- * ensuring that 'runWorker().add()' deletes the run if it times out. But in a very soon commit,
- * this will be entirely unnecessary since a sweeper, which enqueues RUNNING pipeline runs every
- * ~60 seconds, will be added.
+ * ensuring that 'runWorker().add()' deletes the run if it times out. But this is unnecessary
+ * since the sweeper enqueues RUNNING pipeline runs every ~60 seconds
  * 
- * Despite being unnecessary, it's kept to keep both connection files consistent and make
- * an approval's 'enqueuePipelineRun()' call survive an outage.
+ * Despite being unnecessary, it's kept to keep both connection files consistent
  */

@@ -5,6 +5,7 @@ import { RUN_QUEUE, STAGE_QUEUE } from '@/lib/queue/names';
 import { processRun } from './runProcessor';
 import { processStage } from './stageProcessor';
 import { reapAbandonedWork } from './reaper';
+import { startStalledRunSweep, stopStalledRunSweep } from './sweeper';
 import { killAllChildren } from './execute';
 import type { RunJobData } from '@/lib/queue/runs';
 import type { Payload } from './stageQueue';
@@ -88,6 +89,8 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
 
   console.log(`${signal} received — no longer accepting jobs, finishing in-flight stages`);
 
+  stopStalledRunSweep();
+
   const deadline = setTimeout(() => {
     console.error(`shutdown still waiting after ${SHUTDOWN_TIMEOUT_MS}ms — exiting anyway`);
     killAllChildren();
@@ -119,6 +122,8 @@ async function main(): Promise<void> {
   // and an unhandled rejection there would take the process down with no diagnosis.
   runWorker.run().catch(error => console.error('run worker stopped:', error));
   stageWorker.run().catch(error => console.error('stage worker stopped:', error));
+
+  startStalledRunSweep();
 
   console.log(`runner listening on "${RUN_QUEUE}" and "${STAGE_QUEUE}"`);
 }
