@@ -22,11 +22,6 @@ export default function PipelineGraph({nodes, edges, envPresent} : { nodes: Stag
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-  /* 
-  Look the node up by id rather than storing it: AutoRefresh re-renders this
-  page every 10s while the run is live, so a captured node object goes stale
-  while an id stays valid — and the open panel follows the run's progress.
-  */
   const selectedNode = nodes.find(node => node.id === selectedNodeId);
 
   return (
