@@ -3,6 +3,7 @@ import {
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAwaitingQueuedStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
   failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
+  findStalledRuns,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -493,6 +494,34 @@ describe('openRetry', () => {
     prismaMock.pipelineRun.update.mockRejectedValue(prismaError('P2003'));
 
     await expect(openRetry('run-1', 'a', 1)).rejects.toThrow();
+  });
+});
+
+describe('findStalledRuns', () => {
+  it('asks for queued runs by createdAt and running runs by startedAt', async () => {
+    const cutoff = new Date('2026-08-23T12:00:00.000Z');
+    prismaMock.pipelineRun.findMany.mockResolvedValue([] as never);
+
+    await findStalledRuns(cutoff);
+
+    expect(prismaMock.pipelineRun.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        OR: [
+          { status: 'QUEUED', createdAt: { lt: cutoff } },
+          { status: 'RUNNING', startedAt: { lt: cutoff } },
+        ],
+      },
+    }));
+  });
+
+  it('selects the id and status the sweep branches on', async () => {
+    prismaMock.pipelineRun.findMany.mockResolvedValue([] as never);
+
+    await findStalledRuns(new Date());
+
+    expect(prismaMock.pipelineRun.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      select: { id: true, status: true },
+    }));
   });
 });
 

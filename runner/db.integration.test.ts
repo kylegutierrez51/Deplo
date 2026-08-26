@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { openRetry, cancelPendingAwaitingQueuedStages } from './db';
+import { openRetry, cancelPendingAwaitingQueuedStages, findStalledRuns } from './db';
 import { Prisma, type StageStatus } from '@/generated/prisma/client';
 import { makeUser, makePipeline, makeDefinition, makeRun } from '@/test/integration/factories';
 
@@ -195,5 +195,70 @@ describe('cancelPendingAwaitingQueuedStages against a real database', () => {
 
     const [other] = await rowsFor(theirs.id, 'a');
     expect(other.status).toBe('QUEUED');
+  });
+});
+
+describe('findStalledRuns against a real database', () => {
+  const LONG_AGO = new Date('2020-01-01T00:00:00.000Z');
+
+  async function makeRunAged(status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED', aged: boolean) {
+    const user = await makeUser();
+    const pipeline = await makePipeline({ createdById: user.id });
+    const definition = await makeDefinition(pipeline.id, 1);
+    const run = await makeRun(pipeline.id, definition.id, user.id);
+
+    const stamp = aged ? LONG_AGO : new Date();
+
+    return prisma.pipelineRun.update({
+      where: { id: run.id },
+      data: {
+        status,
+        createdAt: stamp,
+        // Left null for QUEUED, which is the state that has never been started.
+        startedAt: status === 'QUEUED' ? null : stamp,
+      },
+      select: { id: true },
+    });
+  }
+
+  const cutoff = () => new Date(Date.now() - 60_000);
+  const ids = async () => (await findStalledRuns(cutoff())).map(run => run.id);
+
+  it('returns a queued run that has been waiting since before the cutoff', async () => {
+    const run = await makeRunAged('QUEUED', true);
+
+    expect(await ids()).toEqual([run.id]);
+  });
+
+  it('leaves a freshly queued run alone', async () => {
+    await makeRunAged('QUEUED', false);
+
+    expect(await ids()).toEqual([]);
+  });
+
+  it('returns a running run that started before the cutoff', async () => {
+    const run = await makeRunAged('RUNNING', true);
+
+    expect(await ids()).toEqual([run.id]);
+  });
+
+  it('leaves a run that started moments ago alone', async () => {
+    await makeRunAged('RUNNING', false);
+
+    expect(await ids()).toEqual([]);
+  });
+
+  it.each(['SUCCEEDED', 'FAILED', 'CANCELLED'] as const)('never returns a %s run', async (status) => {
+    await makeRunAged(status, true);
+
+    expect(await ids()).toEqual([]);
+  });
+
+  it('returns both statuses together, oldest first', async () => {
+    const queued = await makeRunAged('QUEUED', true);
+    const running = await makeRunAged('RUNNING', true);
+    await makeRunAged('SUCCEEDED', true);
+
+    expect((await ids()).sort()).toEqual([queued.id, running.id].sort());
   });
 });
