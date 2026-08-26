@@ -1,3 +1,4 @@
+import { Queue } from 'bullmq';
 import { enqueueStageJob, reclaimStageJob } from './stageQueue';
 
 /*
@@ -25,9 +26,41 @@ jest.mock('bullmq', () => ({
 
 const stage = { runId: 'run-1', stageId: 'build', attempt: 2 };
 
+/*
+ * Captured here rather than inside a test: stageQueue.ts constructs its Queue exactly once,
+ * at module scope, during this file's own top-level import above — before any test body or
+ * beforeEach hook runs. beforeEach's jest.clearAllMocks() wipes Queue.mock.calls before the
+ * first test executes, so reading it from inside a test sees nothing.
+ */
+const stageQueueConstructorArgs = (Queue as unknown as jest.Mock).mock.calls[0];
+
 beforeEach(() => {
   jest.clearAllMocks();
   remove.mockResolvedValue(1);
+});
+
+/*
+ * The queue is constructed once, at module scope, when this file's own top-level import of
+ * stageQueue.ts first runs — before any test body executes and before jest.clearAllMocks()
+ * in beforeEach can touch it. So this is the constructor call every test in the file shares,
+ * not one a particular test triggers.
+ */
+describe('the stage queue connection', () => {
+  /*
+   * The regression this pins: claimStageForQueue's Postgres CAS (PENDING -> QUEUED) commits
+   * before enqueueStageJob ever reaches Redis, and nothing rolls it back if that second write
+   * fails. BullMQ only defaults maxRetriesPerRequest to null on a Worker's own dedicated
+   * blocking connection, never on a plain Queue — so left at ioredis's real default of 20, a
+   * Redis outage of a few minutes was enough to exhaust it, and the resulting
+   * MaxRetriesPerRequestError left a stage QUEUED with no job behind it and no path back,
+   * since readyStages only ever reconsiders a PENDING row. runner/connection.ts sets it
+   * explicitly so the command buffers and is sent once Redis reconnects, instead of giving up.
+   */
+  it('disables maxRetriesPerRequest so a Redis outage buffers instead of failing the claim', () => {
+    expect(stageQueueConstructorArgs[1]).toEqual(expect.objectContaining({
+      connection: expect.objectContaining({ maxRetriesPerRequest: null }),
+    }));
+  });
 });
 
 describe('enqueueStageJob', () => {
