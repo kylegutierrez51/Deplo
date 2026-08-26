@@ -1,24 +1,35 @@
 "use client"
 
 import { createContext, useContext, useState, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { type ToastIcon } from '@/lib/types';
 
 interface ToastItem {
   id: number;
   text: string;
+  link?: string;
   icon: ToastIcon;
   exiting: boolean;
   sticky: boolean;
 }
 
-type ShowToastOptions = { sticky?: boolean };
+type ShowToastOptions = { sticky?: boolean; totalDuration?: number } | undefined;
+
+interface ShowToastProps {
+  text: string;
+  icon: ToastIcon;
+  link?: string;
+  options?: ShowToastOptions;
+}
 
 interface ToastContextValue {
   toasts: ToastItem[];
-  showToast: (text: string, icon: ToastIcon, options?: ShowToastOptions) => void;
+  showToast: ({ text, icon, link, options }: ShowToastProps) => void;
   dismissToast: (id: number) => void;
   dismissStickyToasts: () => void;
 }
+
+
 
 const TOTAL_DURATION = 3000;
 const EXIT_DURATION = 200;
@@ -29,6 +40,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>[]>());
+  const pathname = usePathname();
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
+   // A sticky toast reports on work the user started on this page, 
+   // so leaving the current page removes it.
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setToasts(prev => prev.some(t => t.sticky) ? prev.filter(t => !t.sticky) : prev);
+  }
 
   // Starts the exit animation, then drops the toast once it has played. 
   // Every timer here goes into `timers` so dismissToast can find and cancel it.
@@ -43,15 +63,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     timers.current.set(id, [removeTimer]);
   }
 
-  function showToast(text: string, icon: ToastIcon, options?: ShowToastOptions) {
+  function showToast({ text, icon, link, options }: ShowToastProps) {
     const id = nextId.current++;
     const sticky = options?.sticky ?? false;
+    const totalDuration = options?.totalDuration ?? TOTAL_DURATION;
 
-    setToasts(prev => [...prev, { id, text, icon, exiting: false, sticky }]);
+    setToasts(prev => [...prev, { id, text, link, icon, exiting: false, sticky }]);
 
     if (sticky) return; // sticky toasts never schedules timers
 
-    const exitTimer = setTimeout(() => remove(id), TOTAL_DURATION - EXIT_DURATION);
+    const exitTimer = setTimeout(() => remove(id), totalDuration - EXIT_DURATION);
 
     timers.current.set(id, [exitTimer]);
   }

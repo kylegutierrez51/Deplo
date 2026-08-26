@@ -35,13 +35,15 @@ export function findDanglingEdges(edges: Edge[], nodes: CustomNode[]): Edge[] {
   return edges.filter(edge => !ids.has(edge.source) || !ids.has(edge.target));
 }
 
-/**
+/*
+==============================================================================================
  * Kahn's algorithm: drain every stage whose dependencies are satisfied, and
  * whatever will not drain is held up by a cycle. Returns that cycle as a
  * readable path (`build → deploy → build`), or null when the graph is a DAG.
  *
  * Assumes every edge references a real node — run findDanglingEdges first, or a
  * phantom target inflates its own in-degree and reads as a cycle that isn't there.
+==============================================================================================
  */
 export function detectCycle(edges: Edge[], nodes: CustomNode[]): string[] | null {
   const { inDegree, adjacency } = buildMaps(edges, nodes);
@@ -67,12 +69,13 @@ export function detectCycle(edges: Edge[], nodes: CustomNode[]): string[] | null
   return describeCycle(stuck, edges, nodes);
 }
 
-/*
+/*==============================================================================================
  - Walks backwards from a stuck stage until it revisits one — that repeat is the cycle.
  - Backwards is what makes this terminate. A stage survives Kahn's only because an
  - incoming edge was never decremented, so it is guaranteed a stuck predecessor;
  - walking forwards can dead-end on a stage that merely hangs off a cycle
  - (A→B→C→A plus A→D leaves D stuck with nowhere to go).
+==============================================================================================
 */
 function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): string[] {
   const reverse = buildReverseAdjacency(edges);
@@ -99,17 +102,20 @@ function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): 
   });
 }
 
-/**
+/*
+==============================================================================================
  * Deploy stages with no Approval stage anywhere upstream.
  *
- * Any ancestor counts, not only the immediate parent. The runner enqueues a stage
- * only once every parent has completed (runState.completeStage) and never
- * auto-enqueues a command-less approval stage (bullmq.enqueueReadyStages), so an
- * ungranted approval stalls everything downstream of it transitively. One approval
+ * Any ancestor counts, not only the immediate parent. A stage becomes eligible only
+ * once every parent has succeeded (scheduler.readyStages), and an approval stage is
+ * never enqueued — runProcessor.advanceRun writes it AWAITING_APPROVAL and waits — so
+ * an ungranted approval stalls everything downstream of it transitively. One approval
  * ancestor is therefore enough to guarantee the gate the environment promises.
  *
  * A deploy stage with no parents at all fails, which is the point — nothing gates it.
- */
+==============================================================================================
+*/
+
 export function findUngatedDeployStages(edges: Edge[], nodes: CustomNode[]): CustomNode[] {
   const reverse = buildReverseAdjacency(edges);
   const typeById = new Map(nodes.map(node => [node.id, node.data.type]));

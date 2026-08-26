@@ -5,6 +5,7 @@ import { capitalize } from '@/lib/utils/string';
 import type { RunStatus, EnvType } from '@/lib/types';
 
 interface RunDetailCardProps {
+  id: string;
   pipelineName: string;
   runNumber: number;
   status: RunStatus;
@@ -19,15 +20,7 @@ interface RunDetailCardProps {
   timeAgo: string;
 }
 
-const STATUS_ICONS: Record<RunStatus, string> = {
-  queued: 'time-outline',
-  running: 'sync-outline',
-  succeeded: 'checkmark-circle-outline',
-  failed: 'close-circle-outline',
-  cancelled: 'ban-outline',
-};
-
-export default function RunDetailCard({ pipelineName, runNumber, status, environment, commitHash, commitMessage, branch, repo, trigger, triggeredBy, duration, timeAgo }: RunDetailCardProps) {
+export default function RunDetailCard({ id, pipelineName, runNumber, status, environment, commitHash, commitMessage, branch, repo, trigger, triggeredBy, duration, timeAgo }: RunDetailCardProps) {
   return (
     <div className={styles['run-detail-card']}>
       <div className={styles['rdc-inner']}>
@@ -39,7 +32,9 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
             <span className={styles['rdc-num']}>#{runNumber}</span>
             <span className={styles.divider} aria-hidden="true" />
             <div className={styles['rdc-status']}>
-              <ion-icon name={STATUS_ICONS[status]} className={status === 'running' ? styles.running : undefined}></ion-icon>
+              {status === 'running' && 
+                <ion-icon name='sync-outline' className={styles.running}></ion-icon>
+              }
               <Pill variant={status} label={capitalize(status)} />
             </div>
             {environment ? (
@@ -51,7 +46,7 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
                 </div>
               </>
             ) : (
-              <span className={styles['rdc-meta-item']}>None</span>
+              <span className={styles['rdc-meta-item']}>No Environment Found</span>
             )}
           </div>
 
@@ -80,16 +75,16 @@ export default function RunDetailCard({ pipelineName, runNumber, status, environ
             </div>
             <div className={styles['rdc-meta-item']}>
               <ion-icon name="stopwatch-outline"></ion-icon>
-              <span>{duration}</span>
+              <span>Duration: {duration}</span>
             </div>
             <div className={styles['rdc-meta-item']}>
               <ion-icon name="time-outline"></ion-icon>
-              <span>{timeAgo} ago</span>
+              <span>Triggered {timeAgo} ago</span>
             </div>
           </div>
         </div>
 
-        <RunDetailActions />
+        <RunDetailActions id={id} status={status} env={environment} />
 
       </div>
     </div>

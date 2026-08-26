@@ -4,6 +4,7 @@ import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline, up
 import { toDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
+import { enqueuePipelineRun } from '@/lib/queue/runs';
 import type { CustomNode } from '@/lib/types';
 
 jest.mock('@/lib/prisma');
@@ -15,8 +16,14 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
 }));
+// Also a factory, and for a stronger reason than next/cache: the real module imports
+// bullmq, which pulls in ioredis. addPipelineRun only ever calls enqueuePipelineRun.
+jest.mock('@/lib/queue/runs', () => ({
+  enqueuePipelineRun: jest.fn(),
+}));
 
 const revalidate = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
+const enqueue = enqueuePipelineRun as jest.MockedFunction<typeof enqueuePipelineRun>;
 
 
 // `command` is widened to allow null so a case can model a stage the user never
@@ -40,10 +47,14 @@ function runTransactionsInline() {
 beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
+  enqueue.mockClear();
   setSession();
   runTransactionsInline();
   // The sweep runs on every successful save; default it to finding nothing.
   prismaMock.pipelineDefinition.findMany.mockResolvedValue([] as never);
+  // addPipelineRun reads the created id back to enqueue and to return it, so an
+  // unstubbed create would surface as a TypeError swallowed by the action's catch.
+  prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1' } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -327,10 +338,56 @@ describe('addPipelineRun graph validation', () => {
 
     const result = await addPipelineRun('p1', 'env-1', nodes, []);
 
-    expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!' });
-    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith({
+    expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
       data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1' },
-    });
+    }));
+  });
+
+  // The handoff to the runner. Without this the row is created and nothing ever
+  // executes it, which is precisely the state the whole phase exists to fix.
+  it('hands the created run to the runner', async () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+
+    await addPipelineRun('p1', 'env-1', nodes, []);
+
+    expect(enqueue).toHaveBeenCalledWith('run-1');
+    expect(revalidate).toHaveBeenCalledWith('/runs');
+  });
+
+  /*
+   * The row is written before the enqueue and the enqueue can fail, so the action has to
+   * take the row back — otherwise the user is told to try again, does, and ends up with two
+   * runs where the first sits at QUEUED with no job that will ever reference it.
+   * enqueueOrDiscardRun owns that; this pins that addPipelineRun actually goes through it
+   * rather than awaiting the queue directly.
+   */
+  it('discards the run and names the queue when the enqueue fails', async () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+    enqueue.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+    const result = await addPipelineRun('p1', 'env-1', nodes, []);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/job queue/);
+    expect(prismaMock.pipelineRun.delete).toHaveBeenCalledWith({ where: { id: 'run-1' } });
+  });
+
+  // The generic catch is still the right home for everything else — it must not start
+  // reporting a queue problem for a database one.
+  it('keeps the generic error for a failure that is not the enqueue', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockRejectedValue(new Error('connection terminated'));
+
+    const result = await addPipelineRun('p1', 'env-1', [node('a')], []);
+
+    expect(result.status).toBe('error');
+    expect(result.message).not.toMatch(/job queue/);
   });
 
   // The graph rules are what make a run safe to execute, so this proves

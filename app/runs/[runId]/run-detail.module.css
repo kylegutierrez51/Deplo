@@ -26,6 +26,46 @@ Page Shell
 
 /*
 ===============================
+Run Header (collapsible)
+===============================
+*/
+
+/*
+  Collapses the run detail card without unmounting it, so nothing inside remounts and
+  the reader keeps whatever they were looking at.
+
+  grid-template-rows: 1fr -> 0fr is what makes the height animatable: the card's height
+  is responsive and unknown here, so max-height would need a magic number that clips it
+  at some viewport width.
+
+  .run-header-inner does the clipping, and it has to exist. overflow: hidden gives it a
+  block formatting context, which contains .run-detail-card's 40px margin-bottom inside
+  the animated row; on the wrapper itself that margin would sit outside the collapsing
+  track and leave a 40px gap behind the hidden card.
+*/
+.run-header {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 200ms ease;
+}
+
+.run-header[data-collapsed='true'] {
+  grid-template-rows: 0fr;
+}
+
+.run-header-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-header {
+    transition: none;
+  }
+}
+
+/*
+===============================
 Overview
 ===============================
 */
@@ -38,8 +78,24 @@ Overview
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  /* Anchor for .overview-overlay. */
+  position: relative;
 }
 
+.overview-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-graph-overlay);
+
+  width: fit-content;
+  padding: var(--space-md);
+  background: var(--background-clr);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px var(--dark-clr-1);
+}
 
 .overview .job-statuses {
   display: flex;
@@ -54,7 +110,8 @@ Overview
   that parent. Styling .react-flow directly does not work: the inline style
   always wins over a stylesheet rule.
 
-  Here it takes the space .overview has left over after .job-statuses.
+  It is the only in-flow child of .overview — the pills and banner are lifted out above —
+  so `flex: 1` here is the full height of the overview pane.
   min-height: 0 lets it shrink below the graph's content size.
 */
 .graph {
@@ -73,9 +130,10 @@ Log Viewer
 .logs {
   margin-top: var(--space-xl);
   flex: 1;
-  min-height: 0; /* lets flex child shrink below its content size */
-  overflow-y: auto;
+  min-height: 0; /* lets this flex child shrink below its content size */
   padding-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
 
   /* Without .page-layout's cap the log viewers would span the full ~1560px.
      Long monospace lines want more than --width-xl, but not edge to edge. */
@@ -83,64 +141,6 @@ Log Viewer
   max-width: var(--width-2xl);
   margin-left: auto;
   margin-right: auto;
-}
-
-/*
-====================================================================================
-Filters
-====================================================================================
-*/
-
-.logs .filters {
-  margin-bottom: var(--space-md);
-}
-
-.filters-bar {
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.input-group {
-  position: relative;
-  width: 25%;
-  min-width: 350px;
-}
-
-.input-group ion-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--icon-clr);
-  pointer-events: none; /* clicks go through the search icon */
-  font-size: 16px;
-}
-
-/* offset text so it doesn't overlap the search icon */
-.input-group input {
-  padding-left: 34px;
-}
-
-.select-group {
-  position: relative;
-}
-
-/* custom chevron arrow */
-.select-group::after {
-  content: '';
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--icon-clr);
-  pointer-events: none;
 }
 
 /*
@@ -187,31 +187,30 @@ Run Detail Media Queries
   .run-main:global(.page-content) {
     margin-top: 0;
     padding: 75px var(--space-xl) 0;
+    min-height: 100vh;
     height: auto;
     overflow: visible;
   }
 
-  /* Let .overview grow to its content height instead of filling the
-     remaining viewport. */
+  /* Grows into whatever the viewport has left over and passes it down to .graph. Never
+     shrinks (`flex-shrink: 0`), so a tall run still pushes the page into scrolling rather
+     than being squeezed to fit. */
   .overview {
-    flex: none;
+    flex: 1 0 auto;
     overflow: visible;
     min-height: auto;
   }
 
-  /* .overview is content-sized from here down, so `flex: 1` no longer yields a
-     definite height and React Flow's height: 100% would collapse to 0 (error
-     #004). Pin an explicit height so the graph still has something to fill. */
   .graph {
-    flex: none;
-    height: 65vh;
-    min-height: 380px;
+    flex: 1 0 auto;
+    height: 380px;
   }
 
+  /* Content-sized from here down, so the viewer grows and the page scrolls
+     instead of the viewer scrolling inside a fixed-height column. */
   .logs {
     flex: none;
     min-height: auto;
-    overflow-y: visible;
   }
 }
 
@@ -223,17 +222,9 @@ Run Detail Media Queries
 */
 @media (max-width: 768px) {
   /* --- Job status pills --- */
-
   .job-statuses {
     flex-wrap: wrap;
     gap: var(--space-sm);
-  }
-
-  /* --- Filters (Logs tab) --- */
-
-  .input-group {
-    width: 40%;
-    min-width: 200px;
   }
 }
 
@@ -248,24 +239,5 @@ Run Detail Media Queries
   .run-main,
   .run-main:global(.page-content) {
     padding: 60px var(--space-md) 0;
-  }
-
-  /* --- Filters (Logs tab) --- */
-
-  .input-group {
-    width: 100%;
-  }
-
-  .select-group {
-    width: 100%;
-  }
-
-  .select-group select {
-    width: 100%;
-    min-height: 44px;
-  }
-
-  .input-group input {
-    min-height: 44px;
   }
 }

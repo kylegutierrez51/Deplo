@@ -1,7 +1,7 @@
 import styles from "./runs.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import RunRow from "@/components/runs/RunRow";
@@ -14,6 +14,8 @@ type SearchParams = Promise<{ mode?: string; id?: string; }>;
 export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
   const { mode, id, } = await searchParams;
   const runs = await getRuns();
+
+  const activeRuns = runs.filter(r => r.status === 'running').length;
 
   const record = id ? await getRunById(id) : undefined;
 
@@ -32,7 +34,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
         <Subheader
           title="Run History"
           subtitle="All pipeline executions across your projects."
-          badge={{ count: 3, label: 'Active' }}>
+          badge={activeRuns > 0 ? { count: activeRuns, label: 'Active' } : undefined}>
         </Subheader>
 
         {runs.length > 0 &&
@@ -41,7 +43,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
               <div className={styles['filters-bar']}>
                 <SearchInput
                   placeholder={"Search pipelines, commits..."} />
-                <FilterSelect
+                <FilterListbox
                   id={"status"} name={"status"}
                   options={
                     [
@@ -53,7 +55,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
                       { value: "cancelled", label: "Cancelled" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"trigger"} name={"trigger"}
                   options={
                     [
@@ -63,7 +65,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
                       { value: "api", label: "API" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"environment"} name={"environment"}
                   options={
                     [
@@ -75,7 +77,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
                       { value: "custom", label: "Custom" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"recency"} name={"recency"}
                   options={
                     [

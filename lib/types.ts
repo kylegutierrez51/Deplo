@@ -41,9 +41,9 @@ export type StageType = 'custom' | 'deploy' | 'approval';
 export type PipelineRun = {
   id: string;
   version: number;
-  graphJson: GraphJson
-  configJson: ConfigJson
-} | null
+  graphJson: GraphJson;
+  configJson: ConfigJson;
+} | null;
 
 export type CustomNode = Omit<Node, 'data'> & {
   data: {
@@ -78,3 +78,16 @@ export type StageConfig = {
 }
 
 export type ConfigJson = Record<string, StageConfig>;
+
+
+/*
+===================================================
+Runner availability
+===================================================
+*/
+
+// no-workers: 'npm run runner' hasn't started
+// unreachable: redis is down
+export type RunnerAvailability =
+  | { available: true }
+  | { available: false; reason: 'no-workers' | 'unreachable' };

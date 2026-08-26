@@ -3,7 +3,7 @@ import styles from "./pipelines.module.css"
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
@@ -41,7 +41,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Search pipelines..."} />
-                <FilterSelect
+                <FilterListbox
                   id={"status"} name={"status"}
                   options={[
                     { value: "all", label: "All statuses" },
@@ -55,7 +55,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
               </div>
             </div>
 
-            <DataTable columns={["Pipeline", "Status", "Repository", "Last Run", ""]}>
+            <DataTable columns={["Pipeline", "Recent Status", "Repository", "Last Run", ""]}>
               {pipelines.map((pipeline, i) => (
                 <PipelineRow key={i} pipeline={pipeline} />
               ))}

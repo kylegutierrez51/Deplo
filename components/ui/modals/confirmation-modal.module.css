@@ -1,0 +1,120 @@
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-confirmation-modal);
+}
+
+.confirmation-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background-color: var(--dark-clr-2);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  pointer-events: auto;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.confirmation-container .message-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.confirmation-container p {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.confirmation-container .sub-message {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.confirmation-overlay .btn-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  justify-content: space-between;
+  width: 100%;
+}
+
+.confirmation-overlay button {
+  padding: var(--space-sm) var(--space-md);
+  border-width: 1.5px;
+  border-style: solid;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.confirmation-overlay button:disabled {
+  cursor: default;
+}
+
+.confirmation-overlay .cancel-btn {
+  color: var(--white-clr);
+  border-color: var(--light-gray-clr);
+  background-color: transparent;
+}
+
+.confirmation-overlay .cancel-btn:hover {
+  background-color: var(--gray-clr);
+}
+
+.confirmation-overlay .cancel-ghost-btn {
+  color: var(--gray-ghost-inert-clr);
+  border-color: var(--gray-ghost-inert-clr);
+  background-color: transparent;
+}
+
+
+/*
+Confirm-button variants, selected by ConfirmationModal's `variant` prop.
+Decoration only -- padding, border width/style, radius and type come from the
+base `button` rule above, which deliberately sets none of these properties.
+Adding a variant means adding it to the ConfirmVariant union *and* adding a
+matching .confirm-<variant> / .confirm-<variant>-ghost pair here.
+*/
+.confirmation-overlay .confirm-danger {
+  color: var(--red-text);
+  border-color: var(--red-btn-border-clr);
+  background-color: transparent;
+}
+
+.confirmation-overlay .confirm-danger:hover {
+  background-color: var(--red-btn-hover-clr);
+}
+
+.confirmation-overlay .confirm-danger-ghost {
+  color: var(--red-ghost-inert-clr);
+  border-color: var(--red-ghost-inert-clr);
+  background-color: transparent;
+}
+
+.confirmation-overlay .confirm-success {
+  color: var(--green-text);
+  border-color: var(--green-border-clr);
+  background-color: transparent;
+}
+
+.confirmation-overlay .confirm-success:hover {
+  background-color: var(--green-hover-clr);
+}
+
+.confirmation-overlay .confirm-success-ghost {
+  color: var(--green-ghost-inert-clr);
+  border-color: var(--green-ghost-inert-clr);
+  background-color: transparent;
+}

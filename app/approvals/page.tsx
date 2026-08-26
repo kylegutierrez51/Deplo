@@ -2,11 +2,15 @@ import styles from "./approvals.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import StatCards from "@/components/ui/StatCards";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/ui/pagination/Pagination";
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getApprovals } from "@/lib/data/approvals";
+import { Suspense } from "react";
+
+const REFRESH_INTERVAL_MS = 10_000;
 
 export default async function Approvals() {
   const approvals = await getApprovals();
@@ -27,6 +31,9 @@ export default async function Approvals() {
             subtitle="Pipeline runs waiting for manual approval before proceeding."
           />
 
+          {/* always re-render Approvals page every 10s to detect if approval stages are present, otherwise user will have to refresh page to see new approval stages */}
+          <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
+
           {approvals.length > 0 &&
             <>
               <StatCards
@@ -45,7 +52,7 @@ export default async function Approvals() {
                   <SearchInput
                     placeholder={"Search by pipeline, repo, branch, user..."}
                     styles={styles} />
-                  <FilterSelect
+                  <FilterListbox
                     id={"environment"} name={"environment"}
                     styles={styles}
                     options={
@@ -58,7 +65,7 @@ export default async function Approvals() {
                         { value: "custom", label: "Custom" },
                       ]
                     } />
-                  <FilterSelect
+                  <FilterListbox
                     id={"recency"} name={"recency"}
                     styles={styles}
                     options={
@@ -74,21 +81,27 @@ export default async function Approvals() {
                 {approvals.map((a) => (
                   <div key={a.id} className={styles['approval-card-wrapper']}>
                     <ApprovalCard
+                      id={a.id}
+                      runNumber={a.runNumber ?? null}
+                      stageId={a.stageId}
                       runId={a.runId}
                       pipelineName={a.pipelineName}
+                      stageName={a.stageName}
                       environment={a.environment}
                       commitSha={a.commitSha}
                       commitMessage={a.commitMessage}
                       createdBy={a.createdBy}
                       branch={a.branch}
                       waitingTime={a.waitingTime}
-                      stages={a.stages}
+                      stagesComplete={a.stagesComplete}
                     />
                   </div>
                 ))}
               </div>
+              <Suspense>
+                <Pagination showing="1-4" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
+              </Suspense>
 
-              <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
             </>
           }
         </div>

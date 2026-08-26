@@ -6,35 +6,22 @@ import { getDuration } from '@/lib/utils/date';
 export type StageType = Lowercase<PrismaStageType>;
 export type StageStatus = Lowercase<PrismaStageStatus>;
 
-export type Stage = {
-  id: string;
-  stageType: StageType;
-  status: StageStatus;
-  name: string;
-  isApproval?: boolean;
-}
-
 export type Approval = {
   id: string;
+  stageId: string;
   runId: string;
+  runNumber: number | null;
   waitingTime: string;
   createdBy: string | null;
+  stageName: string;
   /* below come from runId in PipelineRun model */
   pipelineName: string;
   commitSha: string | null;
   commitMessage: string | null;
   environment: { type: EnvType; name: string } | null;
   branch: string | null;
-
-  /* below are stages */
-  stages: Stage[];
+  stagesComplete: string;
 }
-
-// build -> hammer-outline
-// test -> flask-outline
-// deploy -> rocket-outline
-// approval -> shield-outline
-// script -> code-outline
 
 type GithubWebhookPayload = { head_commit?: { message?: string } };
 
@@ -58,8 +45,25 @@ const approvalRunInclude = {
   pipeline: { select: { name: true } },
   environment: { select: { type: true, name: true } },
   triggeredBy: { select: { name: true } },
-  stages: { orderBy: { createdAt: 'asc' as const } },
+  stages: { orderBy: [{ stageId: 'asc' as const }, { attempt: 'asc' as const }] },
 };
+
+async function getRunNumbersById(
+  runs: { id: string, pipelineId: string, createdAt: Date }[]
+): Promise<Map<string, number>> {
+  const unique = [...new Map(runs.map((run) => [run.id, run])).values()];
+
+  const counts = await prisma.$transaction(
+    unique.map((run) => (
+      prisma.pipelineRun.count({
+        where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } }
+      })
+    )
+  ));
+
+  return new Map(unique.map((run, i) => [run.id, counts[i]]));
+}
+
 
 export async function getApprovals(): Promise<Approval[]> {
   const approvalStages = await prisma.stageResult.findMany({
@@ -68,16 +72,30 @@ export async function getApprovals(): Promise<Approval[]> {
     include: { run: { include: approvalRunInclude } },
   });
 
-  const commitMessageByRunId = await getCommitMessagesByRunId(approvalStages.map((a) => a.runId));
+
+  const runs = approvalStages.map((a) => a.run);
+
+  const [commitMessageByRunId, runNumberById ] = await Promise.all([
+    getCommitMessagesByRunId(approvalStages.map((a) => a.runId)),
+    getRunNumbersById(runs)
+  ])
 
   return approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
+
+    const latestStages = new Map<string, PrismaStageStatus>(
+      run.stages.map(s => [s.stageId, s.status])
+    ); // includes only most recent attempt for each stage -- like loadRunContext() does
+
     return {
       id: approvalStage.id,
+      stageId: approvalStage.stageId,
       runId: run.id,
-      waitingTime: getDuration(approvalStage.createdAt),
+      runNumber: runNumberById.get(run.id) ?? null,
+      waitingTime: getDuration(approvalStage.startedAt ?? approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,
+      stageName: approvalStage.stageName,
       commitSha: run.commitSha,
       commitMessage: commitMessageByRunId.get(run.id) ?? null,
       environment: run.environment ? {
@@ -85,47 +103,7 @@ export async function getApprovals(): Promise<Approval[]> {
         name: run.environment.name,
       } : null,
       branch: run.branch,
-      stages: run.stages.map((stage) => ({
-        id: stage.id,
-        stageType: stage.stageType.toLowerCase() as StageType,
-        status: stage.status.toLowerCase() as StageStatus,
-        name: stage.stageName,
-        isApproval: stage.stageType === 'APPROVAL',
-      })),
+      stagesComplete: new Map([...latestStages].filter(([_, status]) => ["SUCCEEDED", "APPROVED"].includes(status))).size + '/' + latestStages.size
     };
   });
-}
-
-export async function getApprovalById(id: string): Promise<Approval | null> {
-  const approvalStage = await prisma.stageResult.findUnique({
-    where: { id },
-    include: { run: { include: approvalRunInclude } },
-  });
-
-  if (!approvalStage) return null;
-
-  const commitMessageByRunId = await getCommitMessagesByRunId([approvalStage.runId]);
-  const { run } = approvalStage;
-
-  return {
-    id: approvalStage.id,
-    runId: run.id,
-    waitingTime: getDuration(approvalStage.createdAt),
-    createdBy: run.triggeredBy?.name ?? null,
-    pipelineName: run.pipeline.name,
-    commitSha: run.commitSha,
-    commitMessage: commitMessageByRunId.get(run.id) ?? null,
-    environment: run.environment ? {
-      type: run.environment.type.toLowerCase() as EnvType,
-      name: run.environment.name,
-    } : null,
-    branch: run.branch,
-    stages: run.stages.map((stage) => ({
-      id: stage.id,
-      stageType: stage.stageType.toLowerCase() as StageType,
-      status: stage.status.toLowerCase() as StageStatus,
-      name: stage.stageName,
-      isApproval: stage.stageType === 'APPROVAL',
-    })),
-  };
 }

@@ -1,5 +1,3 @@
-Notes to help assist my own learning
-
 
 CSS Modules
 
@@ -165,67 +163,6 @@ The following information contains a plan to implement the Pill Component, which
   'processed' | 'ignored' | 'push' | 'pull-request' | 'webhook' | 'manual' | 
   'api' | 'total' | 'approval'; label: string }
 </Information>
-
-===================================================================================================================================
-
-PRISMA TO DO LIST
-
-
-
-Schema columns/relations with no UI yet
- - AuditLog: metadata Json? — never rendered, not even as expandable detail.
-
- - StageResult.exitCode, .logSnippet, .command, .attempt, .maxRetries, .approvedById, .approvedAt — LogViewer.tsx hardcodes the command string instead of using command/logSnippet; retry tracking (attempt/maxRetries) and approval metadata never surface on stage/job views.
-
-
-Enum coverage gaps
- - StageStatus (8 values: PENDING, QUEUED, RUNNING, SUCCESS, FAILED, SKIPPED, AWAITING_APPROVAL, CANCELLED): LogViewer.tsx:6 only handles 3 (succeeded|failed|running), JobNode.tsx:14-16 only handles 5 (missing SKIPPED, AWAITING_APPROVAL, CANCELLED) — notable since AWAITING_APPROVAL is central to the approvals feature.
-
-
-
-Type/shape mismatches
- - components/run-detail/RunDetailCard.tsx types triggeredBy and environment as plain strings ("sarah.chen", "Production"), but in the schema these are relations (PipelineRun.triggeredBy → User?, PipelineRun.environment → Environment?) requiring a join, not a flat display name.
-
-
-
-
-Finished Tasks:
-
-UI data that the schema doesn't have
- - app/environments/page.tsx:69,82,95,... — "Created By" column shows coco. Environment has no createdById/user relation.
-
- - app/secrets/page.tsx:46,56,67,... — "Created By" column shows sarah.chen/marcus.coco. Secret has no createdById/user relation.
-
- - app/environments/page.tsx:69,75,88,... and app/secrets/page.tsx:46,54,65,... — both show an "Environment Type" column as a Pill (Development/Staging/Production/Preview/Custom). Environment only has name: String @unique — no type/category field. Notably, in environments/page.tsx row 1 the name literally reads production while the "Environment Type" pill reads Development — the mock data treats name and type as two separate concepts, which strongly suggests Environment needs a real type/kind column distinct from name.
-
- - app/pipelines/page.tsx:64,68,74,80,86,92 — the pipelines list also has an "Environment Type" column attached to each pipeline row. But Pipeline has no relation to Environment at all (only PipelineRun.environmentId does). Either this column belongs on the runs view instead, or Pipeline needs some notion of a target/default environment.
-
- - app/secrets/page.tsx:48,70,81,92 — under each key, a description ("Primary Postgres connection -- pool...", "Fine-grained PAT scoped to acme or..."). Secret has no description/notes field.
-
- - app/audit/page.tsx:67 — Action shown as "Run Completed". AuditAction has RUN_CANCELLED but nothing for a successful/completed run — no enum value maps to this label.
-
- - components/WebhookCard.tsx:5-11 (used in app/webhooks/page.tsx) — props are repo, status: 'Active'|'Inactive', triggers, lastDelivery, registeredAgo, and branchFilters. None of these exist on WebhookEvent (which models individual delivery records, not the registered webhook). The schema seems to be missing a Webhook/registration model entirely — WebhookEvent alone can't supply this card's data.
-
-
-
-
-Schema columns/relations with no UI yet
- - Environment.createdAt — only updatedAt ("Last Updated") has a column.
-
- - Pipeline.description, .isActive, .branchFilter, .createdAt/.updatedAt — never shown.
-
-
-
-Type/shape mismatches
- - components/pipeline-editor/StageSidebar/StageTypeGrid.tsx lets users pick a stage type (build/test/deploy/approval — confirmed by the "manual-approval" stage in app/runs/[runId]/page.tsx:34), but nothing in the schema records stage type — neither PipelineDefinition.configJson nor StageResult has a type/kind column or enum. Given StageStatus already defines AWAITING_APPROVAL, the schema seems to assume approval stages exist but has no column identifying which stages are which (today that'd be buried in opaque configJson).
-
-
-
-
-Info:
-
-      Derived values (not gaps — just noting they're computed, not missing columns)
-      - Run counts, pipeline-level status rollups, run "Duration", runNumber, waitingTime/stagesComplete on ApprovalCard, and "Repository"/"Branch"/"Commit" on the webhook-events table (parseable from payload JSON) are all reasonably derivable from existing schema fields/relations.
 
 ===================================================================================================================================
 
@@ -419,25 +356,6 @@ Line 3:
 This is all needed because otherwise the Sidebar can't get those 2 props, which Pipeline Editor relies on for the sidebar to work properly.
 
 ===================================================================================================================================
-
-HideStagesButton.tsx
-
-toggle function:
-
-          function toggle(e: React.MouseEvent<HTMLButtonElement>) {
-            const card = e.currentTarget.closest('[data-approval-card]');
-            const stages = card?.querySelector<HTMLElement>('[data-stages-row]');
-            stages?.classList.toggle(styles['stages--hidden']);
-            setHidden((prev) => !prev);
-          }
-
- - 1st line gets the top div wrapper of ApprovalCard
- - 2nd line gets the .stages div
- - 3rd line toggles the .stages div off/on
- - 4th line updates the useState to update the text to show either the up or down arrow and "Show Stages" or "Hide Stages"
-
-
-===================================================================================================================================
 EnvironmentModal:
 
   useEffect(() => {
@@ -595,15 +513,6 @@ We don't use 'generateWebhookSecret()' since 'node:crypto' is a server-only API,
 handleGenerateSecret is used on the client side -- the Web Crypto API's crypto.getRandomValues, producing the same whsec_<64 hex chars> shape as the server-side version, just via a browser API instead of Node's. 
 
 'generateWebhookSecret()' is used in lib/actions/webhooks.ts in regenerateWebhookSecret(). 
-
-===================================================================================================================================
-
-BullMQ Runner Stuff
-
-CWD - Working directory that each pipeline stage's shell command runs in.
-
-
-
 
 ===================================================================================================================================
 
@@ -885,3 +794,578 @@ Fix:
           setEnvVars(next);
           updateNodeData(node.id, { env_vars: next });
         }; /* runs when you change key or value in an env variable via changing the input */
+
+===================================================================================================================================
+
+Why '@/runner/env.ts' is needed
+
+Next.js has built-in support for loading env variables from .env* files into process.env.
+
+But env.ts is necessary to setup process.env for the Runner files since they're not a part of Next.js.
+
+Furthermore, env.ts should always be imported first, so that the other files ('./connection.ts', @/lib/utils/crypto.ts) can properly get process.env.* If 'connection.ts' is imported before env.ts, for example, then an error will be thrown since process.env wasn't set yet
+
+The reason crypto.ts can work outside of any set config() in the runner/ directory is because it's only called in server actions that are evaluated by the Next.js server, which already populated process.env. 
+
+===================================================================================================================================
+
+loadContextRun() orderBy() Explanation
+
+orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }]
+
+Initial Stages:
+      stages: [
+          { stageId: 'build', attempt: 1, status: 'RUNNING'   },
+          { stageId: 'install', attempt: 1, status: 'SUCCEEDED' },
+          { stageId: 'package', attempt: 1, status: 'PENDING'   },
+          { stageId: 'test', attempt: 1, status: 'QUEUED'    },
+        ],
+
+But if a stage ever retries, you get something like:
+
+    { stageId: 'test', attempt: 1, status: 'FAILED' }
+    { stageId: 'test', attempt: 2, status: 'SUCCEEDED' }
+
+
+  const outcomes = new Map<string, StageStatus>(
+    run.stages.map(stage => [stage.stageId, stage.status]),
+  );
+
+Because we order attempts by ascending order, 'outcomes' gets the stage with the highest attempt since that's added last, overwriting the lower attempt one.
+
+So outcomes returns the 'test' stage with attempt: 2 (succeeded) rather than the failed test run.
+
+===================================================================================================================================
+
+@/runner/execute.ts 'createLineBuffer' sample:
+
+    write("Building...\r\nCompiling src/a.ts\r\n")
+      lines  = ["Building...","Compiling src/a.ts"]
+      partial= ""
+    write("Compiling src/b.ts\nWarn")
+      lines  = ["Building...","Compiling src/a.ts","Compiling src/b.ts"]
+      partial= "Warn"
+    write("ing: unused var\nDownloading 10%\rDownloading 100%\nDone\r\n")
+      lines  = ["Compiling src/b.ts","Warning: unused var","Downloading 10%\rDownloading 100%","Done"]
+      partial= ""
+    write("Exit code 0")
+      lines  = ["Compiling src/b.ts","Warning: unused var","Downloading 10%\rDownloading 100%","Done"]
+      partial= "Exit code 0"
+    flush() = "Warning: unused var\nDownloading 10%\rDownloading 100%\nDone\nExit code 0"
+
+
+The sample doesn't touch "if (partial.length > MAX_LINE_CHARS)"
+ - Just pretend that in the 2nd write() call, "Warn" is a string of more than 2000 chars. 
+ - If so, then:
+         lines = ["Building...","Compiling src/a.ts","Compiling src/b.ts", "Warn..."]
+         partial = ''
+
+===================================================================================================================================
+
+High Level Overview of runner/execute.ts -- execute() and killTree()
+
+
+============================================================================================
+    const child = spawn(command, {
+      shell: true,
+      cwd,
+      env,
+      // Makes the child a process-group leader so killTree can signal the group. Windows
+      // has no process groups in this sense, and `detached` there pops a console window,
+      // so it stays off — taskkill /T walks the tree instead.
+      detached: process.platform !== 'win32',
+      windowsHide: true,
+    });
+    
+'shell: true' makes the returned child the shell, not the command.
+'detached' is POSIX-only; on Windows it pops a console window.
+
+============================================================================================
+
+
+    child.stdout.on('data', chunk => {
+      const text = String(chunk);
+      log.write(text);
+      console.log(`[${command}] ${text}`);
+    });
+
+    child.stderr.on('data', chunk => {
+      const text = String(chunk);
+      log.write(text);
+      console.error(`[${command}] ${text}`);
+    });
+
+These are used to write text to the log so that it can be displayed to the user via the Run Detail log viewer.
+ - But for now, they're just printed to the runner's stdout/stderr
+
+============================================================================================
+
+
+    child.stdout.on('error', () => { });
+    child.stderr.on('error', () => { });
+
+    child.on('error', error => finish(() => reject(error)));
+
+Difference:
+ 1. 'child.on('error')' - process could not be started, killed, or messaged. Under 'shell: true', the reachable case is spawn failure, triggered by a bad cwd. 
+       - the 'close' event (child.on('close')) may never follow it
+
+ 2. 'child.[stdout/stderr].on('error', () => {})' - A read failure on the pipe handle. I/O error about ONE file descripter; says nothing about whether the process is alive.
+       - ECONNRESET when write end is destroyed while a read is in fight.
+       - EBADF if pipe handle goes invalid
+       - EPIPE on a broken pipe
+       - ONLY reachable because the child writes data to the runner's stdout (child.stdout.on('data'))
+
+============================================================================================
+
+
+    child.on('close', (exitCode, signal) => finish(() => resolve({
+      exitCode,
+      signal,
+      timedOut,
+      logSnippet: log.flush(),
+    })));
+
+This fires when the process ends, which can precede the last stdout chunk being read. 
+Waiting for the streams to close is what makes the snippet include the message a command printed on its way out.
+
+'close' requires the stdio streams to close, not just the process to die.
+If the signal (SIGTERM, SIGKILL) reached the shell but missed a grandchild holding the same stdout pipe, then the shell is gone but 'close' never fires
+ - This is why killTree() signals the process group (the negative pid in the else statement) rather than the shell alone
+
+============================================================================================
+
+    const finish = (settle: () => void) => {
+      if (settled) return;
+      settled = true;
+      running.delete(child);
+      clearTimeout(deadline);
+      clearTimeout(graceTimer);
+      settle();
+    };
+
+Used for both: 
+ - child.on('error') and child.on('close')
+
+ 1. "if (settled) return" - used since 'error' and 'close' can both fire for the sme child
+ 2. Clears the graceTimer and deadline, so that timers don't outlive the process.
+ 3. 'settle()' calls the callback function given to finish(). 
+      - In 'child.on('error')', the callback function is '() => reject(error)'
+      - In 'child.on('close'), the callback function is '() => resolve({ exitCode, signal, timedOut, logSnippet: log.flush() })'
+
+============================================================================================
+
+    const deadline = setTimeout(() => {
+      timedOut = killTree(child, false);
+      if (!timedOut) return;
+
+      graceTimer = setTimeout(() => killTree(child, true), KILL_GRACE_MS);
+
+      graceTimer.unref();
+    }, timeoutMs);
+
+Once a process times out, we must kill it.
+
+killTree(child, false) - 'false' gives a SIGTERM signal, which sets the graceTimer for 5 seconds.
+ - SIGTERM politely requests for a process to stop, allowing it to clean up its resources within 5 seconds
+
+killTree(child, true) - 'true' gives a SIGKILL signal, which forcefully kills the process, called if the process didn't clean up in the 5 seconds.
+ - 'SIGKILL' is executed directly by the kernel to terminate  aprocess immediately, preventing any cleanup or saving.
+
+graceTimer.unref() - prevents timeout from being reason runner refuses to exit at shutdown by removing the timeout from the event loop
+ - Without this, the runner would have to wait the full timeout out (5 seconds) before shutting down.
+
+Once 'SIGTERM/SIGKILL' trigger the process to cleanup, the process calls the 'close' event (child.on('close')) before terminating
+ - This means 'finish()' is called after 'deadline' executes
+
+
+============================================================================================
+============================================================================================
+============================================================================================
+
+
+killTree():
+
+The difference between the 2 if statements is reliant on whether 'detached' is set to true
+
+if process.platform === 'win32', detached is set to false
+else if process.platform is on POSIX, detached is set to true
+
+On POSIX the negative pid signals the process group, which `detached: true` above created. 
+
+On Windows, taskkill /T walks the tree by pid; there is no meaningful graceful stage there, so `force` is
+ignored and the second call (in the graceTimer timeout) simply finds nothing left to kill.
+
+============================================================================================
+
+
+
+        function killTree(child: ChildProcess, force: boolean): boolean {
+          if (child.pid === undefined) return false;
+
+          try {
+            if (process.platform === 'win32') {
+              if (child.exitCode !== null || child.signalCode !== null) return false;
+
+              const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+                windowsHide: true,
+                stdio: 'ignore',
+              });
+              killer.on('error', () => { });
+              killer.unref();
+            } else {
+              process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
+            }
+
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+
+1st case: process.platform !== 'win32':
+ - In 'deadline', the first call to killTree makes force false. This sets the signal in process.kill() to SIGTERM
+      - This gives the process 5 seconds to terminate before calling killTree with force: true, setting the signal to SIGKILL
+
+ - killTree(child, false) sets the child process's signal to SIGTERM. 
+ - If you had the "if (child.signalCode !== null)" guard before the try {} statement, for POSIX platforms, it would incorrectly return false because:
+
+          Under shell: true the direct child is the shell. 
+          The shell installs no signal handlers, so the graceful SIGTERM at the deadline always kills it instantly and sets child.signalCode. 
+          When the real command handles SIGTERM itself, it survives as a grandchild — and 5s later the grace timer's killTree(child, true) hit that guard, returned false, and never sent SIGKILL. 
+          The command lived on holding the stdout pipe, so the 'close' event doesn't fire
+          
+          The SIGTERM went to the whole process group, not just the shell.
+
+          process.kill(-pid, 'SIGTERM') signals every process in the group, so Node received it too — it just had process.on('SIGTERM', () => {}) installed and ignored it. The shell had no handler, so it died. 
+          Node then reaped the shell and set child.signalCode = 'SIGTERM'.
+
+          So that guard was reading the shell's death and concluding the tree was gone, at the exact moment the tree provably wasn't.
+
+
+
+2nd case: process.platform === 'win32':
+ - On the first call -- killTree(child, false), Windows kills the child process and its children.
+ - This means tha the second call -- killTree(child, true) typically doesn't ever call, but it definitely can
+
+ - The reason the guard is there -- if (child.exitCode !== null || child.signalCode !== null) return false : 
+
+          Windows recycles pids, so without the guard you risk killing an unrelated process.
+
+   Example:
+      1.  0ms   - Stage A spawns cmd.exe pid 14312
+      2.  250ms -	deadline → taskkill /pid 14312 /T /F → tree dies, exitCode set, handle closed, 14312 freed
+      3.  ~2s   -	Stage C (unrelated, healthy) spawns a build step — Windows hands it 14312
+      4.  5.25s - grace timer fires → taskkill /pid 14312 /T /F
+
+
+
+Extra Info on: process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM');
+ /*
+  * Deliberately not guarded on the child's exit state, the way the Windows branch is.
+  * The direct child is the *shell*, and it is the first thing to die: it installs no
+  * handlers, so the graceful SIGTERM always takes it down, setting child.signalCode
+  * immediately. A command that handles SIGTERM itself outlives it — which is the only
+  * situation the escalation exists for. Reading signalCode as "the tree is gone" would
+  * therefore suppress the SIGKILL in exactly the case that needs it, leaving the real
+  * command alive, still holding the run's workspace and the stdout pipe that 'close'
+  * is waiting on.
+  *
+  * The group is its own liveness test: a process group outlives its leader as long as
+  * any member is left, and signalling an empty one throws ESRCH, which the catch below
+  * reports as "there was nothing to kill".
+  */
+
+
+
+
+===================================================================================================================================
+
+runner/stageProcessor processStage() Info
+
+      if (outcome.status === 'FAILED' && retryable) {
+        await openRetry(job.runId, job.stageId, job.attempt);
+      }
+
+      await finishStage(job.runId, job.stageId, job.attempt, outcome);
+
+
+The retry row is opened BEFORE the failure is recorded, and the order is load-bearing.
+
+loadRunContext folds stage rows last-write-wins over ascending attempt, so the stage's
+reported status is whatever its highest attempt says. Writing FAILED first leaves a
+window in which that is the latest word — and the other four worker slots are live. A
+sibling finishing in that window calls advanceRun, runOutcome sees a failure-terminal
+stage, and the run is finalized FAILED with cancelPendingStages sweeping behind it. The
+retry then lands as an orphan row in a run nothing will ever advance again: the
+configured retry silently never happens.
+
+Opening attempt N+1 first means the stage goes straight from RUNNING to PENDING as far
+as any reader is concerned, and runOutcome never sees the failure at all. A crash
+between the two leaves attempt N stuck RUNNING, which is harmless — it is no longer the
+latest attempt — and is exactly what the boot reaper is for.
+   
+===================================================================================================================================
+
+reapQueuedStages() explanation
+
+          async function reapQueuedStages(): Promise<{ requeued: number, failed: number }> {
+            let requeued = 0;
+            let failed = 0;
+
+            let queuedStages: Awaited<ReturnType<typeof findQueuedStages>> = [];
+            try {
+              queuedStages = await findQueuedStages();
+            } catch (error) {
+              console.error('reaper: could not read the queued stage rows:', error);
+              return { requeued, failed };
+            }
+
+            for (const { stageId, runId, attempt } of queuedStages) {
+              try {
+                if (await reclaimStageJob({ stageId, runId, attempt })) {
+                  if (await updateQueuedToPending(runId, stageId, attempt)) requeued++;
+                } else if (await failQueuedStage(runId, stageId, attempt)) {
+                  failed++;
+                }
+              } catch (error) {
+                console.error(`reaper: could not recover stage ${stageId} of run ${runId}:`, error);
+              }
+            }
+
+            return { requeued, failed };
+          }
+
+
+advanceRun:
+  1. claimStageForQueue   row: PENDING → QUEUED        (Postgres commit)
+  2. enqueueStageJob      job created, state `waiting`  (Redis)
+       ↓
+  3. worker fetches it    job: waiting → active, worker takes a 30s lock
+  4. markStageRunning     row: QUEUED → RUNNING         (Postgres commit)
+
+
+Died between	Job's actual state	        Left alone, does it recover?
+1 and 2	      doesn't exist	              No — nothing will ever dispatch it
+2 and 3	      waiting (or delayed)        in Redis	Yes — Redis kept it, delivered on restart
+3 and 4	      active, holding a lock	    No — stalled-failed without ever running
+
+
+Case 1. 
+  For 1-2, the stage is claimed for queue but doesn't get enqueued, leaving an orphaned stage that will never get enqueued.
+
+  reapQueuedStages() handles this by finding the queued stages, calling reclaimStageJob() (which returns true on the 1st if statement even if the job isnt found there) and reverting it from 'queued' to 'pending' so it can be enqueued again
+
+Case 2. 
+ For 2-3, Redis keeps the job and because a lock wasn't put on it by the stageWorker, reapQueuedStages() does exactly what Case 1 does except 'reclaimStageJob()' actually removes the job from the stage queue
+
+Case 3.
+ For 3-4, a 30s lock was put on the job, so the 1st if statement in 'reclaimStageJob()' returns false, meaning the job cannot be removed
+
+          const client = await stageQueue.client;
+          await client.del(`${stageQueue.toKey(jobId)}:lock`);
+
+          return await removeStageJob(jobId);
+ 
+ The next 2 lines then attempt to delete the lock, and if successful, removeStageJob(jobId) returns true, so it sets the previously locked job from 'QUEUED' to 'PENDING'
+
+ If reclaimStageJob() returns false: That job will be failed by the stalled checker and will never run, so the row is failed rather than reset: reverting it from 'QUEUED' to 'PENDING' would re-enqueue the job witbt be same jobId that's still in the keyspace, leaving the stage hung with nothing scheduled to move it. So we just fail that stage.
+
+===================================================================================================================================
+
+FilterListBox.tsx
+
+  const [selected, setSelected] = useState(
+    () => options.find((option) => option.value === defaultValue)?.value ?? options[0]?.value ?? '',
+  );
+
+  const selectedOption = options.find((option) => option.value === selected) ?? options[0];
+  const selectedValue = selectedOption?.value ?? '';
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selectedValue)); 
+  
+That last line ensures that even if the 'options' list changes in order and re-renders, that the stage the user is currently viewing doesn't jump to another stage (e.g. -- 'test' was index 0, but 'options' changes so that 'build' is index 0 - this line still ensures that the user still looks at 'test')
+
+So the only thing that changes is the order of the stages in the filter, which (for the Run Detail page) is based on the order the user created the nodes in the Pipeline Editor (via @/lib/data/run-detail.ts -- buildLogFilters() 2nd for loop)
+
+===================================================================================================================================
+
+LogsTab.tsx
+
+
+  if (attempt === null && attemptsForStage.length) setAttempt(highestAttempt);
+
+
+  if (selectedLogIndex === undefined && logFilters.length) setSelectedLogIndex(logFilters[0].value);
+
+
+
+  Both of these seed state the first time the data to seed it from arrives, rather than
+  deriving it every render. AutoRefresh re-runs the server component on a timer and
+  reconciles into this tree, so `logs` and `logFilters` grow underneath state that
+  survives — and a derived `attempt ?? highestAttempt` would follow a retry the moment
+  it opened, pulling LogViewer off the attempt the reader was in the middle of. null
+  means "nothing chosen for this stage yet": take the newest attempt available once,
+  then hold it until the reader picks another or the stage changes.
+
+  The 2nd if statement exists because if 'logFilters' is initally empty on the first render (which happens when the run is queued), then 'selectedLogIndex' will be undefined and since 'selectedLog' fetches the log based on 'selectedLogIndex', the LogViewer wouldn't show logs until the user clicks on a stage in the filter (since 'selectedLog' renders LogViewer but uses 'selectedLogIndex')
+
+
+
+
+
+
+    <FilterListbox
+      key={selectedLogIndex}
+      id={"attempts"} name={"attempts"}
+      styles={styles}
+      defaultValue={attempt ? String(attempt) : undefined}
+      setFilteredOption={(val) => setAttempt(Number(val))}
+      options={
+        attemptsForStage.map((n) => (
+          { value: String(n), label: `Attempt ${n}` }
+        ))
+      }
+    />   
+
+    defaultValue is read once by the useState initializer, so when a user switches to another stage that had maybe 9 attempts, it still shows 'Attempt 1' even though it should show the highest attempt. 
+
+    The fix is the key prop. Keying it to the selectedLogIndex (the selected stage) remounts the component, which re-reads defaultValue off the stage the user just picked. This always ensures that the highest attempt is selected on any stage the user picks.
+
+   defaultValue is read once, by the useState initializer — so without a new
+   identity this keeps the attempt it was showing for the previous stage while
+   LogViewer moves on to the new one. Keying it to the stage remounts it, which
+   re-reads defaultValue off the stage the user just picked.
+            
+============================================================================================
+
+LogViewer ion-icon fix:
+
+Previously: 
+
+      <ion-icon 
+        name={iconName[status]} 
+        className={`${styles['log-job-icon']} ${styles[status]}`}
+      ></ion-icon>
+
+Issue: 
+1. Enter the Run Detail page for the first time.
+2. Go to the Logs tab, and the ion icon shows for the first stage in the log filter.
+3. Decide to switch to another stage via the log filter.
+4. But the ion-icon completely disappears (ion-icon isn't hydrated)
+5. If you go back to the stage that rendered it initially, the ion-icon is gone too.
+
+
+New Implementation:
+
+          <ion-icon
+            name={iconName[status]}
+            data-status={status}
+            className={styles['log-job-icon']}
+          ></ion-icon>
+
+Why it fixes the issue:
+
+    React owns 'class' via 'className'. When 'status' changes, that string changes, 
+    so React rewrites the entire class attribute (removing 'md hydrated' as shown from DevTools). 
+    Since LogViewer isn't keyed, React reuses the same DOM node rather than creating a fresh one.
+
+  Steps:
+
+    1. Works on first view — React writes className at mount, then the runtime appends its classes.
+    2. Disappears on switching stage — first className change wipes hydrated.
+    3. Still gone when you switch back — a custom element upgrades exactly once. Nothing re-adds them ever.
+
+    So remove 'status' off of className to keep the class string constant, so that React never touches the 'className' attribute after mount.
+
+    Move it to a custom 'data-status' attribute to render out the ion-icons
+
+===================================================================================================================================
+
+Explanation of 'maxRetriesPerRequest: null' in @/runner/connection.ts -> 'stageQueue().add()'
+
+
+
+
+      maxRetriesPerRequest: 20 -- default value
+
+
+When a run progresses and enqueues a stage, it calls 'stageQueue().add()'.
+
+
+If Redis is shut down, then 'stageQueue().add()' makes ioredis:
+
+ 1. Put a command into an in-memory offlineQueue -- Only IF Redis was started before and then died during the runner. 
+      - If Redis was dead from the start, then no command is ever issued in an offlineQueue, so ignore 2 and 3.
+
+ 2. Start reconnecting to Redis on a custom BullMQ backoff
+
+ 3. Flushes the buffer (with the command) by sending the command once a connection to Redis succeeds within multiples of 21 (maxRetriesPerRequest + 1) attempts.
+
+
+
+However, if a connection to Redis doesn't succeed within 21 attempts, ioredis still keeps reconnecting, but commands made within those 21 attempts are entirely rejected, which empty the buffer. 
+
+      - This means that even when redis starts up, any calls to 'stageQueue().add()' made within those 21 attempts are lost, since the jobs were never added.
+          - In the actual application when Redis is down, this would mean that a stage like 'npm run lint', which gets enqueued to the stage runner -- via 'stageQueue.add()' -- when it's QUEUED, will stay 'QUEUED' forever until the runner is shutdown and restarted because it will inevitably use up 21 attempts.
+
+          - By use up 21 attempts, I mean that it'll try reconnecting 21 times, not that 'stageQueue().add()' gets called 21 times -- it only gets called once, put in the offlineQueue, and move on while ioredis tries to reconnect.
+      
+      - However, once it reaches those 21 attempts, if you call 'stageQueue().add()' and Redis comes back within the next 21 attempts (by attempt 42 and so on (63, 84, ...)), the command it buffered will go through and 'stageQueue().add()' will be executed.
+
+
+
+'maxRetriesPerRequest: null'
+ - Makes it so that any call to 'stageQueue().add()' is guaranteed to go through whenever Redis starts again, even if those calls were made hours ago.
+
+
+===================================================================================================================================
+
+Why @/lib/queue/connection.ts doesn't need 'maxRetriesPerRequest: null' -- 'runQueue().add()'
+
+
+
+
+The 2 places that call 'runQueue.add()' are the 2 server actions: 'addPipelineRun()' and 'retryRun()', 
+and those ensure that if 'runWorker().add()' times out, that the pipeline run is deleted. 
+ - This means that even when Redis comes back on and adds the run, it just returns early on 'loadRunContext(runId)' since its runId can't be found
+
+
+The only reason it's kept for now is to just make both connection files consistent and make an @/lib/actions/approval.ts 'enqueuePipelineRun()' call
+survive an outage.
+ - Since the sweeper enqueues 'RUNNING' runs every 60 seconds, it's unneeded in @/lib/actions/approval.ts.
+
+===================================================================================================================================
+
+
+withTimeout(), 'runQueue().add()', 'stageQueue().add(), 'runQueue().getWorkersCount()'
+
+withTimeout() -> Whenever Redis is shut down, this ensures that it returns 
+ - Used only with Next.js (for `addPipelineRun()`, `retryRun()`, and health.ts probe()), which prevents a server component from not re-rendering and a server action from hanging entirely.
+ - `addPipelineRun()` and `retryRun()` use `enqueueOrDiscardRun()`, which deletes a pipelineRun from a database if it exceeds the timeout in `withTimeout()`
+
+
+ - For `runQueue().add()`, the withTimeout() wrap does NOT make ioredis abandon the command, it just makes Nextjs stop waiting for it, so that the user can see results on the frontend. This means that when Redis goes up, it will create a job for the run.
+     - HOWEVER, because `addPipelineRun()` and `retryRun()` call `enqueueOrDiscardRun()`, which discards a run that timed out via `withTimeout()`, it means that when the job loads and goes to 'processStage()', it calls 'loadRunContext(runId)' and returns early since the runId doesn't exist.
+
+
+ - 'stageQueue().add()' isn't wrapped in withTimeout() on purpose, so `advanceRun()` suspends at 'await enqueueStageJob():
+      1. This is because the runner has nothing else to do -- its entire purpose is reliant on making stages execute. If Redis is down, then there's nothing the runner can do besides wait.
+
+
+
+
+
+runQueue().getWorkersCount() -- counts Redis clients whose connection name is 'bull:<base64 queue name>, which the runWorker's blocking connection registers on connect. With one runner up, that means it returns 1. It's a proxy for 'is a consumer attached?', not an inspection of the actual instance of the runWorker object
+
+ - This returns 0 if:
+    1. The runner process isn't running
+    2. The runner is alive but can't reach Redis, meaning the runWorker process is up but its blocking connection is down, so it isn't in 'CLIENT LIST'
+    3. Redis was just restarted -- in the time that it takes to reconnect, it will return 0
+    4. The runWorker recycles its blocking connection roughly every 30s, and for about a second its gone.
+    5. A redis provider that doesn't support 'CLIENT SETNAME'
+    6. App and runner pointed at different redis instances or disagreeing on queue name / prefix
+
+
+
+===================================================================================================================================

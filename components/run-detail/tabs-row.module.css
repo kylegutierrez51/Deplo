@@ -13,6 +13,9 @@ Section Select (Overview, Logs)
 .tabs {
   padding: 0 0 0 var(--space-lg);
   border-bottom: 1px solid var(--gray-clr);
+
+  /* Anchor for .collapse-toggle. */
+  position: relative;
 }
 
 .tabs-row {
@@ -43,4 +46,48 @@ Section Select (Overview, Logs)
 .tab.active ion-icon,
 .tab.active span {
   font-weight: bold;
+}
+
+
+/*
+===============================
+Run Header Collapse Toggle
+===============================
+*/
+
+.collapse-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: var(--space-xs);
+  color: var(--icon-clr);
+  cursor: pointer;
+}
+
+.collapse-toggle:hover {
+  color: var(--white-clr);
+}
+
+.collapse-toggle ion-icon {
+  font-size: var(--font-size-lg);
+  transition: transform 200ms ease;
+}
+
+/*
+  Keyed off aria-expanded rather than a class of its own, so the direction the chevron
+  points cannot drift away from the state it is reporting.
+*/
+.collapse-toggle[aria-expanded='false'] ion-icon {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse-toggle ion-icon {
+    transition: none;
+  }
 }

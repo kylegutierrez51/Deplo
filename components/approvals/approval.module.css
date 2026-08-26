@@ -50,6 +50,13 @@ Approval Card
   font-size: 18px;
 }
 
+.top-row .run-num {
+  font-size: var(--font-size-lg);
+  color: var(--subtitle-clr);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-weight: 300;
+}
+
 .top-row .divider {
   width: 1px;
   height: 16px;
@@ -73,6 +80,14 @@ Approval Card
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+}
+
+.feature-info .stage-name {
+  color: var(--subtitle-clr);
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .feature-info .feature-id {
@@ -173,6 +188,14 @@ Approval Card
 .approve-btn {
   white-space: nowrap;
 }
+
+/* Cancel Button Environment Label */
+.meta-label {
+  margin-right: var(--space-sm);
+  color: #ffffff;
+}
+
+
 
 /*
 =====================================================================================

@@ -1,4 +1,4 @@
-type PillVariant =
+export type PillVariant =
   | 'running' | 'succeeded' | 'failed' | 'queued' | 'cancelled'
   | 'production' | 'staging' | 'development' | 'preview' | 'custom'
   | 'processed' | 'ignored' | 'pending' | 'push' | 'pull-request' | 'webhook'
@@ -13,5 +13,3 @@ interface PillProps {
 export default function Pill({ variant, label }: PillProps) {
   return <div className={`pill pill--${variant}`}>{label}</div>;
 }
-
-export type { PillVariant };

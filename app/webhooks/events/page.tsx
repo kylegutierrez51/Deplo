@@ -3,7 +3,7 @@ import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import StatCards from "@/components/ui/StatCards";
-import FilterSelect from "@/components/ui/filters/FilterSelect";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
@@ -55,7 +55,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
                 <SearchInput
                   placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
                   styles={styles} />
-                <FilterSelect
+                <FilterListbox
                   id={"status"} name={"status"}
                   styles={styles}
                   options={
@@ -67,7 +67,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
                       { value: "failed", label: "Failed" },
                     ]
                   } />
-                <FilterSelect
+                <FilterListbox
                   id={"event-type"} name={"event-type"}
                   styles={styles}
                   options={

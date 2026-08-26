@@ -114,7 +114,7 @@ Sidebar Content
 
 .sidebar .subtitle {
   margin-left: var(--space-md);
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono);
   font-size: var(--font-size-body);
 }
 
@@ -200,7 +200,7 @@ Profile
 }
 
 .profile .role {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono);
   font-size: var(--font-size-lg);
 }
 

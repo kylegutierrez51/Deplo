@@ -1,0 +1,44 @@
+/*
+====================================================================================
+Runner Status Banner
+====================================================================================
+*/
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  max-width: 650px;
+
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md);
+}
+
+.banner ion-icon {
+  font-size: 18px;
+
+  /* Optical alignment with the title's cap height rather than its line box. */
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+}
+
+.detail {
+  font-size: var(--font-size-sm);
+  color: var(--subtitle-clr);
+}

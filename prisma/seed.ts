@@ -7,10 +7,6 @@ import prisma from "@/lib/prisma";
 import {
   UserRole,
   EnvironmentType,
-  RunStatus,
-  RunTrigger,
-  StageStatus,
-  StageType,
   WebhookEventStatus,
   EventType,
   AuditAction,
@@ -108,231 +104,96 @@ async function main() {
     })
   );
 
-  // ── Pipelines ───────────────────────────────────────────────────
-  // Unique pipeline names referenced across lib/data/pipelines.ts,
-  // lib/data/webhooks.ts and lib/data/webhook-events.ts.
-  const pipelineSeeds = [
-    { name: "build-frontend", repoUrl: "https://github.com/abcd/web-client", description: "Builds and deploys the web client on every push to main", branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "coco" },
-    { name: "deploy-api", repoUrl: "https://github.com/abcd/api-server", description: "Builds and deploys the API server", branchFilters: ["main"], createdBy: "coco" },
-    { name: "release-mobile", repoUrl: "https://github.com/abcd/mobile-app", description: "Builds and ships the mobile app to app stores", branchFilters: ["main", "release/*"], createdBy: "coco" },
-    { name: "deploy-infra", repoUrl: "https://github.com/abcd/infra", description: "Applies Terraform changes to cloud infrastructure", branchFilters: ["main/*", "release/*", "hotfix/*"], createdBy: "coco" },
-    { name: "db-migrate", repoUrl: "https://github.com/abcd/web-client", description: "Runs database migrations for the RBAC system", branchFilters: ["main"], createdBy: "marcus.coco" },
-    { name: "deploy-worker", repoUrl: "https://github.com/abcd/worker-service", description: "Builds and deploys the background worker service", branchFilters: ["main"], createdBy: "diego.ramirez" },
-    { name: "run-e2e-tests", repoUrl: "https://github.com/abcd/web-client", description: "Runs the end-to-end test suite against staging", branchFilters: ["main", "staging/*"], createdBy: "priya.nair" },
-    { name: "deploy-docs", repoUrl: "https://github.com/abcd/docs-site", description: "Publishes the public documentation site", branchFilters: ["main"], createdBy: "jordan.lee" },
-    { name: "sync-translations", repoUrl: "https://github.com/abcd/web-client", description: "Syncs translation files from the localization provider", branchFilters: ["main"], createdBy: "amara.okafor" },
-    { name: "backup-prod-db", repoUrl: "https://github.com/abcd/infra", description: "Nightly backup of the production database", branchFilters: ["main"], createdBy: "felix.mueller" },
-  ];
-  const pipelines = await Promise.all(
-    pipelineSeeds.map((p) =>
-      prisma.pipeline.create({
-        data: {
-          name: p.name,
-          repoUrl: p.repoUrl,
-          description: p.description,
-          branchFilters: p.branchFilters,
-          createdById: userByName.get(p.createdBy)?.id ?? null,
-        },
-      })
-    )
-  );
-  const pipelineByName = new Map(pipelines.map((p) => [p.name, p]));
+  // ── Pipeline ────────────────────────────────────────────────────
+  // A single pipeline, running Deplo's own verification suite.
+  const pipeline = await prisma.pipeline.create({
+    data: {
+      name: "verify-and-build",
+      repoUrl: "https://github.com/abcd/deplo",
+      description: "Type-checks and tests the app, then builds it behind an approval gate",
+      branchFilters: ["main"],
+      createdById: userByName.get("coco")?.id ?? null,
+    },
+  });
 
-  // ── Pipeline Definitions ────────────────────────────────────────
-  // Both columns follow lib/pipeline-definition.ts's split: graphJson is the
+  // ── Pipeline Definition ─────────────────────────────────────────
+  // Two independent branches converging on a gated deploy:
+  //
+  //   typecheck → approval → lint ───────────────┐
+  //                                              ├→ release-approval → build
+  //   unit-tests → integration-tests → e2e-tests ┘
+  //
+  // The two columns follow lib/pipeline/definition.ts's split: graphJson is the
   // React Flow structure the editor draws, configJson the per-stage execution
-  // settings keyed by node id.
-  function buildDefinition(stageNames: string[]) {
-    const nodes = stageNames.map((name, i) => ({
-      id: `stage-${i + 1}`,
-      type: "standardStage",
-      position: { x: 0, y: i * 120 },
-      data: { type: "custom", name },
-    }));
-    const edges = stageNames.slice(1).map((_, i) => ({
-      id: `edge-${i + 1}`,
-      source: `stage-${i + 1}`,
-      target: `stage-${i + 2}`,
-      type: "customEdge",
-      markerEnd: "marker",
-    }));
-    const configJson = Object.fromEntries(
-      stageNames.map((name, i) => [`stage-${i + 1}`, { command: `run ${name}`, timeout: 600, retries: 0, env_vars: [], secrets: {} }])
-    );
-    return { graphJson: { nodes, edges }, configJson };
-  }
-  const definitionSeeds: { pipeline: string; version: number; stages: string[]; createdBy: string }[] = [
-    { pipeline: "build-frontend", version: 1, stages: ["install-deps", "lint", "unit-tests", "build", "deploy-staging", "smoke-tests", "manual-approval", "deploy-production"], createdBy: "coco" },
-    { pipeline: "deploy-api", version: 1, stages: ["install-deps", "build", "deploy-staging", "manual-approval"], createdBy: "coco" },
-    { pipeline: "deploy-api", version: 2, stages: ["install-deps", "lint", "unit-tests", "build", "deploy-staging", "smoke-tests", "manual-approval", "deploy-production"], createdBy: "sarah.chen" },
-    { pipeline: "release-mobile", version: 1, stages: ["install-deps", "lint", "unit-tests", "release-approval", "db-backup", "publish-stores"], createdBy: "coco" },
-    { pipeline: "deploy-infra", version: 1, stages: ["install-deps", "lint", "unit-tests", "release-approval", "db-backup", "publish-stores"], createdBy: "coco" },
-    { pipeline: "db-migrate", version: 1, stages: ["install-deps", "run-migration", "manual-approval"], createdBy: "marcus.coco" },
-    { pipeline: "deploy-worker", version: 1, stages: ["install-deps", "build", "deploy-staging", "deploy-production"], createdBy: "diego.ramirez" },
-    { pipeline: "run-e2e-tests", version: 1, stages: ["install-deps", "build", "e2e-tests"], createdBy: "priya.nair" },
-    { pipeline: "deploy-docs", version: 1, stages: ["install-deps", "build", "deploy-production"], createdBy: "jordan.lee" },
-    { pipeline: "sync-translations", version: 1, stages: ["install-deps", "fetch-translations", "open-pr"], createdBy: "amara.okafor" },
+  // settings keyed by node id. Only the keys toDefinition writes are emitted —
+  // an extra one would make definitionsEqual read as an edit and mint a second
+  // version the first time the editor saves this graph untouched.
+  type StageSeed = {
+    id: string;
+    name: string;
+    type: "custom" | "deploy" | "approval";
+    label?: string;
+    x: number;
+    y: number;
+    command?: string;
+    timeout?: number;
+    retries?: number;
+  };
+  const stageSeeds: StageSeed[] = [
+    { id: "stage-1", name: "typecheck", type: "custom", label: "tsc --noEmit", x: 0, y: 0, command: "npm run typecheck", timeout: 300, retries: 0 },
+    { id: "stage-2", name: "typecheck-approval", type: "approval", label: "Approval", x: 0, y: 160 },
+    { id: "stage-3", name: "lint", type: "custom", label: "eslint", x: 0, y: 320, command: "npm run lint", timeout: 300, retries: 0 },
+    { id: "stage-4", name: "unit-tests", type: "custom", label: "jest", x: 360, y: 0, command: "npm test", timeout: 900, retries: 1 },
+    { id: "stage-5", name: "integration-tests", type: "custom", label: "jest -c jest.config.integration.mjs", x: 360, y: 160, command: "npm run test:integration", timeout: 900, retries: 1 },
+    { id: "stage-6", name: "e2e-tests", type: "custom", label: "playwright test", x: 360, y: 320, command: "npm run test:e2e", timeout: 1800, retries: 1 },
+    { id: "stage-7", name: "release-approval", type: "approval", label: "Approval", x: 180, y: 480 },
+    { id: "stage-8", name: "build", type: "deploy", label: "Deploy", x: 180, y: 640, command: "npm run build", timeout: 900, retries: 0 },
   ];
-  const definitions = await Promise.all(
-    definitionSeeds.map((d) => {
-      const { graphJson, configJson } = buildDefinition(d.stages);
-      return prisma.pipelineDefinition.create({
-        data: {
-          pipelineId: pipelineByName.get(d.pipeline)!.id,
-          version: d.version,
-          graphJson,
-          configJson,
-          createdById: userByName.get(d.createdBy)?.id ?? null,
-        },
-      });
-    })
+  const edgeSeeds: [source: string, target: string][] = [
+    ["stage-1", "stage-2"],
+    ["stage-2", "stage-3"],
+    ["stage-4", "stage-5"],
+    ["stage-5", "stage-6"],
+    ["stage-3", "stage-7"],
+    ["stage-6", "stage-7"],
+    ["stage-7", "stage-8"],
+  ];
+  const graphJson = {
+    nodes: stageSeeds.map((s) => ({
+      id: s.id,
+      position: { x: s.x, y: s.y },
+      data: { type: s.type, name: s.name, ...(s.label !== undefined && { label: s.label }) },
+    })),
+    edges: edgeSeeds.map(([source, target], i) => ({ id: `edge-${i + 1}`, source, target })),
+  };
+  const configJson = Object.fromEntries(
+    stageSeeds.map((s) => [
+      s.id,
+      {
+        command: s.command ? ('cd /d "%PROJECT_DIR%" && ' + s.command) : null,
+        timeout: s.timeout ?? null,
+        retries: s.retries ?? null,
+        env_vars: [],
+        secrets: {},
+      },
+    ])
   );
-  // Latest definition per pipeline, used as the default for new runs.
-  const latestDefinitionByPipeline = new Map<string, (typeof definitions)[number]>();
-  definitionSeeds.forEach((d, i) => {
-    const existing = latestDefinitionByPipeline.get(d.pipeline);
-    if (!existing || d.version > existing.version) {
-      latestDefinitionByPipeline.set(d.pipeline, definitions[i]);
-    }
+  await prisma.pipelineDefinition.create({
+    data: {
+      pipelineId: pipeline.id,
+      version: 1,
+      graphJson,
+      configJson,
+      createdById: userByName.get("coco")?.id ?? null,
+    },
   });
-
-  // ── Pipeline Runs ────────────────────────────────────────────────
-  // From lib/data/runs.ts and lib/data/run-detail.ts, plus the three runs
-  // referenced by lib/data/approvals.ts (awaiting manual approval).
-  function randomPastDate(daysAgoMax: number, daysAgoMin = 0): Date {
-    const minMs = daysAgoMin * 86400000;
-    const maxMs = daysAgoMax * 86400000;
-    return new Date(Date.now() - (minMs + Math.random() * (maxMs - minMs)));
-  }
-  function addRandomMinutes(date: Date, minMinutes: number, maxMinutes: number): Date {
-    return new Date(date.getTime() + (minMinutes + Math.random() * (maxMinutes - minMinutes)) * 60000);
-  }
-  const runSeeds = [
-    { pipeline: "deploy-api", status: RunStatus.QUEUED, trigger: RunTrigger.WEBHOOK, env: "prod", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
-    { pipeline: "build-frontend", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "staging", branch: "main", commitSha: "f4e5d6c", triggeredBy: "coco" },
-    { pipeline: "deploy-api", status: RunStatus.SUCCEEDED, trigger: RunTrigger.API, env: "dev", branch: "main", commitSha: "a1b2c3d", triggeredBy: "sarah.chen" },
-    { pipeline: "deploy-api", status: RunStatus.FAILED, trigger: RunTrigger.WEBHOOK, env: "prev", branch: "main", commitSha: "7890abc", triggeredBy: "sarah.chen" },
-    { pipeline: "deploy-api", status: RunStatus.CANCELLED, trigger: RunTrigger.MANUAL, env: "custom", branch: "main", commitSha: "7890abc", triggeredBy: "marcus.coco" },
-    { pipeline: "release-mobile", status: RunStatus.FAILED, trigger: RunTrigger.WEBHOOK, env: "prod", branch: "main", commitSha: "7890abc", triggeredBy: "coco" },
-    { pipeline: "release-mobile", status: RunStatus.QUEUED, trigger: RunTrigger.MANUAL, env: "staging", branch: "main", commitSha: "7890abc", triggeredBy: "coco" },
-    { pipeline: "deploy-infra", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "prod-eu", branch: "main", commitSha: "c3d435f", triggeredBy: "coco" },
-    { pipeline: "deploy-infra", status: RunStatus.RUNNING, trigger: RunTrigger.MANUAL, env: "prod-eu", branch: "main", commitSha: "c3d435f", triggeredBy: "diego.ramirez" },
-    { pipeline: "db-migrate", status: RunStatus.SUCCEEDED, trigger: RunTrigger.WEBHOOK, env: "dev-2", branch: "feature/auth-flow", commitSha: "7890abc", triggeredBy: "marcus.coco" },
-  ];
-  const runs = await Promise.all(
-    runSeeds.map((r) => {
-      const isTerminal = ([RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED] as RunStatus[]).includes(r.status);
-      const startedAt = r.status === RunStatus.QUEUED ? null : randomPastDate(14, 1);
-      const finishedAt = isTerminal && startedAt ? addRandomMinutes(startedAt, 1, 45) : null;
-      return prisma.pipelineRun.create({
-        data: {
-          pipelineId: pipelineByName.get(r.pipeline)!.id,
-          definitionId: latestDefinitionByPipeline.get(r.pipeline)!.id,
-          status: r.status,
-          trigger: r.trigger,
-          commitSha: r.commitSha,
-          branch: r.branch,
-          environmentId: envByName.get(r.env)!.id,
-          triggeredById: userByName.get(r.triggeredBy)?.id ?? null,
-          startedAt,
-          finishedAt,
-        },
-      });
-    })
-  );
-
-  // ── Stage Results ────────────────────────────────────────────────
-  // Stage shapes come from lib/data/run-detail.ts (graph nodes) and
-  // lib/data/approvals.ts (approval-gated stage lists).
-  const stageSeeds: { run: number; stageId: string; stageName: string; stageType: StageType; status: StageStatus; approvedBy?: string; durationSeconds?: number }[] = [
-    { run: 0, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
-    { run: 0, stageId: "stage-2", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 1, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
-    { run: 1, stageId: "stage-2", stageName: "lint", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 38 },
-    { run: 1, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 133 },
-    { run: 1, stageId: "stage-4", stageName: "build", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 85 },
-    { run: 1, stageId: "stage-5", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.RUNNING },
-    { run: 3, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 40 },
-    { run: 3, stageId: "stage-2", stageName: "build", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 70 },
-    { run: 3, stageId: "stage-3", stageName: "deploy-staging", stageType: StageType.DEPLOY, status: StageStatus.FAILED, durationSeconds: 101 },
-    { run: 5, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 35 },
-    { run: 5, stageId: "stage-2", stageName: "lint", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 30 },
-    { run: 5, stageId: "stage-3", stageName: "unit-tests", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 95 },
-    { run: 5, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
-    { run: 5, stageId: "stage-5", stageName: "db-backup", stageType: StageType.CUSTOM, status: StageStatus.QUEUED },
-    { run: 5, stageId: "stage-6", stageName: "publish-stores", stageType: StageType.DEPLOY, status: StageStatus.QUEUED },
-    { run: 6, stageId: "stage-1", stageName: "install-deps", stageType: StageType.CUSTOM, status: StageStatus.SUCCEEDED, durationSeconds: 42 },
-    { run: 6, stageId: "stage-4", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.AWAITING_APPROVAL },
-    { run: 7, stageId: "stage-1", stageName: "release-approval", stageType: StageType.APPROVAL, status: StageStatus.APPROVED, approvedBy: "coco", durationSeconds: 45 },
-  ];
-
-  // Stage timestamps are anchored to their parent run's startedAt and walked
-  // forward sequentially per run, so each stage's duration (and the live
-  // elapsed time for still-running/awaiting-approval stages) renders
-  // meaningfully in the Run Detail pipeline graph. A run that hasn't started
-  // (startedAt === null, i.e. QUEUED) leaves all its stages unstarted too,
-  // regardless of the stage's own (already-inconsistent) seeded status.
-  const TERMINAL_STAGE_STATUSES: StageStatus[] = [
-    StageStatus.SUCCEEDED,
-    StageStatus.FAILED,
-    StageStatus.APPROVED,
-    StageStatus.UNAPPROVED,
-    StageStatus.CANCELLED,
-  ];
-  const ACTIVE_STAGE_STATUSES: StageStatus[] = [StageStatus.RUNNING, StageStatus.AWAITING_APPROVAL];
-  const runCursors = new Map<number, Date>();
-  const stageSeedsWithTimes = stageSeeds.map((s) => {
-    const runStartedAt = runs[s.run].startedAt;
-    if (!runStartedAt) return { ...s, startedAt: null, finishedAt: null };
-
-    const cursor = runCursors.get(s.run) ?? runStartedAt;
-
-    if (TERMINAL_STAGE_STATUSES.includes(s.status)) {
-      const finishedAt = new Date(cursor.getTime() + (s.durationSeconds ?? 60) * 1000);
-      runCursors.set(s.run, finishedAt);
-      return { ...s, startedAt: cursor, finishedAt };
-    }
-
-    if (ACTIVE_STAGE_STATUSES.includes(s.status)) {
-      runCursors.set(s.run, cursor);
-      return { ...s, startedAt: cursor, finishedAt: null };
-    }
-
-    // QUEUED / PENDING — not reached yet.
-    return { ...s, startedAt: null, finishedAt: null };
-  });
-
-  const stageResults = await Promise.all(
-    stageSeedsWithTimes.map((s) =>
-      prisma.stageResult.create({
-        data: {
-          runId: runs[s.run].id,
-          stageId: s.stageId,
-          stageName: s.stageName,
-          stageType: s.stageType,
-          status: s.status,
-          startedAt: s.startedAt,
-          finishedAt: s.finishedAt,
-          approvedById: s.approvedBy ? userByName.get(s.approvedBy)?.id ?? null : null,
-          approvedAt: s.approvedBy ? new Date() : null,
-        },
-      })
-    )
-  );
 
   // ── Webhooks ─────────────────────────────────────────────────────
-  // From lib/data/webhooks.ts, extended with a couple more repos.
+  // From lib/data/webhooks.ts, all bound to the one pipeline.
   const webhookSeeds = [
-    { pipeline: "deploy-infra", isActive: true, events: ["push", "pull_request"], branchFilters: ["main/*", "release/*", "hotfix/*"], createdBy: "coco" },
-    { pipeline: "deploy-infra", isActive: false, events: ["push"], branchFilters: [], createdBy: null },
-    { pipeline: "deploy-api", isActive: false, events: ["pull_request"], branchFilters: [], createdBy: null },
-    { pipeline: "build-frontend", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "sarah.chen" },
-    { pipeline: "db-migrate", isActive: true, events: ["push", "pull_request"], branchFilters: ["main"], createdBy: "marcus.coco" },
-    { pipeline: "release-mobile", isActive: true, events: ["push"], branchFilters: ["main", "release/*"], createdBy: "coco" },
-    { pipeline: "deploy-worker", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "diego.ramirez" },
-    { pipeline: "run-e2e-tests", isActive: false, events: ["pull_request"], branchFilters: ["main"], createdBy: "priya.nair" },
-    { pipeline: "deploy-docs", isActive: true, events: ["push"], branchFilters: ["main"], createdBy: "jordan.lee" },
-    { pipeline: "sync-translations", isActive: false, events: ["push"], branchFilters: ["main"], createdBy: "amara.okafor" },
+    { isActive: true, events: ["push", "pull_request"], branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "coco" },
+    { isActive: false, events: ["push"], branchFilters: [], createdBy: null },
+    { isActive: true, events: ["pull_request"], branchFilters: ["main"], createdBy: "sarah.chen" },
   ];
   await Promise.all(
     webhookSeeds.map((w) => {
@@ -346,7 +207,7 @@ async function main() {
           encryptedValue,
           iv,
           authTag,
-          pipelineId: pipelineByName.get(w.pipeline)?.id ?? null,
+          pipelineId: pipeline.id,
           createdById: w.createdBy ? userByName.get(w.createdBy)?.id ?? null : null,
         },
       });
@@ -354,22 +215,15 @@ async function main() {
   );
 
   // ── Webhook Events ───────────────────────────────────────────────
-  // From lib/data/webhook-events.ts, extended with a few more deliveries.
+  // From lib/data/webhook-events.ts, all delivered to the one pipeline.
   const webhookEventSeeds = [
-    { pipeline: "deploy-api", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { pipeline: "deploy-api", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { pipeline: "build-frontend", eventType: EventType.PUSH, status: WebhookEventStatus.IGNORED, branch: "release/v2.4.0", commitSha: "f4e5d6c", commitMessage: "chore: bump dependencies to latest stable versions" },
-    { pipeline: "db-migrate", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.FAILED, branch: "feature/auth-flow", commitSha: "7890abc", commitMessage: "feat: add user role migration for RBAC system" },
-    { pipeline: "release-mobile", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "release/v3.1.0", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
-    { pipeline: "deploy-infra", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "c3d435f", commitMessage: "fix: resolve deep link crash on Android 14" },
-    { pipeline: "deploy-worker", eventType: EventType.PUSH, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "d4e5f6a", commitMessage: "feat: add dead-letter queue for failed jobs" },
-    { pipeline: "run-e2e-tests", eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.IGNORED, branch: "feature/checkout-flow", commitSha: "e5f6a1b", commitMessage: "test: add checkout flow e2e coverage" },
-    { pipeline: "deploy-docs", eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "f6a1b2c", commitMessage: "docs: update API reference for v2 endpoints" },
-    { pipeline: "sync-translations", eventType: EventType.PUSH, status: WebhookEventStatus.FAILED, branch: "main", commitSha: "a1b2c3e", commitMessage: "chore: sync translations from Crowdin" },
+    { eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
+    { eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
+    { eventType: EventType.PUSH, status: WebhookEventStatus.IGNORED, branch: "release/v2.4.0", commitSha: "f4e5d6c", commitMessage: "chore: bump dependencies to latest stable versions" },
+    { eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.FAILED, branch: "feature/auth-flow", commitSha: "7890abc", commitMessage: "feat: add user role migration for RBAC system" },
   ];
   await Promise.all(
     webhookEventSeeds.map((e) => {
-      const pipeline = pipelineByName.get(e.pipeline)!;
       return prisma.webhookEvent.create({
         data: {
           pipelineId: pipeline.id,
@@ -384,18 +238,15 @@ async function main() {
   );
 
   // ── Audit Log ────────────────────────────────────────────────────
-  // From lib/data/audits.ts, extended with a few more action types.
+  // From lib/data/audits.ts. Only actions the seeded state can actually account
+  // for: no stage results exist, and the single run has not finished, so nothing
+  // here claims an approval, a completion or a cancellation.
   const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; user: string | null; actor?: string }[] = [
-    { action: AuditAction.RUN_COMPLETED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, resourceLabel: "deploy-api @ a1b2c3d", user: null, actor: "github" },
-    { action: AuditAction.PIPELINE_TRIGGERED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[2].id, resourceLabel: "deploy-api @ a1b2c3d", user: null, actor: "github" },
-    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("deploy-api")!.id, resourceLabel: "push → abcd/api-server", user: null, actor: "github" },
-    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("build-frontend")!.id, resourceLabel: "build-frontend", user: "coco" },
+    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "coco" },
+    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },
     { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (prod)", user: "sarah.chen" },
-    { action: AuditAction.APPROVAL_GRANTED, resourceType: ResourceType.STAGE_RESULT, resourceId: stageResults[18].id, resourceLabel: "release-approval", user: "coco" },
-    { action: AuditAction.RUN_CANCELLED, resourceType: ResourceType.PIPELINE_RUN, resourceId: runs[4].id, resourceLabel: "deploy-api @ 7890abc", user: "marcus.coco" },
+    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (dev)", user: "marcus.coco" },
     { action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "priya.nair" },
-    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[1].id, resourceLabel: "GITHUB_TOKEN (dev)", user: "coco" },
-    { action: AuditAction.PIPELINE_DELETED, resourceType: ResourceType.PIPELINE, resourceId: pipelineByName.get("sync-translations")!.id, resourceLabel: "sync-translations", user: "amara.okafor" },
   ];
   await Promise.all(
     auditSeeds.map((a) =>
@@ -412,7 +263,7 @@ async function main() {
     )
   );
 
-  console.log(`Seeded ${users.length} users, ${environments.length} environments, ${pipelines.length} pipelines, ${definitions.length} pipeline definitions, ${runs.length} runs, ${stageSeeds.length} stage results, ${webhookSeeds.length} webhooks, ${webhookEventSeeds.length} webhook events, ${auditSeeds.length} audit logs.`);
+  console.log(`Seeded ${users.length} users, ${environments.length} environments, ${secrets.length} secrets, 1 pipeline (${stageSeeds.length} stages), 1 pipeline definition, 1 queued run, ${webhookSeeds.length} webhooks, ${webhookEventSeeds.length} webhook events, ${auditSeeds.length} audit logs.`);
 }
 
 main()

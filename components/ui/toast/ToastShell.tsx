@@ -14,6 +14,7 @@ export default function ToastShell() {
           key={t.id}
           text={t.text}
           icon={t.icon}
+          link={t.link}
           exiting={t.exiting}
           sticky={t.sticky}
           onDismiss={() => dismissToast(t.id)}

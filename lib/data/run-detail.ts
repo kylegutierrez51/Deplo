@@ -8,20 +8,30 @@ import type {
 import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
 import { getDuration } from "@/lib/utils/date";
 import { fromDefinition } from "@/lib/pipeline/definition";
+import { CANCELLED_NOTE } from "@/lib/stage-notes";
 import { Edge } from "@xyflow/react";
 
 export type JobStatus = 'succeeded' | 'running' | 'queued' | 'pending' | 'failed' | 'cancelled' | 'awaiting-approval' | 'approved' | 'unapproved';
-export type LogStatus = 'succeeded' | 'failed' | 'running';
 
-export type LogLine = { lineNumber: number; timestamp: string; content: string };
+export type LogStatus = 'succeeded' | 'failed' | 'running' | 'cancelled';
+
+export type LogLine = { lineNumber: number; content: string };
 
 export type JobLog = {
+  stageId: string;
   jobName: string;
   command: string;
+  attempt: number;
   status: LogStatus;
   duration: string;
   lines: LogLine[];
 };
+
+export type LogFilters = {
+  value: string; 
+  label: string;
+  status: JobStatus;
+}
 
 export type JobCounts = {
   total: number;
@@ -35,10 +45,13 @@ export type JobCounts = {
   unapproved: number;
 };
 
-type StageResultNode = Omit<CustomNode, 'data'> & {
+export type StageResultNode = Omit<CustomNode, 'data'> & {
   data: CustomNode['data'] & {
     duration: string;
     status: JobStatus;
+    attempt: number;
+    maxAttempts: number;
+    secretKeys: string[];
   };
 }
 
@@ -58,7 +71,8 @@ export type RunDetail = {
   duration: string;
   timeAgo: string;
   jobCounts: JobCounts;
-  logFilters: { value: string; label: string }[];
+  logFilters: LogFilters[];
+  logs: JobLog[];
 };
 
 const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
@@ -68,6 +82,22 @@ const RUN_STATUS_MAP: Record<PrismaRunStatus, RunStatus> = {
   FAILED: 'failed',
   CANCELLED: 'cancelled',
 };
+
+const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+  RUNNING: 'running',
+  CANCELLED: 'cancelled'
+}
+
+// stages previously running that got cancelled have concatenated '\n[run cancelled]" to the logSnippet. If that's the only line the logSnippet has, don't display the stage's logs.
+export const hasReadableLogs = (logSnippet: string | null): boolean =>
+  !!logSnippet && logSnippet.replace(CANCELLED_NOTE, '').trim().length > 0;
+
+// needed since 'failQueuedStage()' marks a stage as 'FAILED' with no 'startedAt' date.
+// the first condition allows 'running', 'succeeded', 'failed' stages. the 2nd allows 'cancelled' stages only if they have started and have logs.
+const isLoggable = (status: PrismaStageStatus, hasStarted: boolean, hasLogs: boolean): boolean =>
+  status !== 'CANCELLED' || (hasStarted && hasLogs);
 
 const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   WEBHOOK: 'webhook',
@@ -87,14 +117,10 @@ const STAGE_STATUS_TO_JOB_STATUS: Record<PrismaStageStatus, JobStatus> = {
   CANCELLED: 'cancelled',
 };
 
-const LOG_ELIGIBLE_STATUS: Partial<Record<PrismaStageStatus, LogStatus>> = {
-  SUCCEEDED: 'succeeded',
-  FAILED: 'failed',
-  RUNNING: 'running',
-};
-
 export type StageLite = {
   stageId: string;
+  startedAt: Date | null;
+  logSnippet: string | null;
   status: PrismaStageStatus;
 };
 
@@ -130,49 +156,56 @@ export function countJobs(nodes: CustomNode[], stages: StageLite[]): JobCounts {
   return counts;
 }
 
-/** One filter option per stage defined in graphJson, in pipeline order. */
-export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): { value: string; label: string }[] {
-  const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
-  return nodes.map((node) => {
-    const stage = stageByStageId.get(node.id);
-    const status = stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending';
-    return { value: node.id, label: `${node.data.name ?? ''} - ${status}` };
-  });
+export function buildLogFilters(nodes: CustomNode[], stages: StageLite[]): LogFilters[] {
+  const statusByStageId = new Map<string, LogStatus>();
+
+  for (const stage of stages) {
+    const status = LOG_ELIGIBLE_STATUS[stage.status];
+    if (!status || !isLoggable(stage.status, !!stage.startedAt, hasReadableLogs(stage.logSnippet))) continue;
+    statusByStageId.set(stage.stageId, status);
+  }
+
+  const filteredNodes: LogFilters[] = [];
+
+  for (const node of nodes) {
+    const status = statusByStageId.get(node.id);
+    if (!status) continue;
+    filteredNodes.push({ value: node.id, label: node.data.name ?? '', status });
+  }
+
+  return filteredNodes;
 }
 
-type StageForLogs = {
-  stageName: string;
-  command: string | null;
-  logSnippet: string | null;
-  status: PrismaStageStatus;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-};
+export function buildLogs(stages: StageResult[]): JobLog[] {
+  const filteredStages = [];
+  
+  for (const stage of stages) {
+    const status = LOG_ELIGIBLE_STATUS[stage.status];
+    if (!status || !isLoggable(stage.status, !!stage.startedAt, hasReadableLogs(stage.logSnippet))) continue;
+    filteredStages.push({ stage, status });
+  }
 
-/**
- * One JobLog per stage that has actually produced output (a command and/or
- * a logSnippet) and is in a terminal-or-running state. logSnippet has no
- * per-line timestamp data in the schema, so LogLine.timestamp is always ''.
- */
-export function buildLogs(stages: StageForLogs[]): JobLog[] {
-  return stages
-    .filter((stage) => (stage.command || stage.logSnippet) && LOG_ELIGIBLE_STATUS[stage.status])
-    .map((stage) => {
-      const status = LOG_ELIGIBLE_STATUS[stage.status]!;
-      const duration = stage.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—';
-      const lines: LogLine[] = (stage.logSnippet ?? '')
-        .split('\n')
-        .filter((line) => line.length > 0)
-        .map((content, index) => ({ lineNumber: index + 1, timestamp: '', content }));
+  const loggedStages: JobLog[] = [];
 
-      return {
-        jobName: stage.stageName,
-        command: stage.command ?? '',
-        status,
-        duration,
-        lines,
-      };
+  for (const { stage, status } of filteredStages) {
+    const { stageId, stageName, command, attempt, startedAt, finishedAt, logSnippet } = stage;
+
+    loggedStages.push({
+      stageId: stageId,
+      jobName: stageName, 
+      command: command ?? '',
+      attempt,
+      status,
+      duration: finishedAt
+        ? getDuration(startedAt!, finishedAt)
+        : startedAt
+          ? getDuration(startedAt)
+          : '—',
+      lines: formatLines(logSnippet)
     });
+  }
+
+  return loggedStages;
 }
 
 type GithubWebhookPayload = { head_commit?: { message?: string } };
@@ -190,7 +223,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       environment: { select: { name: true, type: true } },
       triggeredBy: { select: { name: true } },
       definition: { select: { graphJson: true, configJson: true } },
-      stages: { orderBy: { createdAt: 'asc' } },
+      stages:  { orderBy: [{ stageId: 'asc' }, { attempt: 'asc' }] } // matches loadRunContext()
     },
   });
 
@@ -200,15 +233,25 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
 
   const stagesLite: StageLite[] = run.stages.map((s) => ({
     stageId: s.stageId,
+    startedAt: s.startedAt,
+    logSnippet: s.logSnippet,
     status: s.status,
   }));
 
-  const detailedNodes = addNodeDetails(nodes, run.stages);
-
-  const [runNumber, commitMessage] = await Promise.all([
+  const [runNumber, commitMessage, secrets] = await Promise.all([
     prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
     getCommitMessage(run.id),
+    run.environmentId
+      ? prisma.secret.findMany({ where: { environmentId: run.environmentId }, select: { id: true, key: true } })
+      : Promise.resolve([]),
   ]);
+
+  const detailedNodes = addNodeDetails(
+    nodes,
+    run.stages,
+    new Map(secrets.map((s) => [s.id, s.key])),
+    run.environmentId,
+  );
 
   return {
     runNumber,
@@ -230,24 +273,72 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
       : run.startedAt
         ? getDuration(run.startedAt)
         : '—',
-    timeAgo: getDuration(run.finishedAt ?? run.startedAt ?? run.createdAt),
+    timeAgo: getDuration(run.createdAt),
     jobCounts: countJobs(nodes, stagesLite),
-    logFilters: buildLogFilters(nodes, stagesLite),
+    logFilters: buildLogFilters(nodes.filter(n => n.data.type !== 'approval'), stagesLite),
+    logs: buildLogs(run.stages)
   };
 }
 
-function addNodeDetails(nodes: CustomNode[], stages: StageResult[]): StageResultNode[] {
+/*
+==============================================================================================
+ * Folds the per-attempt StageResult rows onto their graph nodes.
+ *
+ * stages arrives ordered [stageId asc, attempt asc], so building the Map is
+ * last-write-wins and the row kept for a stageId is its *highest* attempt —
+ * which is exactly the row `attempt`/`maxAttempts` should report.
+ *
+ * secretKeyById resolves node.data.secrets (which stores ids only) to keys.
+ * environmentId is the run's own environment: the editor keeps stale entries
+ * for previously selected environments, so only that key is read.
+==============================================================================================
+ */
+export function addNodeDetails(
+  nodes: CustomNode[],
+  stages: StageResult[],
+  secretKeyById: Map<string, string>,
+  environmentId: string | null,
+): StageResultNode[] {
   const stageByStageId = new Map(stages.map((s) => [s.stageId, s]));
 
   return nodes.map((node) => {
     const stage = stageByStageId.get(node.id);
+    const secretIds = environmentId ? node.data.secrets?.[environmentId] ?? [] : [];
+
     return {
       ...node,
       data: {
         ...node.data,
         duration: stage?.startedAt ? getDuration(stage.startedAt, stage.finishedAt ?? undefined) : '—',
         status: stage ? STAGE_STATUS_TO_JOB_STATUS[stage.status] : 'pending',
+        attempt: stage?.attempt ?? 1,
+        // node.data.retries - falls back to the definition for a stage that doesn't have a stageResult row yet
+        maxAttempts: (stage?.maxRetries ?? node.data.retries ?? 0) + 1,
+        // A secret deleted after the run was triggered no longer resolves — drop it
+        // rather than rendering a dangling id.
+        secretKeys: secretIds.map((id) => secretKeyById.get(id)).filter((key): key is string => Boolean(key)),
       },
     };
   });
+}
+
+export function formatLines(logSnippet: string | null): LogLine[] {
+  if (!logSnippet) return [];
+
+  let start = 0;
+
+  const lines: LogLine[] = [];
+
+  for (let i = 0; i < logSnippet.length; i++) {
+    if (logSnippet[i] === '\n') {
+      lines.push({ lineNumber: lines.length + 1, content: logSnippet.slice(start, i)});
+      start = i + 1;
+    }
+  }
+
+  if (start < logSnippet.length) {
+    lines.push({ lineNumber: lines.length + 1, content: logSnippet.slice(start)});
+  }
+
+  return lines;
 }

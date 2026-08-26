@@ -3,18 +3,11 @@
 import styles from './presentable-stage.module.css'
 import { type Node, type NodeProps, Position } from '@xyflow/react';
 import CustomHandle from '@/components/flow/CustomHandle';
-import { JobStatus } from '@/lib/data/run-detail';
+import { StageResultNode } from '@/lib/data/run-detail';
 import Pill from '@/components/ui/Pill';
 import { capitalize } from '@/lib/utils/string';
 
-type PresentableStage = Node<
-  {
-    type: 'custom' | 'deploy' | 'approval';
-    name?: string;
-    label?: string;
-    status?: JobStatus;
-    duration?: string;
-  }>;
+type PresentableStage = Node<StageResultNode['data']>;
 
 export default function PresentableStage(props: NodeProps<PresentableStage>) {
   return (
@@ -29,7 +22,7 @@ export default function PresentableStage(props: NodeProps<PresentableStage>) {
             </div>
           }
           {props.data.name ? <p className={styles['stage-name']} title={props.data.name}>{props.data.name}</p> :
-            <p className={styles['stage-name']}>New Stage</p>
+            <p className={styles['stage-name']}>Stage</p>
           }
         </div>
         {props.data.duration && <p className={styles['stage-duration']}>{props.data.duration}</p>}
