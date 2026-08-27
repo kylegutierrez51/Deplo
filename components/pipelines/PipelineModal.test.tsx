@@ -27,7 +27,7 @@ const setup = (over: Partial<Props> = {}) => {
     id: 'p1',
     name: 'CI',
     status: 'succeeded',
-    lastRun: new Date('2026-01-02T00:00:00Z'),
+    lastRun: 'run-9',
     repoUrl: 'https://github.com/o/web-client',
     commitMessage: 'Fix the thing',
     description: null,
@@ -54,6 +54,27 @@ describe('view mode', () => {
     expect(screen.getByText('Repo URL')).toBeInTheDocument();
     expect(screen.getByText('https://github.com/o/web-client')).toBeInTheDocument();
     expect(screen.getByText('Fix the thing')).toBeInTheDocument();
+  });
+
+  /*
+   * The modal names the link rather than showing it as a bare icon: unlike the
+   * table cell, this is a standalone field under a label, where an icon alone
+   * leaves the reader guessing what it opens.
+   */
+  it('links to the latest run instead of printing its id', () => {
+    setup();
+
+    const link = screen.getByRole('link', { name: /view run/i });
+
+    expect(link).toHaveAttribute('href', '/runs/run-9');
+    expect(screen.queryByText('run-9')).not.toBeInTheDocument();
+  });
+
+  it('omits the last run field for a pipeline that has never run', () => {
+    setup({ lastRun: null });
+
+    expect(screen.queryByText('Last Run')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /view run/i })).not.toBeInTheDocument();
   });
 
   it('drops the whole repo url block when there is none', () => {
