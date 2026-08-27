@@ -3,9 +3,12 @@ import { getSecrets, getSecretById } from '@/lib/data/secrets';
 import { addSecret } from '@/lib/actions/secrets';
 import { addEnvironment } from '@/lib/actions/environments';
 import { makeEnvironment, makeUser } from '@/test/integration/factories';
+import { setSession } from '@/test/mocks/auth';
 
 jest.mock('@/auth');
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
+
+beforeEach(async () => setSession((await makeUser()).id));
 
 /*
  * Proves the write path and the read path agree against a real database, and
