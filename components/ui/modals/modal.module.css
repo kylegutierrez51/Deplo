@@ -244,3 +244,27 @@ Common Form Utilities
   white-space: nowrap;
   line-height: 1.6;
 }
+
+.branchPillRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--space-xs);
+  margin-right: -2px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.branchPillRemove ion-icon {
+  font-size: 14px;
+}
+
+.branchPillRemove:hover,
+.branchPillRemove:focus-visible {
+  opacity: 1;
+}
