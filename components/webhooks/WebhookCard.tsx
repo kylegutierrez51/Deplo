@@ -28,16 +28,13 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                 <Pill key={index} variant={event} label={EVENT_TYPE_MAP[event]}/>
               ))}
             </div>
-            <div className={styles.time}>
               {webhook.lastDelivery &&
                 <>
                   <div className={styles['last-delivery']}>
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    <span>{formatDate(webhook.lastDelivery)}</span>
+                    <span>Last Delivery: {formatDate(webhook.lastDelivery)}</span>
                   </div>
                 </>
               }
-            </div>
             {webhook.branchFilters.length > 0  &&
               <div className={styles.branchFilters}>
                 <span>Branch Filters:</span>

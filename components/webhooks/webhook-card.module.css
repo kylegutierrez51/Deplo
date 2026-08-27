@@ -67,19 +67,13 @@
   margin-bottom: var(--space-xs);
 }
 
-.time {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
 .last-delivery {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.registered {
+.last-delivery span {
   color: var(--subtitle-clr);
 }
 
