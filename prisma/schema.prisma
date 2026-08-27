@@ -98,7 +98,7 @@ model Pipeline {
   id            String   @id @default(cuid())
   name          String
   description   String?  @db.Text
-  repoUrl       String
+  repoUrl       String?
   branchFilters String[] @default(["main"]) // glob pattern, e.g. "main", "release/*"
 
   createdById String?
@@ -307,7 +307,7 @@ model Secret {
 
 model Webhook {
   id            String    @id @default(cuid())
-  pipelineId String?
+  pipelineId    String?
   isActive      Boolean   @default(false)
   events        String[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
