@@ -6,10 +6,6 @@ import prisma from "@/lib/prisma";
 import { EnvironmentType, Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 
-// The UI works in lowercase domain types and Prisma's enum is uppercase, so the
-// pairing is spelled out rather than upcased blindly: a new enum member fails to
-// compile until it is mapped, the same way the readers in lib/data translate on
-// the way out.
 const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
   production: 'PRODUCTION',
   staging: 'STAGING',
@@ -18,14 +14,7 @@ const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
   custom: 'CUSTOM',
 };
 
-/*
- * Returns undefined for anything the enum does not name, so the caller can reject
- * it before Prisma sees it. Handing Prisma an undefined type would not fail:
- * Environment.type carries @default(DEVELOPMENT), so a create would silently
- * store DEVELOPMENT and an update would silently leave the column untouched,
- * both reporting success. A server action is a POST endpoint, so a request that
- * omits the field entirely is a shape worth handling.
- */
+
 function readEnvType(formData: FormData): EnvironmentType | undefined {
   const raw = formData.get('type');
   if (typeof raw !== 'string') return undefined;
