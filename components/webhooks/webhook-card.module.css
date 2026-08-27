@@ -67,15 +67,6 @@
   margin-bottom: var(--space-xs);
 }
 
-.event-type {
-  font-size: var(--font-size-sm);
-  background-color: var(--color-border-dark);
-  padding: 7px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #3a3a3a;
-  color: var(--subtitle-clr);
-}
-
 .time {
   display: flex;
   align-items: center;

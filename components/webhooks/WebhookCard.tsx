@@ -1,7 +1,14 @@
 import styles from './webhook-card.module.css'
 import SyncButton from './SyncButton';
 import type { Webhook } from "@/lib/data/webhooks";
+import Pill from '../ui/Pill';
 import { formatDate } from '@/lib/utils/date';
+import { EventType } from '@/lib/types';
+
+const EVENT_TYPE_MAP: Record<EventType, string> = {
+  push: 'Push',
+  'pull-request': 'Pull Request'
+};
 
 export default function WebhookCard({ webhook }: { webhook: Webhook}) {
   return (
@@ -18,7 +25,7 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
             </div>
             <div className={styles.events}>
               {webhook.events.map((event, index) => (
-                <div className={styles['event-type']} key={index}>{event}</div>
+                <Pill key={index} variant={event} label={EVENT_TYPE_MAP[event]}/>
               ))}
             </div>
             <div className={styles.time}>
