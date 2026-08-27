@@ -13,6 +13,11 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   const session = await auth();
   const createdById = session?.user?.id ?? null;
 
+  if (!createdById) return {
+    status: 'error',
+    message: 'Sign in to add a webhook.'
+  }
+
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
   const events = formData.getAll('events') as string[];
@@ -49,6 +54,13 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
 }
 
 export async function updateWebhook(prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to update a webhook.'
+  }
+
   const id = formData.get('id') as string;
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
@@ -90,6 +102,13 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 }
 
 export async function deleteWebhook(id: string): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to delete a webhook.'
+  }
+
   try {
     await prisma.webhook.delete({
       where: { id }
@@ -118,10 +137,15 @@ export async function deleteWebhook(id: string): Promise<FormState> {
   }
 }
 
-// Rotates the signing secret only — decoupled from updateWebhook so that
-// editing metadata (pipeline, branch filters, events) never silently
-// re-signs or discards a rotation, and vice versa.
+
 export async function regenerateWebhookSecret(id: string): Promise<RegenerateSecretState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to regenerate a webhook secret.'
+  }
+
   const secret = generateWebhookSecret();
   const { encryptedValue, iv, authTag } = encryptSecret(secret);
 

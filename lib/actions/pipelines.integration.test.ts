@@ -1,9 +1,12 @@
 import prisma from '@/lib/prisma';
 import { savePipelineDefinition } from '@/lib/actions/pipelines';
 import { makePipeline, makeUser, makeDefinition, makeRun, stage } from '@/test/integration/factories';
+import { setSession } from '@/test/mocks/auth';
 
 jest.mock('@/auth');
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
+
+beforeEach(async () => setSession((await makeUser()).id));
 
 /*
  * Runs against real Postgres. These are the cases a mocked Prisma cannot prove,

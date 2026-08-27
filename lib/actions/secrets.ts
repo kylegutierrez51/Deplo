@@ -11,6 +11,11 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
   const session = await auth();
   const createdById = session?.user?.id ?? null;
 
+  if (!createdById) return {
+    status: 'error',
+    message: 'Sign in to add a secret.'
+  }
+
   const key = formData.get('key') as string;
   const value = formData.get('value') as string;
   const environmentId = formData.get('env_id') as string;
@@ -55,6 +60,13 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
 }
 
 export async function updateSecret(prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to update a secret.'
+  }
+
   const id = formData.get('id') as string;
   const key = formData.get('key') as string;
   const value = formData.get('value') as string;
@@ -106,6 +118,13 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
 }
 
 export async function deleteSecret(id: string): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to delete a secret.'
+  }
+
   try {
     await prisma.secret.delete({
       where: { id }

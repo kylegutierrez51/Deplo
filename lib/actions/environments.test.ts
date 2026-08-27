@@ -51,14 +51,13 @@ describe('addEnvironment', () => {
     });
   });
 
-  it('stores a null creator when signed out', async () => {
+  it('refuses when signed out', async () => {
     signedOut();
 
-    await addEnvironment(idle, form());
+    const result = await addEnvironment(idle, form());
 
-    expect(prismaMock.environment.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ createdById: null }),
-    });
+    expect(result).toEqual({ status: 'error', message: 'Sign in to add an environment.' });
+    expect(prismaMock.environment.create).not.toHaveBeenCalled();
   });
 
   // requireApproval arrives as a string and is compared to 'true', so anything
