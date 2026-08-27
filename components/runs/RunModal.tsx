@@ -17,7 +17,7 @@ interface RunModalProps {
   id: string;
   status: RunStatus;
   pipelineName: Run['pipelineName'];
-  repoUrl: string;
+  repoUrl: string | null;
   environment: Run['environment'];
   trigger: RunTrigger;
   startedAt: Date | null;
@@ -56,7 +56,7 @@ export default function RunModal({
             <label>Pipeline</label>
             <div className={styles['pipeline-detail']}>
               <span>{pipelineName}</span>
-              <span className={styles.repo}>{repoUrl}</span>
+              {repoUrl && <span className={styles.repo}>{repoUrl}</span>}
             </div>
           </div>
           {status && (

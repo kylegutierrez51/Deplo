@@ -62,10 +62,10 @@ export type RunDetail = {
   pipelineName: string;
   status: RunStatus;
   environment: { type: EnvType; name: string } | null;
-  commitHash: string;
-  commitMessage: string;
-  branch: string;
-  repo: string;
+  commitHash: string | null;
+  commitMessage: string | null;
+  branch: string | null;
+  repo: string | null;
   trigger: RunTrigger;
   triggeredBy: string;
   duration: string;
@@ -262,9 +262,9 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     environment: run.environment
       ? { type: run.environment.type.toLowerCase() as EnvType, name: run.environment.name }
       : null,
-    commitHash: run.commitSha ?? '—',
-    commitMessage: commitMessage ?? '—',
-    branch: run.branch ?? '—',
+    commitHash: run.commitSha,
+    commitMessage: commitMessage,
+    branch: run.branch,
     repo: run.pipeline.repoUrl,
     trigger: RUN_TRIGGER_MAP[run.trigger],
     triggeredBy: run.triggeredBy?.name ?? '—',

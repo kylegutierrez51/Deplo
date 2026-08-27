@@ -20,7 +20,7 @@ interface PipelineModalProps {
   name: string;
   status: PipelineStatus;
   lastRun: Date | null;
-  repoUrl: string;
+  repoUrl: string | null;
   commitMessage?: string | null;
   description: string | null;
   branchFilters: string[];
@@ -163,12 +163,14 @@ export default function PipelineModal({
               }
             </div>
 
+            {repoUrl &&
+              <div className={styles.item}>
+                <label>Repo URL</label>
+                <span>{repoUrl}</span>
+                <span className={styles['commit-message']}>{commitMessage}</span>
+              </div>
+            }
 
-            <div className={styles.item}>
-              <label>Repo URL</label>
-              <span>{repoUrl}</span>
-              <span className={styles['commit-message']}>{commitMessage}</span>
-            </div>
 
             {description && (
               <div className={styles.item}>
@@ -212,7 +214,7 @@ export default function PipelineModal({
 
             <div className={styles.item}>
               <label htmlFor="repo_url">Repo URL</label>
-              <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client" defaultValue={repoUrl} required />
+              <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client" defaultValue={repoUrl || ''} />
             </div>
 
             <div className={styles.item}>
@@ -236,7 +238,7 @@ export default function PipelineModal({
                 Glob pattern. Leave empty to trigger on all branches.
               </p>
               <div className={styles.branchPills}>
-                {pills.map((p, i) => 
+                {pills.map((p, i) =>
                   <span key={i} className={styles.branchPill}>
                     {p}
                     <input type="hidden" name="branch_filters" id="branch_filters" value={p} />

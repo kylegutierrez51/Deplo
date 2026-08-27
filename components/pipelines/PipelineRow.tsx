@@ -10,29 +10,31 @@ import { formatDate } from "@/lib/utils/date";
 
 
 export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
+  const { repoUrl, name, runCount, status, commitMessage, lastRun, id } = pipeline;
+  
   const router = useRouter();
-  const open = () => router.push(`/pipelines?id=${pipeline.id}`);
+  const open = () => router.push(`/pipelines?id=${id}`);
 
-  const repoName = pipeline.repoUrl.slice(pipeline.repoUrl.lastIndexOf('/') + 1);
+  const repoName = repoUrl ? repoUrl.slice(repoUrl.lastIndexOf('/') + 1) : null;
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
-      <td>{pipeline.name} 
-        {pipeline.runCount ? (pipeline.runCount > 0 ? 
-          <><br /><span className="nowrap">{pipeline.runCount} {pipeline.runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
+      <td>{name} 
+        {runCount ? (runCount > 0 ? 
+          <><br /><span className="nowrap">{runCount} {runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
         : ''}
       </td>
-      <td><Pill variant={pipeline.status} label={capitalize(pipeline.status)} /></td>
-      <td>{repoName}<br /><span>{pipeline.commitMessage}</span></td>
-      <td className="nowrap">{pipeline.lastRun ? formatDate(pipeline.lastRun) : 'No Runs'}</td>
+      <td><Pill variant={status} label={capitalize(status)} /></td>
+      <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
+      <td className="nowrap">{lastRun ? formatDate(lastRun) : 'No Runs'}</td>
       <td className={styles['row-action']}>
         {/* stopPropagation so the icon navigates to the editor instead of also firing the row's open() */}
         <Link
-          href={`/pipelines/${pipeline.id}`}
+          href={`/pipelines/${id}`}
           className={styles['editor-link']}
           title="Open in editor"
           target="_blank"
-          aria-label={`Open ${pipeline.name} in the pipeline editor`}
+          aria-label={`Open ${name} in the pipeline editor`}
           onClick={e => e.stopPropagation()}
         >
           <ion-icon name="open-outline"></ion-icon>

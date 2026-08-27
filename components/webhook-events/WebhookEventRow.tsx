@@ -7,18 +7,20 @@ import { capitalize, getRepoName, getBranch } from "@/lib/utils/string";
 import { formatDate } from "@/lib/utils/date";
 
 export default function WebhookEventRow({ event }: { event: WebhookEvent }) {
+  const { status, eventType, pipeline, branch, commitSha, commitMessage, receivedAt } = event;
+  
   const router = useRouter();
   const open = () => router.push(`events?id=${event.id}`);
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
-      <td><Pill variant={event.status} label={capitalize(event.status)} /></td>
-      <td><Pill variant={event.eventType} label={event.eventType === 'pull-request' ? 'Pull Request' : capitalize(event.eventType)} /></td>
-      <td>{event.pipeline ? getRepoName(event.pipeline?.repoUrl) : 'None'}</td>
-      <td>{event.branch ? getBranch(event.branch) : 'None' }</td>
-      <td>{event.commitSha}<br /><span>{event.commitMessage}</span></td>
-      <td>{event.pipeline?.name ?? 'None'}</td>
-      <td>{formatDate(event.receivedAt)}</td>
+      <td><Pill variant={status} label={capitalize(status)} /></td>
+      <td><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></td>
+      <td>{pipeline?.repoUrl ? getRepoName(pipeline.repoUrl) : '—'}</td>
+      <td>{branch ? getBranch(branch) : '—' }</td>
+      <td>{commitSha || '—'}<br />{<span>{commitSha && commitMessage && commitMessage}</span>}</td>
+      <td>{pipeline?.name ?? 'None'}</td>
+      <td>{formatDate(receivedAt)}</td>
     </tr>
   )
 }
