@@ -23,7 +23,6 @@ const pipeline = (over: Partial<Pipeline> = {}): Pipeline => ({
   name: 'CI',
   description: null,
   repoUrl: 'https://github.com/o/web-client',
-  branchFilters: ['main'],
   createdAt: new Date('2026-01-01T00:00:00Z'),
   updatedAt: new Date('2026-01-01T00:00:00Z'),
   status: 'succeeded',

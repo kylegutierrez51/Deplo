@@ -474,17 +474,6 @@ describe('addPipeline', () => {
     );
   });
 
-  it('collects every branch filter, not just the first', async () => {
-    const fd = form();
-    fd.append('branch_filters', 'develop');
-
-    await addPipeline(idle, fd);
-
-    expect(prismaMock.pipeline.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ branchFilters: ['main', 'develop'] }) }),
-    );
-  });
-
   it('reports a friendly message when the insert fails', async () => {
     prismaMock.pipeline.create.mockRejectedValue(prismaError('P2002') as never);
 
@@ -541,7 +530,7 @@ describe('updatePipeline', () => {
 
     expect(prismaMock.pipeline.update).toHaveBeenCalledWith({
       where: { id: 'p1' },
-      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', branchFilters: ['main'] },
+      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc' },
     });
     expect(result).toEqual({ status: 'success', message: 'Pipeline updated' });
     expect(revalidate).toHaveBeenCalledWith('/pipelines');

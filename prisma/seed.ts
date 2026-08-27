@@ -1,4 +1,3 @@
-// Seeds the database with data shaped after the mock arrays in lib/data/*.
 // Run via `npx prisma db seed` (or automatically after `prisma migrate dev`).
 import "dotenv/config";
 import { randomBytes } from "node:crypto";
@@ -14,7 +13,6 @@ import {
 } from "../generated/prisma/client";
 
 async function main() {
-  // Clear in reverse dependency order so re-running the seed is idempotent.
   await prisma.auditLog.deleteMany();
   await prisma.webhookEvent.deleteMany();
   await prisma.webhook.deleteMany();
@@ -26,8 +24,11 @@ async function main() {
   await prisma.pipeline.deleteMany();
   await prisma.user.deleteMany();
 
-  // ── Users ──────────────────────────────────────────────────────
-  // Names pulled from createdBy/triggeredBy/actor fields across lib/data/*.
+/*
+===============================================================
+  Users
+===============================================================
+*/
   const userSeeds = [
     { name: "coco", email: "coco@acme.dev", role: UserRole.MEMBER },
     { name: "sarah.chen", email: "sarah.chen@acme.dev", role: UserRole.MEMBER },
@@ -45,9 +46,11 @@ async function main() {
   );
   const userByName = new Map(users.map((u) => [u.name as string, u]));
 
-  // ── Environments ───────────────────────────────────────────────
-  // Base 5 from lib/data/environments.ts, plus a few extra of the same
-  // shape so each EnvironmentType has more than one row.
+/*
+===============================================================
+  Environments
+===============================================================
+*/
   const environmentSeeds = [
     { name: "dev", type: EnvironmentType.DEVELOPMENT, requireApproval: true, createdBy: "coco" },
     { name: "staging", type: EnvironmentType.STAGING, requireApproval: false, createdBy: "coco" },
@@ -74,8 +77,11 @@ async function main() {
   );
   const envByName = new Map(environments.map((e) => [e.name, e]));
 
-  // ── Secrets ─────────────────────────────────────────────────────
-  // From lib/data/secrets.ts, extended with a few more common CI/CD keys.
+/*
+===============================================================
+  Secrets
+===============================================================
+*/
   const secretSeeds = [
     { key: "DATABASE_URL", env: "prod", createdBy: "sarah.chen" },
     { key: "DATABASE_URL", env: "staging", createdBy: "sarah.chen" },
@@ -104,30 +110,29 @@ async function main() {
     })
   );
 
-  // ── Pipeline ────────────────────────────────────────────────────
-  // A single pipeline, running Deplo's own verification suite.
+/*
+===============================================================
+  1 Pipeline
+===============================================================
+*/
   const pipeline = await prisma.pipeline.create({
     data: {
       name: "verify-and-build",
       repoUrl: "https://github.com/abcd/deplo",
       description: "Type-checks and tests the app, then builds it behind an approval gate",
-      branchFilters: ["main"],
       createdById: userByName.get("coco")?.id ?? null,
     },
   });
 
-  // ── Pipeline Definition ─────────────────────────────────────────
-  // Two independent branches converging on a gated deploy:
-  //
-  //   typecheck → approval → lint ───────────────┐
-  //                                              ├→ release-approval → build
-  //   unit-tests → integration-tests → e2e-tests ┘
-  //
-  // The two columns follow lib/pipeline/definition.ts's split: graphJson is the
-  // React Flow structure the editor draws, configJson the per-stage execution
-  // settings keyed by node id. Only the keys toDefinition writes are emitted —
-  // an extra one would make definitionsEqual read as an edit and mint a second
-  // version the first time the editor saves this graph untouched.
+/*
+===============================================================
+  1 PipelineDefinition
+
+  typecheck → approval → lint ───────────────┐
+                                             ├→ approval → build
+  unit-tests → integration-tests → e2e-tests ┘
+===============================================================
+*/
   type StageSeed = {
     id: string;
     name: string;
@@ -188,8 +193,11 @@ async function main() {
     },
   });
 
-  // ── Webhooks ─────────────────────────────────────────────────────
-  // From lib/data/webhooks.ts, all bound to the one pipeline.
+/*
+===============================================================
+  Webhooks
+===============================================================
+*/
   const webhookSeeds = [
     { isActive: true, events: ["push", "pull_request"], branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "coco" },
     { isActive: false, events: ["push"], branchFilters: [], createdBy: null },
@@ -214,8 +222,11 @@ async function main() {
     })
   );
 
-  // ── Webhook Events ───────────────────────────────────────────────
-  // From lib/data/webhook-events.ts, all delivered to the one pipeline.
+/*
+===============================================================
+  Webhook Events
+===============================================================
+*/
   const webhookEventSeeds = [
     { eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
     { eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
@@ -237,10 +248,11 @@ async function main() {
     })
   );
 
-  // ── Audit Log ────────────────────────────────────────────────────
-  // From lib/data/audits.ts. Only actions the seeded state can actually account
-  // for: no stage results exist, and the single run has not finished, so nothing
-  // here claims an approval, a completion or a cancellation.
+/*
+===============================================================
+  Audit Log
+===============================================================
+*/
   const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; user: string | null; actor?: string }[] = [
     { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "coco" },
     { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },

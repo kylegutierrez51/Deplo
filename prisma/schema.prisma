@@ -99,7 +99,6 @@ model Pipeline {
   name          String
   description   String?  @db.Text
   repoUrl       String?
-  branchFilters String[] @default(["main"]) // glob pattern, e.g. "main", "release/*"
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
