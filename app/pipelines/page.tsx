@@ -55,7 +55,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
               </div>
             </div>
 
-            <DataTable columns={["Pipeline", "Recent Status", "Repository", "Lastest Run", ""]}>
+            <DataTable columns={["Pipeline", "Recent Status", "Repository", "Latest Run", ""]}>
               {pipelines.map((pipeline, i) => (
                 <PipelineRow key={i} pipeline={pipeline} />
               ))}

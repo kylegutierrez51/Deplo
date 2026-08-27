@@ -23,8 +23,23 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
           <><br /><span className="nowrap">{runCount} {runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
         : ''}
       </td>
-      <td><Pill variant={pipeline.status} label={capitalize(pipeline.status)} /></td>
+      <td><Pill variant={status} label={capitalize(status)} /></td>
       <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
+      <td className="nowrap">
+        {lastRun ? (
+          /* stopPropagation for the same reason as the editor link below. */
+          <Link
+            href={`/runs/${lastRun}`}
+            className={styles['latest-run-link']}
+            title="View latest run"
+            target="_blank"
+            aria-label={`View the latest run of ${name}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <ion-icon name="open-outline"></ion-icon>
+          </Link>
+        ) : 'No Runs'}
+      </td>
       <td className={styles['row-action']}>
         {/* stopPropagation so the icon navigates to the editor instead of also firing the row's open() */}
         <Link
