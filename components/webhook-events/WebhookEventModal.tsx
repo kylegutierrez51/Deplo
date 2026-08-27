@@ -17,7 +17,7 @@ interface WebhookEventModalProps {
   branch?: string | null;
   commitSha?: string | null;
   commitMessage?: string | null;
-  pipeline?: { name: string; repoUrl: string } | null;
+  pipeline?: { name: string; repoUrl: string | null } | null;
   receivedAt: Date;
   onClose: () => void;
 }
@@ -59,11 +59,11 @@ export default function WebhookEventModal({
         <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Repository</label>
-            <span>{pipeline ? getRepoName(pipeline.repoUrl) : 'None'}</span>
+            <span>{pipeline?.repoUrl ? getRepoName(pipeline.repoUrl) : '—'}</span>
           </div>
           <div className={styles.item}>
             <label>Branch</label>
-            <span>{branch ? getBranch(branch) : 'None'}</span>
+            <span>{branch ? getBranch(branch) : '—'}</span>
           </div>
         </div>
 
@@ -72,16 +72,16 @@ export default function WebhookEventModal({
           <div className={styles['commit-detail']}>
             <span className={styles['commit-hash']}>
               <ion-icon name="git-commit-outline"></ion-icon>
-              {commitSha ?? 'None'}
+              {commitSha ?? '—'}
             </span>
-            <span className={styles['commit-message']}>{commitMessage ?? 'None'}</span>
+            {commitMessage && <span className={styles['commit-message']}>{commitMessage}</span>}
           </div>
         </div>
 
         <div className={styles['item-flex']}>
           <div className={styles.item}>
             <label>Pipeline</label>
-            <span>{pipeline?.name ?? 'None'}</span>
+            <span>{pipeline?.name ?? 'Not Found'}</span>
           </div>
           <div className={styles.item}>
             <label>Received</label>

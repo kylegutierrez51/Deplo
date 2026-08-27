@@ -8,7 +8,7 @@ export type Run = Omit<PrismaPipelineRun, | 'triggeredById' | 'status' | 'trigge
     name: string;
   } | null;
   pipelineName: string | null;
-  repoUrl: string;
+  repoUrl: string | null;
   triggeredBy?: string | null;
   status: RunStatus;
   trigger: RunTrigger

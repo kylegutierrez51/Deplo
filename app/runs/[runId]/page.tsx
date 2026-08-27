@@ -43,19 +43,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
         <RunDetailShell
           header={
             <RunDetailCard
-              id={runId}
-              pipelineName={run.pipelineName}
-              runNumber={run.runNumber}
-              status={run.status}
-              environment={run.environment}
-              commitHash={run.commitHash}
-              commitMessage={run.commitMessage}
-              branch={run.branch}
-              repo={run.repo}
-              trigger={run.trigger}
-              triggeredBy={run.triggeredBy}
-              duration={run.duration}
-              timeAgo={run.timeAgo}
+              run={{ id: runId, ...run,  }}
             />
           }
           overview={

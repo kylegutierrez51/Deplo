@@ -10,7 +10,7 @@ export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   branch: string | null;
   pipeline: {
     name: string;
-    repoUrl: string;
+    repoUrl: string | null;
   } | null;
 };
 
