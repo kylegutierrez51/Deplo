@@ -44,3 +44,19 @@
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);
 }
+
+.latest-run-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue-clr);
+}
+
+.latest-run-link ion-icon {
+  color: var(--blue-clr);
+  font-size: 16px;
+}
+
+.latest-run-link:hover {
+  text-decoration: underline;
+}

@@ -65,15 +65,15 @@ describe('getPipelines status', () => {
     );
   });
 
-  // An in-flight run has no finishedAt yet, so lastRun is legitimately null even
-  // though the pipeline is not idle.
-  it('leaves lastRun null for a run still in flight', async () => {
+  // lastRun links to the run detail page, so an in-flight run is still worth
+  // linking to (it's the one case where you'd actually want to jump in and watch).
+  it('returns the latest run id even while it is still in flight', async () => {
     prismaMock.pipeline.findMany.mockResolvedValue([row({ runs: [run('RUNNING', null)] })] as never);
 
     const [pipeline] = await getPipelines();
 
     expect(pipeline.status).toBe('running');
-    expect(pipeline.lastRun).toBeNull();
+    expect(pipeline.lastRun).toBe('r1');
   });
 
   it('surfaces the run count and drops the raw relation', async () => {
