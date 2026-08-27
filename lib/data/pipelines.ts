@@ -4,7 +4,7 @@ import { fromDefinition } from '@/lib/pipeline/definition';
 import type { GraphJson, PipelineStatus } from '@/lib/types';
 
 export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
-  lastRun: Date | null;
+  lastRun: string | null;
   status: PipelineStatus;
   runCount?: number;
   createdBy?: string | null;
@@ -36,7 +36,7 @@ export async function getPipelines(): Promise<Pipeline[]> {
   return pipelines.map(({ runs, _count, ...pipeline }) => ({
     ...pipeline,
     status: runs[0] ? RUN_STATUS_MAP[runs[0].status] : 'idle',
-    lastRun: runs[0] ? runs[0].finishedAt : null,
+    lastRun: runs[0]?.id ?? null,
     runCount: _count.runs,
   }));
 }
@@ -58,7 +58,7 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
   return {
     ...pipeline,
     status: pipeline.runs[0] ? RUN_STATUS_MAP[pipeline.runs[0].status] : 'idle',
-    lastRun: pipeline.runs[0] ? pipeline.runs[0].finishedAt : null,
+    lastRun: pipeline.runs[0]?.id ?? null,
     createdBy: pipeline.createdBy?.name ?? null
   }
 }

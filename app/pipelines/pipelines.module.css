@@ -40,6 +40,27 @@ table tbody td.filter ion-icon {
   margin: 0 4px;
 }
 
+.latest-run-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.latest-run-link ion-icon {
+  color: var(--blue-clr);
+}
+
+.latest-run-link:hover {
+  background-color: var(--blue-btn-clr);
+}
+
+.latest-run-link:focus-visible {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: 2px;
+}
+
 /* Trailing "open in editor" column. width: 1% is the table trick that collapses
    a cell down to its content width, so the icon never steals space from the
    data columns. */

@@ -19,7 +19,7 @@ interface PipelineModalProps {
   id: string;
   name: string;
   status: PipelineStatus;
-  lastRun: Date | null;
+  lastRun: string | null;
   repoUrl: string | null;
   commitMessage?: string | null;
   description: string | null;
@@ -158,7 +158,12 @@ export default function PipelineModal({
               {lastRun &&
                 <div className={styles.item}>
                   <label>Last Run</label>
-                  <span>{formatDate(lastRun)}</span>
+                  <span>
+                    <Link href={`/runs/${lastRun}`} className={styles['latest-run-link']} target="_blank">
+                      <ion-icon name="open-outline"></ion-icon>
+                      View Run
+                    </Link>
+                  </span>
                 </div>
               }
             </div>

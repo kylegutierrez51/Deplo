@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Pipeline } from "@/lib/data/pipelines";
 import Pill from '@/components/ui/Pill';
-import { formatDate } from "@/lib/utils/date";
 
 
 export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
@@ -24,9 +23,8 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
           <><br /><span className="nowrap">{runCount} {runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
         : ''}
       </td>
-      <td><Pill variant={status} label={capitalize(status)} /></td>
+      <td><Pill variant={pipeline.status} label={capitalize(pipeline.status)} /></td>
       <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
-      <td className="nowrap">{lastRun ? formatDate(lastRun) : 'No Runs'}</td>
       <td className={styles['row-action']}>
         {/* stopPropagation so the icon navigates to the editor instead of also firing the row's open() */}
         <Link
