@@ -51,13 +51,13 @@ describe('addWebhook', () => {
   it('collects multi-valued branch filters and events', async () => {
     const fd = form();
     fd.append('branch_filters', 'develop');
-    fd.append('events', 'pull_request');
+    fd.append('events', 'pull-request');
 
     await addWebhook(idle, fd);
 
     expect(writtenData(prismaMock.webhook.create)).toMatchObject({
       branchFilters: ['main', 'develop'],
-      events: ['push', 'pull_request'],
+      events: ['PUSH', 'PULL_REQUEST'],
     });
   });
 
@@ -86,6 +86,46 @@ describe('addWebhook', () => {
   });
 });
 
+// validateAndMapEvents is module-private, and a "use server" file cannot export a
+// non-action helper, so it is exercised through the two actions that call it.
+describe('event validation', () => {
+  it('rejects the submission without writing when an event is not a known member', async () => {
+    const fd = form();
+    fd.append('events', 'pull_request');
+
+    const result = await addWebhook(idle, fd);
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Error adding trigger event data. Please try again.',
+    });
+    expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
+  // An empty list is a valid submission, not a rejected one: null is the only
+  // failure signal, so the caller's `if (!events)` must not treat [] as one.
+  it('writes an empty array when the form carries no events at all', async () => {
+    const fd = form();
+    fd.delete('events');
+
+    const result = await addWebhook(idle, fd);
+
+    expect(result.status).toBe('success');
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ events: [] });
+  });
+
+  it('maps every selected event to its uppercase Prisma member', async () => {
+    const fd = form();
+    fd.append('events', 'pull-request');
+
+    await updateWebhook(idle, fd);
+
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({
+      events: ['PUSH', 'PULL_REQUEST'],
+    });
+  });
+});
+
 describe('updateWebhook', () => {
   // Rotation is deliberately a separate action, so editing metadata must never
   // re-sign or discard the stored secret.
@@ -103,7 +143,7 @@ describe('updateWebhook', () => {
 
     expect(prismaMock.webhook.update).toHaveBeenCalledWith({
       where: { id: 'wh-1' },
-      data: { pipelineId: 'p2', branchFilters: ['main'], events: ['push'] },
+      data: { pipelineId: 'p2', branchFilters: ['main'], events: ['PUSH'] },
     });
   });
 

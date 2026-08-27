@@ -35,7 +35,6 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  // Deplo relations
   pipelines           Pipeline[]
   pipelineRuns        PipelineRun[]
   pipelineDefinitions PipelineDefinition[]
@@ -135,10 +134,9 @@ model PipelineDefinition {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
-  // Runs reference the exact definition version they executed. The relation is
-  // ON DELETE RESTRICT (PipelineRun.definition is required with no override),
-  // which is what stops the sweep in savePipelineDefinition from deleting a
-  // definition a run still needs.
+  // Runs reference the exact definition version they executed. Prisma defaults
+  // to ON DELETE RESTRICT, which is what stops deleteStaleDefinitions() in 
+  // savePipelineDefinition() from deleting a definition a run still needs.
   runs PipelineRun[]
 
   @@unique([pipelineId, version])
@@ -170,14 +168,12 @@ model PipelineRun {
   status       RunStatus  @default(QUEUED)
   trigger      RunTrigger
 
-  // Git context — ties the run back to the exact commit
   commitSha String?
   branch    String?
 
   triggeredById String?
   triggeredBy   User?   @relation(fields: [triggeredById], references: [id])
 
-  // Environment this run targets
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])
 
@@ -304,11 +300,16 @@ model Secret {
 // WEBHOOK EVENTS
 // ─────────────────────────────────────────────
 
+enum EventType {
+  PUSH
+  PULL_REQUEST
+}
+
 model Webhook {
   id            String    @id @default(cuid())
   pipelineId    String?
   isActive      Boolean   @default(false)
-  events        String[]
+  events        EventType[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  DateTime?
   createdAt     DateTime  @default(now())
@@ -330,11 +331,6 @@ enum WebhookEventStatus {
   PROCESSED
   IGNORED
   FAILED
-}
-
-enum EventType {
-  PUSH
-  PULL_REQUEST
 }
 
 model WebhookEvent {
@@ -398,7 +394,7 @@ model AuditLog {
   userId       String?
   actor        String? // display name for non-user actors (webhooks, integrations, system jobs)
   action       AuditAction
-  resourceType ResourceType // "Pipeline", "Secret", "PipelineRun", etc.
+  resourceType ResourceType
   resourceId   String
   resourceLabel String? // human-readable snapshot of the resource, captured at write time so it survives resource deletion/rename
 
