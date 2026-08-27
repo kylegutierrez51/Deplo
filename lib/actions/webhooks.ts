@@ -1,11 +1,28 @@
 "use server"
 
 import { encryptSecret, generateWebhookSecret } from '@/lib/utils/crypto';
-import { FormState } from '@/lib/types';
+import { FormState, EventType } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { Prisma } from '@/generated/prisma/client';
+import { EventType as PrismaEventType, Prisma } from '@/generated/prisma/client';
 import { auth } from '@/auth';
+
+const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
+  push: 'PUSH',
+  'pull-request': 'PULL_REQUEST',
+};
+
+function validateAndMapEvents(formData: FormData): PrismaEventType[] | null {
+  const events = formData.getAll('events') as string[];
+
+  const validatedEvents: PrismaEventType[] = []
+  for (const e of events) {
+    if (!['push', 'pull-request'].includes(e)) return null;
+    validatedEvents.push(EVENT_TYPE_MAP[e as EventType])
+  }
+  return validatedEvents;
+}
+
 
 export type RegenerateSecretState = FormState & { secret?: string };
 
@@ -20,8 +37,15 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
 
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
-  const events = formData.getAll('events') as string[];
   const secret = formData.get('webhook_secret') as string;
+  const events = validateAndMapEvents(formData); 
+
+  if (!events) {
+    return {
+      status: 'error',
+      message: 'Error adding trigger event data. Please try again.'
+    }
+  }
 
   const { encryptedValue, iv, authTag } = encryptSecret(secret);
 
@@ -64,7 +88,14 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
   const id = formData.get('id') as string;
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
-  const events = formData.getAll('events') as string[];
+  const events = validateAndMapEvents(formData); 
+
+  if (!events) {
+    return {
+      status: 'error',
+      message: 'Error adding trigger event data. Please try again.'
+    }
+  }
 
   try {
     await prisma.webhook.update({

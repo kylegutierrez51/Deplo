@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useActionState } from 'react';
 import { formatDate } from '@/lib/utils/date';
-import type { FormState } from '@/lib/types';
+import type { FormState, EventType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
@@ -17,7 +17,7 @@ interface WebhookModalProps {
   id: string;
   pipelineName?: string | null;
   branchFilters: string[];
-  events: string[];
+  events: EventType[];
   createdBy?: string | null;
   lastDelivery?: Date | null;
   createdAt: Date;
@@ -36,9 +36,9 @@ const initialState: FormState = {
   message: '',
 }
 
-const EVENT_DEFS = [
+const EVENT_DEFS: { key: EventType, label: string, desc: string }[] = [
   { key: 'push', label: 'Push', desc: 'Triggered when commits are pushed to a branch' },
-  { key: 'pull_request', label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
+  { key: 'pull-request', label: 'Pull Request', desc: 'Triggered on PR open, sync, or merge' },
 ];
 
 export default function WebhookModal({
@@ -60,7 +60,7 @@ export default function WebhookModal({
   onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(events);
+  const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
   const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
 
@@ -144,7 +144,7 @@ export default function WebhookModal({
     setBranchFilters(prev => prev.filter((_, i) => i !== index));
   };
 
-  const toggleEvent = (key: string) => {
+  const toggleEvent = (key: EventType) => {
     setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
 
