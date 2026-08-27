@@ -19,6 +19,11 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
   const session = await auth();
   const createdById = session?.user?.id ?? null;
 
+  if (!createdById) return {
+    status: 'error',
+    message: 'Sign in to add a pipeline.'
+  }
+
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
@@ -51,6 +56,13 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
 }
 
 export async function updatePipeline(prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to update a pipeline.'
+  }
+  
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
@@ -87,6 +99,13 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 }
 
 export async function deletePipeline(id: string): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to delete a pipeline.'
+  }
+
   try {
     await prisma.pipeline.delete({
       where: { id }
@@ -125,6 +144,11 @@ export async function deletePipeline(id: string): Promise<FormState> {
 export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<SaveDefinitionResult> {
   const session = await auth();
   const createdById = session?.user?.id ?? null;
+
+  if (!createdById) return {
+    status: 'error',
+    message: 'Sign in to save a pipeline.'
+  }
 
   const { graphJson, configJson } = toDefinition(nodes, edges);
 
@@ -228,17 +252,17 @@ async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promi
 }
 
 export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState & { runId?: string }> {
-  if (!environmentId) return {
-    status: 'error',
-    message: 'Select an environment to target.'
-  }
-  
   const session = await auth();
   const triggeredById = session?.user?.id ?? null;
 
   if (!triggeredById) return {
     status: 'error',
     message: 'Sign in to run a pipeline.'
+  }
+
+  if (!environmentId) return {
+    status: 'error',
+    message: 'Select an environment to target.'
   }
 
   try {

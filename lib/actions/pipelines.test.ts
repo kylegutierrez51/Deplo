@@ -134,17 +134,13 @@ describe('savePipelineDefinition versioning', () => {
     );
   });
 
-  it('saves with a null author rather than failing when signed out', async () => {
+  it('refuses when signed out', async () => {
     signedOut();
-    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
-    expect(result.status).toBe('success');
-    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ createdById: null }) }),
-    );
+    expect(result).toEqual({ status: 'error', message: 'Sign in to save a pipeline.' });
+    expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
   });
 
   it('revalidates both the list and the editor route', async () => {

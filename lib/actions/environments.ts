@@ -38,6 +38,11 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
   const session = await auth();
   const createdById = session?.user?.id ?? null;
 
+  if (!createdById) return {
+    status: 'error',
+    message: 'Sign in to add an environment.'
+  }
+
   const name = formData.get('name') as string;
   const type = readEnvType(formData);
   const requireApproval = formData.get('requireApproval') === 'true';
@@ -78,10 +83,18 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
 }
 
 export async function updateEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
+  const session = await auth();
+
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to update an environment.'
+  }
+  
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const type = readEnvType(formData);
   const requireApproval = formData.get('requireApproval') === 'true';
+
 
   if (!type) {
     return {
@@ -127,6 +140,13 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
 
 export async function deleteEnvironment(id: string): Promise<FormState> {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id) return {
+      status: 'error',
+      message: 'Sign in to delete an environment.'
+    }
+
     await prisma.environment.delete({
       where: { id }
     });
