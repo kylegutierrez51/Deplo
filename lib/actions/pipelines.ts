@@ -27,12 +27,11 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
-  const branchFilters = formData.getAll('branch_filters') as string[];
 
   try {
     await prisma.pipeline.create({
       data: {
-        name, repoUrl, description, branchFilters, createdById,
+        name, repoUrl, description, createdById,
         definitions: {
           create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
         },
@@ -67,12 +66,11 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
-  const branchFilters = formData.getAll('branch_filters') as string[];
 
   try {
     await prisma.pipeline.update({
       where: { id },
-      data: { name, repoUrl, description, branchFilters },
+      data: { name, repoUrl, description },
     });
 
     revalidatePath('/pipelines');
@@ -134,13 +132,8 @@ export async function deletePipeline(id: string): Promise<FormState> {
   }
 }
 
-/**
- * Definitions are immutable: a save inserts a new version rather than editing
- * the current row, so every PipelineRun keeps resolving to the exact graph it
- * executed and the Run Detail page stays truthful. Superseded versions that no
- * run references are then swept away, leaving only the current version plus the
- * ones that actually ran.
- */
+
+// a save inserts an entirely new row with an incremented version
 export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<SaveDefinitionResult> {
   const session = await auth();
   const createdById = session?.user?.id ?? null;
@@ -161,9 +154,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
           select: { id: true, version: true, graphJson: true, configJson: true },
         });
 
-        // A save that changed nothing reuses the current version instead of
-        // minting a duplicate, so version counts distinct configurations rather
-        // than presses of the Save button.
+        // A save that changed nothing reuses the current version instead of creating a duplicate
+        // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save' 
         if (latest && definitionsEqual({ graphJson, configJson }, latest)) return latest.id;
 
         // Versions are monotonic and never reused, so the sweep below leaves
@@ -217,17 +209,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
   };
 }
 
-/**
- * Drops every definition of this pipeline except `keepId` that no run
- * references — a sweep rather than a delete of just the superseded row, so a
- * sweep that failed earlier gets cleaned up on the next save.
- *
- * Runs outside the save's transaction and swallows its own errors on purpose.
- * PipelineRun references its definition ON DELETE RESTRICT, so a run created
- * between the lookup and the delete makes the delete fail instead of orphaning
- * the run, and the definition simply survives until the next sweep. Rolling the
- * user's save back over that would be the wrong trade.
- */
+// Drop definitions that do not have a run associated with it
+// Since Deplo can't go back to previous versions, deletes previous pipeline definitions with no runs 
 async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promise<void> {
   try {
     // deleteMany can't filter on a to-many relation, so collect the ids first.
@@ -332,13 +315,6 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
 
 
-/*
- * Gates that make the graph checks meaningful come first and return on their own —
- * there is nothing useful to say about the stages of a pipeline that has none, or
- * about an environment that has been deleted. Everything after that is collected
- * by validatePipelineGraph and reported in one message, so a user fixing several
- * problems does not have to press Run once per problem.
-*/
 async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
   const { graphJson, configJson } = definition;
 

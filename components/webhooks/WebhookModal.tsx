@@ -140,6 +140,10 @@ export default function WebhookModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
+  const removeBranchFilter = (index: number) => {
+    setBranchFilters(prev => prev.filter((_, i) => i !== index));
+  };
+
   const toggleEvent = (key: string) => {
     setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
@@ -294,13 +298,26 @@ export default function WebhookModal({
               <input
                 type="text"
                 ref={branchInputRef}
-                placeholder="e.g. main, release/*, feature/** — press Enter to add"
+                placeholder="e.g. main, release/*, feature/* — press Enter to add"
                 onKeyDown={handleBranchKeyDown}
               />
+              <p className={styles.fieldHint}>
+                <ion-icon name="information-circle-outline"></ion-icon>
+                Glob pattern. Leave empty to trigger on all branches.
+              </p>
+              
               <div className={styles.branchPills}>
                 {filters.map((p, i) => (
                   <span key={i} className={styles.branchPill}>
                     {p}
+                    <button
+                      type="button"
+                      className={styles.branchPillRemove}
+                      onClick={() => removeBranchFilter(i)}
+                      aria-label={`Remove branch filter ${p}`}
+                    >
+                      <ion-icon name="close-outline"></ion-icon>
+                    </button>
                     <input type="hidden" name="branch_filters" value={p} />
                   </span>
                 ))}

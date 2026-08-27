@@ -2,7 +2,7 @@
 
 import { capitalize } from "@/lib/utils/string";
 import { formatDate } from "@/lib/utils/date";
-import { useState, useRef, useEffect, useActionState } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";
@@ -23,7 +23,6 @@ interface PipelineModalProps {
   repoUrl: string | null;
   commitMessage?: string | null;
   description: string | null;
-  branchFilters: string[];
   createdBy?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -50,7 +49,6 @@ export default function PipelineModal({
   repoUrl,
   commitMessage,
   description,
-  branchFilters = [],
   createdBy,
   createdAt,
   updatedAt,
@@ -62,8 +60,6 @@ export default function PipelineModal({
   onSave,
   onError,
 }: PipelineModalProps) {
-  const [pills, setPills] = useState<string[]>(branchFilters);
-  const branchInputRef = useRef<HTMLInputElement>(null);
   const [deleteModal, setDeleteModal] = useState(false);
   const [createState, createFormAction] = useActionState(addPipeline, initialState);
   const [editState, editFormAction] = useActionState(updatePipeline, initialState);
@@ -103,17 +99,6 @@ export default function PipelineModal({
     }
   }
 
-  const handleBranchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const value = branchInputRef.current?.value.trim();
-    if (!value) return;
-    setPills(prev => [...prev, value]);
-    if (branchInputRef.current) branchInputRef.current.value = '';
-  };
-
-
-
   const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Pipeline' : 'Edit Pipeline');
 
   const footer = mode === 'view' ? (
@@ -150,7 +135,7 @@ export default function PipelineModal({
 
               {status &&
                 <div className={styles.item}>
-                  <label>Status</label>
+                  <label>Recent Status</label>
                   <span><Pill variant={status} label={capitalize(status)} /></span>
                 </div>
               }
@@ -183,15 +168,6 @@ export default function PipelineModal({
                 <span>{description}</span>
               </div>
             )}
-            {branchFilters.length > 0 && (
-              <div className={styles.item}>
-                <label>Branch Filters</label>
-                <div className={styles.branchPills}>
-                  {pills.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
-                </div>
-              </div>
-            )}
-
 
             <div className={styles['created-updated-flex']}>
               <div className={styles.item}>
@@ -218,37 +194,13 @@ export default function PipelineModal({
             </div>
 
             <div className={styles.item}>
-              <label htmlFor="repo_url">Repo URL</label>
+              <label htmlFor="repo_url">Repo URL <span className={styles.optionalBadge}>optional</span></label>
               <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client" defaultValue={repoUrl || ''} />
             </div>
 
             <div className={styles.item}>
               <label htmlFor="description">Description <span className={styles.optionalBadge}>optional</span></label>
               <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main" defaultValue={description || ''}></textarea>
-            </div>
-
-            <div className={styles.item}>
-              <label>
-                Branch Filters
-                <span className={styles.optionalBadge}>optional</span>
-              </label>
-              <input
-                type="text"
-                ref={branchInputRef}
-                placeholder="e.g. main, release/* — press Enter to add"
-                onKeyDown={handleBranchKeyDown}
-              />
-              <p className={styles.fieldHint}>
-                <ion-icon name="information-circle-outline"></ion-icon>
-                Glob pattern. Leave empty to trigger on all branches.
-              </p>
-              <div className={styles.branchPills}>
-                {pills.map((p, i) =>
-                  <span key={i} className={styles.branchPill}>
-                    {p}
-                    <input type="hidden" name="branch_filters" id="branch_filters" value={p} />
-                  </span>)}
-              </div>
             </div>
           </>
         )}

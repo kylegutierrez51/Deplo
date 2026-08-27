@@ -31,7 +31,6 @@ const setup = (over: Partial<Props> = {}) => {
     repoUrl: 'https://github.com/o/web-client',
     commitMessage: 'Fix the thing',
     description: null,
-    branchFilters: [],
     createdBy: 'kyle',
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
