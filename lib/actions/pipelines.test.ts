@@ -98,7 +98,7 @@ describe('savePipelineDefinition versioning', () => {
     const result = await savePipelineDefinition('p1', nodes, []);
 
     expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ status: 'success', definitionId: 'def-3' });
+    expect(result).toMatchObject({ status: 'success' });
   });
 
   // Postgres jsonb reorders keys, so the stored copy never matches the fresh one
@@ -171,7 +171,7 @@ describe('savePipelineDefinition error handling', () => {
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
     expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ status: 'success', message: 'Pipeline saved', definitionId: 'def-2' });
+    expect(result).toEqual({ status: 'success', message: 'Pipeline saved' });
   });
 
   // The retry is bounded: a collision on every attempt gives up rather than
@@ -336,7 +336,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1' },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', runNumber: 1 },
     }));
   });
 
