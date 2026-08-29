@@ -9,7 +9,7 @@ import Pill from '@/components/ui/Pill';
 
 
 export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
-  const { repoUrl, name, runCount, status, commitMessage, lastRun, id } = pipeline;
+  const { repoUrl, name, runNumber, status, commitMessage, lastRun, id } = pipeline;
   
   const router = useRouter();
   const open = () => router.push(`/pipelines?id=${id}`);
@@ -19,8 +19,8 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>{name} 
-        {runCount ? (runCount > 0 ? 
-          <><br /><span className="nowrap">{runCount} {runCount > 1 ? 'Runs' : 'Run'}</span></> : '') 
+        {runNumber ? (runNumber > 0 ? 
+          <><br /><span className="nowrap">Latest Run: #{runNumber}</span></> : '') 
         : ''}
       </td>
       <td><Pill variant={status} label={capitalize(status)} /></td>

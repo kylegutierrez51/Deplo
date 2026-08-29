@@ -79,6 +79,19 @@ table tbody td.filter ion-icon {
   margin: 0 4px;
 }
 
+.pipeline-detail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: max-content; /* prevents lines from newlining */
+  max-width: 100%;
+}
+
+.pipeline-detail .status-name {
+  gap: var(--space-xs);
+  flex: none;
+  display: flex;
+}
 /*
 =====================================================================================
 Run History Media Queries
