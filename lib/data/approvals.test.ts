@@ -10,25 +10,13 @@ import type { StageStatus as PrismaStageStatus } from '@/generated/prisma';
  * with Prisma mocked nothing here executes SQL — so the ordering is asserted as a call
  * argument, and every fold case feeds its rows in the order a real query would.
  *
- * The other two are fields PipelineRun does not store. commitMessage is dug out of the
- * payload of whichever WebhookEvent points at the run, if any; runNumber is counted from
- * how many runs of the same pipeline preceded it.
+ * The other is commitMessage, a field PipelineRun does not store: it is dug out of the
+ * payload of whichever WebhookEvent points at the run, if any. runNumber used to be
+ * derived the same way — one count() per run — and is now a column on PipelineRun.
  */
 jest.mock('@/lib/prisma');
 
-/*
- * getRunNumbersById batches one count() per unique run through $transaction, and the
- * deep mock answers it with undefined — which the caller then indexes, so every case
- * yielding even one approval throws before reaching its own assertion. Resolving the
- * array it was handed is what the real batch API does, and it keeps each count
- * individually stubbable through prismaMock.pipelineRun.count.
- */
-beforeEach(() => {
-  resetPrismaMock();
-  prismaMock.$transaction.mockImplementation(
-    ((operations: Promise<unknown>[]) => Promise.all(operations)) as never,
-  );
-});
+beforeEach(resetPrismaMock);
 
 const stage = (stageId: string, status: PrismaStageStatus, attempt = 1) => ({
   id: `${stageId}-${attempt}`,
@@ -62,6 +50,7 @@ const run = (over: Record<string, unknown> = {}) => ({
   startedAt: new Date('2026-01-01T00:00:00Z'),
   finishedAt: null,
   createdAt: new Date('2026-01-01T00:00:00Z'),
+  runNumber: 7,
   pipeline: { name: 'Deploy API' },
   environment: { type: 'PRODUCTION', name: 'prod-us-east' },
   triggeredBy: { name: 'kyle' },
@@ -266,53 +255,35 @@ describe('commitMessage', () => {
  * graph can leave several stages of one run waiting at once.
  */
 describe('runNumber', () => {
-  const withCounts = async (counts: number[], approvals = [approval()]) => {
-    prismaMock.stageResult.findMany.mockResolvedValue(approvals as never);
-    prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
-    counts.forEach((count) => prismaMock.pipelineRun.count.mockResolvedValueOnce(count as never));
-
-    return getApprovals();
-  };
-
-  it('numbers the run by how many of its pipeline had run up to it', async () => {
-    const [row] = await withCounts([7]);
+  it('reads the number off the run row', async () => {
+    const row = await only();
 
     expect(row.runNumber).toBe(7);
-  });
-
-  it('scopes the count to the run own pipeline and creation time', async () => {
-    await withCounts([1]);
-
-    expect(prismaMock.pipelineRun.count).toHaveBeenCalledWith({
-      where: { pipelineId: 'p1', createdAt: { lte: new Date('2026-01-01T00:00:00Z') } },
-    });
-  });
-
-  it('counts a run once however many of its stages are waiting', async () => {
-    await withCounts([3], [approval({ id: 'sr-1' }), approval({ id: 'sr-2' })]);
-
-    expect(prismaMock.pipelineRun.count).toHaveBeenCalledTimes(1);
+    // The column replaced a count() per run — no such query should be issued.
+    expect(prismaMock.pipelineRun.count).not.toHaveBeenCalled();
   });
 
   it('gives every approval on one run the same number', async () => {
-    const rows = await withCounts([3], [approval({ id: 'sr-1' }), approval({ id: 'sr-2' })]);
-
-    expect(rows.map((row) => row.runNumber)).toEqual([3, 3]);
-  });
-
-  it('numbers two runs of the same pipeline independently', async () => {
-    const rows = await withCounts(
-      [4, 9],
-      [approval({ id: 'sr-1' }), approval({ id: 'sr-2', runId: 'r2', run: run({ id: 'r2' }) })],
+    prismaMock.stageResult.findMany.mockResolvedValue(
+      [approval({ id: 'sr-1' }), approval({ id: 'sr-2' })] as never,
     );
+    prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
 
-    expect(rows.map((row) => row.runNumber)).toEqual([4, 9]);
+    const rows = await getApprovals();
+
+    expect(rows.map((row) => row.runNumber)).toEqual([7, 7]);
   });
 
-  it('returns null when no count comes back', async () => {
-    const [row] = await withCounts([]);
+  it('carries each run its own number', async () => {
+    prismaMock.stageResult.findMany.mockResolvedValue([
+      approval({ id: 'sr-1' }),
+      approval({ id: 'sr-2', runId: 'r2', run: run({ id: 'r2', runNumber: 9 }) }),
+    ] as never);
+    prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
 
-    expect(row.runNumber).toBe(null);
+    const rows = await getApprovals();
+
+    expect(rows.map((row) => row.runNumber)).toEqual([7, 9]);
   });
 });
 

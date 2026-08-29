@@ -5,6 +5,7 @@ import { toDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
+import { isQueueReachable } from '@/lib/queue/health';
 import type { CustomNode } from '@/lib/types';
 
 jest.mock('@/lib/prisma');
@@ -21,9 +22,16 @@ jest.mock('next/cache', () => ({
 jest.mock('@/lib/queue/runs', () => ({
   enqueuePipelineRun: jest.fn(),
 }));
+// A factory for the same reason as the queue module above: health.ts imports runQueue
+// from it, so an automock would still reach bullmq. These actions only call
+// isQueueReachable.
+jest.mock('@/lib/queue/health', () => ({
+  isQueueReachable: jest.fn(),
+}));
 
 const revalidate = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
 const enqueue = enqueuePipelineRun as jest.MockedFunction<typeof enqueuePipelineRun>;
+const reachable = isQueueReachable as jest.MockedFunction<typeof isQueueReachable>;
 
 
 // `command` is widened to allow null so a case can model a stage the user never
@@ -48,6 +56,7 @@ beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
   enqueue.mockClear();
+  reachable.mockReset().mockResolvedValue(true);
   setSession();
   runTransactionsInline();
   // The sweep runs on every successful save; default it to finding nothing.
@@ -98,7 +107,7 @@ describe('savePipelineDefinition versioning', () => {
     const result = await savePipelineDefinition('p1', nodes, []);
 
     expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ status: 'success', definitionId: 'def-3' });
+    expect(result).toMatchObject({ status: 'success' });
   });
 
   // Postgres jsonb reorders keys, so the stored copy never matches the fresh one
@@ -171,7 +180,7 @@ describe('savePipelineDefinition error handling', () => {
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
     expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ status: 'success', message: 'Pipeline saved', definitionId: 'def-2' });
+    expect(result).toEqual({ status: 'success', message: 'Pipeline saved' });
   });
 
   // The retry is bounded: a collision on every attempt gives up rather than
@@ -336,7 +345,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1' },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', runNumber: 1 },
     }));
   });
 
@@ -444,6 +453,73 @@ describe('addPipelineRun graph validation', () => {
     expect(result).toEqual({
       status: 'error', message: 'Error triggering pipeline. Please try again.',
     });
+  });
+});
+
+/*
+ * The probe is a fast fail, not a second correctness check. enqueueOrDiscardRun still has
+ * to handle a Redis that dies between this call and the add — what this buys is that a
+ * user triggering into an outage already in progress waits 500ms instead of 5s, and
+ * leaves no row behind for the discard to clean up.
+ */
+describe('addPipelineRun queue reachability', () => {
+  const sound = () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(
+      { id: 'def-1', version: 0, graphJson, configJson } as never,
+    );
+    prismaMock.environment.findUnique.mockResolvedValue({
+      id: 'env-1', name: 'prod', type: 'PRODUCTION', requireApproval: false,
+      createdById: null, createdAt: new Date(), updatedAt: new Date(), secrets: [], createdBy: null,
+    } as never);
+    return nodes;
+  };
+
+  it('refuses when the queue cannot be reached', async () => {
+    const nodes = sound();
+    reachable.mockResolvedValue(false);
+
+    expect(await addPipelineRun('p1', 'env-1', nodes, [])).toEqual({
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.',
+    });
+  });
+
+  // The point of probing at all: no row is written, so there is nothing for
+  // enqueueOrDiscardRun to take back and no run number is spent.
+  it('writes no run and attempts no enqueue', async () => {
+    const nodes = sound();
+    reachable.mockResolvedValue(false);
+
+    await addPipelineRun('p1', 'env-1', nodes, []);
+
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Ordering is deliberate: the probe sits after the graph checks, so a pipeline that is
+   * also broken hears about the thing its author can fix rather than about infrastructure.
+   */
+  it('reports a graph problem ahead of an unreachable queue', async () => {
+    const { graphJson, configJson } = toDefinition([], []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(
+      { id: 'def-1', version: 0, graphJson, configJson } as never,
+    );
+    reachable.mockResolvedValue(false);
+
+    expect(await addPipelineRun('p1', 'env-1', [], [])).toEqual({
+      status: 'error', message: 'This pipeline has no stages. Add at least one.',
+    });
+  });
+
+  it('does not probe at all when the caller is not signed in', async () => {
+    signedOut();
+
+    await addPipelineRun('p1', 'env-1', [node('a')], []);
+
+    expect(reachable).not.toHaveBeenCalled();
   });
 });
 

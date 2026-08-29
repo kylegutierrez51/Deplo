@@ -168,6 +168,8 @@ model PipelineRun {
   status       RunStatus  @default(QUEUED)
   trigger      RunTrigger
 
+  runNumber Int
+
   commitSha String?
   branch    String?
 
@@ -186,6 +188,7 @@ model PipelineRun {
   finishedAt DateTime?
   createdAt  DateTime  @default(now())
 
+  @@unique([pipelineId, runNumber])
   @@index([status])
   @@index([pipelineId, createdAt(sort: Desc)])
   @@map("pipeline_runs")

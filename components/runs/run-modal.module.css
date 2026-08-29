@@ -32,6 +32,10 @@ Pipeline Detail
   gap: 4px;
 }
 
+.pipeline-detail .run-number {
+  color: var(--subtitle-clr);
+}
+
 .repo {
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);

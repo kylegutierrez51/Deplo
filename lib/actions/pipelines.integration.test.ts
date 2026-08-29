@@ -15,6 +15,13 @@ beforeEach(async () => setSession((await makeUser()).id));
  * them and the retry loop.
  */
 
+// savePipelineDefinition returns a plain FormState, so a test that needs the row
+// it landed on reads it back rather than taking it from the result.
+const latestDefinitionOf = (pipelineId: string) =>
+  prisma.pipelineDefinition.findFirstOrThrow({
+    where: { pipelineId }, orderBy: { version: 'desc' }, select: { id: true, version: true },
+  });
+
 const versionsOf = (pipelineId: string) =>
   prisma.pipelineDefinition.findMany({
     where: { pipelineId }, orderBy: { version: 'asc' }, select: { version: true },
@@ -47,10 +54,15 @@ describe('version allocation', () => {
     const pipeline = await makePipeline();
     const nodes = [stage('a', { timeout: 30, retries: 2, secrets: { e1: ['s2', 's1'] } })];
 
-    const first = await savePipelineDefinition(pipeline.id, nodes, []);
-    const second = await savePipelineDefinition(pipeline.id, nodes, []);
+    await savePipelineDefinition(pipeline.id, nodes, []);
+    const first = await latestDefinitionOf(pipeline.id);
 
-    expect(second.definitionId).toBe(first.definitionId);
+    await savePipelineDefinition(pipeline.id, nodes, []);
+    const second = await latestDefinitionOf(pipeline.id);
+
+    // The same row, not a fresh one the sweep happened to reduce back to a count of one.
+    expect(second.id).toBe(first.id);
+    expect(second.version).toBe(first.version);
     expect(await prisma.pipelineDefinition.count({ where: { pipelineId: pipeline.id } })).toBe(1);
   });
 
@@ -61,8 +73,9 @@ describe('version allocation', () => {
     const pipeline = await makePipeline();
 
     // v0, kept alive by a run that references it.
-    const v0 = await savePipelineDefinition(pipeline.id, [stage('a')], []);
-    await makeRun(pipeline.id, v0.definitionId!, user.id);
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+    const v0 = await latestDefinitionOf(pipeline.id);
+    await makeRun(pipeline.id, v0.id, user.id);
 
     // v1 and v2 are unreferenced, so saving v3 sweeps them away.
     await savePipelineDefinition(pipeline.id, [stage('a'), stage('b')], []);
@@ -97,12 +110,15 @@ describe('the unique constraint the retry loop exists for', () => {
 
     const succeeded = results.filter(r => r.status === 'success');
 
-    // Every caller that succeeded must have got a distinct row, and no version
-    // may be reused.
+    // No version may be reused, and no caller may be left holding an error: three
+    // racers is exactly what SAVE_ATTEMPTS is sized for, so the loser of every
+    // collision has an attempt left to re-read and win a later number.
+    //
+    // Which row each caller landed on is no longer assertable — the result carries
+    // no id, and the sweep each save runs deletes the losing rows' evidence.
     const versions = await versionsOf(pipeline.id);
     expect(new Set(versions).size).toBe(versions.length);
-    expect(succeeded.length).toBeGreaterThan(0);
-    expect(new Set(succeeded.map(r => r.definitionId)).size).toBe(succeeded.length);
+    expect(succeeded.length).toBe(results.length);
   });
 
   it('keeps versions unique per pipeline, not globally', async () => {
@@ -143,8 +159,9 @@ describe('the sweep and ON DELETE RESTRICT', () => {
     const user = await makeUser();
     const pipeline = await makePipeline();
 
-    const first = await savePipelineDefinition(pipeline.id, [stage('a')], []);
-    await makeRun(pipeline.id, first.definitionId!, user.id);
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+    const first = await latestDefinitionOf(pipeline.id);
+    await makeRun(pipeline.id, first.id, user.id);
     await savePipelineDefinition(pipeline.id, [stage('a'), stage('b')], []);
 
     expect(await prisma.pipelineDefinition.count({ where: { pipelineId: pipeline.id } })).toBe(2);
@@ -156,8 +173,9 @@ describe('the sweep and ON DELETE RESTRICT', () => {
     const user = await makeUser();
     const pipeline = await makePipeline();
 
-    const first = await savePipelineDefinition(pipeline.id, [stage('a')], []);
-    await makeRun(pipeline.id, first.definitionId!, user.id);
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+    const first = await latestDefinitionOf(pipeline.id);
+    await makeRun(pipeline.id, first.id, user.id);
 
     const second = await savePipelineDefinition(pipeline.id, [stage('a'), stage('b')], []);
 

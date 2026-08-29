@@ -10,7 +10,7 @@ export type Approval = {
   id: string;
   stageId: string;
   runId: string;
-  runNumber: number | null;
+  runNumber: number;
   waitingTime: string;
   createdBy: string | null;
   stageName: string;
@@ -48,23 +48,6 @@ const approvalRunInclude = {
   stages: { orderBy: [{ stageId: 'asc' as const }, { attempt: 'asc' as const }] },
 };
 
-async function getRunNumbersById(
-  runs: { id: string, pipelineId: string, createdAt: Date }[]
-): Promise<Map<string, number>> {
-  const unique = [...new Map(runs.map((run) => [run.id, run])).values()];
-
-  const counts = await prisma.$transaction(
-    unique.map((run) => (
-      prisma.pipelineRun.count({
-        where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } }
-      })
-    )
-  ));
-
-  return new Map(unique.map((run, i) => [run.id, counts[i]]));
-}
-
-
 export async function getApprovals(): Promise<Approval[]> {
   const approvalStages = await prisma.stageResult.findMany({
     where: { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' },
@@ -72,13 +55,8 @@ export async function getApprovals(): Promise<Approval[]> {
     include: { run: { include: approvalRunInclude } },
   });
 
+  const commitMessageByRunId = await getCommitMessagesByRunId(approvalStages.map((a) => a.runId))
 
-  const runs = approvalStages.map((a) => a.run);
-
-  const [commitMessageByRunId, runNumberById ] = await Promise.all([
-    getCommitMessagesByRunId(approvalStages.map((a) => a.runId)),
-    getRunNumbersById(runs)
-  ])
 
   return approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
@@ -91,7 +69,7 @@ export async function getApprovals(): Promise<Approval[]> {
       id: approvalStage.id,
       stageId: approvalStage.stageId,
       runId: run.id,
-      runNumber: runNumberById.get(run.id) ?? null,
+      runNumber: run.runNumber,
       waitingTime: getDuration(approvalStage.startedAt ?? approvalStage.createdAt),
       createdBy: run.triggeredBy?.name ?? null,
       pipelineName: run.pipeline.name,

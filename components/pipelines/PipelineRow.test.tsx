@@ -27,7 +27,7 @@ const pipeline = (over: Partial<Pipeline> = {}): Pipeline => ({
   updatedAt: new Date('2026-01-01T00:00:00Z'),
   status: 'succeeded',
   lastRun: 'run-9',
-  runCount: 12,
+  runNumber: 12,
   commitMessage: 'Fix the thing',
   ...over,
 });
@@ -100,11 +100,11 @@ describe('no repository', () => {
     expect(repository()).not.toHaveTextContent('Fix the thing');
   });
 
-  it('keeps the name, run count and status', () => {
+  it('keeps the name, latest run number and status', () => {
     setup({ repoUrl: null });
 
     expect(screen.getByText('CI')).toBeInTheDocument();
-    expect(screen.getByText('12 Runs')).toBeInTheDocument();
+    expect(screen.getByText('Latest Run: #12')).toBeInTheDocument();
     expect(screen.getByText('Succeeded')).toBeInTheDocument();
   });
 

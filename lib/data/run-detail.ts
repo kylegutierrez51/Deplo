@@ -238,8 +238,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     status: s.status,
   }));
 
-  const [runNumber, commitMessage, secrets] = await Promise.all([
-    prisma.pipelineRun.count({ where: { pipelineId: run.pipelineId, createdAt: { lte: run.createdAt } } }),
+  const [commitMessage, secrets] = await Promise.all([
     getCommitMessage(run.id),
     run.environmentId
       ? prisma.secret.findMany({ where: { environmentId: run.environmentId }, select: { id: true, key: true } })
@@ -254,7 +253,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
   );
 
   return {
-    runNumber,
+    runNumber: run.runNumber,
     nodes: detailedNodes,
     edges,
     pipelineName: run.pipeline.name,

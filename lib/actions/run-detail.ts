@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
 import { auth } from '@/auth';
-import { enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { isQueueReachable } from '../queue/health';
 
 const RETRYABLE: Record<PrismaRunStatus, boolean> = {
   QUEUED: false, RUNNING: false, SUCCEEDED: true, FAILED: true, CANCELLED: true
@@ -38,16 +39,21 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       message: 'This run has not finished yet.'
     }
 
-    const retry = await prisma.pipelineRun.create({
-      select: { id: true },
-      data: {
-        pipelineId: run.pipelineId,
-        definitionId: run.definitionId,
-        environmentId: run.environmentId,
-        trigger: 'MANUAL',
-        triggeredById
-      }
+    // When redis is down, this guard lets user waits <= 500ms instead of 5000ms.
+    // Since it caches, each subsequent trigger in the next 5 seconds makes user wait less than 500ms
+    if (!await isQueueReachable()) return {
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.'
+    }
+
+    const retry = await createPipelineRun({ 
+      pipelineId: run.pipelineId, 
+      environmentId: run.environmentId,
+      definitionId: run.definitionId, 
+      trigger: 'manual',  
+      triggeredById, 
     });
+
 
     // Takes the row back rather than leaving it stranded at QUEUED — see run-trigger.ts.
     if (!await enqueueOrDiscardRun(retry.id)) return {

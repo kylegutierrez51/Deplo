@@ -257,3 +257,74 @@ describe('getRunnerAvailability', () => {
     }
   });
 });
+
+describe('isQueueReachable', () => {
+  it('lets a trigger through when a worker is consuming the run queue', async () => {
+    workersCount(async () => 1);
+
+    await jest.isolateModulesAsync(async () => {
+      const { isQueueReachable } = await import('./health');
+      expect(await isQueueReachable()).toBe(true);
+    });
+  });
+
+  /*
+   * The distinction the reason code exists for. Redis answered, so queue.add will land and
+   * the run waits at QUEUED until a worker comes back — nothing has failed, and refusing the
+   * trigger here would turn "start it when the runner returns" into an error the user has to
+   * act on. It is also the flappy reading: a worker recycling its blocking connection reports
+   * zero for about a second every thirty.
+   */
+  it('lets a trigger through when the queue has no consumers', async () => {
+    workersCount(async () => 0);
+
+    await jest.isolateModulesAsync(async () => {
+      const { isQueueReachable } = await import('./health');
+      expect(await isQueueReachable()).toBe(true);
+    });
+  });
+
+  /*
+   * The whole point of not going through getRunnerAvailability. One failed probe is enough:
+   * the grace window withholds this same reading from the banner for another fifteen seconds,
+   * and waiting it out here would wave through exactly the burst of triggers this exists to
+   * refuse — each one writing a run row that enqueueOrDiscardRun then has to delete.
+   */
+  it('refuses on the first unreachable probe, without waiting out the grace window', async () => {
+    workersCount(() => Promise.reject(new Error('ECONNREFUSED')));
+
+    await jest.isolateModulesAsync(async () => {
+      const { getRunnerAvailability, isQueueReachable } = await import('./health');
+
+      expect(await isQueueReachable()).toBe(false);
+      // Same probe, same instant: the banner is still deliberately claiming otherwise.
+      expect(await getRunnerAvailability()).toEqual({ available: true });
+    });
+  });
+
+  it('reads unreachable when the queue cannot even be constructed', async () => {
+    queue.mockImplementation(() => { throw new Error('REDIS_HOST is not set'); });
+
+    await jest.isolateModulesAsync(async () => {
+      const { isQueueReachable } = await import('./health');
+      expect(await isQueueReachable()).toBe(false);
+    });
+  });
+
+  // Both readers draw on one probe, so a user clicking Run repeatedly during an outage is
+  // answered immediately and costs a single round trip.
+  it('shares the cached probe with getRunnerAvailability', async () => {
+    const getWorkersCount = jest.fn<Promise<number>, []>().mockResolvedValue(1);
+    queue.mockReturnValue({ getWorkersCount } as unknown as ReturnType<typeof runQueue>);
+
+    await jest.isolateModulesAsync(async () => {
+      const { getRunnerAvailability, isQueueReachable } = await import('./health');
+
+      await getRunnerAvailability();
+      await isQueueReachable();
+      await isQueueReachable();
+    });
+
+    expect(getWorkersCount).toHaveBeenCalledTimes(1);
+  });
+});
