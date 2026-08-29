@@ -19,15 +19,44 @@ const globalForHealth = global as unknown as { runnerHealth?: HealthState };
 
 const state = (): HealthState => (globalForHealth.runnerHealth ??= { cached: null, unhealthySince: null });
 
-export async function getRunnerAvailability(): Promise<RunnerAvailability> {
+
+async function probeCached(): Promise<RunnerAvailability> {
   const health = state();
 
   if (health.cached && (Date.now() - health.cached.at) < CACHE_TTL_MS) return health.cached.availability;
 
-  const availability = settle(await probe());
+  const availability = await probe();
   health.cached = { at: Date.now(), availability };
 
   return availability;
+}
+
+
+// used to display RunStatusBanner in run detail page
+// settle makes the cache wait for the 'unhealthySince' grace before returning 'available: false'
+export async function getRunnerAvailability(): Promise<RunnerAvailability> {
+  return settle(await probeCached());
+}
+
+
+// used before creating a pipeline run, ignores 'unhealthySince' grace
+// "reason: 'no-workers'" returns true since queueWorker() recycles its blocking connection for ~1 second every 30 seconds. So it must not block a trigger.
+export async function isQueueReachable(): Promise<boolean> {
+  const probed = await probeCached();
+
+  return probed.available || probed.reason !== 'unreachable';
+}
+
+
+// checks if runner/redis is currently available
+async function probe(): Promise<RunnerAvailability> {
+  try {
+    const workers = await withTimeout(runQueue().getWorkersCount(), PROBE_TIMEOUT_MS, 'runner probe');
+
+    return workers > 0 ? { available: true } : { available: false, reason: 'no-workers' }; // runner issue
+  } catch {
+    return { available: false, reason: 'unreachable' }; // redis issue
+  }
 }
 
 
@@ -51,16 +80,4 @@ function settle(probed: RunnerAvailability): RunnerAvailability {
   health.unhealthySince ??= Date.now();
 
   return (Date.now() - health.unhealthySince) < UNHEALTHY_GRACE_MS ? { available: true } : probed;
-}
-
-
-// essentially checks if runner/redis is currently available
-async function probe(): Promise<RunnerAvailability> {
-  try {
-    const workers = await withTimeout(runQueue().getWorkersCount(), PROBE_TIMEOUT_MS, 'runner probe');
-
-    return workers > 0 ? { available: true } : { available: false, reason: 'no-workers' };
-  } catch {
-    return { available: false, reason: 'unreachable' };
-  }
 }

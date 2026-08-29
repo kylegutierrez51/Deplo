@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { isQueueReachable } from '../queue/health';
 
 const RETRYABLE: Record<PrismaRunStatus, boolean> = {
   QUEUED: false, RUNNING: false, SUCCEEDED: true, FAILED: true, CANCELLED: true
@@ -36,6 +37,13 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
     if (!RETRYABLE[run.status]) return {
       status: 'error',
       message: 'This run has not finished yet.'
+    }
+
+    // When redis is down, this guard lets user waits <= 500ms instead of 5000ms.
+    // Since it caches, each subsequent trigger in the next 5 seconds makes user wait less than 500ms
+    if (!await isQueueReachable()) return {
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
 
     const retry = await createPipelineRun({ 

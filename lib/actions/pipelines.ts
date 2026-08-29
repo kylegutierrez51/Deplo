@@ -10,6 +10,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
 import { enqueueOrDiscardRun, createPipelineRun } from '@/lib/actions/run-trigger';
+import { isQueueReachable } from '../queue/health';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -273,6 +274,13 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     const isReadyState = await verifyPipelineRunReady({ graphJson, configJson }, environmentId);
 
     if (isReadyState.status === 'error') return isReadyState;
+
+    // When redis is down, this guard lets user waits <= 500ms instead of 5000ms
+    // Since it caches, each subsequent trigger in the next 5 seconds makes user wait less than 500ms
+    if (!await isQueueReachable()) return {
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.'
+    }
 
     const pipeline = await createPipelineRun({ 
       pipelineId, triggeredById, environmentId,
