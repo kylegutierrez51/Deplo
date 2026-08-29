@@ -1,5 +1,16 @@
 import prisma from '@/lib/prisma';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
+import type { RunTrigger as PrismaRunTrigger } from '@/generated/prisma';
+import { Prisma } from '@/generated/prisma/client';
+import type { RunTrigger } from '../types';
+
+const RUN_NUMBER_ATTEMPTS = 3;
+
+const TRIGGER_MAP: Record<RunTrigger, PrismaRunTrigger> = {
+  webhook: 'WEBHOOK',
+  manual: 'MANUAL',
+  api: 'API'
+}
 
 /*
 ==============================================================================================
@@ -36,3 +47,35 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function createPipelineRun(data: {
+  pipelineId: string,
+  definitionId: string,
+  trigger: RunTrigger,
+  triggeredById: string,
+  environmentId: string | null
+}): Promise<{ id: string }> {
+  for (let attempt = 1; attempt <= RUN_NUMBER_ATTEMPTS; attempt++) {
+    try {
+      const latest = await prisma.pipelineRun.findFirst({
+        select: { runNumber: true },
+        orderBy: { runNumber: 'desc' },
+        where: { pipelineId: data.pipelineId }
+      });
+
+      return await prisma.pipelineRun.create({
+        select: { id: true },
+        data: { ...data, trigger: TRIGGER_MAP[data.trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
+      });
+    } catch (error: unknown) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError 
+          && error.code === 'P2002'
+          && attempt < RUN_NUMBER_ATTEMPTS ) continue;
+        throw error;
+    }
+  }
+
+  // TypeScript cannot prove the loop runs at all, so the function needs an exit here.
+  throw new Error(`could not allocate a run number for pipeline ${data.pipelineId}`);
+}
+

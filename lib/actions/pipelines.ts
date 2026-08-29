@@ -1,6 +1,6 @@
 "use server"
 
-import { FormState, type ConfigJson, type CustomNode, type GraphJson, type SaveDefinitionResult } from '@/lib/types';
+import { FormState, type ConfigJson, type CustomNode, type GraphJson } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { auth } from '@/auth';
@@ -9,7 +9,7 @@ import type { Edge } from '@xyflow/react';
 import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
-import { enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { enqueueOrDiscardRun, createPipelineRun } from '@/lib/actions/run-trigger';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -134,7 +134,7 @@ export async function deletePipeline(id: string): Promise<FormState> {
 
 
 // a save inserts an entirely new row with an incremented version
-export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<SaveDefinitionResult> {
+export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
   const session = await auth();
   const createdById = session?.user?.id ?? null;
 
@@ -147,8 +147,7 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
     try {
-      const definitionId = await prisma.$transaction(async (tx) => {
-        const latest = await tx.pipelineDefinition.findFirst({
+        const latest = await prisma.pipelineDefinition.findFirst({
           where: { pipelineId },
           orderBy: { version: 'desc' },
           select: { id: true, version: true, graphJson: true, configJson: true },
@@ -156,11 +155,14 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
 
         // A save that changed nothing reuses the current version instead of creating a duplicate
         // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save' 
-        if (latest && definitionsEqual({ graphJson, configJson }, latest)) return latest.id;
+        if (latest && definitionsEqual({ graphJson, configJson }, latest)) return {
+          status: 'success',
+          message: 'Pipeline saved'
+        }
 
         // Versions are monotonic and never reused, so the sweep below leaves
         // them sparse (0, 1, 4, 9...) — a version is the nth edit ever made.
-        const created = await tx.pipelineDefinition.create({
+        const created = await prisma.pipelineDefinition.create({
           data: {
             pipelineId,
             version: (latest?.version ?? -1) + 1,
@@ -171,18 +173,16 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
           select: { id: true },
         });
 
-        return created.id;
-      });
+    
 
-      await deleteStaleDefinitions(pipelineId, definitionId);
+      await deleteStaleDefinitions(pipelineId, created.id);
 
       revalidatePath('/pipelines');
       revalidatePath(`/pipelines/${pipelineId}`);
 
       return {
         status: 'success',
-        message: 'Pipeline saved',
-        definitionId
+        message: 'Pipeline saved'
       };
 
     } catch (error: unknown) {
@@ -274,15 +274,14 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
     if (isReadyState.status === 'error') return isReadyState;
 
-    const pipelineRun = await prisma.pipelineRun.create({
-      select: { id: true },
-      data: {
-        pipelineId, definitionId: latest.id, trigger: "MANUAL", triggeredById, environmentId
-      }
+    const pipeline = await createPipelineRun({ 
+      pipelineId, triggeredById, environmentId,
+      definitionId: latest.id, 
+      trigger: 'manual',  
     });
 
     // Takes the row back rather than leaving it stranded at QUEUED — see run-trigger.ts.
-    if (!await enqueueOrDiscardRun(pipelineRun.id)) return {
+    if (!await enqueueOrDiscardRun(pipeline.id)) return {
       status: 'error',
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
@@ -293,7 +292,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     return {
       status: 'success',
       message: 'Pipeline Run Triggered!',
-      runId: pipelineRun.id
+      runId: pipeline.id
     };
 
   } catch (error: unknown) {
