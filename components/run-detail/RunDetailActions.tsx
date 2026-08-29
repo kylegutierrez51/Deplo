@@ -23,8 +23,6 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
   const readyToCancel = () => ['queued', 'running'].includes(status)
   const readyToRetry = () => ['succeeded', 'failed', 'cancelled'].includes(status)
 
-
-
   const handleCancelRun = async () => {
     startCancelTransition(async () => {
       if (!readyToCancel()) return;
@@ -33,9 +31,7 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
       showToast({
         text: result.message,
         icon: result.status !== 'success' ? 'close-circle-outline' : 'checkmark-circle-outline',
-      }
-
-      );
+      });
       setCancelModal(false);
     });
   }
@@ -51,9 +47,7 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
         icon: failed ? 'close-circle-outline' : 'checkmark-circle-outline',
         link: result.runId ? `/runs/${result.runId}` : undefined,
         options: { sticky: true },
-      }
-
-      );
+      });
     });
   }
 
