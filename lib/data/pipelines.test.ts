@@ -21,7 +21,6 @@ const row = (over: Record<string, unknown> = {}) => ({
   createdAt: new Date('2026-01-01T00:00:00Z'),
   updatedAt: new Date('2026-01-01T00:00:00Z'),
   runs: [],
-  _count: { runs: 0 },
   ...over,
 });
 
@@ -49,6 +48,8 @@ describe('getPipelines status', () => {
 
     expect(pipeline.status).toBe('idle');
     expect(pipeline.lastRun).toBeNull();
+    // There is no run to take a number from, and reading one off runs[0] threw here.
+    expect(pipeline.runNumber).toBeUndefined();
   });
 
   it('takes only the newest run to decide status', async () => {
@@ -76,16 +77,15 @@ describe('getPipelines status', () => {
     expect(pipeline.lastRun).toBe('r1');
   });
 
-  it('surfaces the run count and drops the raw relation', async () => {
+  it('surfaces the newest run number and drops the raw relation', async () => {
     prismaMock.pipeline.findMany.mockResolvedValue([
-      row({ runs: [run('SUCCEEDED')], _count: { runs: 12 } }),
+      row({ runs: [{ ...run('SUCCEEDED'), runNumber: 12 }] }),
     ] as never);
 
     const [pipeline] = await getPipelines();
 
-    expect(pipeline.runCount).toBe(12);
+    expect(pipeline.runNumber).toBe(12);
     expect(pipeline).not.toHaveProperty('runs');
-    expect(pipeline).not.toHaveProperty('_count');
   });
 });
 

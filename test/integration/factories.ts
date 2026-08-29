@@ -3,6 +3,7 @@ import { toDefinition } from '@/lib/pipeline/definition';
 import type { CustomNode } from '@/lib/types';
 import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
+import { createPipelineRun } from '@/lib/actions/run-trigger';
 
 /*
  * Small builders for integration tests. Deliberately not prisma/seed.ts, which
@@ -55,10 +56,16 @@ export function makeDefinition(pipelineId: string, version: number, nodes: Custo
   });
 }
 
-export function makeRun(pipelineId: string, definitionId: string, triggeredById: string) {
-  return prisma.pipelineRun.create({
-    data: { pipelineId, definitionId, trigger: 'MANUAL', triggeredById },
+// Goes through createPipelineRun rather than inserting directly, so runNumber is
+// minted the way production mints it and the [pipelineId, runNumber] constraint is
+// exercised by every test that makes a run. It selects only the id, so the row is
+// read back to keep the full PipelineRun these tests expect.
+export async function makeRun(pipelineId: string, definitionId: string, triggeredById: string) {
+  const { id } = await createPipelineRun({
+    pipelineId, definitionId, triggeredById, trigger: 'manual', environmentId: null,
   });
+
+  return prisma.pipelineRun.findUniqueOrThrow({ where: { id } });
 }
 
 export const stage = (id: string, over: Partial<CustomNode['data']> = {}): CustomNode => ({
