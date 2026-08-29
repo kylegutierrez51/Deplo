@@ -4,6 +4,7 @@ import { retryRun, cancelRun } from '@/lib/actions/run-detail';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
+import { isQueueReachable } from '@/lib/queue/health';
 import type { RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
 
 jest.mock('@/lib/prisma');
@@ -16,6 +17,12 @@ jest.mock('next/cache', () => ({
 // ioredis and opens a socket. This action only ever calls enqueuePipelineRun.
 jest.mock('@/lib/queue/runs', () => ({
   enqueuePipelineRun: jest.fn(),
+}));
+// A factory for the same reason as the queue module above: health.ts imports runQueue
+// from it, so an automock would still reach bullmq. These actions only call
+// isQueueReachable.
+jest.mock('@/lib/queue/health', () => ({
+  isQueueReachable: jest.fn(),
 }));
 
 /*
@@ -38,6 +45,7 @@ jest.mock('@/lib/queue/runs', () => ({
 
 const revalidate = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
 const enqueue = enqueuePipelineRun as jest.MockedFunction<typeof enqueuePipelineRun>;
+const reachable = isQueueReachable as jest.MockedFunction<typeof isQueueReachable>;
 
 /** The old run as findUnique's `select` returns it. */
 const existingRun = (status: PrismaRunStatus = 'FAILED') =>
@@ -61,6 +69,7 @@ beforeEach(() => {
   revalidate.mockClear();
   enqueue.mockClear();
   enqueue.mockResolvedValue(undefined);
+  reachable.mockReset().mockResolvedValue(true);
   setSession();
   existingRun();
   created();
@@ -331,6 +340,49 @@ describe('when the insert fails', () => {
  * command, and writes the row itself. Sweeping it here would race the runner for a row it
  * still holds, and record a stage as cancelled while its command was still executing.
  */
+/*
+ * Same fast fail as addPipelineRun. A retry is a fresh row, so an unreachable queue would
+ * otherwise mint one, spend a run number on it, and delete it 5s later.
+ */
+describe('retrying into an unreachable queue', () => {
+  it('refuses with the job queue message', async () => {
+    reachable.mockResolvedValue(false);
+
+    expect(await retry()).toEqual({
+      status: 'error',
+      message: 'Could not reach the job queue, so the run was not started. Please try again.',
+    });
+  });
+
+  it('writes no row and attempts no enqueue', async () => {
+    reachable.mockResolvedValue(false);
+
+    await retry();
+
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  // The probe sits after the RETRYABLE guard, so a run that is still going is told so
+  // rather than being blamed on the queue.
+  it('reports an unfinished run ahead of an unreachable queue', async () => {
+    existingRun('RUNNING');
+    reachable.mockResolvedValue(false);
+
+    expect(await retry()).toEqual({
+      status: 'error', message: 'This run has not finished yet.',
+    });
+  });
+
+  it('does not probe at all when the run no longer exists', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(null as never);
+
+    await retry();
+
+    expect(reachable).not.toHaveBeenCalled();
+  });
+});
+
 describe('cancelRun', () => {
   const swept = () => prismaMock.stageResult.updateMany.mock.calls[0][0];
   /** The statuses the sweep named, cast past Prisma's filter union. */
