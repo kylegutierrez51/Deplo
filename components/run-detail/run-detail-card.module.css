@@ -176,7 +176,7 @@
   background-color: rgba(248, 113, 113, 0.06);
 }
 
-.rdc-btn-cancel:hover {
+.rdc-btn-cancel:hover:not(:disabled) {
   background-color: var(--red-btn-hover-clr);
 }
 
@@ -186,8 +186,14 @@
   background-color: transparent;
 }
 
-.rdc-btn-rerun:hover {
+.rdc-btn-rerun:hover:not(:disabled) {
   background-color: var(--gray-clr);
+}
+
+.rdc-btn-cancel:disabled,
+.rdc-btn-rerun:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .rdc-btn-cancel ion-icon,
