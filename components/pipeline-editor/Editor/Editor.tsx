@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState, useEffect, type CSSProperties } from 'react';
+import { useRef, useState, useEffect, type CSSProperties } from 'react';
 import { ReactFlow, Background, Controls, Panel, type Edge, type ReactFlowInstance, type OnNodesDelete, type NodeMouseHandler, type EdgeMouseHandler } from '@xyflow/react';
 import type { CustomNode } from '@/lib/types';
 import { usePipelineGraph } from '@/components/pipeline-editor/PipelineGraphProvider';
@@ -38,7 +38,7 @@ export default function Editor() {
   const [toggleStageSidebar, setToggleStageSidebar] = useState<boolean>(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const onAddStage = useCallback(() => {
+  const onAddStage = () => {
     const wrapperBounds = wrapperRef.current?.getBoundingClientRect();
     if (!wrapperBounds || !reactFlowInstanceRef.current) return;
 
@@ -49,7 +49,7 @@ export default function Editor() {
     const newNode: CustomNode = { id: crypto.randomUUID(), position, data: { type: 'custom' }, type: 'standardStage' };
     setNodes((nodes) => [...nodes, newNode]);
     setPast(prevPast => [...prevPast, { ...newNode, operation: 'delete' }]);
-  }, [setNodes, setPast]);
+  };
 
   const onEdgeContextMenu: EdgeMouseHandler<Edge> = (event, edge) => {
     event.preventDefault();
