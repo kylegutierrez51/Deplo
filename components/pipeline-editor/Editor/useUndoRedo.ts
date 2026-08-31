@@ -1,4 +1,4 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { addEdge, type Edge } from '@xyflow/react';
 import { CustomNode } from '@/lib/types';
 
@@ -14,7 +14,7 @@ export function useUndoRedo(
   const [past, setPast] = useState<HistoryItem[]>([]);
   const [future, setFuture] = useState<HistoryItem[]>([]);
 
-  const undo = useCallback(() => {
+  const undo = () => {
     if (!past.length) return;
     const item = past.at(-1);
     setPast(prev => prev.slice(0, -1));
@@ -52,9 +52,9 @@ export function useUndoRedo(
         setNodes((nodes) => [...nodes, restoredNode]);
       }
     }
-  }, [past, edges, nodes, setEdges, setNodes]);
+  };
 
-  const redo = useCallback(() => {
+  const redo = () => {
     if (!future.length) return;
     const item = future.at(-1);
     setFuture(prev => prev.slice(0, -1));
@@ -92,7 +92,7 @@ export function useUndoRedo(
         setNodes((nodes) => [...nodes, restoredNode]);
       }
     }
-  }, [future, edges, nodes, setEdges, setNodes]);
+  };
 
   return { setPast, setFuture, undo, redo };
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, createContext, useContext, useRef, useState, type ReactNode, Dispatch, SetStateAction } from "react";
+import { createContext, useContext, useRef, useState, type ReactNode, Dispatch, SetStateAction } from "react";
 import { useUndoRedo, type HistoryItem } from './Editor/useUndoRedo';
 import { useNodesState, useEdgesState, addEdge, reconnectEdge, OnEdgesChange, type OnNodesChange, type OnNodeDrag, type OnEdgesDelete, type OnReconnect, type Connection, type Edge, type XYPosition } from '@xyflow/react';
 import type { CustomNode } from '@/lib/types';
@@ -51,15 +51,15 @@ export function PipelineGraphProvider({ children, pipelineId, initialNodes, init
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(initialEnvironmentId);
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
 
-  const updateNodeData = useCallback((id: string, patch: Record<string, unknown>) => {
+  const updateNodeData = (id: string, patch: Record<string, unknown>) => {
     setNodes(nodes => nodes.map(n => n.id === id ? { ...n, data: { ...n.data, ...patch } } : n));
-  }, [setNodes]);
+  };
 
-  const onConnect = useCallback((params: Connection) => {
+  const onConnect = (params: Connection) => {
     const edge: Edge = { ...params, id: crypto.randomUUID(), markerEnd: 'marker', type: 'customEdge' };
     setEdges((edges) => addEdge(edge, edges));
     setPast(prevPast => [...prevPast, { ...edge, operation: 'delete' }]);
-  }, [setEdges, setPast]);
+  };
 
   // used for when user presses 'Backspace' or 'Del' key on edge
   const onEdgesDelete: OnEdgesDelete<Edge> = (deletedEdges) => {
