@@ -2,19 +2,21 @@
 
 import styles from './sidebar.module.css';
 import Link from 'next/link';
+import { useSidebar } from './SidebarContext';
 
 interface TopbarProps {
   activeItem: string | undefined;
   showToggle: boolean;
-  handleToggle: (() => void) | undefined;
 }
 
-export default function Topbar({ activeItem, showToggle, handleToggle }: TopbarProps) {
+export default function Topbar({ activeItem, showToggle }: TopbarProps) {
+  const { toggle } = useSidebar();
+
   return (
     <>
       {activeItem === 'run-detail' ? (
         <div className={styles.topbar}>
-          <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={handleToggle}>
+          <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={toggle} aria-label="Toggle sidebar">
             <ion-icon name="menu-outline"></ion-icon>
           </button>
 
@@ -24,7 +26,7 @@ export default function Topbar({ activeItem, showToggle, handleToggle }: TopbarP
           </Link>
         </div>
       ) : showToggle && (
-        <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={handleToggle}>
+        <button className={styles["sidebar-toggle"]} id="sidebarToggle" onClick={toggle} aria-label="Toggle sidebar">
           <ion-icon name="menu-outline"></ion-icon>
         </button>
       )}

@@ -83,3 +83,22 @@ test('two stages can be added and both persist', async ({ page }) => {
   await page.goto(`/pipelines/${id}`);
   await expect(page.locator('.react-flow__node')).toHaveCount(2);
 });
+
+// pipeline editor sidebar's 'menu toggle' is laid out differently from every other page
+test('the editor header toggle drives the shared sidebar', async ({ page }) => {
+  await newPipeline(page);
+
+  const toggle = page.getByRole('button', { name: 'Toggle sidebar' });
+  await expect(toggle).toHaveCount(1);
+
+  const sidebar = page.locator('aside:has(nav[aria-label="Main"])');
+  await expect(sidebar).toHaveClass(/sidebar-closed/);
+
+  await toggle.click();
+  await expect(sidebar).toHaveClass(/sidebar-open/);
+
+  await sidebar.getByRole('link', { name: 'Pipelines' }).click();
+  await expect(page).toHaveURL('/pipelines');
+
+  await expect(sidebar).toHaveClass(/sidebar-open/);
+});
