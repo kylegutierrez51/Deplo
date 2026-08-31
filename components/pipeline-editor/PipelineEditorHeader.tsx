@@ -4,7 +4,7 @@ import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
 import HeaderButtons from './HeaderButtons';
 import EnvironmentSelect from './EnvironmentSelect';
-import { MainSidebarToggle } from './PipelineEditorChrome';
+import { MainSidebarToggle } from '../layout/sidebar/SidebarContext';
 import { usePipelineGraph } from './PipelineGraphProvider';
 import type { Environment } from '@/lib/data/environments';
 

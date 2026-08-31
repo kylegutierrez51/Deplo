@@ -7,18 +7,15 @@ type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'se
 
 interface SidebarProps {
   activeItem?: ActiveItem;
-  // below are used by Pipeline Editor page only
-  showToggle?: boolean;
-  open?: boolean;
-  onToggle?: () => void;
+  showToggle?: boolean; // used by Pipeline Editor page
 }
 
-export default function Sidebar({ activeItem, showToggle = true, open, onToggle }: SidebarProps) {
+export default function Sidebar({ activeItem, showToggle = true }: SidebarProps) {
 
   const activePage = (item: ActiveItem) => activeItem === item ? styles['nav-item-active'] : undefined;
 
   return (
-    <SidebarShell activeItem={activeItem} showToggle={showToggle} open={open} onToggle={onToggle}>
+    <SidebarShell activeItem={activeItem} showToggle={showToggle}>
       <nav className={styles['sidebar-nav']} aria-label="Main">
         <div className={styles['sidebar-content']}>
           <span className={styles.subtitle}>DEPLOY</span>

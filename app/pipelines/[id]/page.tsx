@@ -1,7 +1,7 @@
 import styles from "./pipeline-editor.module.css";
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import { PipelineEditorChrome, SidebarSlot } from "@/components/pipeline-editor/PipelineEditorChrome";
+import { PipelineEditorChrome } from "@/components/pipeline-editor/PipelineEditorChrome";
 import { PipelineGraphProvider } from "@/components/pipeline-editor/PipelineGraphProvider";
 import Editor from "@/components/pipeline-editor/Editor/Editor";
 import { getEnvironments } from "@/lib/data/environments";
@@ -33,9 +33,7 @@ export default async function PipelineEditor({ params, searchParams }: EditorPro
 
   return (
     <PipelineEditorChrome>
-      <SidebarSlot>
-        <Sidebar activeItem="pipelines" showToggle={false} />
-      </SidebarSlot>
+      <Sidebar activeItem="pipelines" showToggle={false} />
 
       <PipelineGraphProvider pipelineId={id} initialNodes={nodes} initialEdges={edges} initialEnvironmentId={initialEnvironmentId} secrets={secrets}>
         <PipelineEditorHeader
