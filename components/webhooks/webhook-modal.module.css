@@ -200,11 +200,15 @@ Webhook Secret Input
 .secretInput {
   width: 100%;
   padding-left: 34px;
-  padding-right: 76px;
+  padding-right: var(--space-md);
   border-radius: var(--radius-lg);
   background-color: rgb(48, 48, 48);
   border: 1px solid gray;
   letter-spacing: 0.06em;
+}
+
+.secretInput.padded {
+  padding-right: 74px;
 }
 
 .secretActions {
