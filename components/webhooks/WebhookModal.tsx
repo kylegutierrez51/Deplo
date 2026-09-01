@@ -103,6 +103,7 @@ export default function WebhookModal({
 
 
   const handleDeleteClose = () => {
+    setDeleteModal(false);
     onEditOrDeleteClose();
   }
 
