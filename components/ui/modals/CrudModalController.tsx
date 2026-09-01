@@ -26,12 +26,12 @@ export default function CrudModalController<T extends { id: string }, Extra exte
 }) {
   const router = useRouter();
   const [modalKey, setModalKey] = useState(0);
-  const toast = useToast();
+  const { showToast } = useToast();
 
   const onClose = () => router.push(basePath); // clear modal query params
 
   const onCreate = () => {
-    toast.showToast({
+    showToast({
       text: "Created " + recordLabel,
       icon: 'checkmark-circle-outline'
     });
@@ -40,14 +40,14 @@ export default function CrudModalController<T extends { id: string }, Extra exte
   }
 
   const onError = (message: string) => {
-    toast.showToast({
+    showToast({
       text: message,
       icon: 'close-circle-outline'
     });
   }
 
   const onDelete = () => {
-    toast.showToast({
+    showToast({
       text: "Deleted " + recordLabel,
       icon: 'trash-outline'
     });
@@ -65,7 +65,7 @@ export default function CrudModalController<T extends { id: string }, Extra exte
         router.push(`${basePath}?id=${record?.id}`);
       });
       router.refresh();  // reruns page server component so the table reflects the edit
-      toast.showToast({
+      showToast({
         text: "Edited " + recordLabel,
         icon: 'create-outline'
       });

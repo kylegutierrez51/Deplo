@@ -108,7 +108,7 @@
 }
 
 .toast-icon ion-icon[name="create-outline"] {
-  color: var(--pill-approval-text);
+  color: var(--pill-pending-text);
 }
 
 .toast-icon ion-icon[name="trash-outline"] {
