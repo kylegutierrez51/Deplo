@@ -28,6 +28,7 @@ interface WebhookModalProps {
   onEdit: () => void;
   onEditOrDeleteClose: () => void;
   onSave: () => void;
+  onRegenerate: (message: string) => void;
   onError: (message: string) => void;
 }
 
@@ -57,6 +58,7 @@ export default function WebhookModal({
   onEdit,
   onEditOrDeleteClose,
   onSave,
+  onRegenerate,
   onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
@@ -99,10 +101,12 @@ export default function WebhookModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
   }, [editState]);
 
+
   const handleDeleteClose = () => {
     setDeleteModal(false);
     onEditOrDeleteClose();
   }
+
 
   const deleteRecord = async () => {
     const deletedRecord = await deleteWebhook(id);
@@ -112,24 +116,28 @@ export default function WebhookModal({
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);
     }
+    setDeleteModal(false);
   }
 
-  const onRegenerate=(newSecret: string) => {
+  
+  const afterRegenerate=(newSecret: string) => {
     setRevealedSecret(newSecret);
     setRevealedSecretVisible(false);
-    setRegenerateModal(false);
   }
 
 
   const handleRegenerate = async () => {
     const result = await regenerateWebhookSecret(id);
     if (result.status === 'success' && result.secret) {
-      onRegenerate(result.secret);
+      afterRegenerate(result.secret);
+      onRegenerate(result.message);
     }
     else if (result.status === 'error') {
       onError(result.message);
     }
+    setRegenerateModal(false);
   }
+
 
   const handleBranchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
@@ -140,19 +148,23 @@ export default function WebhookModal({
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
+
   const removeBranchFilter = (index: number) => {
     setBranchFilters(prev => prev.filter((_, i) => i !== index));
   };
 
+
   const toggleEvent = (key: EventType) => {
     setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
+
 
   const matches = () => {
     if (!query) return [];
     const q = query.toLowerCase();
     return pipelines?.filter(p => p.name.toLowerCase().includes(q)) ?? [];
   }
+
 
   const handleGenerateSecret = () => {
     const bytes = new Uint8Array(32);
@@ -161,12 +173,16 @@ export default function WebhookModal({
     setSecret(`whsec_${hex}`);
   };
 
+
   const handleCopyRevealed = () => {
     if (!revealedSecret) return;
     navigator.clipboard.writeText(revealedSecret);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+
+  if (mode === 'view' && revealedSecret !== null) setRevealedSecret(null);
 
   const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
   const subtitle = mode === 'edit' || mode === 'create' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
@@ -391,7 +407,7 @@ export default function WebhookModal({
                         type={revealedSecretVisible ? 'text' : 'password'}
                         value={revealedSecret}
                         readOnly
-                        className={styles.secretInput}
+                        className={`${styles.secretInput} ${styles.padded}`}
                       />
                       <div className={styles.secretActions}>
                         <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>

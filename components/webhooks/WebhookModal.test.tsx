@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WebhookModal from '@/components/webhooks/WebhookModal';
-import { updateWebhook } from '@/lib/actions/webhooks';
+import { regenerateWebhookSecret, updateWebhook } from '@/lib/actions/webhooks';
 
 jest.mock('@/lib/actions/webhooks', () => ({
   addWebhook: jest.fn(async () => ({ status: 'idle', message: '' })),
@@ -11,6 +11,7 @@ jest.mock('@/lib/actions/webhooks', () => ({
 }));
 
 const update = updateWebhook as jest.MockedFunction<typeof updateWebhook>;
+const regenerate = regenerateWebhookSecret as jest.MockedFunction<typeof regenerateWebhookSecret>;
 
 type Props = React.ComponentProps<typeof WebhookModal>;
 
@@ -31,10 +32,12 @@ const setup = (over: Partial<Props> = {}) => {
     onEdit: jest.fn(),
     onEditOrDeleteClose: jest.fn(),
     onSave: jest.fn(),
+    onRegenerate: jest.fn(),
     onError: jest.fn(),
     ...over,
   };
-  return render(<WebhookModal {...props} />);
+  render(<WebhookModal {...props} />);
+  return props;
 };
 
 /* What `updateWebhook` would receive if the form were submitted right now. */
@@ -48,6 +51,7 @@ const removeButton = (filter: string) =>
 
 beforeEach(() => {
   update.mockClear();
+  regenerate.mockReset();
 });
 
 describe('removing a branch filter', () => {
@@ -123,5 +127,112 @@ describe('removing a branch filter', () => {
 
     expect(screen.getByText('release/*')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Remove branch filter/ })).not.toBeInTheDocument();
+  });
+});
+
+
+describe('regenerating the secret', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const REVEALED_HINT = /Copy this now/;
+
+  /** Opens the ConfirmationModal, waits out its timer, and confirms. */
+  const confirmRegenerate = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole('button', { name: 'Regenerate secret' }));
+    act(() => { jest.advanceTimersByTime(2000); });
+    await user.click(screen.getByRole('button', { name: 'Regenerate' }));
+  };
+
+  const withFakeTimers = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+  it('reveals the new secret and reports the success message', async () => {
+    const user = withFakeTimers();
+    regenerate.mockResolvedValue({
+      status: 'success',
+      message: 'Saved regenerated secret!',
+      secret: 'whsec_regenerated',
+    });
+    const { onRegenerate, onError } = setup();
+
+    expect(screen.queryByText(REVEALED_HINT)).not.toBeInTheDocument();
+
+    await confirmRegenerate(user);
+
+    await waitFor(() => expect(onRegenerate).toHaveBeenCalledWith('Saved regenerated secret!'));
+    expect(onRegenerate).toHaveBeenCalledTimes(1);
+    expect(regenerate).toHaveBeenCalledWith('wh-1');
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('shows the revealed secret banner and dismisses the confirmation', async () => {
+    const user = withFakeTimers();
+    regenerate.mockResolvedValue({
+      status: 'success',
+      message: 'Saved regenerated secret!',
+      secret: 'whsec_regenerated',
+    });
+    setup();
+
+    await confirmRegenerate(user);
+
+    const revealed = await screen.findByDisplayValue('whsec_regenerated');
+    expect(revealed).toHaveAttribute('type', 'password');
+    expect(screen.getByText(REVEALED_HINT)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument();
+  });
+
+  it('reports a failure through onError and reveals nothing', async () => {
+    const user = withFakeTimers();
+    regenerate.mockResolvedValue({
+      status: 'error',
+      message: 'This webhook no longer exists.',
+    });
+    const { onRegenerate, onError } = setup();
+
+    await confirmRegenerate(user);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith('This webhook no longer exists.'));
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onRegenerate).not.toHaveBeenCalled();
+    expect(screen.queryByText(REVEALED_HINT)).not.toBeInTheDocument();
+  });
+
+  it('closes the confirmation modal after a failure', async () => {
+    const user = withFakeTimers();
+    regenerate.mockResolvedValue({
+      status: 'error',
+      message: 'This webhook no longer exists.',
+    });
+    const { onError } = setup();
+
+    await confirmRegenerate(user);
+
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument(),
+    );
+  });
+
+  // when 'result.secret' is falsy
+  it('closes the dialog even when neither branch reports anything', async () => {
+    const user = withFakeTimers();
+    regenerate.mockResolvedValue({ status: 'success', message: 'Saved regenerated secret!' });
+    const { onRegenerate, onError } = setup();
+
+    await confirmRegenerate(user);
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument(),
+    );
+    expect(onRegenerate).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+    expect(screen.queryByText(REVEALED_HINT)).not.toBeInTheDocument();
+  });
+
+  it('offers no regenerate affordance outside edit mode', () => {
+    setup({ mode: 'view' });
+
+    expect(screen.queryByRole('button', { name: 'Regenerate secret' })).not.toBeInTheDocument();
   });
 });

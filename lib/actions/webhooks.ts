@@ -190,7 +190,7 @@ export async function regenerateWebhookSecret(id: string): Promise<RegenerateSec
 
     return {
       status: 'success',
-      message: 'Webhook secret regenerated',
+      message: 'Saved regenerated secret!',
       secret,
     };
 
