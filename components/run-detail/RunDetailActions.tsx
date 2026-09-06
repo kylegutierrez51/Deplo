@@ -20,12 +20,11 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
   const [cancelModal, setCancelModal] = useState(false);
   const { showToast } = useToast();
 
-  const readyToCancel = () => ['queued', 'running'].includes(status)
-  const readyToRetry = () => ['succeeded', 'failed', 'cancelled'].includes(status)
+  const readyToCancel = () => ['queued', 'running'].includes(status);
+  const readyToRetry = () => ['succeeded', 'failed', 'cancelled'].includes(status);
 
   const handleCancelRun = async () => {
     startCancelTransition(async () => {
-      if (!readyToCancel()) return;
       const result = await cancelRun(id);
 
       showToast({

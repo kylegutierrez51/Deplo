@@ -104,6 +104,7 @@ export default function EnvironmentModal({
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);
     }
+    setDeleteModal(false);
   }
 
   const title = mode === 'view' ? 'Environment' : (name ? 'Edit Environment' : 'Add Environment');

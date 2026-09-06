@@ -103,6 +103,7 @@ export default function SecretModal({
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);
     }
+    setDeleteModal(false);
   }
 
   const matches = () => {

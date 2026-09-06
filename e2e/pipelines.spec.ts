@@ -98,3 +98,40 @@ test('the created pipeline starts idle, having never run', async ({ page }) => {
   const row = page.getByRole('row').filter({ hasText: name });
   await expect(row.locator('.pill--idle')).toBeVisible();
 });
+
+/*
+ * onEditOrDeleteClose pushes back to ?id=<id> — "re-enter view mode for this
+ * record" — which assumes the record is still there. When it is not, the page
+ * falls through to no modal and the id is left in the URL claiming a modal that
+ * cannot open, and that the Back button walks straight back into.
+ */
+test('cancelling a delete on a pipeline that is already gone clears the stale id', async ({ page, context }) => {
+  const name = unique('e2e-stale');
+
+  await createPipeline(page, name);
+  await page.getByText(name).click();
+  await expect(page).toHaveURL(/\?id=/);
+
+  // Delete the row out from under the open modal, from a second tab.
+  const other = await context.newPage();
+  await other.goto('/pipelines');
+  await other.getByText(name).click();
+  await other.getByRole('button', { name: 'Delete', exact: true }).click();
+
+  const otherConfirm = other.locator('[class*="confirmation-container"]')
+    .getByRole('button', { name: 'Delete', exact: true });
+  await expect(otherConfirm).toBeEnabled();
+  await otherConfirm.click();
+  await expect(other).toHaveURL('/pipelines');
+  await other.close();
+
+  // The first tab is unaware; its modal is still open on the deleted record.
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+
+  const confirmation = page.locator('[class*="confirmation-container"]');
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  await expect(page).toHaveURL('/pipelines');
+  await expect(page.locator('.modal-overlay')).toHaveCount(0);
+});

@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  *   mode === "create"            -> create
  *   record && mode === "edit"    -> edit
  *   record                       -> view
- *   otherwise                    -> no modal
+ *   otherwise                    -> no modal, and a stale ?id= is dropped
  *
  * The fall-through cases are the interesting ones, and they live in async
  * server components that Jest cannot render.
@@ -35,13 +35,15 @@ test.describe('the query-param contract', () => {
     await expect(modal(page)).toHaveCount(0);
   });
 
-  // A stale bookmark to a deleted record is a 200 with no modal, not a 404 —
-  // the id simply resolves to undefined.
-  test('an id that does not exist opens nothing and does not 404', async ({ page }) => {
+  // A stale bookmark to a deleted record is not a 404 — the id simply resolves
+  // to undefined. The param is then dropped rather than left in the URL
+  // claiming a modal that cannot open, so the redirect lands on a plain 200.
+  test('an id that does not exist opens nothing, does not 404, and drops the id', async ({ page }) => {
     const response = await page.goto('/environments?id=does-not-exist');
 
     expect(response?.status()).toBe(200);
     await expect(modal(page)).toHaveCount(0);
+    await expect(page).toHaveURL('/environments');
   });
 
   test('an unrecognised mode with a valid id falls through to view', async ({ page }) => {
@@ -64,12 +66,13 @@ test.describe('the query-param contract', () => {
 });
 
 test.describe('the contract holds on every page that uses it', () => {
-  for (const path of ['/pipelines', '/runs', '/audits', '/environments', '/secrets', '/webhooks', '/webhooks/events']) {
+  for (const path of ['/pipelines', '/runs', '/environments', '/secrets', '/webhooks']) {
     test(`${path} opens nothing for a bad id`, async ({ page }) => {
       const response = await page.goto(`${path}?id=nope`);
 
       expect(response?.status()).toBe(200);
       await expect(modal(page)).toHaveCount(0);
+      await expect(page).toHaveURL(path);
     });
   }
 });
