@@ -1,5 +1,4 @@
-import styles from "./pipelines.module.css"
-
+import styles from "./pipelines.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
@@ -10,6 +9,7 @@ import PipelineRow from "@/components/pipelines/PipelineRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
 import { getPipelineById, getPipelines } from '@/lib/data/pipelines';
+import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -18,6 +18,11 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
   const pipelines = await getPipelines();
 
   const record = id ? await getPipelineById(id) : undefined;
+
+  // edge case where a pipeline gets deleted in one tab while the user is editing or viewing it in another tab
+  if (id && !record && mode !== "create") redirect("/pipelines");
+
+
 
   const modal =
     mode === "create" ? { mode: "create" as const } :

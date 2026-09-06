@@ -1,5 +1,5 @@
 import styles from './env.module.css';
-import Sidebar from "@/components/layout/sidebar/Sidebar"
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from "@/components/layout/subheader/AddButton";
 import FilterListbox from "@/components/ui/filters/FilterListbox";
@@ -9,6 +9,7 @@ import EnvironmentRow from '@/components/environments/EnvironmentRow';
 import Pagination from '@/components/ui/pagination/Pagination';
 import EnvModalController from '@/components/environments/EnvModalController';
 import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
+import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -17,6 +18,9 @@ export default async function Environments({ searchParams }: { searchParams: Sea
   const environments = await getEnvironments();
 
   const record = id ? await getEnvironmentById(id) : undefined;
+
+  // edge case where an env gets deleted in one tab while the user is editing or viewing it in another tab
+  if (id && !record && mode !== "create") redirect("/environments");
 
   const modal =
     mode === "create" ? { mode: "create" as const } :

@@ -10,6 +10,7 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import SecretModalController from '@/components/secrets/SecretModalController';
 import { getSecretById, getSecrets } from '@/lib/data/secrets';
 import { getEnvironments } from '@/lib/data/environments';
+import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -18,6 +19,9 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
   const secrets = await getSecrets();
 
   const record = id ? await getSecretById(id) : undefined;
+
+  // edge case where a secret (or parent environment) gets deleted in one tab while the user is editing or viewing it in another tab
+  if (id && !record && mode !== "create") redirect("/secrets");
 
   const modal =
     mode === "create" ? { mode: "create" as const } :

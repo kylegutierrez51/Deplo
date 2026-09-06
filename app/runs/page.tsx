@@ -8,6 +8,7 @@ import RunRow from "@/components/runs/RunRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import RunModalController from "@/components/runs/RunModalController";
 import { getRuns, getRunById } from "@/lib/data/runs";
+import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -18,6 +19,9 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
   const activeRuns = runs.filter(r => r.status === 'running').length;
 
   const record = id ? await getRunById(id) : undefined;
+
+  // edge case where a run (or parent pipeline) gets deleted while the user is viewing it
+  if (id && !record && mode !== "create") redirect("/runs");
 
   const modal =
     mode === "create" ? { mode: "create" as const } :

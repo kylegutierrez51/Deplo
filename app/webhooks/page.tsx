@@ -1,15 +1,16 @@
-import styles from "./webhooks.module.css"
-import Subheader from "@/components/layout/subheader/Subheader"
+import styles from "./webhooks.module.css";
+import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
-import Sidebar from "@/components/layout/sidebar/Sidebar"
-import FilterListbox from "@/components/ui/filters/FilterListbox"
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/WebhookCard";
-import Pagination from "@/components/ui/pagination/Pagination"
+import Pagination from "@/components/ui/pagination/Pagination";
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";
+import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -19,6 +20,9 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
   const pipelines = await getPipelines();
 
   const record = id ? await getWebhookById(id) : undefined;
+
+  // edge case where a webhook gets deleted in one tab while the user is editing or viewing it in another tab
+  if (id && !record && mode !== "create") redirect("/webhooks");
 
   const modal =
     mode === "create" ? { mode: "create" as const } :
