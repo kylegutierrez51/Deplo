@@ -97,6 +97,7 @@ export default function PipelineModal({
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);
     }
+    setDeleteModal(false);
   }
 
   const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Pipeline' : 'Edit Pipeline');
