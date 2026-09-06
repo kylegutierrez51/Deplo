@@ -60,6 +60,10 @@
   font-weight: bold;
 }
 
+.webhook-detail .name-status .name-missing {
+  color: var(--red-text);
+}
+
 .events {
   display: flex;
   align-items: center;
