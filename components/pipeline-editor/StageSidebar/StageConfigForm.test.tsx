@@ -42,6 +42,17 @@ function setup(nodeOver: Partial<CustomNode['data']> = {}, graphOver: Record<str
 /** The merged patch across every updateNodeData call. */
 const lastPatch = () => updateNodeData.mock.calls.at(-1)?.[1];
 
+/*
+ * Timeout and retries seed with the runner's defaults, so typing into either one
+ * appends to a number that is already there. Anything testing what a given entry
+ * produces has to start from the empty field the reader gets by backspacing.
+ */
+const emptied = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
+  const field = screen.getByLabelText(label);
+  await user.clear(field);
+  return field;
+};
+
 beforeEach(() => { updateNodeData.mockClear(); });
 
 describe('timeout and retries validation', () => {
@@ -56,7 +67,7 @@ describe('timeout and retries validation', () => {
     [' 5', '5'],
   ])('drops the non-digit characters of %s, leaving %s', async (input, expected) => {
     const { user } = setup();
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = await emptied(user, 'TIMEOUT (S)');
 
     await user.type(field, input);
 
@@ -65,8 +76,10 @@ describe('timeout and retries validation', () => {
 
   it('never patches the node from a wholly non-numeric entry', async () => {
     const { user } = setup();
+    const field = await emptied(user, 'TIMEOUT (S)');
+    updateNodeData.mockClear();
 
-    await user.type(screen.getByLabelText('TIMEOUT (S)'), 'abc');
+    await user.type(field, 'abc');
 
     expect(updateNodeData).not.toHaveBeenCalled();
   });
@@ -74,7 +87,7 @@ describe('timeout and retries validation', () => {
   it('accepts digits', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('TIMEOUT (S)'), '90');
+    await user.type(await emptied(user, 'TIMEOUT (S)'), '90');
 
     expect(lastPatch()).toEqual({ timeout: 90 });
   });
@@ -82,7 +95,7 @@ describe('timeout and retries validation', () => {
   it('sends a number, not the raw string', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('RETRIES'), '3');
+    await user.type(await emptied(user, 'RETRIES'), '3');
 
     expect(lastPatch()).toEqual({ retries: 3 });
   });
@@ -92,25 +105,25 @@ describe('timeout and retries validation', () => {
   it('clamps retries to 10', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('RETRIES'), '99');
+    await user.type(await emptied(user, 'RETRIES'), '99');
 
     expect(lastPatch()).toEqual({ retries: 10 });
     expect(screen.getByLabelText('RETRIES')).toHaveValue('10');
   });
 
-  it('clamps timeout to 3600', async () => {
+  it('clamps timeout to 43200', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('TIMEOUT (S)'), '9999');
+    await user.type(await emptied(user, 'TIMEOUT (S)'), '99999');
 
-    expect(lastPatch()).toEqual({ timeout: 3600 });
-    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('3600');
+    expect(lastPatch()).toEqual({ timeout: 43200 });
+    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('43200');
   });
 
   it('allows exactly the maximum', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('RETRIES'), '10');
+    await user.type(await emptied(user, 'RETRIES'), '10');
 
     expect(lastPatch()).toEqual({ retries: 10 });
   });
@@ -120,6 +133,15 @@ describe('timeout and retries validation', () => {
 
     expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('120');
     expect(screen.getByLabelText('RETRIES')).toHaveValue('2');
+  });
+
+  // A stage that carries no numbers of its own shows the runner's defaults, so
+  // the reader sees what the stage will actually do rather than two blank boxes.
+  it('seeds the runner defaults when the node carries neither', () => {
+    setup();
+
+    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('1800');
+    expect(screen.getByLabelText('RETRIES')).toHaveValue('0');
   });
 });
 
@@ -283,5 +305,151 @@ describe('environment variables', () => {
 
     expect(screen.getByDisplayValue('NODE_ENV')).toBeInTheDocument();
     expect(screen.getByDisplayValue('production')).toBeInTheDocument();
+  });
+});
+
+describe('clearing timeout and retries', () => {
+  it('leaves the timeout field empty when it is backspaced away', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+
+    expect(field).toHaveValue('');
+  });
+
+  it('stays empty under further backspaces', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.type(field, '{Backspace}{Backspace}');
+
+    expect(field).toHaveValue('');
+  });
+
+  it('leaves the retries field empty when it is backspaced away', async () => {
+    const { user } = setup({ retries: 3 });
+    const field = screen.getByLabelText('RETRIES');
+
+    await user.clear(field);
+
+    expect(field).toHaveValue('');
+  });
+
+  it('clears the value on the node rather than patching a number', async () => {
+    const { user } = setup({ timeout: 1800 });
+
+    await user.clear(screen.getByLabelText('TIMEOUT (S)'));
+
+    expect(lastPatch()).toStrictEqual({ timeout: undefined });
+  });
+
+  it('clears retries on the node too', async () => {
+    const { user } = setup({ retries: 3 });
+
+    await user.clear(screen.getByLabelText('RETRIES'));
+
+    expect(lastPatch()).toStrictEqual({ retries: undefined });
+  });
+
+  it('accepts a fresh number after being cleared', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.type(field, '90');
+
+    expect(field).toHaveValue('90');
+    expect(lastPatch()).toEqual({ timeout: 90 });
+  });
+});
+
+describe('settling an empty field on blur', () => {
+  // when timeout input loses focus and is either 0 or blank, default to 1800
+  it('settles an emptied timeout on 1800', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.tab();
+
+    expect(field).toHaveValue('1800');
+    expect(lastPatch()).toEqual({ timeout: 1800 });
+  });
+
+  it('settles a timeout typed as 0 on 1800 as well', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.type(field, '0');
+    await user.tab();
+
+    expect(field).toHaveValue('1800');
+    expect(lastPatch()).toEqual({ timeout: 1800 });
+  });
+
+  // catches '00' or '000' and sets them to 1800
+  it.each(['00', '000'])('settles a timeout typed as %s', async (typed) => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.type(field, typed);
+    await user.tab();
+
+    expect(field).toHaveValue('1800');
+    expect(lastPatch()).toEqual({ timeout: 1800 });
+  });
+
+  it('leaves a field that holds a number alone', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.type(field, '90');
+    updateNodeData.mockClear();
+    await user.tab();
+
+    expect(field).toHaveValue('90');
+    expect(updateNodeData).not.toHaveBeenCalled();
+  });
+
+  // The reader can still empty it again after it has been settled once.
+  it('can be emptied again after settling', async () => {
+    const { user } = setup({ timeout: 1800 });
+    const field = screen.getByLabelText('TIMEOUT (S)');
+
+    await user.clear(field);
+    await user.tab();
+    await user.clear(field);
+
+    expect(field).toHaveValue('');
+  });
+
+  // default blank retries input to 0
+  it('settles emptied retries on 0, not on the timeout default', async () => {
+    const { user } = setup({ retries: 3 });
+    const field = screen.getByLabelText('RETRIES');
+
+    await user.clear(field);
+    await user.tab();
+
+    expect(field).toHaveValue('0');
+    expect(lastPatch()).toEqual({ retries: 0 });
+  });
+
+  it('leaves an untouched retries field at 0 when tabbed through', async () => {
+    const { user } = setup();
+    const field = screen.getByLabelText('RETRIES');
+
+    expect(field).toHaveValue('0');
+
+    await user.click(field);
+    await user.tab();
+
+    expect(field).toHaveValue('0');
+    expect(lastPatch()).toEqual({ retries: 0 });
   });
 });

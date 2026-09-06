@@ -4,6 +4,7 @@ import styles from './editor.module.css'
 import { type Node, type NodeProps, Position } from '@xyflow/react';
 import { StageSidebarToggle } from '@/components/pipeline-editor/PipelineEditorChrome';
 import CustomHandle from '@/components/flow/CustomHandle';
+import { DEFAULT_STAGE_TIMEOUT_S } from '@/lib/pipeline/defaults';
 
 export type StageNode = Node<
   {
@@ -38,12 +39,10 @@ export default function Stage(props: NodeProps<StageNode>) {
           {props.data.label && <div className={styles['stage-label']} title={props.data.label}><p>{props.data.label}</p></div>}
           {props.data.type !== 'approval' &&
             <div className={styles['stage-options']}>
-              {!!props.data.timeout &&
                 <div className={styles['stage-timeout']}>
                   <ion-icon name="time-outline"></ion-icon>
-                  <p>{props.data.timeout}s</p>
+                  <p>{props.data.timeout || DEFAULT_STAGE_TIMEOUT_S}s</p>
                 </div>
-              }
               {!!props.data.retries &&
                 <div className={styles['stage-retries']}>
                   <ion-icon name="refresh-outline"></ion-icon>

@@ -11,9 +11,10 @@ import { execute } from "./execute";
 import { resolveSecrets } from "./secrets";
 import type { CustomNode } from "@/lib/types";
 import { CANCELLED_NOTE } from "@/lib/stage-notes";
+import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
 
 
-const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 1800s
+const DEFAULT_TIMEOUT_MS = DEFAULT_STAGE_TIMEOUT_S * 1000; // 1800s
 
 const CANCEL_POLL_MS = 2_000;
 

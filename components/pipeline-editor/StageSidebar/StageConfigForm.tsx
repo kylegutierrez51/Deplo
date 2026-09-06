@@ -8,13 +8,14 @@ import SecretsSection from "./SecretsSection";
 import type { CustomNode, StageType } from "@/lib/types";
 import { usePipelineGraph } from "@/components/pipeline-editor/PipelineGraphProvider";
 import { matchReservedLabel } from '@/lib/utils/string';
+import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [type, setType] = useState<StageType>(node?.data?.type || 'custom');
   const [label, setLabel] = useState<string>(matchReservedLabel(node?.data?.label) ? '' : node?.data?.label ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
-  const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : '', retries: node.data?.retries ? String(node.data?.retries) : '' });
+  const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : String(DEFAULT_STAGE_TIMEOUT_S), retries: node.data?.retries ? String(node.data?.retries) : '0' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
   const [secretSearch, setSecretSearch] = useState("");
   const { updateNodeData, selectedEnvironmentId, secrets } = usePipelineGraph();
@@ -31,24 +32,40 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
 
   const handleTimeOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (/^[0-9]*$/.test(value)) {
-      if (name === 'retries' && Number(value) > 10) {
-        setTimeOptions(prev => ({ ...prev, retries: '10' }));
-        updateNodeData(node.id, { retries: 10 });
-      }
-      else if (name === 'timeout' && Number(value) > 3600) {
-        setTimeOptions(prev => ({ ...prev, timeout: '3600' }));
-        updateNodeData(node.id, { timeout: 3600 });
-      }
-      else {
-        setTimeOptions(prev => ({ ...prev, [name]: value }));
-        updateNodeData(node.id, { [name]: Number(value) });
-      }
+    if (!(/^[0-9]*$/.test(value))) return;
+
+    if (!value.length) {
+      setTimeOptions(prev => ({ ...prev, [name]: '' }));
+      updateNodeData(node.id, { [name]: undefined });
+      return;
+    }
+
+    if (name === 'retries' && Number(value) > 10) {
+      setTimeOptions(prev => ({ ...prev, retries: '10' }));
+      updateNodeData(node.id, { retries: 10 });
+    }
+    else if (name === 'timeout' && Number(value) > 43200) {
+      setTimeOptions(prev => ({ ...prev, timeout: '43200' }));
+      updateNodeData(node.id, { timeout: 43200 });
+    }
+    else {
+      setTimeOptions(prev => ({ ...prev, [name]: value }));
+      updateNodeData(node.id, { [name]: Number(value) });
     }
   };
 
+  const handleTimeOptionsBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (value.length && Number(value) !== 0) return;
+
+    const settled = name === 'retries' ? 0 : DEFAULT_STAGE_TIMEOUT_S;
+
+    setTimeOptions(prev => ({ ...prev, [name]: String(settled) }));
+    updateNodeData(node.id, { [name]: settled });
+  };
+
   const handleEnvAdd = () => {
-    const next = [ ...envVars, { key: '', value: ''}];
+    const next = [...envVars, { key: '', value: '' }];
     setEnvVars(next);
     updateNodeData(node.id, { env_vars: next });
   };
@@ -131,22 +148,24 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
             </div>
             <div className={styles["timeout-and-retries"]}>
               <div className={styles.timeout}>
-                <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout">TIMEOUT (S)</label></div>
+                <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout" title="in Seconds (S)">TIMEOUT (S)</label></div>
                 <input
                   id="timeout"
                   name="timeout"
+                  title="in Seconds (S)"
                   value={timeOptions.timeout}
-                  placeholder="In seconds (S)"
-                  onChange={e => handleTimeOptionsChange(e)} />
+                  onChange={e => handleTimeOptionsChange(e)}
+                  onBlur={e => handleTimeOptionsBlur(e)} />
               </div>
               <div className={styles.retries}>
-                <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries">RETRIES</label></div>
+                <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries" title="1-10">RETRIES</label></div>
                 <input
                   id="retries"
                   name="retries"
+                  title="1-10"
                   value={timeOptions.retries}
-                  placeholder="e.g. 1, 2, ..., 10"
-                  onChange={e => handleTimeOptionsChange(e)} />
+                  onChange={e => handleTimeOptionsChange(e)}
+                  onBlur={e => handleTimeOptionsBlur(e)} />
               </div>
             </div>
             <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
