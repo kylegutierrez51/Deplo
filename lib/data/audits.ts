@@ -31,11 +31,11 @@ const ACTION_MAP: Record<PrismaAuditAction, AuditAction> = {
 };
 
 const RESOURCE_MAP: Record<PrismaResourceType, ResourceType> = {
-  PIPELINE: "Pipeline",
-  PIPELINE_RUN: "PipelineRun",
-  ENVIRONMENT: "Environment",
-  SECRET: "Secret",
-  WEBHOOK: "Webhook",
+  PIPELINE: "pipeline",
+  PIPELINE_RUN: "pipeline-run",
+  ENVIRONMENT: "environment",
+  SECRET: "secret",
+  WEBHOOK: "webhook",
 };
 
 export async function getAudits(): Promise<Audit[]> {

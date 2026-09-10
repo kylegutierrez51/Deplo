@@ -23,11 +23,11 @@ export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
 
 export type EventType = 'push' | 'pull-request';
 
+export type ResourceType = 'pipeline' | 'pipeline-run' | 'environment' | 'secret' | 'webhook';
 
-/* AuditAction and ResourceType can be capitalized since they're not used by a separate component (Pill, Toast) */
+
+/* AuditAction can be capitalized since it's not used by a separate component (Pill, Toast) */
 export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Definition Updated" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Environment Created" | "Environment Updated" | "Environment Deleted" | "Webhook Received" | "Webhook Created" | "Webhook Updated" | "Webhook Deleted" | "Run Triggered" | "Run Completed" | "Run Cancelled" | "Approval Granted" | "Approval Rejected" | "User Role Changed";
-
-export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Environment" | "Secret";
 
 
 export type StageType = 'custom' | 'deploy' | 'approval';

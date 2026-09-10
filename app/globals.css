@@ -255,6 +255,23 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --pill-pull-request-text: #c084fc;
   --pill-pull-request-bg: #c084fc1a;
   --pill-pull-request-border: #c084fc4d;
+
+  /* Resource Types (Audit Log) — 'webhook' reuses the trigger's pill above */
+  --pill-pipeline-text: #38bdf8;
+  --pill-pipeline-bg: #38bdf81a;
+  --pill-pipeline-border: #38bdf84d;
+
+  --pill-pipeline-run-text: #f472b6;
+  --pill-pipeline-run-bg: #f472b61a;
+  --pill-pipeline-run-border: #f472b64d;
+
+  --pill-environment-text: #2dd4bf;
+  --pill-environment-bg: #2dd4bf1a;
+  --pill-environment-border: #2dd4bf4d;
+
+  --pill-secret-text: #facc15;
+  --pill-secret-bg: #facc151a;
+  --pill-secret-border: #facc154d;
 }
 
 
@@ -486,3 +503,9 @@ Pill Base + Variants
 /* Event Types */
 .pill--push          { color: var(--pill-push-text);          background: var(--pill-push-bg);          border-color: var(--pill-push-border); }
 .pill--pull-request  { color: var(--pill-pull-request-text);  background: var(--pill-pull-request-bg);  border-color: var(--pill-pull-request-border); }
+
+/* Resource Types */
+.pill--pipeline      { color: var(--pill-pipeline-text);      background: var(--pill-pipeline-bg);      border-color: var(--pill-pipeline-border); }
+.pill--pipeline-run  { color: var(--pill-pipeline-run-text);  background: var(--pill-pipeline-run-bg);  border-color: var(--pill-pipeline-run-border); }
+.pill--environment   { color: var(--pill-environment-text);   background: var(--pill-environment-bg);   border-color: var(--pill-environment-border); }
+.pill--secret        { color: var(--pill-secret-text);        background: var(--pill-secret-bg);        border-color: var(--pill-secret-border); }

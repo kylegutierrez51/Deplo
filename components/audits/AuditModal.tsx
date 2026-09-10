@@ -5,6 +5,7 @@ import type { ResourceType } from '@/lib/types';
 import Modal from '@/components/ui/modals/Modal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import auditStyles from './audit-modal.module.css';
+import ResourceTypePill from './ResourceTypePill';
 
 const styles = { ...modalStyles, ...auditStyles };
 
@@ -45,8 +46,8 @@ export default function AuditModal({
             <span>{action}</span>
           </div>
           <div className={styles.item}>
-            <label>Category</label>
-            <span>{resourceType}</span>
+            <label>Type</label>
+            <span><ResourceTypePill type={resourceType} /></span>
           </div>
         </div>
 
@@ -56,7 +57,7 @@ export default function AuditModal({
           <span>{resourceLabel ?? '—'}</span>
         </div>
 
-        <div className={styles['time-flex']}>
+        <div className={styles['footer-flex']}>
           <div className={styles.item}>
             <label>Actor</label>
             <span>{user ?? actor ?? 'Unknown User'}</span>
