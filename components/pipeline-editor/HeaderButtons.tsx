@@ -3,14 +3,31 @@
 import { useTransition } from 'react'
 import styles from './header-buttons.module.css'
 import { usePipelineGraph } from './PipelineGraphProvider'
-import { savePipelineDefinition, addPipelineRun } from '@/lib/actions/pipelines'
+import { savePipelineDefinition, addPipelineRun, validatePipeline } from '@/lib/actions/pipelines'
 import { useToast } from '@/components/ui/toast/ToastContext'
 
 export default function HeaderButtons() {
   const { pipelineId, selectedEnvironmentId, nodes, edges } = usePipelineGraph();
   const [isSaving, startSaveTransition] = useTransition();
   const [isRunning, startRunTransition] = useTransition();
+  const [isValidating, startValidateTransition] = useTransition();
   const { showToast, dismissStickyToasts } = useToast();
+
+  const handleValidate = () => {
+    // Clears the previous report so a re-check replaces it rather than stacking on it.
+    dismissStickyToasts();
+
+    startValidateTransition(async () => {
+      const result = await validatePipeline(selectedEnvironmentId, nodes, edges);
+      const failed = result.status !== 'success';
+      
+      showToast({
+        text: result.message,
+        icon: failed ? 'close-circle-outline' : 'checkmark-circle-outline',
+        options: { sticky: failed },
+      });
+    });
+  }
 
   const handleSave = () => startSaveTransition(async () => {
     const result = await savePipelineDefinition(pipelineId, nodes, edges);
@@ -41,6 +58,10 @@ export default function HeaderButtons() {
 
   return (
     <>
+      <button className={styles['validate-btn']} type="button" onClick={handleValidate} disabled={isValidating}>
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        {isValidating ? 'Validating...' : 'Validate Pipeline'}
+      </button>
       <button className={styles['save-btn']} type="button" onClick={handleSave} disabled={isBusy}>
         <ion-icon name="save-outline"></ion-icon>
         {isSaving ? 'Saving...' : 'Save'}

@@ -36,6 +36,16 @@ test('refuses to run without an environment selected', async ({ page }) => {
   await expect(page.getByText(/select an environment/i)).toBeVisible();
 });
 
+// The Validate button reaches the server and reports back without starting a run.
+// Its environment guard fires before any graph check, so it needs no seed data.
+test('validate refuses without an environment selected', async ({ page }) => {
+  await openEditor(page);
+
+  await page.getByRole('button', { name: /validate pipeline/i }).click();
+
+  await expect(page.getByText(/select an environment to validate against/i)).toBeVisible();
+});
+
 // verifyPipelineRunReady's first gate — there is nothing useful to say about
 // the stages of a pipeline that has none.
 test('refuses to run a pipeline with no stages', async ({ page }) => {

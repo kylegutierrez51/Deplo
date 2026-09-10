@@ -1,6 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
-import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline, updatePipeline } from '@/lib/actions/pipelines';
+import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline, updatePipeline, validatePipeline } from '@/lib/actions/pipelines';
 import { toDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
@@ -520,6 +520,111 @@ describe('addPipelineRun queue reachability', () => {
     await addPipelineRun('p1', 'env-1', [node('a')], []);
 
     expect(reachable).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * The Validate button's action. It shares verifyPipelineRunReady with addPipelineRun, so
+ * these cases pin the wiring and the differences — it reads the editor's graph rather than
+ * the stored one, and it must never have a side effect — not the graph rules themselves.
+ */
+describe('validatePipeline', () => {
+  const environment = (requireApproval: boolean) => ({
+    id: 'env-1', name: 'prod', type: 'PRODUCTION', requireApproval,
+    createdById: null, createdAt: new Date(), updatedAt: new Date(), secrets: [], createdBy: null,
+  });
+
+  it('refuses when signed out', async () => {
+    signedOut();
+
+    const result = await validatePipeline('env-1', [node('a')], []);
+
+    expect(result).toEqual({ status: 'error', message: 'Sign in to validate a pipeline.' });
+    expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('refuses a session carrying no user id', async () => {
+    sessionWithoutUserId();
+
+    const result = await validatePipeline('env-1', [node('a')], []);
+
+    expect(result).toEqual({ status: 'error', message: 'Sign in to validate a pipeline.' });
+  });
+
+  // requireApproval decides whether the approval rule applies, so there is no answer without one.
+  it('refuses without a target environment', async () => {
+    const result = await validatePipeline(null, [node('a')], []);
+
+    expect(result).toEqual({ status: 'error', message: 'Select an environment to validate against.' });
+    expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('reports a sound graph as valid', async () => {
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+
+    const result = await validatePipeline('env-1', [node('a')], []);
+
+    expect(result).toEqual({ status: 'success', message: 'Pipeline is valid' });
+  });
+
+  // The point of the button is checking edits before committing them, so an editor that
+  // has drifted from the stored definition is validated as-is rather than refused.
+  it('validates the editor graph without reading the stored definition', async () => {
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+
+    await validatePipeline('env-1', [node('a'), node('b')], []);
+
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('reports every graph problem in one message', async () => {
+    const nodes = [node('a', { command: null }), node('d', { type: 'deploy', command: 'ship' })];
+    const edges = [{ id: 'e0', source: 'a', target: 'd' }];
+    prismaMock.environment.findUnique.mockResolvedValue(environment(true) as never);
+
+    const result = await validatePipeline('env-1', nodes, edges);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('Cannot run pipeline:');
+    expect(result.message).toMatch(/missing a command/);
+    expect(result.message).toMatch(/Approval stage upstream/);
+  });
+
+  it('refuses an empty pipeline', async () => {
+    const result = await validatePipeline('env-1', [], []);
+
+    expect(result).toEqual({ status: 'error', message: 'This pipeline has no stages. Add at least one.' });
+  });
+
+  it('refuses when the environment has been deleted', async () => {
+    prismaMock.environment.findUnique.mockResolvedValue(null as never);
+
+    const result = await validatePipeline('env-1', [node('a')], []);
+
+    expect(result).toEqual({
+      status: 'error', message: 'The selected environment no longer exists. Pick another.',
+    });
+  });
+
+  it('reports a generic failure when the environment lookup throws', async () => {
+    prismaMock.environment.findUnique.mockRejectedValue(new Error('connection lost') as never);
+
+    const result = await validatePipeline('env-1', [node('a')], []);
+
+    expect(result).toEqual({ status: 'error', message: 'Error validating pipeline. Please try again.' });
+  });
+
+  // Validation is a question, not a trigger: a clean result must not create, enqueue or refresh anything.
+  it('writes nothing, enqueues nothing and revalidates nothing', async () => {
+    prismaMock.environment.findUnique.mockResolvedValue(environment(false) as never);
+
+    await validatePipeline('env-1', [node('a')], []);
+
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
+    expect(reachable).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
   });
 });
 
