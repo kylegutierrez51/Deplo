@@ -9,8 +9,10 @@ import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
 
+const REFRESH_INTERVAL_MS = 15_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -37,6 +39,8 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
           subtitle="Incoming webhook deliveries from GitHub.">
           <RefreshButton />
         </Subheader>
+        
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
         {webhookEvents.length > 0 &&
           <>

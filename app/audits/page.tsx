@@ -1,14 +1,17 @@
 import styles from "./audit.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
-import ExportButton from "@/components/layout/subheader/ExportButton";
+import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import AuditModalController from "@/components/audits/AuditModalController";
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getAudits, getAuditById } from '@/lib/data/audits';
+
+const REFRESH_INTERVAL_MS = 30_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -34,8 +37,10 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
         <Subheader
           title="Audit Log"
           subtitle="Immutable record of every action taken across your workspace.">
-          <ExportButton />
+          <RefreshButton />
         </Subheader>
+
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
         {audits.length > 0 &&
           <>

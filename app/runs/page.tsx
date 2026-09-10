@@ -1,5 +1,6 @@
 import styles from "./runs.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
+import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
@@ -7,8 +8,11 @@ import DataTable from "@/components/ui/DataTable";
 import RunRow from "@/components/runs/RunRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import RunModalController from "@/components/runs/RunModalController";
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getRuns, getRunById } from "@/lib/data/runs";
 import { redirect } from 'next/navigation';
+
+const REFRESH_INTERVAL_MS = 10_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -39,7 +43,10 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
           title="Run History"
           subtitle="All pipeline executions across your projects."
           badge={activeRuns > 0 ? { count: activeRuns, label: 'Active' } : undefined}>
+          <RefreshButton />
         </Subheader>
+
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
         {runs.length > 0 &&
           <>
