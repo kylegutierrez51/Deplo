@@ -267,17 +267,22 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     repo: run.pipeline.repoUrl,
     trigger: RUN_TRIGGER_MAP[run.trigger],
     triggeredBy: run.triggeredBy?.name ?? '—',
-    duration: run.finishedAt
-      ? getDuration(run.startedAt!, run.finishedAt)
-      : run.startedAt
-        ? getDuration(run.startedAt)
-        : '—',
+    duration: run.startedAt && run.finishedAt ? 
+      getDuration(run.startedAt, run.finishedAt) 
+      : run.startedAt 
+        ? getDuration(run.startedAt) : '—',
     timeAgo: getDuration(run.createdAt),
     jobCounts: countJobs(nodes, stagesLite),
     logFilters: buildLogFilters(nodes.filter(n => n.data.type !== 'approval'), stagesLite),
     logs: buildLogs(run.stages)
   };
 }
+
+    // run.finishedAt
+    //   ? getDuration(run.startedAt!, run.finishedAt)
+    //   : run.startedAt
+    //     ? getDuration(run.startedAt)
+    //     : '—',
 
 /*
 ==============================================================================================
