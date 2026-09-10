@@ -11,29 +11,31 @@ const ACTION_MAP: Record<PrismaAuditAction, AuditAction> = {
   PIPELINE_CREATED: "Pipeline Created",
   PIPELINE_UPDATED: "Pipeline Updated",
   PIPELINE_DELETED: "Pipeline Deleted",
-  PIPELINE_TRIGGERED: "Pipeline Triggered",
+  PIPELINE_DEFINITION_UPDATED: "Pipeline Definition Updated",
   SECRET_CREATED: "Secret Created",
   SECRET_UPDATED: "Secret Updated",
   SECRET_DELETED: "Secret Deleted",
-  APPROVAL_GRANTED: "Approval Granted",
-  APPROVAL_REJECTED: "Approval Rejected",
+  ENVIRONMENT_CREATED: "Environment Created",
+  ENVIRONMENT_UPDATED: "Environment Updated",
+  ENVIRONMENT_DELETED: "Environment Deleted",
+  WEBHOOK_RECEIVED: "Webhook Received",
+  WEBHOOK_CREATED: "Webhook Created",
+  WEBHOOK_UPDATED: "Webhook Updated",
+  WEBHOOK_DELETED: "Webhook Deleted",
+  RUN_TRIGGERED: "Run Triggered",
   RUN_COMPLETED: "Run Completed",
   RUN_CANCELLED: "Run Cancelled",
-  WEBHOOK_RECEIVED: "Webhook Received",
-  ENVIRONMENT_CREATED: "Environment Created",
-  ENVIRONMENT_DELETED: "Environment Deleted",
-  USER_ROLE_CHANGED: "User Role Changed"
+  APPROVAL_GRANTED: "Approval Granted",
+  APPROVAL_REJECTED: "Approval Rejected",
+  USER_ROLE_CHANGED: "User Role Changed",
 };
 
 const RESOURCE_MAP: Record<PrismaResourceType, ResourceType> = {
   PIPELINE: "Pipeline",
   PIPELINE_RUN: "PipelineRun",
-  APPROVAL: "Approval",
   ENVIRONMENT: "Environment",
   SECRET: "Secret",
   WEBHOOK: "Webhook",
-  STAGE_RESULT: "Stage Result",
-  SETTING: "Setting",
 };
 
 export async function getAudits(): Promise<Audit[]> {

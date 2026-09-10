@@ -53,12 +53,12 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
                   options={
                     [
                       { value: "all", label: "All actions" },
-                      { value: "pipeline", label: "Pipeline" },
+
                       { value: "run", label: "Runs" },
-                      { value: "approval", label: "Approvals" },
+                      { value: "pipeline", label: "Pipeline" },
+                      { value: "environment", label: "Environments" },
                       { value: "secret", label: "Secrets" },
                       { value: "webhook", label: "Webhooks" },
-                      { value: "settings", label: "Settings" },
                     ]
                   } />
                 <FilterListbox

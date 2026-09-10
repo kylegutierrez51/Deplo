@@ -25,9 +25,9 @@ export type EventType = 'push' | 'pull-request';
 
 
 /* AuditAction and ResourceType can be capitalized since they're not used by a separate component (Pill, Toast) */
-export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Triggered" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Approval Granted" | "Approval Rejected" | "Run Completed" | "Run Cancelled" | "Webhook Received" | "Environment Created" | "Environment Deleted" | "User Role Changed";
+export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Definition Updated" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Environment Created" | "Environment Updated" | "Environment Deleted" | "Webhook Received" | "Webhook Created" | "Webhook Updated" | "Webhook Deleted" | "Run Triggered" | "Run Completed" | "Run Cancelled" | "Approval Granted" | "Approval Rejected" | "User Role Changed";
 
-export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" | "Environment" | "Secret" | "Stage Result" | "Setting";
+export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Environment" | "Secret";
 
 
 export type StageType = 'custom' | 'deploy' | 'approval';
