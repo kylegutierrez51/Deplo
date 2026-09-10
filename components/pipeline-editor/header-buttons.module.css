@@ -1,7 +1,7 @@
 /* 
 Header Buttons
 */
-.add-stage-btn, .save-btn, .run-btn {
+.add-stage-btn, .validate-btn, .save-btn, .run-btn {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,6 +28,14 @@ Header Buttons
   background-color: #162032;
 }
 
+.validate-btn {
+  background-color: var(--btn-subheader-clr);
+}
+
+.validate-btn:hover {
+  background-color: var(--btn-subheader-clr-hover);
+}
+
 .save-btn {
   background-color: var(--draft-btn-clr);
 }
@@ -38,6 +46,8 @@ Header Buttons
 
 /* While a save is in flight. The hover override keeps the button from lighting
    up under a cursor that's already resting on it. */
+.validate-btn:disabled,
+.validate-btn:disabled:hover,
 .save-btn:disabled,
 .save-btn:disabled:hover,
 .run-btn:disabled,
@@ -79,6 +89,7 @@ Header Button Media Queries
   /* font-size: 0 hides the text node without a wrapper element.
      ion-icon manages its own font-size so it is unaffected. */
   .add-stage-btn,
+  .validate-btn,
   .save-btn {
     font-size: 0;
     padding: var(--space-sm);
@@ -87,6 +98,7 @@ Header Button Media Queries
   /* Restore the icon's visual size and remove the margin that was
      separating it from the now-hidden button label. */
   .add-stage-btn ion-icon,
+  .validate-btn ion-icon,
   .save-btn ion-icon {
     font-size: 20px;
     margin-right: 0;

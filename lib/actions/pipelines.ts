@@ -319,8 +319,40 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
   }
 }
 
+// Runs addPipelineRun's readiness checks without starting a run. It validates the graph as it
+// sits in the editor, saved or not, since the point is to check edits before committing them.
+export async function validatePipeline(environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
+  const session = await auth();
 
+  if (!session?.user?.id) return {
+    status: 'error',
+    message: 'Sign in to validate a pipeline.'
+  }
 
+  // The environment's requireApproval decides whether the approval rule applies, so there is no answer without one.
+  if (!environmentId) return {
+    status: 'error',
+    message: 'Select an environment to validate against.'
+  }
+
+  try {
+    const isReadyState = await verifyPipelineRunReady(toDefinition(nodes, edges), environmentId);
+
+    if (isReadyState.status === 'error') return isReadyState;
+
+    return {
+      status: 'success',
+      message: 'Pipeline is valid'
+    }
+
+  } catch (error: unknown) {
+    console.log(error instanceof Error ? error.message : '');
+    return {
+      status: 'error',
+      message: 'Error validating pipeline. Please try again.'
+    }
+  }
+}
 
 async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
   const { graphJson, configJson } = definition;
