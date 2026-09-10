@@ -7,6 +7,7 @@ export type Audit = Omit<PrismaAuditLog, "action" | "resourceType"> & {
   resourceType: ResourceType;
   user: string | null;
 }
+
 const ACTION_MAP: Record<PrismaAuditAction, AuditAction> = {
   PIPELINE_CREATED: "Pipeline Created",
   PIPELINE_UPDATED: "Pipeline Updated",
