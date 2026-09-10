@@ -79,6 +79,27 @@
   font-size: 20px;
 }
 
+
+
+/*
+===============================
+Refresh Button
+===============================
+ */
+.subheader button:disabled {
+  cursor: default;
+  background-color: var(--btn-subheader-clr-hover);
+}
+
+.subheader button:disabled ion-icon {
+  animation: subheader-spin 1.2s linear infinite;
+}
+
+@keyframes subheader-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /*
 =====================================================================================
 Subheader Media Queries
