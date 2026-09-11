@@ -16,7 +16,7 @@ const REFRESH_INTERVAL_MS = 15_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
-export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
+export default async function WebhookEvents({ searchParams }: { searchParams: SearchParams }) {
   const { mode, id } = await searchParams;
   const { events: webhookEvents, counts } = await getWebhookEvents();
 
@@ -30,7 +30,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
   return (
     <>
-      <Sidebar activeItem="webhooks" />
+      <Sidebar activeItem="webhook-events" />
 
       <main className="page-content">
 
