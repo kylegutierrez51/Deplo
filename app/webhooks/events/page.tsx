@@ -32,7 +32,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
     <>
       <Sidebar activeItem="webhook-events" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles['webhook-main']}`}>
 
         <Subheader
           title="Webhook Events"
