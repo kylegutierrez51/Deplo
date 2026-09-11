@@ -3,7 +3,7 @@ import styles from './sidebar.module.css'
 import Profile from './Profile'
 import SidebarShell from './SidebarShell';
 
-type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'audit';
+type ActiveItem = 'pipelines' | 'run-history' | 'run-detail' | 'approvals' | 'secrets' | 'environments' | 'webhooks' | 'webhook-events' | 'audit';
 
 interface SidebarProps {
   activeItem?: ActiveItem;
@@ -56,7 +56,7 @@ export default function Sidebar({ activeItem, showToggle = true }: SidebarProps)
                 <span className={styles.title}>Environments</span>
               </Link>
             </li>
-            <li className={activePage('webhooks')}>
+            <li className={activePage('webhooks') || activePage('webhook-events')}>
               <Link href="/webhooks">
                 <ion-icon name="flash-outline"></ion-icon>
                 <span className={styles.title}>Webhooks</span>
