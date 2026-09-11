@@ -9,9 +9,12 @@ import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/WebhookCard";
 import Pagination from "@/components/ui/pagination/Pagination";
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
+import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";
 import { redirect } from 'next/navigation';
+
+const REFRESH_INTERVAL_MS = 15_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; }>;
 
@@ -44,6 +47,8 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
             <SubheaderLink href="/webhooks/events" icon="pulse-outline" text="View Events" />
             <AddButton text={"Add Webhook"} url={"webhooks"} />
           </Subheader>
+
+          <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
           {webhooks.length > 0 &&
             <>
