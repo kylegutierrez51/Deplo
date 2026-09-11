@@ -12,8 +12,6 @@ export default function Subheader( {title, subtitle, badge, children }: Subheade
     <div className={styles.subheader}>
       <div className={styles['subheader-inner']}>
         <div className={styles['title-group']}>
-
-          
           {badge ? (
             <div className={styles['title-row']}>
               <h1>{title}</h1>
@@ -27,7 +25,7 @@ export default function Subheader( {title, subtitle, badge, children }: Subheade
           }
           <p className={styles.subtitle}>{subtitle}</p>
         </div>
-        {children}
+        {children && <div className={styles['subheader-actions']}>{children}</div>}
       </div>
     </div>
   )

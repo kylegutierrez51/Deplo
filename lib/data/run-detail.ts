@@ -278,12 +278,6 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
   };
 }
 
-    // run.finishedAt
-    //   ? getDuration(run.startedAt!, run.finishedAt)
-    //   : run.startedAt
-    //     ? getDuration(run.startedAt)
-    //     : '—',
-
 /*
 ==============================================================================================
  * Folds the per-attempt StageResult rows onto their graph nodes.

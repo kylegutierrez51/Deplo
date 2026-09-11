@@ -1,3 +1,9 @@
+
+.webhook-main {
+  margin-top: var(--size-topbar-height);
+}
+
+
 /*
 =====================================================================================
 Filters
@@ -170,7 +176,7 @@ Webhook Event Media Queries
 @media (max-width: 1195px) {
 
   :global(.page-content) {
-    padding: 50px 60px 0;
+    padding: 0 60px 0;
   }
 
   table thead th.filter {
@@ -276,6 +282,12 @@ Webhook Event Media Queries
     display: inline;
     white-space: normal;
     overflow: visible;
+  }
+
+  .webhook-main,
+  .webhook-main:global(.page-content) {
+    margin-top: 0;
+    padding: 75px var(--space-xl) 0;
   }
 }
 
