@@ -1,6 +1,7 @@
 import styles from "./webhooks.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
+import SubheaderLink from '@/components/layout/subheader/SubheaderLink';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
@@ -40,6 +41,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
           <Subheader
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
+            <SubheaderLink href="/webhooks/events" icon="pulse-outline" text="View Events" />
             <AddButton text={"Add Webhook"} url={"webhooks"} />
           </Subheader>
 

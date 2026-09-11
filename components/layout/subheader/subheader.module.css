@@ -79,6 +79,25 @@
   font-size: 20px;
 }
 
+.subheader-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-self: start;
+}
+
+/* outline variant for a secondary action beside the primary button; mirrors the Topbar back-link */
+.subheader a.secondary {
+  background-color: transparent;
+  border: 1px solid var(--gray-clr);
+  color: var(--subtitle-clr);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.subheader a.secondary:hover {
+  background-color: var(--gray-clr);
+  color: var(--white-clr);
+}
+
 
 
 /*
@@ -113,13 +132,17 @@ Subheader Media Queries
     gap: var(--space-md);
   }
 
-  .subheader button {
+  .subheader button, .subheader a {
     min-height: 44px;
   }
 }
 
 @media (max-width: 570px) {
-  .subheader button {
+  .subheader-actions {
+    width: 100%;
+  }
+
+  .subheader button, .subheader a {
     width: 100%;
     min-height: 44px;
     justify-content: center;
