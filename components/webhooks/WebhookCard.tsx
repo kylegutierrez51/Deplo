@@ -1,5 +1,4 @@
 import styles from './webhook-card.module.css'
-import SyncButton from './SyncButton';
 import type { Webhook } from "@/lib/data/webhooks";
 import Pill from '../ui/Pill';
 import { formatDate } from '@/lib/utils/date';
@@ -47,7 +46,6 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
             }
           </div>
         </div>
-        <SyncButton id={webhook.id} />
       </div>
     </div>
   )

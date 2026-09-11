@@ -116,18 +116,6 @@
   gap: var(--space-md);
 }
 
-.sync-btn {
-  display: inline-flex;
-  align-items: start;
-  justify-content: center;
-  align-self: flex-start;
-  background: transparent;
-  border: none;
-  padding: 0;
-  line-height: 0;
-  cursor: pointer;
-}
-
 .webhook-row ion-icon[name="sync-outline"] {
   font-size: 27px;
   cursor: pointer;
@@ -138,15 +126,6 @@
   color: var(--blue-clr);
 }
 
-.sync-btn.animate ion-icon[name="sync-outline"] {
-  animation: rdc-spin 1.2s linear infinite;
-  color: var(--blue-clr);
-}
-
-@keyframes rdc-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 /*
 =====================================================================================
