@@ -6,21 +6,25 @@ import prisma from "@/lib/prisma";
 import { auth } from '@/auth';
 import { definitionsEqual, toDefinition } from '@/lib/pipeline/definition';
 import type { Edge } from '@xyflow/react';
+import { AuditAction, ResourceType } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { getEnvironmentById } from '../data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
 import { enqueueOrDiscardRun, createPipelineRun } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
+import { addAudit } from './audits';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
 const SAVE_ATTEMPTS = 3;
 
+
 export async function addPipeline(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
-  const createdById = session?.user?.id ?? null;
+  const user = session?.user;
+  const createdById = user?.id ?? null;
 
-  if (!createdById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to add a pipeline.'
   }
@@ -30,14 +34,26 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
   const description = formData.get('description') as string;
 
   try {
-    await prisma.pipeline.create({
-      data: {
-        name, repoUrl, description, createdById,
-        definitions: {
-          create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
+    await prisma.$transaction(async (tx) => {
+      const pipeline = await tx.pipeline.create({
+        data: {
+          name, repoUrl, description, createdById,
+          definitions: {
+            create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
+          },
         },
-      },
+      });
+
+      await addAudit({
+        userId: user.id,
+        actor: user.name ?? undefined,
+        action: AuditAction.PIPELINE_CREATED,
+        resourceType: ResourceType.PIPELINE,
+        resourceId: pipeline.id,
+        resourceLabel: name
+      }, tx);
     });
+
 
     revalidatePath('/pipelines');
 
@@ -55,23 +71,42 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
   }
 }
 
+
+
 export async function updatePipeline(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to update a pipeline.'
   }
-  
+
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
 
   try {
-    await prisma.pipeline.update({
-      where: { id },
-      data: { name, repoUrl, description },
+    await prisma.$transaction(async (tx) => {
+      const { name: prevName } = await tx.pipeline.findUniqueOrThrow({
+        where: { id },
+        select: { name: true }
+      });
+
+      await tx.pipeline.update({
+        where: { id },
+        data: { name, repoUrl, description },
+      });
+
+      await addAudit({
+        userId: user.id,
+        actor: user.name ?? undefined,
+        action: AuditAction.PIPELINE_UPDATED,
+        resourceType: ResourceType.PIPELINE,
+        resourceId: id,
+        resourceLabel: prevName === name ? name : `${prevName} → ${name}`
+      }, tx);
     });
 
     revalidatePath('/pipelines');
@@ -97,18 +132,33 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
   }
 }
 
+
+
 export async function deletePipeline(id: string): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to delete a pipeline.'
   }
 
   try {
-    await prisma.pipeline.delete({
-      where: { id }
+    await prisma.$transaction(async (tx) => {
+      const pipeline = await tx.pipeline.delete({
+        where: { id }
+      });
+
+      await addAudit({
+        userId: user.id,
+        actor: user.name ?? undefined,
+        action: AuditAction.PIPELINE_DELETED,
+        resourceType: ResourceType.PIPELINE,
+        resourceId: id,
+        resourceLabel: pipeline.name
+      }, tx);
     });
+
 
     revalidatePath('/pipelines');
 
@@ -134,12 +184,14 @@ export async function deletePipeline(id: string): Promise<FormState> {
 }
 
 
+
 // a save inserts an entirely new row with an incremented version
 export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
   const session = await auth();
-  const createdById = session?.user?.id ?? null;
+  const user = session?.user;
+  const createdById = user?.id ?? null;
 
-  if (!createdById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to save a pipeline.'
   }
@@ -148,22 +200,25 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
     try {
-        const latest = await prisma.pipelineDefinition.findFirst({
-          where: { pipelineId },
-          orderBy: { version: 'desc' },
-          select: { id: true, version: true, graphJson: true, configJson: true },
-        });
+      const latest = await prisma.pipelineDefinition.findFirst({
+        where: { pipelineId },
+        orderBy: { version: 'desc' },
+        select: { id: true, version: true, graphJson: true, configJson: true },
+      });
 
-        // A save that changed nothing reuses the current version instead of creating a duplicate
-        // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save' 
-        if (latest && definitionsEqual({ graphJson, configJson }, latest)) return {
-          status: 'success',
-          message: 'Pipeline saved'
-        }
+      // A save that changed nothing reuses the current version instead of creating a duplicate
+      // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save' 
+      if (latest && definitionsEqual({ graphJson, configJson }, latest)) return {
+        status: 'success',
+        message: 'Pipeline saved'
+      }
 
+      // The sweep below runs after the commit, so the id has to come back out of
+      // the transaction — $transaction resolves to whatever the callback returns.
+      const createdId = await prisma.$transaction(async (tx) => {
         // Versions are monotonic and never reused, so the sweep below leaves
         // them sparse (0, 1, 4, 9...) — a version is the nth edit ever made.
-        const created = await prisma.pipelineDefinition.create({
+        const created = await tx.pipelineDefinition.create({
           data: {
             pipelineId,
             version: (latest?.version ?? -1) + 1,
@@ -171,12 +226,22 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
             configJson,
             createdById,
           },
-          select: { id: true },
+          select: { id: true, pipeline: { select: { name: true } } }
         });
 
-    
+        await addAudit({
+          userId: user.id,
+          actor: user.name ?? undefined,
+          action: AuditAction.PIPELINE_DEFINITION_UPDATED,
+          resourceType: ResourceType.PIPELINE,
+          resourceId: pipelineId,
+          resourceLabel: created.pipeline.name
+        }, tx);
 
-      await deleteStaleDefinitions(pipelineId, created.id);
+        return created.id;
+      });
+
+      await deleteStaleDefinitions(pipelineId, createdId);
 
       revalidatePath('/pipelines');
       revalidatePath(`/pipelines/${pipelineId}`);
@@ -210,6 +275,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
   };
 }
 
+
+
 // Drop definitions that do not have a run associated with it
 // Since Deplo can't go back to previous versions, deletes previous pipeline definitions with no runs 
 async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promise<void> {
@@ -235,11 +302,13 @@ async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promi
   }
 }
 
+
+
 export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState & { runId?: string }> {
   const session = await auth();
-  const triggeredById = session?.user?.id ?? null;
+  const user = session?.user;
 
-  if (!triggeredById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to run a pipeline.'
   }
@@ -282,17 +351,28 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
 
-    const pipeline = await createPipelineRun({ 
-      pipelineId, triggeredById, environmentId,
-      definitionId: latest.id, 
-      trigger: 'manual',  
+    const run = await createPipelineRun({
+      pipelineId, environmentId,
+      definitionId: latest.id,
+      triggeredById: user.id,
+      trigger: 'manual',
     });
 
     // Takes the row back rather than leaving it stranded at QUEUED — see run-trigger.ts.
-    if (!await enqueueOrDiscardRun(pipeline.id)) return {
+    if (!await enqueueOrDiscardRun(run.id)) return {
       status: 'error',
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
+    
+    // audited after enqueueOrDiscardRun() since that can delete the run
+    await addAudit({
+      userId: user.id,
+      actor: user.name ?? undefined,
+      action: AuditAction.RUN_TRIGGERED,
+      resourceType: ResourceType.PIPELINE_RUN,
+      resourceId: run.id,
+      resourceLabel: run.name + ' #' + run.runNumber 
+    });
 
     revalidatePath('/pipelines');
     revalidatePath('/runs');
@@ -300,7 +380,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     return {
       status: 'success',
       message: 'Pipeline Run Triggered!',
-      runId: pipeline.id
+      runId: run.id
     };
 
   } catch (error: unknown) {
@@ -318,6 +398,8 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     }
   }
 }
+
+
 
 // Runs addPipelineRun's readiness checks without starting a run. It validates the graph as it
 // sits in the editor, saved or not, since the point is to check edits before committing them.
@@ -353,6 +435,8 @@ export async function validatePipeline(environmentId: string | null, nodes: Cust
     }
   }
 }
+
+
 
 async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
   const { graphJson, configJson } = definition;

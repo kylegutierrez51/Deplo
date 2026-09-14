@@ -54,7 +54,7 @@ export async function createPipelineRun(data: {
   trigger: RunTrigger,
   triggeredById: string,
   environmentId: string | null
-}): Promise<{ id: string }> {
+}): Promise<{ id: string, name: string, runNumber: number }> {
   for (let attempt = 1; attempt <= RUN_NUMBER_ATTEMPTS; attempt++) {
     try {
       const latest = await prisma.pipelineRun.findFirst({
@@ -63,15 +63,19 @@ export async function createPipelineRun(data: {
         where: { pipelineId: data.pipelineId }
       });
 
-      return await prisma.pipelineRun.create({
-        select: { id: true },
+      const run = await prisma.pipelineRun.create({
+        select: { id: true, runNumber: true, pipeline: { select: { name: true } } },
         data: { ...data, trigger: TRIGGER_MAP[data.trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
       });
+
+      return { id: run.id, name: run.pipeline.name, runNumber: run.runNumber };
+
+
     } catch (error: unknown) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError 
-          && error.code === 'P2002'
-          && attempt < RUN_NUMBER_ATTEMPTS ) continue;
-        throw error;
+      if (error instanceof Prisma.PrismaClientKnownRequestError
+        && error.code === 'P2002'
+        && attempt < RUN_NUMBER_ATTEMPTS) continue;
+      throw error;
     }
   }
 

@@ -4,9 +4,11 @@ import { FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
+import { AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
+import { addAudit } from './audits';
 
 const RETRYABLE: Record<PrismaRunStatus, boolean> = {
   QUEUED: false, RUNNING: false, SUCCEEDED: true, FAILED: true, CANCELLED: true
@@ -14,9 +16,9 @@ const RETRYABLE: Record<PrismaRunStatus, boolean> = {
 
 export async function retryRun(id: string): Promise<FormState & { runId?: string }> {
   const session = await auth();
-  const triggeredById = session?.user?.id ?? null;
+  const user = session?.user;
 
-  if (!triggeredById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to run a pipeline.'
   }
@@ -46,12 +48,12 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
 
-    const retry = await createPipelineRun({ 
-      pipelineId: run.pipelineId, 
+    const retry = await createPipelineRun({
+      pipelineId: run.pipelineId,
       environmentId: run.environmentId,
-      definitionId: run.definitionId, 
-      trigger: 'manual',  
-      triggeredById, 
+      definitionId: run.definitionId,
+      trigger: 'manual',
+      triggeredById: user.id,
     });
 
 
@@ -60,6 +62,16 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       status: 'error',
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
+
+    // audited after enqueueOrDiscardRun() since that can delete the run
+    await addAudit({
+      userId: user.id,
+      actor: user.name ?? undefined,
+      action: AuditAction.RUN_TRIGGERED,
+      resourceType: ResourceType.PIPELINE_RUN,
+      resourceId: retry.id,
+      resourceLabel: retry.name + ' #' + retry.runNumber
+    });
 
     revalidatePath('/runs');
     revalidatePath(`/runs/${id}`);
@@ -95,34 +107,48 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
  */
 export async function cancelRun(id: string): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to cancel a run.'
   }
 
   try {
-    const { count } = await prisma.pipelineRun.updateMany({
-      where: { id, status: { in: ['QUEUED', 'RUNNING'] } },
-      data: { status: 'CANCELLED', finishedAt: new Date() },
+    const cancelled = await prisma.$transaction(async (tx) => {
+      const { count } = await tx.pipelineRun.updateMany({
+        where: { id, status: { in: ['QUEUED', 'RUNNING'] } },
+        data: { status: 'CANCELLED', finishedAt: new Date() },
+      });
+
+      if (count === 0) return false;
+
+      await tx.stageResult.updateMany({
+        where: { runId: id, status: { in: ['PENDING', 'QUEUED', 'AWAITING_APPROVAL'] } },
+        data: { status: 'CANCELLED', finishedAt: new Date() },
+      });
+
+      const run = await tx.pipelineRun.findUniqueOrThrow({
+        where: { id },
+        select: { runNumber: true, pipeline: { select: { name: true } } }
+      });
+
+      await addAudit({
+        userId: user.id,
+        actor: user.name ?? undefined,
+        action: AuditAction.RUN_CANCELLED,
+        resourceType: ResourceType.PIPELINE_RUN,
+        resourceId: id,
+        resourceLabel: run.pipeline.name + ' #' + run.runNumber
+      }, tx);
+
+      return true;
     });
 
-    if (count === 0) return {
+    if (!cancelled) return {
       status: 'error',
       message: 'This run has already finished.'
     }
-
-    /*
-     * Every stage that will now never run. Deliberately not the RUNNING one: the runner
-     * owns that row and writes it CANCELLED once its kill lands.
-     *
-     * AWAITING_APPROVAL has to be here — getApprovals filters on stage status alone, so
-     * leaving it would keep a live approval card for a run nothing will advance.
-     */
-    await prisma.stageResult.updateMany({
-      where: { runId: id, status: { in: ['PENDING', 'QUEUED', 'AWAITING_APPROVAL'] } },
-      data: { status: 'CANCELLED', finishedAt: new Date() },
-    });
 
     revalidatePath('/runs');
     revalidatePath(`/runs/${id}`);
