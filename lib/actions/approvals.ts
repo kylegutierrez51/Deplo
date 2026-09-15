@@ -3,28 +3,51 @@
 import { FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';import { AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
+import { addAudit } from './audits';
 
 export async function approveOrRejectStage(id: string, runId: string, stageId: string, approved: boolean): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
   const approvedById = session?.user?.id ?? null;
 
-  if (!approvedById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to approve a pipeline.'
   }
 
+  const userId = user.id;
+
   try {
-    // The same compare-and-swap the runner uses: the where clause names the status the row
-    // is expected to be in, and count is an ownership signal rather than an error code.
-    const { count } = await prisma.stageResult.updateMany({
-      where: { id, runId, stageId, stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' },
-      data: { status: approved ? 'APPROVED' : 'UNAPPROVED', approvedById, approvedAt: new Date(), finishedAt: new Date() },
+    
+    const decided = await prisma.$transaction(async (tx) => {
+      const { count } = await tx.stageResult.updateMany({
+        where: { id, runId, stageId, stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' },
+        data: { status: approved ? 'APPROVED' : 'UNAPPROVED', approvedById, approvedAt: new Date(), finishedAt: new Date() },
+      });
+
+      if (count === 0) return false;
+
+      const run = await tx.pipelineRun.findUniqueOrThrow({
+        where: { id: runId },
+        select: { runNumber: true, pipeline: { select: { name: true } } }
+      });
+
+      await addAudit({
+        userId,
+        actor: user.name ?? null,
+        action: approved ? AuditAction.APPROVAL_GRANTED : AuditAction.APPROVAL_REJECTED,
+        resourceType: ResourceType.PIPELINE_RUN,
+        resourceId: runId,
+        resourceLabel: `${run.pipeline.name} #${run.runNumber}`
+      }, tx);
+
+      return true;
     });
 
-    if (count === 0) {
+    if (!decided) {
       const stage = await prisma.stageResult.findUnique({
         where: { id },
         select: { status: true, run: { select: { status: true } } }
