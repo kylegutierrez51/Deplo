@@ -3,8 +3,10 @@
 import { EnvType, FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { EnvironmentType, Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
+import { EnvironmentType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
+import { addAudit } from './audits';
 
 const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
   production: 'PRODUCTION',
@@ -25,12 +27,15 @@ function readEnvType(formData: FormData): EnvironmentType | undefined {
 
 export async function addEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
-  const createdById = session?.user?.id ?? null;
+  const user = session?.user;
+  const createdById = user?.id ?? null;
 
-  if (!createdById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to add an environment.'
   }
+
+  const userId = user.id;
 
   const name = formData.get('name') as string;
   const type = readEnvType(formData);
@@ -44,15 +49,27 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
   }
 
   try {
-    await prisma.environment.create({
-      data: { name, type, requireApproval, createdById },
+    await prisma.$transaction(async (tx) => {
+      const env = await tx.environment.create({
+        data: { name, type, requireApproval, createdById },
+        select: { id: true, name: true, type: true }
+      });
+
+      await addAudit({
+        userId,
+        actor: user.name ?? null,
+        action: AuditAction.ENVIRONMENT_CREATED,
+        resourceType: ResourceType.ENVIRONMENT,
+        resourceId: env.id,
+        resourceLabel: env.name + " " + env.type
+      }, tx);
     });
 
     revalidatePath('/environments');
 
-    return { 
-      status: 'success', 
-      message: 'Environment added' 
+    return {
+      status: 'success',
+      message: 'Environment added'
     };
 
   } catch (error: unknown) {
@@ -73,12 +90,15 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
 
 export async function updateEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to update an environment.'
   }
-  
+
+  const userId = user.id;
+
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const type = readEnvType(formData);
@@ -93,16 +113,37 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
   }
 
   try {
-    await prisma.environment.update({
-      where: { id },
-      data: { name, type, requireApproval },
+    await prisma.$transaction(async (tx) => {
+      const { name: prevName, type: prevType } = await tx.environment.findUniqueOrThrow({
+        where: { id },
+        select: { name: true, type: true }
+      });
+      
+      await tx.environment.update({
+        where: { id },
+        data: { name, type, requireApproval },
+      });
+
+      const auditedName = prevName === name ? name : `${prevName} → ${name}`
+      const auditedType = prevType === type ? type : `${prevType} → ${type}`
+
+      await addAudit({
+        userId,
+        actor: user.name ?? null,
+        action: AuditAction.ENVIRONMENT_UPDATED,
+        resourceType: ResourceType.ENVIRONMENT,
+        resourceId: id,
+        resourceLabel: auditedName + " " + auditedType
+      }, tx);
     });
+
+
 
     revalidatePath('/environments');
 
-    return { 
-      status: 'success', 
-      message: 'Environment updated' 
+    return {
+      status: 'success',
+      message: 'Environment updated'
     };
 
   } catch (error: unknown) {
@@ -128,16 +169,31 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
 }
 
 export async function deleteEnvironment(id: string): Promise<FormState> {
+  const session = await auth();
+  const user = session?.user;
+
+  if (!user?.id) return {
+    status: 'error',
+    message: 'Sign in to delete an environment.'
+  }
+
+  const userId = user.id;
+
   try {
-    const session = await auth();
+    await prisma.$transaction(async (tx) => {
+      const env = await tx.environment.delete({
+        where: { id },
+        select: { name: true, type: true }
+      });
 
-    if (!session?.user?.id) return {
-      status: 'error',
-      message: 'Sign in to delete an environment.'
-    }
-
-    await prisma.environment.delete({
-      where: { id }
+      await addAudit({
+        userId,
+        actor: user.name ?? null,
+        action: AuditAction.ENVIRONMENT_DELETED,
+        resourceType: ResourceType.ENVIRONMENT,
+        resourceId: id,
+        resourceLabel: env.name + " " + env.type
+      }, tx);
     });
 
     revalidatePath('/environments');

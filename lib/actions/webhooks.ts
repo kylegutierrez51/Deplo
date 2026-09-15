@@ -4,8 +4,10 @@ import { encryptSecret, generateWebhookSecret } from '@/lib/utils/crypto';
 import { FormState, EventType } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { EventType as PrismaEventType, Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
+import { EventType as PrismaEventType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
+import { addAudit } from './audits';
 
 const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
   push: 'PUSH',
@@ -28,17 +30,20 @@ export type RegenerateSecretState = FormState & { secret?: string };
 
 export async function addWebhook(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
-  const createdById = session?.user?.id ?? null;
+  const user = session?.user;
+  const createdById = user?.id ?? null;
 
-  if (!createdById) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to add a webhook.'
   }
 
+  const userId = user.id;
+
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
   const secret = formData.get('webhook_secret') as string;
-  const events = validateAndMapEvents(formData); 
+  const events = validateAndMapEvents(formData);
 
   if (!events) {
     return {
@@ -50,8 +55,20 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   const { encryptedValue, iv, authTag } = encryptSecret(secret);
 
   try {
-    await prisma.webhook.create({
-      data: { pipelineId, branchFilters, events, encryptedValue, iv, authTag, createdById },
+    await prisma.$transaction(async (tx) => {
+      const webhook = await tx.webhook.create({
+        data: { pipelineId, branchFilters, events, encryptedValue, iv, authTag, createdById },
+        select: { id: true, pipeline: { select: { name: true } } }
+      });
+
+      await addAudit({
+        userId: userId,
+        actor: user.name ?? null,
+        action: AuditAction.WEBHOOK_CREATED,
+        resourceType: ResourceType.WEBHOOK,
+        resourceId: webhook.id,
+        resourceLabel: webhook.pipeline?.name ?? null
+      }, tx);
     });
 
     revalidatePath('/webhooks');
@@ -79,16 +96,19 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
 
 export async function updateWebhook(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to update a webhook.'
   }
 
+  const userId = user.id;
+
   const id = formData.get('id') as string;
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
-  const events = validateAndMapEvents(formData); 
+  const events = validateAndMapEvents(formData);
 
   if (!events) {
     return {
@@ -98,10 +118,33 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
   }
 
   try {
-    await prisma.webhook.update({
-      where: { id },
-      data: { pipelineId, branchFilters, events },
+    await prisma.$transaction(async (tx) => {
+      const { pipeline: prevPipeline } = await tx.webhook.findUniqueOrThrow({
+        where: { id },
+        select: { pipeline: { select: { name: true } } }
+      });
+
+      const prevName = prevPipeline?.name ?? null;
+
+      const webhook = await tx.webhook.update({
+        where: { id },
+        data: { pipelineId, branchFilters, events },
+        select: { pipeline: { select: { name: true } } }
+      });
+      
+      const name = webhook.pipeline?.name ?? null;
+
+      await addAudit({
+        userId,
+        actor: user.name ?? null,
+        action: AuditAction.WEBHOOK_UPDATED,
+        resourceType: ResourceType.WEBHOOK,
+        resourceId: id,
+        resourceLabel: prevName === name ? name : `${prevName} → ${name}`
+      }, tx);
     });
+
+
 
     revalidatePath('/webhooks');
 
@@ -134,15 +177,30 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
 export async function deleteWebhook(id: string): Promise<FormState> {
   const session = await auth();
+  const user = session?.user;
 
-  if (!session?.user?.id) return {
+  if (!user?.id) return {
     status: 'error',
     message: 'Sign in to delete a webhook.'
   }
 
+  const userId = user.id;
+
   try {
-    await prisma.webhook.delete({
-      where: { id }
+    await prisma.$transaction(async (tx) => {
+      const webhook = await tx.webhook.delete({
+        where: { id },
+        select: { pipeline: { select: { name: true } } }
+      });
+
+      await addAudit({
+        userId: userId,
+        actor: user.name ?? null,
+        action: AuditAction.WEBHOOK_DELETED,
+        resourceType: ResourceType.WEBHOOK,
+        resourceId: id,
+        resourceLabel: webhook.pipeline?.name ?? null
+      }, tx);
     });
 
     revalidatePath('/webhooks');
