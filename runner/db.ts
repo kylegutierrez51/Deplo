@@ -1,8 +1,9 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
+import { addAudit } from '@/lib/actions/audits';
 import { RUNNER_WORKSPACE_ROOT } from './connection';
 import type { GraphJson, StageType } from '@/lib/types';
-import type { RunStatus, StageStatus } from '@/generated/prisma';
+import { AuditAction, ResourceType, type RunStatus, type StageStatus } from '@/generated/prisma';
 import { Prisma, type StageType as PrismaStageType } from '@/generated/prisma/client';
 import type { Outcomes } from './scheduler';
 import { mkdir } from 'node:fs/promises';
@@ -31,6 +32,7 @@ interface RunContext {
   /** stageId → the attempt number of that stage's latest row. Absent = never materialized. */
   attempts: ReadonlyMap<string, number>,
 }
+
 
 
 /*
@@ -81,6 +83,8 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
   };
 }
 
+
+
 /*
 ==============================================================================================
  * Create a data array, used to create the StageResult rows
@@ -130,6 +134,8 @@ export async function startRunIfQueued(runId: string): Promise<boolean> {
   return count === 1;
 }
 
+
+
 export async function claimStageForQueue(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
     where: { runId, stageId, attempt, status: 'PENDING' },
@@ -138,6 +144,8 @@ export async function claimStageForQueue(runId: string, stageId: string, attempt
 
   return count === 1;
 }
+
+
 
 export async function claimStageForApproval(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
@@ -148,6 +156,8 @@ export async function claimStageForApproval(runId: string, stageId: string, atte
   return count === 1;
 }
 
+
+
 export async function markStageRunning(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
     where: { runId, stageId, attempt, status: 'QUEUED' },
@@ -156,6 +166,8 @@ export async function markStageRunning(runId: string, stageId: string, attempt: 
 
   return count === 1;
 }
+
+
 
 export async function finishStage(runId: string, stageId: string, attempt: number, outcome: StageOutcome): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
@@ -171,6 +183,8 @@ export async function finishStage(runId: string, stageId: string, attempt: numbe
   return count === 1;
 }
 
+
+
 export async function recordStageProgress(
   runId: string,
   stageId: string,
@@ -184,6 +198,7 @@ export async function recordStageProgress(
 
   return count === 1;
 }
+
 
 
 /*
@@ -258,6 +273,7 @@ export async function openRetry(runId: string, stageId: string, attempt: number)
 }
 
 
+
 /*
 ==============================================================================================
  * Fails every stage row left RUNNING by a process that is no longer alive.
@@ -299,6 +315,8 @@ export async function reapStaleStages(): Promise<number> {
   `;
 }
 
+
+
 // Every run the scheduler might still owe a decision to, newest last. Used by the boot reaper.
 export async function findUnfinishedRuns(): Promise<{ id: string, status: RunStatus }[]> {
   return await prisma.pipelineRun.findMany({
@@ -307,6 +325,8 @@ export async function findUnfinishedRuns(): Promise<{ id: string, status: RunSta
     orderBy: { createdAt: 'asc' },
   });
 }
+
+
 
 /*
 ==============================================================================================
@@ -331,6 +351,8 @@ export async function findStalledRuns(cutoff: Date): Promise<{ id: string, statu
   });
 }
 
+
+
 export async function findRunningStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
   return await prisma.stageResult.findMany({
     where: { status: 'RUNNING' },
@@ -338,12 +360,16 @@ export async function findRunningStages(): Promise<{ stageId: string, runId: str
   });
 }
 
+
+
 export async function findQueuedStages(): Promise<{ stageId: string, runId: string, attempt: number }[]> {
   return await prisma.stageResult.findMany({
     where: { status: 'QUEUED' },
     select: { stageId: true, runId: true, attempt: true },
   });
 }
+
+
 
 export async function updateQueuedToPending(runId: string, stageId: string, attempt: number): Promise<boolean> {
   const { count } = await prisma.stageResult.updateMany({
@@ -353,6 +379,8 @@ export async function updateQueuedToPending(runId: string, stageId: string, atte
 
   return count > 0;
 }
+
+
 
 /*
 ==============================================================================================
@@ -384,13 +412,33 @@ export async function failQueuedStage(runId: string, stageId: string, attempt: n
   return count === 1;
 }
 
-export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | 'FAILED'): Promise<boolean> {
-  const { count } = await prisma.pipelineRun.updateMany({
-    where: { id: runId, status: 'RUNNING', },
-    data: { status: terminalStatus, finishedAt: new Date() }
-  });
 
-  return count === 1;
+
+export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | 'FAILED'): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const { count } = await tx.pipelineRun.updateMany({
+      where: { id: runId, status: 'RUNNING' },
+      data: { status: terminalStatus, finishedAt: new Date() }
+    });
+
+    if (count !== 1) return false;
+
+    const run = await tx.pipelineRun.findUniqueOrThrow({
+      where: { id: runId },
+      select: { runNumber: true, pipeline: { select: { name: true } } }
+    });
+
+    await addAudit({
+      userId: null,
+      actor: 'runner',
+      action: AuditAction.RUN_COMPLETED,
+      resourceType: ResourceType.PIPELINE_RUN,
+      resourceId: runId,
+      resourceLabel: `${run.pipeline.name} #${run.runNumber} (${terminalStatus.toLowerCase()})`
+    }, tx);
+
+    return true;
+  });
 }
 
 /*
@@ -417,6 +465,8 @@ export async function cancelPendingAwaitingQueuedStages(runId: string): Promise<
   return count;
 }
 
+
+
 export async function isRunCancelled(runId: string): Promise<boolean> {
   const run = await prisma.pipelineRun.findUnique({
     where: { id: runId },
@@ -425,6 +475,8 @@ export async function isRunCancelled(runId: string): Promise<boolean> {
 
   return run?.status === 'CANCELLED';
 }
+
+
 
 /*
 ==============================================================================================

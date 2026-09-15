@@ -6,7 +6,7 @@ import {
   findStalledRuns,
 } from './db';
 import { graph } from '@/test/helpers/graph';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { mkdir } from 'node:fs/promises';
 
@@ -211,22 +211,39 @@ describe('the run compare-and-swaps', () => {
     });
   });
 
-  it('finalizeRun only decides a run that is RUNNING', async () => {
-    prismaMock.pipelineRun.updateMany.mockResolvedValue(updated(1));
+});
+
+/*
+ * The CAS and the audit write commit together, the same reason cancelRun's does on the app
+ * side: a run that ends up terminal with no audit row is the exact gap addAudit's contract
+ * rules out everywhere else it's called. Only the caller that wins the CAS reaches the audit
+ * — a loss means another process already finalized (and already audited) this run.
+ */
+describe('finalizeRun', () => {
+  let tx: ReturnType<typeof transactionMock>;
+
+  beforeEach(() => {
+    tx = transactionMock();
+    runTransactionsInline(tx);
+    tx.pipelineRun.findUniqueOrThrow.mockResolvedValue({ runNumber: 4, pipeline: { name: 'CI' } } as never);
+  });
+
+  it('only decides a run that is RUNNING', async () => {
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(1));
 
     await finalizeRun('run-1', 'SUCCEEDED');
 
-    expect(prismaMock.pipelineRun.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+    expect(tx.pipelineRun.updateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ status: 'RUNNING' }),
     }));
   });
 
-  it('finalizeRun writes the caller’s verdict', async () => {
-    prismaMock.pipelineRun.updateMany.mockResolvedValue(updated(1));
+  it('writes the caller’s verdict', async () => {
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(1));
 
     await finalizeRun('run-1', 'FAILED');
 
-    expect(prismaMock.pipelineRun.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+    expect(tx.pipelineRun.updateMany).toHaveBeenCalledWith(expect.objectContaining({
       data: { status: 'FAILED', finishedAt: expect.any(Date) },
     }));
   });
@@ -235,9 +252,43 @@ describe('the run compare-and-swaps', () => {
     ['won', 1, true],
     ['lost', 0, false],
   ])('reports a %s race as %s', async (_label, count, expected) => {
-    prismaMock.pipelineRun.updateMany.mockResolvedValue(updated(count));
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(count));
 
     expect(await finalizeRun('run-1', 'SUCCEEDED')).toBe(expected);
+  });
+
+  it('writes the run update and the audit through the same transaction, not the singleton', async () => {
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(1));
+
+    await finalizeRun('run-1', 'SUCCEEDED');
+
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.pipelineRun.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  // No human triggered this — the runner decided the outcome, so there is no userId to blame it on.
+  it('records the outcome against the run, with no human actor', async () => {
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(1));
+
+    await finalizeRun('run-1', 'FAILED');
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({
+      userId: null,
+      actor: 'runner',
+      action: 'RUN_COMPLETED',
+      resourceType: 'PIPELINE_RUN',
+      resourceId: 'run-1',
+      resourceLabel: 'CI #4 (failed)',
+    });
+  });
+
+  it('writes no audit for a run that had already finished', async () => {
+    tx.pipelineRun.updateMany.mockResolvedValue(updated(0));
+
+    await finalizeRun('run-1', 'SUCCEEDED');
+
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 });
 
