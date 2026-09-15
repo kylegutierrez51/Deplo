@@ -62,7 +62,7 @@ export function makeDefinition(pipelineId: string, version: number, nodes: Custo
 // read back to keep the full PipelineRun these tests expect.
 export async function makeRun(pipelineId: string, definitionId: string, triggeredById: string) {
   const { id } = await createPipelineRun({
-    pipelineId, definitionId, triggeredById, trigger: 'manual', environmentId: null,
+    pipelineId, definitionId, user: { id: triggeredById, name: null }, trigger: 'manual', environmentId: null,
   });
 
   return prisma.pipelineRun.findUniqueOrThrow({ where: { id } });
