@@ -55,7 +55,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
                       { value: "all", label: "All actions" },
 
                       { value: "run", label: "Runs" },
-                      { value: "pipeline", label: "Pipeline" },
+                      { value: "pipeline", label: "Pipelines" },
                       { value: "environment", label: "Environments" },
                       { value: "secret", label: "Secrets" },
                       { value: "webhook", label: "Webhooks" },
