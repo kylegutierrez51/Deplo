@@ -134,13 +134,16 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
       
       const name = webhook.pipeline?.name ?? null;
 
+      // displays (none) incase a webhook has no pipeline
+      const display = (n: string | null) => n ?? '(none)';
+
       await addAudit({
         userId,
         actor: user.name ?? null,
         action: AuditAction.WEBHOOK_UPDATED,
         resourceType: ResourceType.WEBHOOK,
         resourceId: id,
-        resourceLabel: prevName === name ? name : `${prevName} → ${name}`
+        resourceLabel: prevName === name ? name : `${display(prevName)} → ${display(name)}`
       }, tx);
     });
 
