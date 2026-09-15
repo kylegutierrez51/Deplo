@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
 import { decryptSecret } from '@/lib/utils/crypto';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession } from '@/test/mocks/auth';
 
 jest.mock('@/lib/prisma');
@@ -31,6 +31,13 @@ beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
   setSession();
+  runTransactionsInline();
+  // Every action reads something back inside its transaction before or after the write
+  // (the prior row for a diff label, or the row it just wrote); an unstubbed read resolves
+  // undefined and crashes the destructure before a single case-specific mock matters.
+  prismaMock.secret.create.mockResolvedValue({ id: 'sec-new', environment: { type: 'PRODUCTION' } } as never);
+  prismaMock.secret.findUniqueOrThrow.mockResolvedValue({ key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never);
+  prismaMock.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -66,6 +73,8 @@ describe('addSecret encryption', () => {
     const first = writtenData(prismaMock.secret.create);
 
     resetPrismaMock();
+    runTransactionsInline();
+    prismaMock.secret.create.mockResolvedValue({ id: 'sec-new', environment: { type: 'PRODUCTION' } } as never);
     await addSecret(idle, form({ value: 'same' }));
     const second = writtenData(prismaMock.secret.create);
 
@@ -184,7 +193,7 @@ describe('deleteSecret', () => {
   // The confirmation names the key, so the delete has to read it off the deleted
   // row rather than echo the id it was handed. The plaintext value never appears.
   it('deletes and revalidates', async () => {
-    prismaMock.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY' } as never);
+    prismaMock.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never);
 
     const result = await deleteSecret('sec-1');
 
@@ -206,5 +215,85 @@ describe('deleteSecret', () => {
     const result = await deleteSecret('sec-1');
 
     expect(result).toEqual({ status: 'error', message: 'Error deleting secret. Please try again.' });
+  });
+});
+
+/*
+ * A mock can't prove the rollback itself (that's audits.integration.test.ts), but it can
+ * prove the precondition a shared mock is blind to: that the audit goes to the same
+ * transaction client as the write, not to the singleton on a connection of its own.
+ */
+describe('audit trail', () => {
+  const attributed = { userId: 'user-1', actor: 'kyle' };
+
+  let tx: ReturnType<typeof transactionMock>;
+
+  beforeEach(() => {
+    tx = transactionMock();
+    runTransactionsInline(tx);
+  });
+
+  const cases = [
+    {
+      name: 'addSecret',
+      arrange: () => tx.secret.create.mockResolvedValue({ id: 'sec-new', environment: { type: 'PRODUCTION' } } as never),
+      act: () => addSecret(idle, form()),
+      written: () => tx.secret.create,
+      audit: { action: 'SECRET_CREATED', resourceType: 'SECRET', resourceId: 'sec-new', resourceLabel: 'API_KEY PRODUCTION' },
+    },
+    {
+      name: 'updateSecret',
+      arrange: () => tx.secret.findUniqueOrThrow.mockResolvedValue({ key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never),
+      act: () => updateSecret(idle, form({ id: 'sec-1', key: 'ROTATED_KEY' })),
+      written: () => tx.secret.update,
+      audit: { action: 'SECRET_UPDATED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY → ROTATED_KEY PRODUCTION' },
+    },
+    {
+      name: 'deleteSecret',
+      arrange: () => tx.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never),
+      act: () => deleteSecret('sec-1'),
+      written: () => tx.secret.delete,
+      audit: { action: 'SECRET_DELETED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY PRODUCTION' },
+    },
+  ];
+
+  describe.each(cases)('$name', ({ arrange, act, written, audit }) => {
+    beforeEach(() => { arrange(); });
+
+    it('sends the write and its audit to the same transaction', async () => {
+      await act();
+
+      expect(written()).toHaveBeenCalledTimes(1);
+      expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('records what happened, to what, and by whom', async () => {
+      await act();
+
+      expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({ ...audit, ...attributed });
+    });
+
+    // The rejection has to escape the callback for Prisma to roll back; a success
+    // message here would mean it was swallowed and the write committed without it.
+    it('reports failure and does not revalidate when the audit cannot be written', async () => {
+      tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+      const result = await act();
+
+      expect(result.status).toBe('error');
+      expect(revalidate).not.toHaveBeenCalled();
+    });
+  });
+
+  // The key never leaves the plaintext at rest, but the label is free text derived from
+  // it — worth pinning separately from the "never writes the plaintext value" case above,
+  // since a label bug would not trip that assertion.
+  it('never puts the plaintext value in the audit label', async () => {
+    tx.secret.create.mockResolvedValue({ id: 'sec-new', environment: { type: 'PRODUCTION' } } as never);
+
+    await addSecret(idle, form({ value: 'super-secret' }));
+
+    expect(JSON.stringify(tx.auditLog.create.mock.calls[0][0].data)).not.toContain('super-secret');
   });
 });

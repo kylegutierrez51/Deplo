@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
 import { decryptSecret } from '@/lib/utils/crypto';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession } from '@/test/mocks/auth';
 
 jest.mock('@/lib/prisma');
@@ -30,6 +30,13 @@ beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
   setSession();
+  runTransactionsInline();
+  // Every action reads something back inside its transaction (the row it just wrote, or
+  // the prior row for a diff label); an unstubbed read resolves undefined and crashes the
+  // destructure before a single case-specific mock matters.
+  prismaMock.webhook.create.mockResolvedValue({ id: 'wh-new', pipeline: { name: 'CI' } } as never);
+  prismaMock.webhook.findUniqueOrThrow.mockResolvedValue({ pipeline: { name: 'CI' } } as never);
+  prismaMock.webhook.update.mockResolvedValue({ pipeline: { name: 'CI' } } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -141,10 +148,10 @@ describe('updateWebhook', () => {
   it('updates only the metadata, by id', async () => {
     await updateWebhook(idle, form({ id: 'wh-1', pipeline_id: 'p2' }));
 
-    expect(prismaMock.webhook.update).toHaveBeenCalledWith({
+    expect(prismaMock.webhook.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'wh-1' },
       data: { pipelineId: 'p2', branchFilters: ['main'], events: ['PUSH'] },
-    });
+    }));
   });
 
   it('names the missing pipeline on a foreign key failure', async () => {
@@ -260,5 +267,116 @@ describe('deleteWebhook', () => {
     const result = await deleteWebhook('wh-1');
 
     expect(result).toEqual({ status: 'error', message: 'Error deleting webhook. Please try again.' });
+  });
+});
+
+/*
+ * A mock can't prove the rollback itself (that's audits.integration.test.ts), but it can
+ * prove the precondition a shared mock is blind to: that the audit goes to the same
+ * transaction client as the write, not to the singleton on a connection of its own.
+ */
+describe('audit trail', () => {
+  const attributed = { userId: 'user-1', actor: 'kyle' };
+
+  let tx: ReturnType<typeof transactionMock>;
+
+  beforeEach(() => {
+    tx = transactionMock();
+    runTransactionsInline(tx);
+  });
+
+  const cases = [
+    {
+      name: 'addWebhook',
+      arrange: () => tx.webhook.create.mockResolvedValue({ id: 'wh-new', pipeline: { name: 'CI' } } as never),
+      act: () => addWebhook(idle, form()),
+      written: () => tx.webhook.create,
+      audit: { action: 'WEBHOOK_CREATED', resourceType: 'WEBHOOK', resourceId: 'wh-new', resourceLabel: 'CI' },
+    },
+    {
+      name: 'updateWebhook',
+      arrange: () => {
+        tx.webhook.findUniqueOrThrow.mockResolvedValue({ pipeline: { name: 'CI' } } as never);
+        tx.webhook.update.mockResolvedValue({ pipeline: { name: 'Other' } } as never);
+      },
+      act: () => updateWebhook(idle, form({ id: 'wh-1', pipeline_id: 'p2' })),
+      written: () => tx.webhook.update,
+      audit: { action: 'WEBHOOK_UPDATED', resourceType: 'WEBHOOK', resourceId: 'wh-1', resourceLabel: 'CI → Other' },
+    },
+    {
+      name: 'deleteWebhook',
+      arrange: () => tx.webhook.delete.mockResolvedValue({ pipeline: { name: 'CI' } } as never),
+      act: () => deleteWebhook('wh-1'),
+      written: () => tx.webhook.delete,
+      audit: { action: 'WEBHOOK_DELETED', resourceType: 'WEBHOOK', resourceId: 'wh-1', resourceLabel: 'CI' },
+    },
+  ];
+
+  describe.each(cases)('$name', ({ arrange, act, written, audit }) => {
+    beforeEach(() => { arrange(); });
+
+    it('sends the write and its audit to the same transaction', async () => {
+      await act();
+
+      expect(written()).toHaveBeenCalledTimes(1);
+      expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('records what happened, to what, and by whom', async () => {
+      await act();
+
+      expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({ ...audit, ...attributed });
+    });
+
+    // The rejection has to escape the callback for Prisma to roll back; a success
+    // message here would mean it was swallowed and the write committed without it.
+    it('reports failure and does not revalidate when the audit cannot be written', async () => {
+      tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+      const result = await act();
+
+      expect(result.status).toBe('error');
+      expect(revalidate).not.toHaveBeenCalled();
+    });
+  });
+
+  // Webhook.pipeline is optional — onDelete: SetNull leaves a webhook pointing at no
+  // pipeline — so the label has to degrade to null rather than throw on a missing relation.
+  it('labels a webhook with no pipeline as null, not a crash', async () => {
+    tx.webhook.create.mockResolvedValue({ id: 'wh-new', pipeline: null } as never);
+
+    await addWebhook(idle, form());
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: null });
+  });
+
+  it('labels a pipeline reassignment from none to one', async () => {
+    tx.webhook.findUniqueOrThrow.mockResolvedValue({ pipeline: null } as never);
+    tx.webhook.update.mockResolvedValue({ pipeline: { name: 'CI' } } as never);
+
+    await updateWebhook(idle, form({ id: 'wh-1' }));
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: '(none) → CI' });
+  });
+
+  it('labels a pipeline unassignment as a diff, not a bare "null"', async () => {
+    tx.webhook.findUniqueOrThrow.mockResolvedValue({ pipeline: { name: 'CI' } } as never);
+    tx.webhook.update.mockResolvedValue({ pipeline: null } as never);
+
+    await updateWebhook(idle, form({ id: 'wh-1' }));
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: 'CI → (none)' });
+  });
+
+  // Staying unassigned across the edit is not a change, so it keeps the plain null the
+  // create/delete audits already use rather than announcing a "(none) → (none)" diff.
+  it('leaves an unchanged missing pipeline as a plain null, not a diff', async () => {
+    tx.webhook.findUniqueOrThrow.mockResolvedValue({ pipeline: null } as never);
+    tx.webhook.update.mockResolvedValue({ pipeline: null } as never);
+
+    await updateWebhook(idle, form({ id: 'wh-1' }));
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: null });
   });
 });
