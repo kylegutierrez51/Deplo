@@ -44,6 +44,7 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
             create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
           },
         },
+        select: { id: true }
       });
 
       await addAudit({
@@ -152,7 +153,8 @@ export async function deletePipeline(id: string): Promise<FormState> {
   try {
     await prisma.$transaction(async (tx) => {
       const pipeline = await tx.pipeline.delete({
-        where: { id }
+        where: { id },
+        select: { name: true }
       });
 
       await addAudit({
@@ -221,11 +223,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
         message: 'Pipeline saved'
       }
 
-      // The sweep below runs after the commit, so the id has to come back out of
-      // the transaction — $transaction resolves to whatever the callback returns.
       const createdId = await prisma.$transaction(async (tx) => {
-        // Versions are monotonic and never reused, so the sweep below leaves
-        // them sparse (0, 1, 4, 9...) — a version is the nth edit ever made.
+        
         const created = await tx.pipelineDefinition.create({
           data: {
             pipelineId,
