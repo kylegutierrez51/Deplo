@@ -23,6 +23,8 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
     message: 'Sign in to run a pipeline.'
   }
 
+  const userId = user.id;
+
   try {
     const run = await prisma.pipelineRun.findUnique({
       where: { id },
@@ -53,7 +55,7 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       environmentId: run.environmentId,
       definitionId: run.definitionId,
       trigger: 'manual',
-      triggeredById: user.id,
+      user: { id: userId, name: user.name ?? null }
     });
 
 
@@ -62,16 +64,6 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       status: 'error',
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
-
-    // audited after enqueueOrDiscardRun() since that can delete the run
-    await addAudit({
-      userId: user.id,
-      actor: user.name ?? undefined,
-      action: AuditAction.RUN_TRIGGERED,
-      resourceType: ResourceType.PIPELINE_RUN,
-      resourceId: retry.id,
-      resourceLabel: retry.name + ' #' + retry.runNumber
-    });
 
     revalidatePath('/runs');
     revalidatePath(`/runs/${id}`);
@@ -114,6 +106,8 @@ export async function cancelRun(id: string): Promise<FormState> {
     message: 'Sign in to cancel a run.'
   }
 
+  const userId = user.id;
+
   try {
     const cancelled = await prisma.$transaction(async (tx) => {
       const { count } = await tx.pipelineRun.updateMany({
@@ -134,8 +128,8 @@ export async function cancelRun(id: string): Promise<FormState> {
       });
 
       await addAudit({
-        userId: user.id,
-        actor: user.name ?? undefined,
+        userId,
+        actor: user.name ?? null,
         action: AuditAction.RUN_CANCELLED,
         resourceType: ResourceType.PIPELINE_RUN,
         resourceId: id,

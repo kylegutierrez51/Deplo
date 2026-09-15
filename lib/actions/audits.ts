@@ -3,12 +3,12 @@ import { AuditAction, ResourceType } from "@/generated/prisma";
 import { Prisma } from '@/generated/prisma';
 
 interface AuditAttrs {
-  userId?: string;
-  actor?: string;
+  userId: string | null;
+  actor: string | null;
   action: AuditAction;
   resourceType: ResourceType;
   resourceId: string;
-  resourceLabel?: string;
+  resourceLabel: string | null;
 }
 
 type Db = typeof prisma | Prisma.TransactionClient;

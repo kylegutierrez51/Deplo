@@ -29,6 +29,8 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
     message: 'Sign in to add a pipeline.'
   }
 
+  const userId = user.id;
+
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
@@ -45,8 +47,8 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
       });
 
       await addAudit({
-        userId: user.id,
-        actor: user.name ?? undefined,
+        userId: userId,
+        actor: user.name ?? null,
         action: AuditAction.PIPELINE_CREATED,
         resourceType: ResourceType.PIPELINE,
         resourceId: pipeline.id,
@@ -82,6 +84,8 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
     message: 'Sign in to update a pipeline.'
   }
 
+  const userId = user.id;
+
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
@@ -100,8 +104,8 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
       });
 
       await addAudit({
-        userId: user.id,
-        actor: user.name ?? undefined,
+        userId,
+        actor: user.name ?? null,
         action: AuditAction.PIPELINE_UPDATED,
         resourceType: ResourceType.PIPELINE,
         resourceId: id,
@@ -143,6 +147,8 @@ export async function deletePipeline(id: string): Promise<FormState> {
     message: 'Sign in to delete a pipeline.'
   }
 
+  const userId = user.id;
+
   try {
     await prisma.$transaction(async (tx) => {
       const pipeline = await tx.pipeline.delete({
@@ -150,8 +156,8 @@ export async function deletePipeline(id: string): Promise<FormState> {
       });
 
       await addAudit({
-        userId: user.id,
-        actor: user.name ?? undefined,
+        userId,
+        actor: user.name ?? null,
         action: AuditAction.PIPELINE_DELETED,
         resourceType: ResourceType.PIPELINE,
         resourceId: id,
@@ -196,6 +202,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
     message: 'Sign in to save a pipeline.'
   }
 
+  const userId = user.id;
+
   const { graphJson, configJson } = toDefinition(nodes, edges);
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
@@ -230,8 +238,8 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
         });
 
         await addAudit({
-          userId: user.id,
-          actor: user.name ?? undefined,
+          userId,
+          actor: user.name ?? null,
           action: AuditAction.PIPELINE_DEFINITION_UPDATED,
           resourceType: ResourceType.PIPELINE,
           resourceId: pipelineId,
@@ -313,6 +321,8 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     message: 'Sign in to run a pipeline.'
   }
 
+  const userId = user.id;
+
   if (!environmentId) return {
     status: 'error',
     message: 'Select an environment to target.'
@@ -354,7 +364,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     const run = await createPipelineRun({
       pipelineId, environmentId,
       definitionId: latest.id,
-      triggeredById: user.id,
+      user: { id: userId, name: user.name ?? null },
       trigger: 'manual',
     });
 
@@ -363,16 +373,6 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
       status: 'error',
       message: 'Could not reach the job queue, so the run was not started. Please try again.'
     }
-    
-    // audited after enqueueOrDiscardRun() since that can delete the run
-    await addAudit({
-      userId: user.id,
-      actor: user.name ?? undefined,
-      action: AuditAction.RUN_TRIGGERED,
-      resourceType: ResourceType.PIPELINE_RUN,
-      resourceId: run.id,
-      resourceLabel: run.name + ' #' + run.runNumber 
-    });
 
     revalidatePath('/pipelines');
     revalidatePath('/runs');
