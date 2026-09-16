@@ -7,6 +7,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
 import { getPipelineById, getPipelines } from '@/lib/data/pipelines';
 import { redirect } from 'next/navigation';
@@ -41,7 +42,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
           <AddButton text={"New Pipeline"} url={"pipelines"} />
         </Subheader>
 
-        {pipelines.length > 0 &&
+        {pipelines.length > 0 ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -68,7 +69,14 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
 
             <Pagination showing="1-10" totalRows={pipelines.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : (
+          <EmptyState
+            icon="git-network-outline"
+            heading="No pipelines yet"
+            description="Create a pipeline to draw the stages of your first deploy and wire them together."
+            action={{ label: "New Pipeline", href: "/pipelines?mode=create", icon: "add-outline" }}
+          />
+        )}
       </main>
 
       {modal && (

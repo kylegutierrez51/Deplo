@@ -7,6 +7,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import EnvironmentRow from '@/components/environments/EnvironmentRow';
 import Pagination from '@/components/ui/pagination/Pagination';
+import EmptyState from '@/components/ui/EmptyState';
 import EnvModalController from '@/components/environments/EnvModalController';
 import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
 import { redirect } from 'next/navigation';
@@ -40,7 +41,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
 
-        {environments.length > 0 &&
+        {environments.length > 0 ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -75,7 +76,14 @@ export default async function Environments({ searchParams }: { searchParams: Sea
 
             <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : (
+          <EmptyState
+            icon="settings-outline"
+            heading="No environments yet"
+            description="An environment is a deploy target. Runs execute against one, and it scopes which secrets they can read."
+            action={{ label: "New Environment", href: "/environments?mode=create", icon: "add-outline" }}
+          />
+        )}
       </main>
 
       {modal && (

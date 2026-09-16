@@ -7,6 +7,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import SecretModalController from '@/components/secrets/SecretModalController';
 import { getSecretById, getSecrets } from '@/lib/data/secrets';
 import { getEnvironments } from '@/lib/data/environments';
@@ -42,7 +43,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
           <AddButton text={"New Secret"} url={"secrets"} />
         </Subheader>
-        {secrets.length > 0 &&
+        {secrets.length > 0 ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -68,7 +69,21 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
 
             <Pagination showing="1-10" totalRows={secrets.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : environments.length > 0 ? (
+          <EmptyState
+            icon="key-outline"
+            heading="No secrets yet"
+            description="Secrets are encrypted at rest and injected into stages when a run starts."
+            action={{ label: "New Secret", href: "/secrets?mode=create", icon: "add-outline" }}
+          />
+        ) : (
+          <EmptyState
+            icon="key-outline"
+            heading="No secrets yet"
+            description="Secrets belong to an environment. Create an environment first."
+            action={{ label: "New Environment", href: "/environments?mode=create", icon: "add-outline" }}
+          />
+        )}
       </main>
 
       {modal && (

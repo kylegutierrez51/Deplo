@@ -8,6 +8,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/WebhookCard";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
@@ -50,7 +51,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-          {webhooks.length > 0 &&
+          {webhooks.length > 0 ? (
             <>
               <div className={styles.filters}>
                 <div className={styles['filters-bar']}>
@@ -82,8 +83,14 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
               <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
             </>
-
-          }
+          ) : (
+            <EmptyState
+              icon="flash-outline"
+              heading="No webhooks yet"
+              description="Register a webhook to trigger a pipeline on every push or pull request."
+              action={{ label: "Add Webhook", href: "/webhooks?mode=create", icon: "add-outline" }}
+            />
+          )}
         </div>
       </main>
 
