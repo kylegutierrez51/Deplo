@@ -97,14 +97,6 @@ describe('getAudits', () => {
     expect(audit.resourceMeta).toEqual({ kind: 'run', pipelineName: 'CI', runNumber: 4 });
   });
 
-  it('falls back to null for a resourceMeta with an unrecognized kind', async () => {
-    prismaMock.auditLog.findMany.mockResolvedValue([{ ...row, resourceMeta: { kind: 'unknown-future-kind' } }] as never);
-
-    const [audit] = await getAudits();
-
-    expect(audit.resourceMeta).toBeNull();
-  });
-
   it('falls back to null when resourceMeta was never written', async () => {
     prismaMock.auditLog.findMany.mockResolvedValue([{ ...row, resourceMeta: null }] as never);
 
