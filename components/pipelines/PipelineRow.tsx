@@ -27,7 +27,6 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
       <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
       <td className="nowrap">
         {lastRun ? (
-          /* stopPropagation for the same reason as the editor link below. */
           <Link
             href={`/runs/${lastRun}`}
             className={styles['latest-run-link']}
@@ -41,7 +40,6 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
         ) : 'No Runs'}
       </td>
       <td className={styles['row-action']}>
-        {/* stopPropagation so the icon navigates to the editor instead of also firing the row's open() */}
         <Link
           href={`/pipelines/${id}`}
           className={styles['editor-link']}
