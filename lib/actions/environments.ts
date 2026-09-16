@@ -61,7 +61,8 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
         action: AuditAction.ENVIRONMENT_CREATED,
         resourceType: ResourceType.ENVIRONMENT,
         resourceId: env.id,
-        resourceLabel: env.name + " " + env.type
+        resourceLabel: env.name + " (" + env.type + ")",
+        resourceMeta: { kind: 'environment', name: env.name, type: env.type.toLowerCase() as EnvType }
       }, tx);
     });
 
@@ -133,7 +134,14 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
         action: AuditAction.ENVIRONMENT_UPDATED,
         resourceType: ResourceType.ENVIRONMENT,
         resourceId: id,
-        resourceLabel: auditedName + " " + auditedType
+        resourceLabel: auditedName + " (" + auditedType + ")",
+        resourceMeta: {
+          kind: 'environment',
+          name,
+          type: type.toLowerCase() as EnvType,
+          ...(prevName !== name && { prevName }),
+          ...(prevType !== type && { prevType: prevType.toLowerCase() as EnvType }),
+        }
       }, tx);
     });
 
@@ -192,7 +200,8 @@ export async function deleteEnvironment(id: string): Promise<FormState> {
         action: AuditAction.ENVIRONMENT_DELETED,
         resourceType: ResourceType.ENVIRONMENT,
         resourceId: id,
-        resourceLabel: env.name + " " + env.type
+        resourceLabel: env.name + " (" + env.type + ")",
+        resourceMeta: { kind: 'environment', name: env.name, type: env.type.toLowerCase() as EnvType }
       }, tx);
     });
 

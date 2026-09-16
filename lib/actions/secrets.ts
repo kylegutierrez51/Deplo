@@ -1,7 +1,7 @@
 "use server"
 
 import { encryptSecret } from '@/lib/utils/crypto';
-import { FormState } from '@/lib/types';
+import { EnvType, FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { auth } from '@/auth';
@@ -41,7 +41,8 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
         action: AuditAction.SECRET_CREATED,
         resourceType: ResourceType.SECRET,
         resourceId: secret.id,
-        resourceLabel: key + " " + secret.environment.type
+        resourceLabel: key + " (" + secret.environment.type + ")",
+        resourceMeta: { kind: 'secret', key, type: secret.environment.type.toLowerCase() as EnvType }
       }, tx);
     });
 
@@ -113,7 +114,13 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
         action: AuditAction.SECRET_UPDATED,
         resourceType: ResourceType.SECRET,
         resourceId: id,
-        resourceLabel: (prevKey === key ? key : `${prevKey} → ${key}`) + " " + type
+        resourceLabel: (prevKey === key ? key : `${prevKey} → ${key}`) + " (" + type + ")",
+        resourceMeta: {
+          kind: 'secret',
+          key,
+          type: type.toLowerCase() as EnvType,
+          ...(prevKey !== key && { prevKey }),
+        }
       }, tx);
     });
 
@@ -178,7 +185,8 @@ export async function deleteSecret(id: string): Promise<FormState> {
         action: AuditAction.SECRET_DELETED,
         resourceType: ResourceType.SECRET,
         resourceId: secret.id,
-        resourceLabel: secret.key + " " + secret.environment.type
+        resourceLabel: secret.key + " (" + secret.environment.type + ")",
+        resourceMeta: { kind: 'secret', key: secret.key, type: secret.environment.type.toLowerCase() as EnvType }
       }, tx);
     });
 

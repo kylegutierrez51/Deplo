@@ -239,21 +239,30 @@ describe('audit trail', () => {
       arrange: () => tx.secret.create.mockResolvedValue({ id: 'sec-new', environment: { type: 'PRODUCTION' } } as never),
       act: () => addSecret(idle, form()),
       written: () => tx.secret.create,
-      audit: { action: 'SECRET_CREATED', resourceType: 'SECRET', resourceId: 'sec-new', resourceLabel: 'API_KEY PRODUCTION' },
+      audit: {
+        action: 'SECRET_CREATED', resourceType: 'SECRET', resourceId: 'sec-new', resourceLabel: 'API_KEY (PRODUCTION)',
+        resourceMeta: { kind: 'secret', key: 'API_KEY', type: 'production' },
+      },
     },
     {
       name: 'updateSecret',
       arrange: () => tx.secret.findUniqueOrThrow.mockResolvedValue({ key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never),
       act: () => updateSecret(idle, form({ id: 'sec-1', key: 'ROTATED_KEY' })),
       written: () => tx.secret.update,
-      audit: { action: 'SECRET_UPDATED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY → ROTATED_KEY PRODUCTION' },
+      audit: {
+        action: 'SECRET_UPDATED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY → ROTATED_KEY (PRODUCTION)',
+        resourceMeta: { kind: 'secret', key: 'ROTATED_KEY', type: 'production', prevKey: 'API_KEY' },
+      },
     },
     {
       name: 'deleteSecret',
       arrange: () => tx.secret.delete.mockResolvedValue({ id: 'sec-1', key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never),
       act: () => deleteSecret('sec-1'),
       written: () => tx.secret.delete,
-      audit: { action: 'SECRET_DELETED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY PRODUCTION' },
+      audit: {
+        action: 'SECRET_DELETED', resourceType: 'SECRET', resourceId: 'sec-1', resourceLabel: 'API_KEY (PRODUCTION)',
+        resourceMeta: { kind: 'secret', key: 'API_KEY', type: 'production' },
+      },
     },
   ];
 

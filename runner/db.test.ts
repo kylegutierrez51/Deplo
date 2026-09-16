@@ -280,6 +280,7 @@ describe('finalizeRun', () => {
       resourceType: 'PIPELINE_RUN',
       resourceId: 'run-1',
       resourceLabel: 'CI #4 (failed)',
+      resourceMeta: { kind: 'run', pipelineName: 'CI', runNumber: 4, status: 'failed' },
     });
   });
 

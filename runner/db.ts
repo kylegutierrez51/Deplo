@@ -434,7 +434,13 @@ export async function finalizeRun(runId: string, terminalStatus: 'SUCCEEDED' | '
       action: AuditAction.RUN_COMPLETED,
       resourceType: ResourceType.PIPELINE_RUN,
       resourceId: runId,
-      resourceLabel: `${run.pipeline.name} #${run.runNumber} (${terminalStatus.toLowerCase()})`
+      resourceLabel: `${run.pipeline.name} #${run.runNumber} (${terminalStatus.toLowerCase()})`,
+      resourceMeta: {
+        kind: 'run',
+        pipelineName: run.pipeline.name,
+        runNumber: run.runNumber,
+        status: terminalStatus === 'SUCCEEDED' ? 'succeeded' : 'failed'
+      }
     }, tx);
 
     return true;

@@ -42,7 +42,8 @@ export async function approveOrRejectStage(id: string, runId: string, stageId: s
         action: approved ? AuditAction.APPROVAL_GRANTED : AuditAction.APPROVAL_REJECTED,
         resourceType: ResourceType.PIPELINE_RUN,
         resourceId: runId,
-        resourceLabel: `${run.pipeline.name} #${run.runNumber}`
+        resourceLabel: `${run.pipeline.name} #${run.runNumber}`,
+        resourceMeta: { kind: 'run', pipelineName: run.pipeline.name, runNumber: run.runNumber }
       }, tx);
 
       return true;

@@ -262,21 +262,30 @@ describe('audit trail', () => {
       arrange: () => tx.environment.create.mockResolvedValue({ id: 'env-new', name: 'Production', type: 'PRODUCTION' } as never),
       act: () => addEnvironment(idle, form()),
       written: () => tx.environment.create,
-      audit: { action: 'ENVIRONMENT_CREATED', resourceType: 'ENVIRONMENT', resourceId: 'env-new', resourceLabel: 'Production PRODUCTION' },
+      audit: {
+        action: 'ENVIRONMENT_CREATED', resourceType: 'ENVIRONMENT', resourceId: 'env-new', resourceLabel: 'Production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+      },
     },
     {
       name: 'updateEnvironment',
       arrange: () => tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
       act: () => updateEnvironment(idle, form({ id: 'env-1', name: 'Prod', type: 'staging' })),
       written: () => tx.environment.update,
-      audit: { action: 'ENVIRONMENT_UPDATED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production → Prod PRODUCTION → STAGING' },
+      audit: {
+        action: 'ENVIRONMENT_UPDATED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production → Prod (PRODUCTION → STAGING)',
+        resourceMeta: { kind: 'environment', name: 'Prod', type: 'staging', prevName: 'Production', prevType: 'production' },
+      },
     },
     {
       name: 'deleteEnvironment',
       arrange: () => tx.environment.delete.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
       act: () => deleteEnvironment('env-1'),
       written: () => tx.environment.delete,
-      audit: { action: 'ENVIRONMENT_DELETED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production PRODUCTION' },
+      audit: {
+        action: 'ENVIRONMENT_DELETED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+      },
     },
   ];
 
@@ -316,8 +325,11 @@ describe('audit trail', () => {
 
     await updateEnvironment(idle, form({ id: 'env-1', name: 'Production', type: 'staging' }));
 
-    expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({
-      resourceLabel: 'Production PRODUCTION → STAGING',
+    const { data } = tx.auditLog.create.mock.calls[0][0];
+
+    expect(data).toMatchObject({
+      resourceLabel: 'Production (PRODUCTION → STAGING)',
     });
+    expect(data.resourceMeta).toEqual({ kind: 'environment', name: 'Production', type: 'staging', prevType: 'production' });
   });
 });
