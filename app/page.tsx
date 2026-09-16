@@ -70,7 +70,7 @@ export default async function Home() {
                       <div className={styles['run-info']}>
                         <span className={styles['run-pipeline']}>{run.pipelineName ?? "Deleted pipeline"}</span>
                         <span className={styles['run-meta']}>
-                          {run.branch ?? "—"}{run.commitSha ? ` · ${run.commitSha.slice(0, 7)}` : ""}
+                          {run.branch ?? ""}{run.commitSha ? ` · ${run.commitSha.slice(0, 7)}` : ""}
                         </span>
                       </div>
                       {run.environment && (
