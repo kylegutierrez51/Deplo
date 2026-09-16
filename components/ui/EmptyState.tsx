@@ -16,8 +16,8 @@ interface EmptyStateProps {
 }
 
 // Shared panel for list pages (and the Logs tab) to render in place of an
-// empty query result. Server component only: both async pages and the
-// client LogsTab import it, so it must stay hook-free.
+// empty query result. Deliberately hook-free so both async page components
+// and client components (like LogsTab) can render it.
 export default function EmptyState({ icon, heading, description, action, fill }: EmptyStateProps) {
   return (
     <div role="status" aria-live="polite" className={`${styles['empty-state']} ${fill ? styles.fill : ''}`.trim()}>

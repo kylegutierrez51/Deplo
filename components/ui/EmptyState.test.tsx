@@ -18,7 +18,7 @@ describe('EmptyState', () => {
       />
     );
 
-    expect(screen.getByRole('heading', { name: 'No pipelines yet' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'No pipelines yet' })).toBeInTheDocument();
     expect(screen.getByText('Create your first pipeline to get started.')).toBeInTheDocument();
     expect(document.querySelector('ion-icon[name="git-network-outline"]')).not.toBeNull();
   });
