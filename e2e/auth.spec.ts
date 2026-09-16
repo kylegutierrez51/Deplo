@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /*
  * Runs in the "anonymous" project, which carries no storageState — proxy.ts's
  * gate is only observable without a session, and nothing else in the suite can
- * see it. app/page.tsx's inverse redirect is checked with a session below.
+ * see it. app/page.tsx's inverse branch is checked with a session below.
  */
 
 /*
@@ -43,25 +43,44 @@ test.describe('unauthenticated access', () => {
   });
 
   // The inverse of the authenticated case below: app/page.tsx calls auth() and
-  // only redirects onward when it finds a session, so an anonymous visitor has
-  // to stay on "/" and be offered the sign-in.
+  // only renders the dashboard when it finds a session, so an anonymous visitor
+  // has to stay on "/" and be offered the sign-in.
   test('the login page renders the sign-in affordance', async ({ page }) => {
     await page.goto('/');
 
     await expect(page).toHaveURL('/');
     await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
   });
+
+  /*
+   * "/" is the one pathname proxy.ts does not gate, and it now serves real data
+   * rather than a redirect — so the page's own `if (!session)` branch is the
+   * only thing standing between an anonymous visitor and a readout of every
+   * pipeline, run and pending approval. Nothing upstream would catch losing it.
+   */
+  test('the dashboard is not rendered without a session', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Recent runs' })).toHaveCount(0);
+  });
 });
 
 test.describe('authenticated access', () => {
   test.use({ storageState: 'e2e/.auth/user.json' });
 
-  // app/page.tsx calls auth() and redirects a signed-in visitor onward, so the
-  // login page is never shown to someone who already has a session.
-  test('the login page redirects to pipelines', async ({ page }) => {
+  /*
+   * app/page.tsx serves the dashboard to a signed-in visitor, so the sign-in is
+   * never shown to someone who already has a session. It used to redirect to
+   * /pipelines here instead; the dashboard's own behaviour is in dashboard.spec.ts,
+   * and this is only the half that pairs with the anonymous case above.
+   */
+  test('the login page gives way to the dashboard', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveURL('/pipelines');
+    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('button', { name: 'Login' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
   test('a gated route is reachable', async ({ page }) => {
