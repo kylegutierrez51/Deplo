@@ -6,6 +6,7 @@ import FilterListbox from "@/components/ui/filters/FilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getApprovals } from "@/lib/data/approvals";
 import { Suspense } from "react";
@@ -34,7 +35,7 @@ export default async function Approvals() {
           {/* always re-render Approvals page every 10s to detect if approval stages are present, otherwise user will have to refresh page to see new approval stages */}
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-          {approvals.length > 0 &&
+          {approvals.length > 0 ? (
             <>
               <StatCards
                 cards={
@@ -103,7 +104,13 @@ export default async function Approvals() {
               </Suspense>
 
             </>
-          }
+          ) : (
+            <EmptyState
+              icon="checkmark-circle-outline"
+              heading="Nothing is waiting on you"
+              description="Runs pause here when they reach an approval stage."
+            />
+          )}
         </div>
       </main>
     </>

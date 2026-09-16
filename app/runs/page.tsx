@@ -7,6 +7,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import RunRow from "@/components/runs/RunRow";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import RunModalController from "@/components/runs/RunModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getRuns, getRunById } from "@/lib/data/runs";
@@ -48,7 +49,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {runs.length > 0 &&
+        {runs.length > 0 ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -108,7 +109,14 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
             <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : (
+          <EmptyState
+            icon="time-outline"
+            heading="No runs yet"
+            description="Runs appear here when a pipeline is triggered, by you or by a webhook."
+            action={{ label: "Go to pipelines", href: "/pipelines" }}
+          />
+        )}
       </main>
 
       {modal && (
