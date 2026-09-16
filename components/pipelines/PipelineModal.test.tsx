@@ -157,6 +157,21 @@ describe("reporting the server's message", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith('Pipeline updated'));
   });
 
+  /*
+   * A failed edit reports the edit action's message. Reading createState here
+   * instead reports the create form's untouched initial message — an empty toast.
+   */
+  it("reports a failed edit with the edit action's message", async () => {
+    update.mockResolvedValueOnce({ status: 'error', message: 'A pipeline with this name already exists' });
+    const { onError, onSave } = setup({ mode: 'edit' });
+
+    submitForm();
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith('A pipeline with this name already exists'));
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   describe('deleting', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
