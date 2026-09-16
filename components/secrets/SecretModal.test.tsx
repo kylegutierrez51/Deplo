@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SecretModal from '@/components/secrets/SecretModal';
+import { addSecret, deleteSecret, updateSecret } from '@/lib/actions/secrets';
 
 /*
  * The representative useActionState modal — EnvironmentModal, PipelineModal and
@@ -15,6 +16,10 @@ jest.mock('@/lib/actions/secrets', () => ({
   updateSecret: jest.fn(async () => ({ status: 'idle', message: '' })),
   deleteSecret: jest.fn(async () => ({ status: 'success', message: '' })),
 }));
+
+const add = addSecret as jest.MockedFunction<typeof addSecret>;
+const update = updateSecret as jest.MockedFunction<typeof updateSecret>;
+const remove = deleteSecret as jest.MockedFunction<typeof deleteSecret>;
 
 const environments = [
   { id: 'env-1', name: 'Production', type: 'production' as const },
@@ -187,5 +192,51 @@ describe('the environment autocomplete', () => {
     await user.click(screen.getByText('Production'));
 
     expect(document.querySelector('input[name="env_id"]')).toHaveValue('env-1');
+  });
+});
+
+/*
+ * The controller shows whatever text it is handed, so the modal is what decides
+ * a toast's wording: it must pass the server action's own message through rather
+ * than calling back with nothing. The form is submitted with fireEvent.submit
+ * because what is under test is the action's result, not constraint validation.
+ */
+describe("reporting the server's message", () => {
+  const submitForm = () => fireEvent.submit(document.getElementById('modal-form')!);
+
+  it('hands a successful create its message', async () => {
+    add.mockResolvedValueOnce({ status: 'success', message: 'Secret added' });
+    const { onCreate } = setup({ mode: 'create' });
+
+    submitForm();
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('Secret added'));
+  });
+
+  it('hands a successful edit its message', async () => {
+    update.mockResolvedValueOnce({ status: 'success', message: 'Secret updated' });
+    const { onSave } = setup({ mode: 'edit' });
+
+    submitForm();
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith('Secret updated'));
+  });
+
+  describe('deleting', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('hands a successful delete its message', async () => {
+      remove.mockResolvedValueOnce({ status: 'success', message: 'Secret deleted' });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { onDelete } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+      act(() => { jest.advanceTimersByTime(2000); });
+      await user.click(screen.getAllByRole('button', { name: 'Delete' }).at(-1)!);
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith('Secret deleted'));
+      expect(remove).toHaveBeenCalledWith('sec-1');
+    });
   });
 });

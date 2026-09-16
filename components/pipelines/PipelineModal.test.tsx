@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PipelineModal from '@/components/pipelines/PipelineModal';
+import { addPipeline, deletePipeline, updatePipeline } from '@/lib/actions/pipelines';
 
 /*
  * The modal is where a pipeline's optional repository is both shown and set, so
@@ -18,6 +20,10 @@ jest.mock('@/lib/actions/pipelines', () => ({
   updatePipeline: jest.fn(async () => ({ status: 'idle', message: '' })),
   deletePipeline: jest.fn(async () => ({ status: 'success', message: '' })),
 }));
+
+const add = addPipeline as jest.MockedFunction<typeof addPipeline>;
+const update = updatePipeline as jest.MockedFunction<typeof updatePipeline>;
+const remove = deletePipeline as jest.MockedFunction<typeof deletePipeline>;
 
 type Props = React.ComponentProps<typeof PipelineModal>;
 
@@ -43,7 +49,7 @@ const setup = (over: Partial<Props> = {}) => {
     onError: jest.fn(),
     ...over,
   };
-  return render(<PipelineModal {...props} />);
+  return { ...render(<PipelineModal {...props} />), ...props };
 };
 
 describe('view mode', () => {
@@ -122,5 +128,50 @@ describe.each(['create', 'edit'] as const)('%s mode', (mode) => {
     setup({ mode, repoUrl: null });
 
     expect(screen.getByLabelText(/repo url/i)).toHaveValue('');
+  });
+});
+
+/*
+ * The controller shows whatever text it is handed, so the modal decides a
+ * toast's wording by forwarding its server action's message. SecretModal's suite
+ * explains the shape of these cases.
+ */
+describe("reporting the server's message", () => {
+  const submitForm = () => fireEvent.submit(document.getElementById('modal-form')!);
+
+  it('hands a successful create its message', async () => {
+    add.mockResolvedValueOnce({ status: 'success', message: 'Pipeline added' });
+    const { onCreate } = setup({ mode: 'create' });
+
+    submitForm();
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('Pipeline added'));
+  });
+
+  it('hands a successful edit its message', async () => {
+    update.mockResolvedValueOnce({ status: 'success', message: 'Pipeline updated' });
+    const { onSave } = setup({ mode: 'edit' });
+
+    submitForm();
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith('Pipeline updated'));
+  });
+
+  describe('deleting', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('hands a successful delete its message', async () => {
+      remove.mockResolvedValueOnce({ status: 'success', message: 'Pipeline deleted' });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { onDelete } = setup({ mode: 'view' });
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+      act(() => { jest.advanceTimersByTime(2000); });
+      await user.click(screen.getAllByRole('button', { name: 'Delete' }).at(-1)!);
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith('Pipeline deleted'));
+      expect(remove).toHaveBeenCalledWith('p1');
+    });
   });
 });
