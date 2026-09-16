@@ -44,6 +44,11 @@ Cards
   color: var(--red-text);
 }
 
+/* Dashboard */
+.card-detail .card-total.queued {
+  color: var(--pill-queued-text);
+}
+
 /* Webhook Events */
 .card-detail .card-total.processed {
   color: var(--pill-succeeded-text);

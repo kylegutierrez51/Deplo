@@ -48,7 +48,7 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
       });
 
       await addAudit({
-        userId: userId,
+        userId,
         actor: user.name ?? null,
         action: AuditAction.PIPELINE_CREATED,
         resourceType: ResourceType.PIPELINE,

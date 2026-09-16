@@ -1,0 +1,349 @@
+/*
+======================================================================================
+Dashboard Grid
+  Recent runs take the wide left column; the narrow right column stacks the
+  7-day summary, pending approvals, and pipeline health.
+======================================================================================
+*/
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+  padding-bottom: var(--space-2xl);
+}
+
+.side-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/*
+======================================================================================
+Panels
+  Same visual vocabulary as the stat cards row: 1px light-gray border,
+  radius-lg, JetBrains Mono labels.
+======================================================================================
+*/
+
+.panel {
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-gap-md) var(--space-md);
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.panel-title {
+  font-family: "JetBrains Mono";
+  font-size: var(--font-size-sm);
+  letter-spacing: 1px;
+  color: var(--table-span-clr);
+}
+
+.panel-link {
+  color: var(--blue-clr);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.panel-link:hover {
+  text-decoration: underline;
+}
+
+.empty-note {
+  padding: var(--space-lg) var(--space-md);
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-body);
+}
+
+/*
+======================================================================================
+Recent Runs
+======================================================================================
+*/
+
+.run-list li {
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.run-list li:last-child {
+  border-bottom: none;
+}
+
+.run-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+  padding: var(--space-gap-md) var(--space-md);
+}
+
+.run-row:hover {
+  background-color: var(--dark-clr-1);
+}
+
+.run-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.run-pipeline {
+  font-weight: 600;
+  font-size: var(--font-size-body);
+}
+
+.run-meta {
+  font-family: "JetBrains Mono";
+  font-size: var(--font-size-sm);
+  color: var(--table-span-clr);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-timing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.run-duration {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.run-duration ion-icon {
+  color: var(--icon-clr);
+}
+
+.run-date {
+  font-size: var(--font-size-sm);
+  color: var(--table-span-clr);
+  white-space: nowrap;
+}
+
+/*
+======================================================================================
+Last 7 Days — success-rate hero + meter
+======================================================================================
+*/
+
+.week-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-md);
+  padding: var(--space-md);
+}
+
+.success-hero {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.success-rate {
+  font-family: "JetBrains Mono";
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--blue-clr);
+}
+
+.success-caption {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}
+
+.meter {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--blue-btn-clr);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--blue-clr);
+}
+
+.week-counts {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--font-size-sm);
+}
+
+.count-succeeded {
+  color: var(--pill-succeeded-text);
+}
+
+.count-failed {
+  color: var(--pill-failed-text);
+}
+
+/*
+======================================================================================
+Needs Approval
+======================================================================================
+*/
+
+.approval-list li {
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.approval-list li:last-child {
+  border-bottom: none;
+}
+
+.approval-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-gap-md) var(--space-md);
+}
+
+.approval-row:hover {
+  background-color: var(--dark-clr-1);
+}
+
+.approval-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.approval-pipeline {
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waiting-time {
+  font-family: "JetBrains Mono";
+  font-size: var(--font-size-sm);
+  color: var(--pill-approval-text);
+  white-space: nowrap;
+}
+
+.more-note {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--table-span-clr);
+}
+
+/*
+======================================================================================
+Pipelines — status dot + name + status/last-run meta
+  The dot color is always paired with the status text so state is never
+  conveyed by color alone.
+======================================================================================
+*/
+
+.pipeline-list li {
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.pipeline-list li:last-child {
+  border-bottom: none;
+}
+
+.pipeline-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-gap-md) var(--space-md);
+}
+
+.pipeline-row:hover {
+  background-color: var(--dark-clr-1);
+}
+
+.pipeline-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-meta {
+  font-size: var(--font-size-sm);
+  color: var(--table-span-clr);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-running   { background-color: var(--pill-running-text); animation: dot-pulse 2s ease-in-out infinite; }
+.dot-succeeded { background-color: var(--pill-succeeded-text); }
+.dot-failed    { background-color: var(--pill-failed-text); }
+.dot-queued    { background-color: var(--pill-queued-text); }
+.dot-cancelled { background-color: var(--pill-cancelled-text); }
+.dot-idle      { background-color: var(--pill-idle-text); }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-running {
+    animation: none;
+  }
+}
+
+/*
+======================================================================================
+Media Queries
+
+  Breakpoints:
+    1500px — single column: the 2fr/1fr split leaves the side panels too
+             narrow once the sidebar (300px) and page padding are subtracted
+     640px — run rows drop the environment pill and stack timing under the
+             pipeline name
+======================================================================================
+*/
+
+@media (max-width: 1500px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .run-row {
+    flex-wrap: wrap;
+  }
+
+  .run-timing {
+    flex-direction: row;
+    gap: var(--space-sm);
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
