@@ -13,7 +13,7 @@ import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
   const [type, setType] = useState<StageType>(node?.data?.type || 'custom');
-  const [label, setLabel] = useState<string>(matchReservedLabel(node?.data?.label) ? '' : node?.data?.label ?? '');
+  const [label, setLabel] = useState<string>(node?.data?.label ?? '');
   const [command, setCommand] = useState<string>(node?.data?.command as string | undefined ?? '');
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : String(DEFAULT_STAGE_TIMEOUT_S), retries: node.data?.retries ? String(node.data?.retries) : '0' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
