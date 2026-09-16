@@ -26,11 +26,11 @@ interface SecretModalProps {
   updatedAt: Date;
   environments: Environment[] | null;
   onClose: () => void;
-  onCreate: () => void;
-  onDelete: () => void;
+  onCreate: (message: string) => void;
+  onDelete: (message: string) => void;
   onEdit: () => void;
   onEditOrDeleteClose: () => void;
-  onSave: () => void;
+  onSave: (message: string) => void;
   onError: (message: string) => void;
 }
 
@@ -72,7 +72,7 @@ export default function SecretModal({
 
   useEffect(() => {
     if (createState.status === 'success') {
-      onCreate();
+      onCreate(createState.message);
     }
     else if (createState.status === 'error') {
       onError(createState.message);
@@ -82,10 +82,10 @@ export default function SecretModal({
 
   useEffect(() => {
     if (editState.status === 'success') {
-      onSave();
+      onSave(editState.message);
     }
     else if (editState.status === 'error') {
-      onError(createState.message);
+      onError(editState.message);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
   }, [editState]);
@@ -98,7 +98,7 @@ export default function SecretModal({
   const deleteRecord = async () => {
     const deletedRecord = await deleteSecret(id);
     if (deletedRecord.status === 'success') {
-      onDelete();
+      onDelete(deletedRecord.message);
     }
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);

@@ -25,7 +25,6 @@ export default function SecretModalController({ mode, secret, environments }: {
       mode={mode}
       record={record}
       basePath={"/secrets"}
-      recordLabel={"Secret"}
       ModalComponent={SecretModal}
       extraProps={{ environments }}
     />

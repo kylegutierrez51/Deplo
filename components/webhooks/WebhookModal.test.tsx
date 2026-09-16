@@ -1,7 +1,7 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WebhookModal from '@/components/webhooks/WebhookModal';
-import { regenerateWebhookSecret, updateWebhook } from '@/lib/actions/webhooks';
+import { addWebhook, deleteWebhook, regenerateWebhookSecret, updateWebhook } from '@/lib/actions/webhooks';
 
 jest.mock('@/lib/actions/webhooks', () => ({
   addWebhook: jest.fn(async () => ({ status: 'idle', message: '' })),
@@ -10,7 +10,9 @@ jest.mock('@/lib/actions/webhooks', () => ({
   regenerateWebhookSecret: jest.fn(async () => ({ status: 'idle', message: '' })),
 }));
 
+const add = addWebhook as jest.MockedFunction<typeof addWebhook>;
 const update = updateWebhook as jest.MockedFunction<typeof updateWebhook>;
+const remove = deleteWebhook as jest.MockedFunction<typeof deleteWebhook>;
 const regenerate = regenerateWebhookSecret as jest.MockedFunction<typeof regenerateWebhookSecret>;
 
 type Props = React.ComponentProps<typeof WebhookModal>;
@@ -234,5 +236,65 @@ describe('regenerating the secret', () => {
     setup({ mode: 'view' });
 
     expect(screen.queryByRole('button', { name: 'Regenerate secret' })).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * The controller shows whatever text it is handed, so the modal decides a
+ * toast's wording by forwarding its server action's message. SecretModal's suite
+ * explains the shape of these cases.
+ */
+describe("reporting the server's message", () => {
+  const submitForm = () => fireEvent.submit(document.getElementById('modal-form')!);
+
+  it('hands a successful create its message', async () => {
+    add.mockResolvedValueOnce({ status: 'success', message: 'Webhook added' });
+    const { onCreate } = setup({ mode: 'create' });
+
+    submitForm();
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('Webhook added'));
+  });
+
+  it('hands a successful edit its message', async () => {
+    update.mockResolvedValueOnce({ status: 'success', message: 'Webhook updated' });
+    const { onSave } = setup({ mode: 'edit' });
+
+    submitForm();
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith('Webhook updated'));
+  });
+
+  /*
+   * A failed edit reports the edit action's message. Reading createState here
+   * instead reports the create form's untouched initial message — an empty toast.
+   */
+  it("reports a failed edit with the edit action's message", async () => {
+    update.mockResolvedValueOnce({ status: 'error', message: 'This webhook no longer exists' });
+    const { onError, onSave } = setup({ mode: 'edit' });
+
+    submitForm();
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith('This webhook no longer exists'));
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  describe('deleting', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('hands a successful delete its message', async () => {
+      remove.mockResolvedValueOnce({ status: 'success', message: 'Webhook deleted' });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { onDelete } = setup({ mode: 'view' });
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+      act(() => { jest.advanceTimersByTime(2000); });
+      await user.click(screen.getAllByRole('button', { name: 'Delete' }).at(-1)!);
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith('Webhook deleted'));
+      expect(remove).toHaveBeenCalledWith('wh-1');
+    });
   });
 });
