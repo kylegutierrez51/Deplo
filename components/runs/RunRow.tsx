@@ -6,6 +6,7 @@ import Pill from '@/components/ui/Pill';
 import type { Run } from "@/lib/data/runs";
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
+import RunLabel from './RunLabel';
 
 export default function RunRow({ run }: { run: Run }) {
   const { status, pipelineName, runNumber, repoUrl, environment, trigger, startedAt, finishedAt, createdAt } = run;
@@ -17,13 +18,7 @@ export default function RunRow({ run }: { run: Run }) {
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>
-        <div className={styles['pipeline-detail']}>
-          <div className={styles['status-name']}>
-            <Pill variant={status} label={capitalize(status)} /> 
-            {pipelineName}
-          </div>
-          <span>#{runNumber}</span>
-        </div>
+        <RunLabel pipelineName={pipelineName} runNumber={runNumber} status={status} />
         {repoUrl && <span>{repoUrl}</span>}
       </td>
       <td>

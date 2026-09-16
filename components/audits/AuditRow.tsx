@@ -6,10 +6,11 @@ import Link from 'next/link';
 import type { Audit } from "@/lib/data/audits";
 import { formatDate } from '@/lib/utils/date';
 import ResourceTypePill from './ResourceTypePill';
+import AuditResourceLabel from './AuditResourceLabel';
 import { resourceHref } from './resourcePath';
 
 export default function AuditRow({ audit }: { audit: Audit }) {
-  const { action, resourceType, resourceLabel, resourceId, user, actor, createdAt } = audit;
+  const { action, resourceType, resourceLabel, resourceMeta, resourceId, user, actor, createdAt } = audit;
 
   const router = useRouter();
   const open = () => router.push(`/audits?id=${audit.id}`);
@@ -17,7 +18,7 @@ export default function AuditRow({ audit }: { audit: Audit }) {
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>{action} <ResourceTypePill type={resourceType} /></td>
-      <td>{resourceLabel ?? '—'}</td>
+      <td><AuditResourceLabel resourceLabel={resourceLabel} resourceMeta={resourceMeta} /></td>
       <td>{user ?? actor ?? "System"}</td>
       <td className={styles.nowrap}>{formatDate(createdAt)}</td>
       <td className={styles['row-action']}>

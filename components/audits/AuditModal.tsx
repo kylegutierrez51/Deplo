@@ -1,12 +1,13 @@
 "use client"
 
 import { formatDate } from '@/lib/utils/date';
-import type { AuditAction, ResourceType } from '@/lib/types';
+import type { AuditAction, AuditMeta, ResourceType } from '@/lib/types';
 import Link from 'next/link';
 import Modal from '@/components/ui/modals/Modal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import auditStyles from './audit-modal.module.css';
 import ResourceTypePill from './ResourceTypePill';
+import AuditResourceLabel from './AuditResourceLabel';
 import { resourceHref } from './resourcePath';
 
 const styles = { ...modalStyles, ...auditStyles };
@@ -16,6 +17,7 @@ interface AuditModalProps {
   action?: AuditAction;
   resourceType: ResourceType;
   resourceLabel: string | null;
+  resourceMeta: AuditMeta | null;
   resourceId: string | null;
   category?: string;
   actor: string | null;
@@ -29,6 +31,7 @@ export default function AuditModal({
   action,
   resourceType,
   resourceLabel,
+  resourceMeta,
   resourceId,
   actor,
   user,
@@ -58,7 +61,7 @@ export default function AuditModal({
 
         <div className={styles.item}>
           <label>Resource</label>
-          <span>{resourceLabel ?? '—'}</span>
+          <span><AuditResourceLabel resourceLabel={resourceLabel} resourceMeta={resourceMeta} /></span>
         </div>
 
         {resourceId &&
