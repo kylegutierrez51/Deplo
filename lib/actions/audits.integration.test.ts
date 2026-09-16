@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import type { AuditAction } from '@/generated/prisma';
 import { updatePipeline, deletePipeline } from '@/lib/actions/pipelines';
 import { cancelRun } from '@/lib/actions/run-detail';
 import { makePipeline, makeUser, makeDefinition, makeRun } from '@/test/integration/factories';
@@ -37,7 +38,7 @@ const pipelineForm = (id: string, name: string) => {
 /** A session whose user row no longer exists. */
 const signedInAsDeletedUser = () => setSession('user-deleted-after-sign-in');
 
-const auditsFor = (resourceId: string) => prisma.auditLog.findMany({ where: { resourceId } });
+const auditsFor = (resourceId: string, action?: AuditAction) => prisma.auditLog.findMany({ where: { resourceId, ...(action && { action }) } });
 
 beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => { });
@@ -110,7 +111,9 @@ describe('cancelRun', () => {
     await cancelRun(run.id);
 
     expect(await stateOf(run.id)).toEqual({ run: 'CANCELLED', stages: ['CANCELLED'] });
-    expect(await auditsFor(run.id)).toEqual([
+    // queuedRunWithStage's makeRun already audited RUN_TRIGGERED against this same resourceId,
+    // so this scopes to the action under test rather than the run's whole audit trail.
+    expect(await auditsFor(run.id, 'RUN_CANCELLED')).toEqual([
       expect.objectContaining({ action: 'RUN_CANCELLED', userId: canceller.id, resourceLabel: `CI #${run.runNumber}` }),
     ]);
   });
@@ -128,7 +131,7 @@ describe('cancelRun', () => {
 
     expect(result.status).toBe('error');
     expect(await stateOf(run.id)).toEqual({ run: 'QUEUED', stages: ['PENDING'] });
-    expect(await auditsFor(run.id)).toEqual([]);
+    expect(await auditsFor(run.id, 'RUN_CANCELLED')).toEqual([]);
   });
 
   // And because nothing committed, trying again is a real retry rather than a dead end.
@@ -141,6 +144,6 @@ describe('cancelRun', () => {
     const result = await cancelRun(run.id);
 
     expect(result).toEqual({ status: 'success', message: 'Run cancelled!' });
-    expect(await auditsFor(run.id)).toHaveLength(1);
+    expect(await auditsFor(run.id, 'RUN_CANCELLED')).toHaveLength(1);
   });
 });
