@@ -23,11 +23,11 @@ interface WebhookModalProps {
   createdAt: Date;
   pipelines: Pipeline[] | null;
   onClose: () => void;
-  onCreate: () => void;
-  onDelete: () => void;
+  onCreate: (message: string) => void;
+  onDelete: (message: string) => void;
   onEdit: () => void;
   onEditOrDeleteClose: () => void;
-  onSave: () => void;
+  onSave: (message: string) => void;
   onRegenerate: (message: string) => void;
   onError: (message: string) => void;
 }
@@ -83,7 +83,7 @@ export default function WebhookModal({
 
   useEffect(() => {
     if (createState.status === 'success') {
-      onCreate();
+      onCreate(createState.message);
     }
     else if (createState.status === 'error') {
       onError(createState.message);
@@ -93,7 +93,7 @@ export default function WebhookModal({
 
   useEffect(() => {
     if (editState.status === 'success') {
-      onSave();
+      onSave(editState.message);
     }
     else if (editState.status === 'error') {
       onError(editState.message);
@@ -111,7 +111,7 @@ export default function WebhookModal({
   const deleteRecord = async () => {
     const deletedRecord = await deleteWebhook(id);
     if (deletedRecord.status === 'success') {
-      onDelete();
+      onDelete(deletedRecord.message);
     }
     else if (deletedRecord.status === 'error') {
       onError(deletedRecord.message);

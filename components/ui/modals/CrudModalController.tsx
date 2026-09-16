@@ -16,11 +16,10 @@ interface CrudModalBaseProps {
   onError: (message: string) => void;
 }
 
-export default function CrudModalController<T extends { id: string }, Extra extends object = Record<string, never>>({ mode, record, basePath, recordLabel, ModalComponent, extraProps }: {
+export default function CrudModalController<T extends { id: string }, Extra extends object = Record<string, never>>({ mode, record, basePath, ModalComponent, extraProps }: {
   mode: "view" | "create" | "edit";
   record?: T;
   basePath: string;
-  recordLabel: string;
   ModalComponent: ComponentType<T & Extra & CrudModalBaseProps>;
   extraProps?: Extra;
 }) {
@@ -30,9 +29,9 @@ export default function CrudModalController<T extends { id: string }, Extra exte
 
   const onClose = () => router.push(basePath); // clear modal query params
 
-  const onCreate = () => {
+  const onCreate = (message: string) => {
     showToast({
-      text: "Created " + recordLabel,
+      text: message,
       icon: 'checkmark-circle-outline'
     });
 
@@ -46,9 +45,9 @@ export default function CrudModalController<T extends { id: string }, Extra exte
     });
   }
 
-  const onDelete = () => {
+  const onDelete = (message: string) => {
     showToast({
-      text: "Deleted " + recordLabel,
+      text: message,
       icon: 'trash-outline'
     });
 
@@ -58,7 +57,7 @@ export default function CrudModalController<T extends { id: string }, Extra exte
   const onEdit = () => router.push(`${basePath}?id=${record?.id}&mode=edit`);
   const onEditOrDeleteClose = () => router.push(`${basePath}?id=${record?.id}`);
 
-  const onSave = () => {
+  const onSave = (message: string) => {
     if (mode === 'edit') {
       startTransition(() => {
         setModalKey(k => k + 1);
@@ -66,7 +65,7 @@ export default function CrudModalController<T extends { id: string }, Extra exte
       });
       router.refresh();  // reruns page server component so the table reflects the edit
       showToast({
-        text: "Edited " + recordLabel,
+        text: message,
         icon: 'create-outline'
       });
     } else {

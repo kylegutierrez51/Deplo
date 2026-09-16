@@ -25,7 +25,6 @@ export default function WebhookModalController({ mode, webhook, pipelines }: {
       mode={mode}
       record={webhook}
       basePath={"/webhooks"}
-      recordLabel={"Webhook"}
       ModalComponent={WebhookModal}
       extraProps={{ pipelines, onRegenerate }}
     />

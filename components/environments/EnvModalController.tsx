@@ -8,5 +8,12 @@ export default function EnvModalController({ mode, env }: {
   mode: "view" | "create" | "edit";
   env?: Environment;
 }) {
-  return <CrudModalController<Environment> mode={mode} record={env} basePath={"/environments"} recordLabel={"Environment"} ModalComponent={EnvironmentModal} />;
+  return (
+    <CrudModalController
+      mode={mode} 
+      record={env} 
+      basePath={"/environments"} 
+      ModalComponent={EnvironmentModal} 
+    />
+  )
 }
