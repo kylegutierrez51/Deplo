@@ -1,19 +1,22 @@
 "use client"
 
 import { formatDate } from '@/lib/utils/date';
-import type { ResourceType } from '@/lib/types';
+import type { AuditAction, ResourceType } from '@/lib/types';
+import Link from 'next/link';
 import Modal from '@/components/ui/modals/Modal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import auditStyles from './audit-modal.module.css';
 import ResourceTypePill from './ResourceTypePill';
+import { resourceHref } from './resourcePath';
 
 const styles = { ...modalStyles, ...auditStyles };
 
 interface AuditModalProps {
   mode?: 'view' | 'edit' | 'create';
-  action?: string;
+  action?: AuditAction;
   resourceType: ResourceType;
   resourceLabel: string | null;
+  resourceId: string | null;
   category?: string;
   actor: string | null;
   user: string | null;
@@ -26,6 +29,7 @@ export default function AuditModal({
   action,
   resourceType,
   resourceLabel,
+  resourceId,
   actor,
   user,
   createdAt,
@@ -56,6 +60,17 @@ export default function AuditModal({
           <label>Resource</label>
           <span>{resourceLabel ?? '—'}</span>
         </div>
+
+        {resourceId &&
+          <div className={styles.item}>
+            <label>View Resource</label>
+            <span>
+              <Link href={resourceHref(resourceType, resourceId)} className={styles['resource-link']} target="_blank">
+                <ion-icon name="open-outline"></ion-icon>
+              </Link>
+            </span>
+          </div>
+        }
 
         <div className={styles['footer-flex']}>
           <div className={styles.item}>

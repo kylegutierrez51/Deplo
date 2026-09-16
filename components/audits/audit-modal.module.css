@@ -39,3 +39,8 @@
   align-items: center;
   gap: 50px;
 }
+
+.resource-link ion-icon {
+  color: var(--blue-clr);
+  font-size: 20px;
+}

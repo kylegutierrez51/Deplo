@@ -84,7 +84,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
             </div>
 
             <DataTable
-              columns={["Action", "Resource", "Actor", "Time"]}>
+              columns={["Action", "Resource", "Actor", "Time", ""]}>
               {audits.map((audit, i) => (
                 <AuditRow key={i} audit={audit} />
               ))}
