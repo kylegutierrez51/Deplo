@@ -37,18 +37,29 @@ const resetNavigation = () => Object.values(router).forEach(spy => spy.mockReset
 
 type Row = { id: string; name: string };
 
+/*
+ * The messages a modal forwards from its server action. The controller no longer
+ * composes toast text itself, so each one is distinct and shaped like a real
+ * FormState message — a toast that reads anything else was not forwarded verbatim.
+ */
+const MESSAGES: Record<string, string> = {
+  onCreate: 'Secret added',
+  onDelete: 'Secret deleted',
+  onSave: 'Secret updated',
+  onError: 'something broke',
+};
+
 /** Renders one button per lifecycle callback so a test can fire any of them. */
 function SpyModal(props: Row & { mode: string } & { [k: string]: unknown }) {
-  const callbacks = ['onClose', 'onCreate', 'onDelete', 'onEdit', 'onEditOrDeleteClose', 'onSave'];
+  const callbacks = ['onClose', 'onCreate', 'onDelete', 'onEdit', 'onEditOrDeleteClose', 'onSave', 'onError'];
   return (
     <div>
       <span data-testid="mode">{props.mode}</span>
       <span data-testid="name">{props.name}</span>
       <span data-testid="extra">{String(props.extraValue ?? '')}</span>
       {callbacks.map(name => (
-        <button key={name} onClick={() => (props[name] as () => void)()}>{name}</button>
+        <button key={name} onClick={() => (props[name] as (m?: string) => void)(MESSAGES[name])}>{name}</button>
       ))}
-      <button onClick={() => (props.onError as (m: string) => void)('something broke')}>onError</button>
     </div>
   );
 }
@@ -68,7 +79,6 @@ type Overrides = {
   mode?: 'view' | 'create' | 'edit';
   record?: Row;
   basePath?: string;
-  recordLabel?: string;
   extraProps?: object;
 };
 
@@ -78,7 +88,6 @@ function setup(over: Overrides = {}) {
     mode: 'view' as const,
     record: { id: 'rec-1', name: 'API_KEY' },
     basePath: '/secrets',
-    recordLabel: 'secret',
     ...over,
   };
   render(
@@ -168,8 +177,8 @@ describe('navigation', () => {
 
 describe('toasts', () => {
   it.each([
-    ['onCreate', 'Created secret|checkmark-circle-outline'],
-    ['onDelete', 'Deleted secret|trash-outline'],
+    ['onCreate', 'Secret added|checkmark-circle-outline'],
+    ['onDelete', 'Secret deleted|trash-outline'],
   ])('%s raises the right toast and closes', async (callback, expected) => {
     const { user } = setup();
 
@@ -179,12 +188,15 @@ describe('toasts', () => {
     expect(router.push).toHaveBeenCalledWith('/secrets');
   });
 
-  it('names the resource in the toast', async () => {
-    const { user } = setup({ recordLabel: 'webhook' });
+  // The wording belongs to the server action; the controller adds only the icon.
+  // The basePath disagrees with the message on purpose, so a toast derived from
+  // the route rather than the message would show up here.
+  it('shows the message the modal hands it, not one of its own', async () => {
+    const { user } = setup({ basePath: '/webhooks' });
 
     await user.click(screen.getByRole('button', { name: 'onCreate' }));
 
-    expect(toasts()).toBe('Created webhook|checkmark-circle-outline');
+    expect(toasts()).toBe('Secret added|checkmark-circle-outline');
   });
 
   it('surfaces an error message with the error icon', async () => {
@@ -214,7 +226,7 @@ describe('saving an edit', () => {
 
     expect(router.push).toHaveBeenCalledWith('/secrets?id=rec-1');
     expect(router.refresh).toHaveBeenCalledTimes(1);
-    expect(toasts()).toBe('Edited secret|create-outline');
+    expect(toasts()).toBe('Secret updated|create-outline');
   });
 
   // The key bump remounts the modal, which is what resets its internal edit
