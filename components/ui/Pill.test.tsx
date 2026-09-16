@@ -12,6 +12,7 @@ const VARIANTS: PillVariant[] = [
   'processed', 'ignored', 'pending', 'push', 'pull-request', 'webhook',
   'manual', 'api', 'total', 'awaiting-approval', 'idle',
   'approved', 'unapproved',
+  'pipeline', 'pipeline-run', 'environment', 'secret',
 ];
 
 describe('Pill', () => {
@@ -27,7 +28,7 @@ describe('Pill', () => {
 
   // Every variant in the union needs a rule in globals.css. This pins the count
   // so the two lists cannot drift silently.
-  it('covers all 23 declared variants', () => {
-    expect(new Set(VARIANTS).size).toBe(23);
+  it('covers all 27 declared variants', () => {
+    expect(new Set(VARIANTS).size).toBe(27);
   });
 });

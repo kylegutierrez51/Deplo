@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { savePipelineDefinition, addPipelineRun, deletePipeline, addPipeline, updatePipeline, validatePipeline } from '@/lib/actions/pipelines';
 import { toDefinition } from '@/lib/pipeline/definition';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import { isQueueReachable } from '@/lib/queue/health';
@@ -45,13 +45,6 @@ const node = (
   data: { type: 'custom', name: id, command: 'npm test', ...data } as CustomNode['data'],
 });
 
-/** Makes $transaction run its callback against the same deep mock. */
-function runTransactionsInline() {
-  prismaMock.$transaction.mockImplementation(
-    (async (cb: (tx: typeof prismaMock) => unknown) => cb(prismaMock)) as never,
-  );
-}
-
 beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
@@ -63,7 +56,7 @@ beforeEach(() => {
   prismaMock.pipelineDefinition.findMany.mockResolvedValue([] as never);
   // addPipelineRun reads the created id back to enqueue and to return it, so an
   // unstubbed create would surface as a TypeError swallowed by the action's catch.
-  prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1' } as never);
+  prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1', runNumber: 1, pipeline: { name: 'pipe-1' } } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -72,7 +65,7 @@ afterEach(() => { jest.restoreAllMocks(); });
 describe('savePipelineDefinition versioning', () => {
   it('starts a pipeline that has no definitions at version 0', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
@@ -86,7 +79,7 @@ describe('savePipelineDefinition versioning', () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue({
       id: 'def-9', version: 9, graphJson: { nodes: [], edges: [] }, configJson: {},
     } as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-10' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-10', pipeline: { name: 'pipe-1' } } as never);
 
     await savePipelineDefinition('p1', [node('a')], []);
 
@@ -134,7 +127,7 @@ describe('savePipelineDefinition versioning', () => {
   it('records the signed-in user as the author', async () => {
     setSession('user-42');
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
 
     await savePipelineDefinition('p1', [node('a')], []);
 
@@ -154,7 +147,7 @@ describe('savePipelineDefinition versioning', () => {
 
   it('revalidates both the list and the editor route', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
 
     await savePipelineDefinition('p1', [node('a')], []);
 
@@ -175,7 +168,7 @@ describe('savePipelineDefinition error handling', () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create
       .mockRejectedValueOnce(prismaError('P2002') as never)
-      .mockResolvedValueOnce({ id: 'def-2' } as never);
+      .mockResolvedValueOnce({ id: 'def-2', pipeline: { name: 'pipe-1' } } as never);
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
 
@@ -219,7 +212,7 @@ describe('savePipelineDefinition error handling', () => {
   // user's save would be the wrong trade.
   it('still succeeds when the stale-definition sweep fails', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
     prismaMock.pipelineDefinition.findMany.mockRejectedValue(prismaError('P2003') as never);
 
     const result = await savePipelineDefinition('p1', [node('a')], []);
@@ -229,7 +222,7 @@ describe('savePipelineDefinition error handling', () => {
 
   it('deletes superseded definitions that no run references', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-new' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-new', pipeline: { name: 'pipe-1' } } as never);
     prismaMock.pipelineDefinition.findMany.mockResolvedValue([{ id: 'old-1' }, { id: 'old-2' }] as never);
 
     await savePipelineDefinition('p1', [node('a')], []);
@@ -246,7 +239,7 @@ describe('savePipelineDefinition error handling', () => {
 
   it('skips the delete entirely when nothing is stale', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
-    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1' } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
 
     await savePipelineDefinition('p1', [node('a')], []);
 
@@ -706,6 +699,15 @@ describe('updatePipeline', () => {
 
   const idle = { status: 'idle' as const, message: '' };
 
+  // The action reads the row before writing it, so the audit label can name the
+  // name being replaced. Default it to the name `form()` submits unchanged.
+  beforeEach(() => {
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+  });
+
+  /** The attrs the audit was written with. */
+  const audited = () => prismaMock.auditLog.create.mock.calls[0][0].data;
+
   it('updates by id and revalidates', async () => {
     const result = await updatePipeline(idle, form({ name: 'Renamed' }));
 
@@ -717,11 +719,38 @@ describe('updatePipeline', () => {
     expect(revalidate).toHaveBeenCalledWith('/pipelines');
   });
 
+  // The label is a snapshot taken at write time, so a rename has to record both
+  // sides: the audit row outlives the old name everywhere else.
+  it('names both sides of a rename in the audit label', async () => {
+    await updatePipeline(idle, form({ name: 'Renamed' }));
+
+    expect(audited()).toMatchObject({ resourceLabel: 'CI → Renamed' });
+  });
+
+  // An edit to the url or description leaves the name alone; an arrow from a name
+  // to itself would read as a rename that never happened.
+  it('records the name alone when the edit did not rename', async () => {
+    await updatePipeline(idle, form({ description: 'a new description' }));
+
+    expect(audited()).toMatchObject({ resourceLabel: 'CI' });
+  });
+
   it('reports a pipeline deleted from under the edit', async () => {
     prismaMock.pipeline.update.mockRejectedValue(prismaError('P2025') as never);
 
     const result = await updatePipeline(idle, form());
 
+    expect(result).toEqual({ status: 'error', message: 'This pipeline no longer exists.' });
+  });
+
+  // The read is what reports the missing row now, and it raises the same P2025 the
+  // update would have — the message must not regress to the generic one.
+  it('reports a pipeline that was already gone when the edit began', async () => {
+    prismaMock.pipeline.findUniqueOrThrow.mockRejectedValue(prismaError('P2025') as never);
+
+    const result = await updatePipeline(idle, form());
+
+    expect(prismaMock.pipeline.update).not.toHaveBeenCalled();
     expect(result).toEqual({ status: 'error', message: 'This pipeline no longer exists.' });
   });
 
@@ -733,5 +762,255 @@ describe('updatePipeline', () => {
     const result = await updatePipeline(idle, form());
 
     expect(result).toEqual({ status: 'error', message: 'Error updating pipeline. Please try again.' });
+  });
+});
+
+/*
+ * Each pipeline write commits together with its audit or not at all. The unit tier cannot
+ * prove the rollback itself — that is lib/actions/audits.integration.test.ts — but it can
+ * prove the precondition a mock is blind to by default: that the audit is sent to the same
+ * transaction client as the write. With one shared mock standing in for both, an audit
+ * written through the singleton passes every assertion while committing on a connection of
+ * its own, so these cases hand the callback a separate `tx`.
+ */
+describe('audit trail', () => {
+  const idle = { status: 'idle' as const, message: '' };
+
+  const form = (over: Record<string, string> = {}) => {
+    const fd = new FormData();
+    fd.set('id', 'p1');
+    fd.set('name', 'CI');
+    fd.set('repo_url', 'https://github.com/o/r');
+    fd.set('description', 'desc');
+    Object.entries(over).forEach(([k, v]) => fd.set(k, v));
+    return fd;
+  };
+
+  const attributed = { userId: 'user-1', actor: 'kyle' };
+
+  describe('pipeline writes', () => {
+    let tx: ReturnType<typeof transactionMock>;
+
+    beforeEach(() => {
+      tx = transactionMock();
+      runTransactionsInline(tx);
+    });
+
+    const cases = [
+      {
+        name: 'addPipeline',
+        arrange: () => tx.pipeline.create.mockResolvedValue({ id: 'p-new' } as never),
+        act: () => addPipeline(idle, form()),
+        written: () => tx.pipeline.create,
+        audit: { action: 'PIPELINE_CREATED', resourceType: 'PIPELINE', resourceId: 'p-new', resourceLabel: 'CI' },
+      },
+      {
+        name: 'updatePipeline',
+        arrange: () => tx.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never),
+        act: () => updatePipeline(idle, form({ name: 'Renamed' })),
+        written: () => tx.pipeline.update,
+        audit: { action: 'PIPELINE_UPDATED', resourceType: 'PIPELINE', resourceId: 'p1', resourceLabel: 'CI → Renamed' },
+      },
+      {
+        // The label comes from the row the delete hands back: afterwards there is nothing
+        // left to read the name from, which is the reason resourceLabel is a snapshot.
+        name: 'deletePipeline',
+        arrange: () => tx.pipeline.delete.mockResolvedValue({ id: 'p1', name: 'CI' } as never),
+        act: () => deletePipeline('p1'),
+        written: () => tx.pipeline.delete,
+        audit: { action: 'PIPELINE_DELETED', resourceType: 'PIPELINE', resourceId: 'p1', resourceLabel: 'CI' },
+      },
+      {
+        // resourceId is the pipeline, not the definition: definitions are swept away, and
+        // the audit has to point at something that outlives the next save.
+        name: 'savePipelineDefinition',
+        arrange: () => {
+          prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+          tx.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'CI' } } as never);
+        },
+        act: () => savePipelineDefinition('p1', [node('a')], []),
+        written: () => tx.pipelineDefinition.create,
+        audit: { action: 'PIPELINE_DEFINITION_UPDATED', resourceType: 'PIPELINE', resourceId: 'p1', resourceLabel: 'CI' },
+      },
+    ];
+
+    describe.each(cases)('$name', ({ arrange, act, written, audit }) => {
+      beforeEach(() => { arrange(); });
+
+      it('sends the write and its audit to the same transaction', async () => {
+        await act();
+
+        expect(written()).toHaveBeenCalledTimes(1);
+        expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+        expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+      });
+
+      it('records what happened, to what, and by whom', async () => {
+        await act();
+
+        expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({ ...audit, ...attributed });
+      });
+
+      // The rejection has to escape the callback for Prisma to roll back; a success
+      // message here would mean it was swallowed and the write committed without it.
+      it('reports failure and does not revalidate when the audit cannot be written', async () => {
+        tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+        const result = await act();
+
+        expect(result.status).toBe('error');
+        expect(revalidate).not.toHaveBeenCalled();
+      });
+
+      it('writes nothing, audit included, for a caller without a user id', async () => {
+        sessionWithoutUserId();
+
+        await act();
+
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+        expect(tx.auditLog.create).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('savePipelineDefinition specifically', () => {
+      beforeEach(() => {
+        tx.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'CI' } } as never);
+      });
+
+      // Spamming Save is exactly what the no-op check exists for; an audit per click would
+      // bury the real edits in the log the same way a version per click would.
+      it('writes no audit for a save that changed nothing', async () => {
+        const nodes = [node('a')];
+        const { graphJson, configJson } = toDefinition(nodes, []);
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+
+        await savePipelineDefinition('p1', nodes, []);
+
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+        expect(tx.auditLog.create).not.toHaveBeenCalled();
+      });
+
+      // The losing attempt throws at the insert, before its audit, and its transaction is
+      // rolled back — so one edit is one entry however many attempts it took.
+      it('writes one audit for a save that lost a version race and retried', async () => {
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+        tx.pipelineDefinition.create
+          .mockRejectedValueOnce(prismaError('P2002') as never)
+          .mockResolvedValueOnce({ id: 'def-2', pipeline: { name: 'CI' } } as never);
+
+        await savePipelineDefinition('p1', [node('a')], []);
+
+        expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      });
+
+      /*
+       * The stale-definition sweep runs after the commit, on the singleton. Inside the
+       * transaction it would delete the old definitions while the new one was still
+       * uncommitted, and its failure would roll back a save it is only meant to tidy after.
+       */
+      it('sweeps after the transaction, not inside it', async () => {
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+
+        await savePipelineDefinition('p1', [node('a')], []);
+
+        expect(tx.pipelineDefinition.findMany).not.toHaveBeenCalled();
+        expect(prismaMock.pipelineDefinition.findMany).toHaveBeenCalledTimes(1);
+        expect(tx.auditLog.create.mock.invocationCallOrder[0])
+          .toBeLessThan(prismaMock.pipelineDefinition.findMany.mock.invocationCallOrder[0]);
+      });
+
+      it('does not sweep when the save rolled back', async () => {
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+        tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+        await savePipelineDefinition('p1', [node('a')], []);
+
+        expect(prismaMock.pipelineDefinition.findMany).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  /*
+   * createPipelineRun writes the run row and its audit in one transaction, and the enqueue
+   * comes after the commit. So an audit that cannot be written rolls the run back before
+   * anything reaches Redis, and the error the user sees is true. A run the enqueue later
+   * discards keeps its entry: audit_logs is append-only, the trigger really was attempted,
+   * and resourceLabel is what outlives the deleted row.
+   */
+  describe('addPipelineRun', () => {
+    const sound = () => {
+      const nodes = [node('a')];
+      const { graphJson, configJson } = toDefinition(nodes, []);
+      prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+      prismaMock.environment.findUnique.mockResolvedValue({
+        id: 'env-1', name: 'prod', type: 'PRODUCTION', requireApproval: false,
+        createdById: null, createdAt: new Date(), updatedAt: new Date(), secrets: [], createdBy: null,
+      } as never);
+      return nodes;
+    };
+
+    beforeEach(() => {
+      enqueue.mockResolvedValue(undefined);
+      jest.spyOn(console, 'error').mockImplementation(() => { });
+    });
+
+    it('records the triggered run, labelled by pipeline and run number', async () => {
+      await addPipelineRun('p1', 'env-1', sound(), []);
+
+      expect(prismaMock.auditLog.create).toHaveBeenCalledWith({
+        data: {
+          action: 'RUN_TRIGGERED', resourceType: 'PIPELINE_RUN', resourceId: 'run-1', resourceLabel: 'pipe-1 #1',
+          resourceMeta: { kind: 'run', pipelineName: 'pipe-1', runNumber: 1 },
+          ...attributed,
+        },
+      });
+    });
+
+    // A separate tx, because with the shared mock an audit written on the singleton would
+    // look identical to one written inside the insert's transaction.
+    it('writes the audit in the run insert transaction, before the enqueue', async () => {
+      const tx = transactionMock();
+      runTransactionsInline(tx);
+      tx.pipelineRun.create.mockResolvedValue({ id: 'run-1', runNumber: 1, pipeline: { name: 'pipe-1' } } as never);
+
+      await addPipelineRun('p1', 'env-1', sound(), []);
+
+      expect(tx.pipelineRun.create).toHaveBeenCalledTimes(1);
+      expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+      expect(tx.auditLog.create.mock.invocationCallOrder[0])
+        .toBeLessThan(enqueue.mock.invocationCallOrder[0]);
+    });
+
+    it('keeps the audit for a run the failed enqueue discarded', async () => {
+      enqueue.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+      const result = await addPipelineRun('p1', 'env-1', sound(), []);
+
+      expect(result.message).toMatch(/job queue/);
+      expect(prismaMock.pipelineRun.delete).toHaveBeenCalledWith({ where: { id: 'run-1' } });
+      expect(prismaMock.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.auditLog.delete).not.toHaveBeenCalled();
+      expect(prismaMock.auditLog.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('writes no audit for a run refused before it existed', async () => {
+      reachable.mockResolvedValue(false);
+
+      await addPipelineRun('p1', 'env-1', sound(), []);
+
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    // Nothing reached the queue, so "try again" starts the only run rather than a second one.
+    it('enqueues nothing when the audit cannot be written', async () => {
+      prismaMock.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+      const result = await addPipelineRun('p1', 'env-1', sound(), []);
+
+      expect(enqueue).not.toHaveBeenCalled();
+      expect(revalidate).not.toHaveBeenCalled();
+      expect(result).toEqual({ status: 'error', message: 'Error triggering pipeline. Please try again.' });
+    });
   });
 });

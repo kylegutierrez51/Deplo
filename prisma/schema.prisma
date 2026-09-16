@@ -367,29 +367,36 @@ enum AuditAction {
   PIPELINE_CREATED
   PIPELINE_UPDATED
   PIPELINE_DELETED
-  PIPELINE_TRIGGERED
+  PIPELINE_DEFINITION_UPDATED
+
   SECRET_CREATED
   SECRET_UPDATED
   SECRET_DELETED
-  APPROVAL_GRANTED
-  APPROVAL_REJECTED
+
+  ENVIRONMENT_CREATED
+  ENVIRONMENT_UPDATED
+  ENVIRONMENT_DELETED
+
+  WEBHOOK_RECEIVED
+  WEBHOOK_CREATED
+  WEBHOOK_UPDATED
+  WEBHOOK_DELETED
+
+  RUN_TRIGGERED
   RUN_COMPLETED
   RUN_CANCELLED
-  WEBHOOK_RECEIVED
-  ENVIRONMENT_CREATED
-  ENVIRONMENT_DELETED
+  APPROVAL_GRANTED
+  APPROVAL_REJECTED
+
   USER_ROLE_CHANGED
 }
 
 enum ResourceType {
   PIPELINE
-  PIPELINE_RUN
-  APPROVAL
-  ENVIRONMENT
   SECRET
+  ENVIRONMENT
   WEBHOOK
-  STAGE_RESULT
-  SETTING
+  PIPELINE_RUN
 }
 
 model AuditLog {
@@ -400,6 +407,7 @@ model AuditLog {
   resourceType ResourceType
   resourceId   String
   resourceLabel String? // human-readable snapshot of the resource, captured at write time so it survives resource deletion/rename
+  resourceMeta  Json? // structured snapshot for UI rendering (e.g. pill values); shape keyed by a `kind` discriminant (see @/lib/types - AuditMeta). Null for actions with no rich rendering (e.g., pipelines, webhooks)
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 

@@ -3,6 +3,7 @@ import "dotenv/config";
 import { randomBytes } from "node:crypto";
 import { encryptSecret } from "@/lib/utils/crypto";
 import prisma from "@/lib/prisma";
+import type { AuditMeta, EnvType } from "@/lib/types";
 import {
   UserRole,
   EnvironmentType,
@@ -253,12 +254,21 @@ async function main() {
   Audit Log
 ===============================================================
 */
-  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; user: string | null; actor?: string }[] = [
+  const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; resourceMeta?: AuditMeta; user: string | null; actor?: string }[] = [
     { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "coco" },
-    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },
-    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (prod)", user: "sarah.chen" },
-    { action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (dev)", user: "marcus.coco" },
-    { action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "priya.nair" },
+    { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.WEBHOOK, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },
+    {
+      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (production)", user: "sarah.chen",
+      resourceMeta: { kind: 'secret', key: 'DATABASE_URL', type: envByName.get("prod")!.type.toLowerCase() as EnvType },
+    },
+    {
+      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (development)", user: "marcus.coco",
+      resourceMeta: { kind: 'secret', key: 'GITHUB_TOKEN', type: envByName.get("dev")!.type.toLowerCase() as EnvType },
+    },
+    {
+      action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "priya.nair",
+      resourceMeta: { kind: 'environment', name: 'sandbox', type: envByName.get("sandbox")!.type.toLowerCase() as EnvType },
+    },
   ];
   await Promise.all(
     auditSeeds.map((a) =>
@@ -268,6 +278,7 @@ async function main() {
           resourceType: a.resourceType,
           resourceId: a.resourceId,
           resourceLabel: a.resourceLabel,
+          resourceMeta: a.resourceMeta,
           userId: a.user ? userByName.get(a.user)?.id ?? null : null,
           actor: a.actor ?? null,
         },

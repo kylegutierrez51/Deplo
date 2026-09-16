@@ -1,7 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { approveOrRejectStage } from '@/lib/actions/approvals';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import type {
@@ -66,7 +66,11 @@ beforeEach(() => {
   enqueue.mockClear();
   enqueue.mockResolvedValue(undefined);
   setSession();
+  runTransactionsInline();
   matched(1);
+  // A won CAS reads the run back for the audit label; an unstubbed read resolves
+  // undefined and crashes the destructure before a single case-specific mock matters.
+  prismaMock.pipelineRun.findUniqueOrThrow.mockResolvedValue({ runNumber: 4, pipeline: { name: 'CI' } } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
   jest.spyOn(console, 'error').mockImplementation(() => { });
 });
@@ -381,5 +385,74 @@ describe('when the write fails', () => {
     await reject();
 
     expect(enqueue).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * A mock can't prove the rollback itself (that's audits.integration.test.ts), but it can
+ * prove the precondition a shared mock is blind to: that the audit goes to the same
+ * transaction client as the CAS, not to the singleton on a connection of its own. And
+ * because the audit sits inside the same transaction as the CAS, only the caller that wins
+ * ever reaches it — a lost race has nothing to record, the same reason it never enqueues.
+ */
+describe('audit trail', () => {
+  const attributed = { userId: 'user-1', actor: 'kyle' };
+
+  let tx: ReturnType<typeof transactionMock>;
+
+  beforeEach(() => {
+    tx = transactionMock();
+    runTransactionsInline(tx);
+    tx.stageResult.updateMany.mockResolvedValue({ count: 1 } as never);
+    tx.pipelineRun.findUniqueOrThrow.mockResolvedValue({ runNumber: 4, pipeline: { name: 'CI' } } as never);
+  });
+
+  it('sends the CAS and its audit to the same transaction', async () => {
+    await approve();
+
+    expect(tx.stageResult.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.stageResult.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['approved', true, 'APPROVAL_GRANTED'],
+    ['rejected', false, 'APPROVAL_REJECTED'],
+  ])('records a %s decision against the run, labelled by pipeline and run number', async (_label, approved, action) => {
+    await decide(approved);
+
+    expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({
+      ...attributed,
+      action,
+      resourceType: 'PIPELINE_RUN',
+      resourceId: 'run-1',
+      resourceLabel: 'CI #4',
+      resourceMeta: { kind: 'run', pipelineName: 'CI', runNumber: 4 },
+    });
+  });
+
+  // The rejection has to escape the callback for Prisma to roll back; a success message
+  // here would mean it was swallowed and the decision committed without a record of it.
+  it('reports failure and does not enqueue when the audit cannot be written', async () => {
+    tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+    const result = await approve();
+
+    expect(result.status).toBe('error');
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  // A lost race has nothing to record — the winner already wrote its own entry — and
+  // reading the run for a label it will never use would be a wasted round trip on every
+  // approval that finds itself second.
+  it('writes no audit for a decision that lost the race', async () => {
+    tx.stageResult.updateMany.mockResolvedValue({ count: 0 } as never);
+    found('APPROVED');
+
+    await reject();
+
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+    expect(tx.pipelineRun.findUniqueOrThrow).not.toHaveBeenCalled();
   });
 });

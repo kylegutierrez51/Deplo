@@ -79,11 +79,41 @@ table tbody td.filter ion-icon {
   margin: 0 4px;
 }
 
-/* Audit Log */
-td .audit-category {
-  margin-left: var(--space-sm);
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-body);
+
+
+/* 
+  Trailing "open in editor" column. width: 1% is the table trick that collapses
+  a cell down to its content width, so the icon never steals space from the
+  data columns.
+  
+  Edit this in 'pipelines.module.css' and look at PipelineRow to see the effect. 
+*/
+.row-action {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.editor-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.editor-link ion-icon {
+  color: var(--icon-clr);
+}
+
+.editor-link:hover ion-icon {
+  color: var(--blue-clr);
+}
+
+/* Can only be seen with keyboard navigation. Press Tab repeatedly on the keyboard to see what this does, or simply remove "-visible" and click on the link.  */
+.editor-link:focus-visible {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: 2px;
 }
 
 /*

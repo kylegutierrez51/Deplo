@@ -3,6 +3,8 @@ import { enqueuePipelineRun } from '@/lib/queue/runs';
 import type { RunTrigger as PrismaRunTrigger } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import type { RunTrigger } from '../types';
+import { addAudit } from './audits';
+import { AuditAction, ResourceType } from '@/generated/prisma';
 
 const RUN_NUMBER_ATTEMPTS = 3;
 
@@ -51,10 +53,12 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
 export async function createPipelineRun(data: {
   pipelineId: string,
   definitionId: string,
+  environmentId: string | null,
   trigger: RunTrigger,
-  triggeredById: string,
-  environmentId: string | null
-}): Promise<{ id: string }> {
+  user: { id: string | null, name: string | null },
+}): Promise<{ id: string, name: string, runNumber: number }> {
+  const { user, trigger, ...runData } = data;
+
   for (let attempt = 1; attempt <= RUN_NUMBER_ATTEMPTS; attempt++) {
     try {
       const latest = await prisma.pipelineRun.findFirst({
@@ -63,15 +67,30 @@ export async function createPipelineRun(data: {
         where: { pipelineId: data.pipelineId }
       });
 
-      return await prisma.pipelineRun.create({
-        select: { id: true },
-        data: { ...data, trigger: TRIGGER_MAP[data.trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
+      return await prisma.$transaction(async (tx) => {
+        const { id, runNumber, pipeline: { name } } = await tx.pipelineRun.create({
+          select: { id: true, runNumber: true, pipeline: { select: { name: true } } },
+          data: { ...runData, triggeredById: user.id, trigger: TRIGGER_MAP[trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
+        });
+
+        await addAudit({
+          userId: user.id,
+          actor: user.name,
+          action: AuditAction.RUN_TRIGGERED,
+          resourceType: ResourceType.PIPELINE_RUN,
+          resourceId: id,
+          resourceLabel: name + ' #' + runNumber,
+          resourceMeta: { kind: 'run', pipelineName: name, runNumber }
+        }, tx);
+
+        return { id, name, runNumber };
       });
+
     } catch (error: unknown) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError 
-          && error.code === 'P2002'
-          && attempt < RUN_NUMBER_ATTEMPTS ) continue;
-        throw error;
+      if (error instanceof Prisma.PrismaClientKnownRequestError
+        && error.code === 'P2002'
+        && attempt < RUN_NUMBER_ATTEMPTS) continue;
+      throw error;
     }
   }
 

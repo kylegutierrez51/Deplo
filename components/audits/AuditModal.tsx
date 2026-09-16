@@ -1,18 +1,24 @@
 "use client"
 
 import { formatDate } from '@/lib/utils/date';
-import type { ResourceType } from '@/lib/types';
+import type { AuditAction, AuditMeta, ResourceType } from '@/lib/types';
+import Link from 'next/link';
 import Modal from '@/components/ui/modals/Modal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import auditStyles from './audit-modal.module.css';
+import ResourceTypePill from './ResourceTypePill';
+import AuditResourceLabel from './AuditResourceLabel';
+import { resourceHref } from './resourcePath';
 
 const styles = { ...modalStyles, ...auditStyles };
 
 interface AuditModalProps {
   mode?: 'view' | 'edit' | 'create';
-  action?: string;
+  action?: AuditAction;
   resourceType: ResourceType;
   resourceLabel: string | null;
+  resourceMeta: AuditMeta | null;
+  resourceId: string | null;
   category?: string;
   actor: string | null;
   user: string | null;
@@ -25,6 +31,8 @@ export default function AuditModal({
   action,
   resourceType,
   resourceLabel,
+  resourceMeta,
+  resourceId,
   actor,
   user,
   createdAt,
@@ -45,18 +53,29 @@ export default function AuditModal({
             <span>{action}</span>
           </div>
           <div className={styles.item}>
-            <label>Category</label>
-            <span>{resourceType}</span>
+            <label>Type</label>
+            <span><ResourceTypePill type={resourceType} /></span>
           </div>
         </div>
 
 
         <div className={styles.item}>
           <label>Resource</label>
-          <span>{resourceLabel ?? '—'}</span>
+          <span><AuditResourceLabel resourceLabel={resourceLabel} resourceMeta={resourceMeta} /></span>
         </div>
 
-        <div className={styles['time-flex']}>
+        {resourceId &&
+          <div className={styles.item}>
+            <label>View Resource</label>
+            <span>
+              <Link href={resourceHref(resourceType, resourceId)} className={styles['resource-link']} target="_blank">
+                <ion-icon name="open-outline"></ion-icon>
+              </Link>
+            </span>
+          </div>
+        }
+
+        <div className={styles['footer-flex']}>
           <div className={styles.item}>
             <label>Actor</label>
             <span>{user ?? actor ?? 'Unknown User'}</span>

@@ -3,7 +3,8 @@ export type PillVariant =
   | 'production' | 'staging' | 'development' | 'preview' | 'custom'
   | 'processed' | 'ignored' | 'pending' | 'push' | 'pull-request' | 'webhook'
   | 'manual' | 'api' | 'total' | 'awaiting-approval' | 'idle'
-  | 'approved' | 'unapproved';
+  | 'approved' | 'unapproved'
+  | 'pipeline' | 'pipeline-run' | 'environment' | 'secret';
 
 interface PillProps {
   variant: PillVariant;

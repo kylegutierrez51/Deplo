@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
-import { mockReset, type DeepMockProxy } from 'jest-mock-extended';
-import type { PrismaClient } from '@/generated/prisma/client';
+import { mockDeep, mockReset, type DeepMockProxy } from 'jest-mock-extended';
+import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 
 /*
  * Typed handle on the manual mock in lib/__mocks__/prisma.ts.
@@ -23,3 +23,21 @@ export const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
 export function resetPrismaMock() {
   mockReset(prismaMock);
 }
+
+/**
+ * Makes $transaction run its callback, which the bare deep mock never does — it resolves
+ * undefined without calling it, so every write inside silently never happens.
+ *
+ * By default the callback gets the mock itself, so existing stubs keep working. Pass a
+ * separate `tx` (from `transactionMock()`) when the test is *about* the boundary: with one
+ * shared object, a write sent to the singleton instead of `tx` is indistinguishable from a
+ * correct one, which is exactly how an audit ends up committing outside its transaction.
+ */
+export function runTransactionsInline(tx: DeepMockProxy<Prisma.TransactionClient> = prismaMock) {
+  prismaMock.$transaction.mockImplementation(
+    (async (cb: (client: typeof tx) => unknown) => cb(tx)) as never,
+  );
+}
+
+/** A transaction client distinct from the singleton. Create one per test. */
+export const transactionMock = () => mockDeep<Prisma.TransactionClient>();

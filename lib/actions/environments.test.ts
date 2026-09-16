@@ -1,7 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { addEnvironment, updateEnvironment, deleteEnvironment } from '@/lib/actions/environments';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession, signedOut } from '@/test/mocks/auth';
 
 jest.mock('@/lib/prisma');
@@ -25,6 +25,12 @@ beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();
   setSession();
+  runTransactionsInline();
+  // Every action reads something back inside its transaction (the row it just created, or
+  // the prior row for a diff label); an unstubbed read resolves undefined and crashes the
+  // destructure before a single case-specific mock matters.
+  prismaMock.environment.create.mockResolvedValue({ id: 'env-new', name: 'Production', type: 'PRODUCTION' } as never);
+  prismaMock.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -36,9 +42,9 @@ describe('addEnvironment', () => {
   it('upcases the form type into the Prisma enum', async () => {
     await addEnvironment(idle, form({ type: 'staging' }));
 
-    expect(prismaMock.environment.create).toHaveBeenCalledWith({
+    expect(prismaMock.environment.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ type: 'STAGING' }),
-    });
+    }));
   });
 
   it('attributes the row to the signed-in user', async () => {
@@ -46,9 +52,9 @@ describe('addEnvironment', () => {
 
     await addEnvironment(idle, form());
 
-    expect(prismaMock.environment.create).toHaveBeenCalledWith({
+    expect(prismaMock.environment.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ createdById: 'user-7' }),
-    });
+    }));
   });
 
   it('refuses when signed out', async () => {
@@ -71,9 +77,9 @@ describe('addEnvironment', () => {
   ])('reads requireApproval=%s as %s', async (raw, expected) => {
     await addEnvironment(idle, form({ requireApproval: raw }));
 
-    expect(prismaMock.environment.create).toHaveBeenCalledWith({
+    expect(prismaMock.environment.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ requireApproval: expected }),
-    });
+    }));
   });
 
   it('revalidates the environments route on success', async () => {
@@ -132,9 +138,9 @@ describe('addEnvironment', () => {
   it('accepts a type the form already sent in uppercase', async () => {
     await addEnvironment(idle, form({ type: 'PREVIEW' }));
 
-    expect(prismaMock.environment.create).toHaveBeenCalledWith({
+    expect(prismaMock.environment.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ type: 'PREVIEW' }),
-    });
+    }));
   });
 });
 
@@ -210,7 +216,7 @@ describe('deleteEnvironment', () => {
   // The confirmation names the environment, so the delete has to read the name
   // off the deleted row rather than echo the id it was handed.
   it('deletes and revalidates', async () => {
-    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1', name: 'Production' } as never);
+    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1', name: 'Production', type: 'PRODUCTION' } as never);
 
     const result = await deleteEnvironment('env-1');
 
@@ -232,5 +238,98 @@ describe('deleteEnvironment', () => {
     const result = await deleteEnvironment('env-1');
 
     expect(result).toEqual({ status: 'error', message: 'Error deleting environment. Please try again.' });
+  });
+});
+
+/*
+ * A mock can't prove the rollback itself (that's audits.integration.test.ts), but it can
+ * prove the precondition a shared mock is blind to: that the audit goes to the same
+ * transaction client as the write, not to the singleton on a connection of its own.
+ */
+describe('audit trail', () => {
+  const attributed = { userId: 'user-1', actor: 'kyle' };
+
+  let tx: ReturnType<typeof transactionMock>;
+
+  beforeEach(() => {
+    tx = transactionMock();
+    runTransactionsInline(tx);
+  });
+
+  const cases = [
+    {
+      name: 'addEnvironment',
+      arrange: () => tx.environment.create.mockResolvedValue({ id: 'env-new', name: 'Production', type: 'PRODUCTION' } as never),
+      act: () => addEnvironment(idle, form()),
+      written: () => tx.environment.create,
+      audit: {
+        action: 'ENVIRONMENT_CREATED', resourceType: 'ENVIRONMENT', resourceId: 'env-new', resourceLabel: 'Production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+      },
+    },
+    {
+      name: 'updateEnvironment',
+      arrange: () => tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
+      act: () => updateEnvironment(idle, form({ id: 'env-1', name: 'Prod', type: 'staging' })),
+      written: () => tx.environment.update,
+      audit: {
+        action: 'ENVIRONMENT_UPDATED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production → Prod (PRODUCTION → STAGING)',
+        resourceMeta: { kind: 'environment', name: 'Prod', type: 'staging', prevName: 'Production', prevType: 'production' },
+      },
+    },
+    {
+      name: 'deleteEnvironment',
+      arrange: () => tx.environment.delete.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
+      act: () => deleteEnvironment('env-1'),
+      written: () => tx.environment.delete,
+      audit: {
+        action: 'ENVIRONMENT_DELETED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+      },
+    },
+  ];
+
+  describe.each(cases)('$name', ({ arrange, act, written, audit }) => {
+    beforeEach(() => { arrange(); });
+
+    it('sends the write and its audit to the same transaction', async () => {
+      await act();
+
+      expect(written()).toHaveBeenCalledTimes(1);
+      expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('records what happened, to what, and by whom', async () => {
+      await act();
+
+      expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({ ...audit, ...attributed });
+    });
+
+    // The rejection has to escape the callback for Prisma to roll back; a success
+    // message here would mean it was swallowed and the write committed without it.
+    it('reports failure and does not revalidate when the audit cannot be written', async () => {
+      tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+      const result = await act();
+
+      expect(result.status).toBe('error');
+      expect(revalidate).not.toHaveBeenCalled();
+    });
+  });
+
+  // Renaming without changing type (or vice versa) should not manufacture a false diff
+  // arrow on the half that did not change.
+  it('labels only the field that actually changed', async () => {
+    tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never);
+
+    await updateEnvironment(idle, form({ id: 'env-1', name: 'Production', type: 'staging' }));
+
+    const { data } = tx.auditLog.create.mock.calls[0][0];
+
+    expect(data).toMatchObject({
+      resourceLabel: 'Production (PRODUCTION → STAGING)',
+    });
+    expect(data.resourceMeta).toEqual({ kind: 'environment', name: 'Production', type: 'staging', prevType: 'production' });
   });
 });

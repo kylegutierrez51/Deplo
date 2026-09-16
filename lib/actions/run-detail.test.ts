@@ -1,7 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { retryRun, cancelRun } from '@/lib/actions/run-detail';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import { isQueueReachable } from '@/lib/queue/health';
@@ -37,7 +37,7 @@ jest.mock('@/lib/queue/health', () => ({
  * never dispatched, because completed stage jobs are kept in Redis forever. The tests
  * below therefore assert on `create` and on the *absence* of writes to the old row.
  *
- * cancelRun, further down, is the mirror image: it writes no new row at all. Marking the run
+ * cancelRun, further down, is the mirror image: it writes no new run, only its audit. Marking the run
  * terminal *is* the stop switch, because advanceRun early-returns on anything that is not
  * RUNNING — so its assertions are about the guard on that write, and about which stage rows
  * it does and does not sweep.
@@ -56,8 +56,13 @@ const existingRun = (status: PrismaRunStatus = 'FAILED') =>
     environmentId: 'env-2',
   } as never);
 
+/** The new run as createPipelineRun's `select` returns it — the audit label reads the last two. */
 const created = (id = 'run-2') =>
-  prismaMock.pipelineRun.create.mockResolvedValue({ id } as never);
+  prismaMock.pipelineRun.create.mockResolvedValue({
+    id,
+    runNumber: 2,
+    pipeline: { name: 'pipe-1' },
+  } as never);
 
 /** The arguments the insert was called with. */
 const inserted = () => prismaMock.pipelineRun.create.mock.calls[0][0];
@@ -71,6 +76,7 @@ beforeEach(() => {
   enqueue.mockResolvedValue(undefined);
   reachable.mockReset().mockResolvedValue(true);
   setSession();
+  runTransactionsInline();
   existingRun();
   created();
   jest.spyOn(console, 'log').mockImplementation(() => { });
@@ -168,11 +174,15 @@ describe('the new run', () => {
    * attempt produced, and the Run Detail page is the only place they are ever shown.
    * Clearing them to make room for a re-run destroys that history irrecoverably.
    */
+  // Asserted on the stage rows themselves. The mock runs transactions against itself, so a
+  // reset hidden inside the insert's transaction would still register here.
   it('deletes none of the old run stage results', async () => {
     await retry();
 
     expect(prismaMock.stageResult.deleteMany).not.toHaveBeenCalled();
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(prismaMock.stageResult.delete).not.toHaveBeenCalled();
+    expect(prismaMock.stageResult.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.stageResult.update).not.toHaveBeenCalled();
   });
 
   /*
@@ -383,6 +393,90 @@ describe('retrying into an unreachable queue', () => {
   });
 });
 
+/*
+ * A retry goes through createPipelineRun, so its audit commits with the new run row and
+ * before the enqueue, exactly as addPipelineRun's does. An audit failure rolls the retry back
+ * with nothing queued; a retry the enqueue discards keeps its entry.
+ */
+describe('the retry audit', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+  });
+
+  // The new run, not the one the button was on: that is the run that will actually execute.
+  it('records the new run, labelled by pipeline and run number', async () => {
+    created('run-2');
+
+    await retry();
+
+    expect(prismaMock.auditLog.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        actor: 'kyle',
+        action: 'RUN_TRIGGERED',
+        resourceType: 'PIPELINE_RUN',
+        resourceId: 'run-2',
+        resourceLabel: 'pipe-1 #2',
+        resourceMeta: { kind: 'run', pipelineName: 'pipe-1', runNumber: 2 },
+      },
+    });
+  });
+
+  // A separate tx, because with the shared mock an audit written on the singleton would
+  // look identical to one written inside the insert's transaction.
+  it('writes the audit in the run insert transaction, before the enqueue', async () => {
+    const tx = transactionMock();
+    runTransactionsInline(tx);
+    tx.pipelineRun.create.mockResolvedValue({ id: 'run-2', runNumber: 2, pipeline: { name: 'pipe-1' } } as never);
+
+    await retry();
+
+    expect(tx.pipelineRun.create).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    expect(tx.auditLog.create.mock.invocationCallOrder[0])
+      .toBeLessThan(enqueue.mock.invocationCallOrder[0]);
+  });
+
+  it('keeps the audit for a retry the failed enqueue discarded', async () => {
+    enqueue.mockRejectedValue(new Error('redis unreachable'));
+
+    await retry();
+
+    expect(prismaMock.pipelineRun.delete).toHaveBeenCalledWith({ where: { id: 'run-2' } });
+    expect(prismaMock.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.auditLog.delete).not.toHaveBeenCalled();
+    expect(prismaMock.auditLog.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('writes no audit when the insert fails', async () => {
+    prismaMock.pipelineRun.create.mockRejectedValue(prismaError('P2003'));
+
+    await retry();
+
+    expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('writes no audit for a run that may not be retried', async () => {
+    existingRun('RUNNING');
+
+    await retry();
+
+    expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  // Nothing reached the queue, so "try again" starts the only retry rather than a second one.
+  it('enqueues nothing when the audit cannot be written', async () => {
+    prismaMock.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+    const result = await retry();
+
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+    expect(result).toEqual({ status: 'error', message: 'Error retrying run. Please try again.' });
+  });
+});
+
 describe('cancelRun', () => {
   const swept = () => prismaMock.stageResult.updateMany.mock.calls[0][0];
   /** The statuses the sweep named, cast past Prisma's filter union. */
@@ -398,6 +492,8 @@ describe('cancelRun', () => {
   beforeEach(() => {
     matched(1);
     prismaMock.stageResult.updateMany.mockResolvedValue({ count: 2 } as never);
+    // Read back inside the transaction for the audit label.
+    prismaMock.pipelineRun.findUniqueOrThrow.mockResolvedValue({ runNumber: 4, pipeline: { name: 'CI' } } as never);
   });
 
   describe('who may cancel', () => {
@@ -516,15 +612,28 @@ describe('cancelRun', () => {
     });
 
     /*
-     * The run row is written first, and that ordering is the stop switch: from the moment
-     * it commits advanceRun early-returns, so nothing can claim a stage while this sweep
-     * is still in flight.
+     * The run row is written first: a run that already finished must sweep nothing, so the
+     * guard has to have answered before any stage is touched.
      */
     it('marks the run before touching the stages', async () => {
       await cancel();
 
       expect(prismaMock.pipelineRun.updateMany.mock.invocationCallOrder[0])
         .toBeLessThan(prismaMock.stageResult.updateMany.mock.invocationCallOrder[0]);
+    });
+
+    /*
+     * Everything commits together, so until then the runner still reads the run as RUNNING.
+     * What holds it off is the sweep's row locks — a claim on a locked row waits for the
+     * commit and then fails its status guard — so the sweep goes straight after the run
+     * write rather than after the label read and the audit.
+     */
+    it('sweeps before the label read and the audit', async () => {
+      await cancel();
+
+      const sweptAt = prismaMock.stageResult.updateMany.mock.invocationCallOrder[0];
+      expect(sweptAt).toBeLessThan(prismaMock.pipelineRun.findUniqueOrThrow.mock.invocationCallOrder[0]);
+      expect(sweptAt).toBeLessThan(prismaMock.auditLog.create.mock.invocationCallOrder[0]);
     });
   });
 
@@ -566,6 +675,77 @@ describe('cancelRun', () => {
       await cancel();
 
       expect(revalidate).not.toHaveBeenCalled();
+    });
+  });
+
+  /*
+   * The cancel and its audit commit together. The version that ran the run write on its own
+   * and only wrapped the sweep and the audit could leave a run CANCELLED with its stages
+   * unswept and no audit, while telling the user to try again — and a second attempt then
+   * loses the guard and reports "already finished", so nothing ever completes it. A separate
+   * `tx` is what lets these cases see a write that escaped the transaction.
+   */
+  describe('the audit', () => {
+    let tx: ReturnType<typeof transactionMock>;
+
+    beforeEach(() => {
+      tx = transactionMock();
+      runTransactionsInline(tx);
+      tx.pipelineRun.updateMany.mockResolvedValue({ count: 1 } as never);
+      tx.stageResult.updateMany.mockResolvedValue({ count: 2 } as never);
+      tx.pipelineRun.findUniqueOrThrow.mockResolvedValue({ runNumber: 4, pipeline: { name: 'CI' } } as never);
+    });
+
+    it('writes the cancel, the sweep and the audit in one transaction', async () => {
+      await cancel();
+
+      expect(tx.pipelineRun.updateMany).toHaveBeenCalledTimes(1);
+      expect(tx.stageResult.updateMany).toHaveBeenCalledTimes(1);
+      expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(prismaMock.pipelineRun.updateMany).not.toHaveBeenCalled();
+      expect(prismaMock.stageResult.updateMany).not.toHaveBeenCalled();
+      expect(prismaMock.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    // The canceller, not the triggerer: the run row keeps triggeredById, and this entry is
+    // the only place the second person is recorded.
+    it('records the cancel against the run, attributed to whoever cancelled it', async () => {
+      setSession('user-7', 'ops');
+
+      await cancel();
+
+      expect(tx.auditLog.create.mock.calls[0][0].data).toEqual({
+        userId: 'user-7',
+        actor: 'ops',
+        action: 'RUN_CANCELLED',
+        resourceType: 'PIPELINE_RUN',
+        resourceId: 'run-1',
+        resourceLabel: 'CI #4',
+        resourceMeta: { kind: 'run', pipelineName: 'CI', runNumber: 4 },
+      });
+    });
+
+    // A cancel that lost the race cancelled nothing, so there is nothing to record.
+    it('writes no audit for a run that had already finished', async () => {
+      tx.pipelineRun.updateMany.mockResolvedValue({ count: 0 } as never);
+
+      expect(await cancel()).toEqual({ status: 'error', message: 'This run has already finished.' });
+      expect(tx.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('reports failure and does not revalidate when the audit cannot be written', async () => {
+      tx.auditLog.create.mockRejectedValue(new Error('audit insert failed'));
+
+      expect(await cancel()).toEqual({ status: 'error', message: 'Error cancelling run. Please try again.' });
+      expect(revalidate).not.toHaveBeenCalled();
+    });
+
+    it('writes nothing, audit included, when signed out', async () => {
+      signedOut();
+
+      await cancel();
+
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
   });
 });

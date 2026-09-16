@@ -23,14 +23,30 @@ export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
 
 export type EventType = 'push' | 'pull-request';
 
+export type ResourceType = 'pipeline' | 'pipeline-run' | 'environment' | 'secret' | 'webhook';
 
-/* AuditAction and ResourceType can be capitalized since they're not used by a separate component (Pill, Toast) */
-export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Triggered" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Approval Granted" | "Approval Rejected" | "Run Completed" | "Run Cancelled" | "Webhook Received" | "Environment Created" | "Environment Deleted" | "User Role Changed";
 
-export type ResourceType = "Webhook" | "Pipeline" | "PipelineRun" | "Approval" | "Environment" | "Secret" | "Stage Result" | "Setting";
+/* AuditAction can be capitalized since it's not used by a separate component (Pill, Toast) */
+export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Definition Updated" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Environment Created" | "Environment Updated" | "Environment Deleted" | "Webhook Received" | "Webhook Created" | "Webhook Updated" | "Webhook Deleted" | "Run Triggered" | "Run Completed" | "Run Cancelled" | "Approval Granted" | "Approval Rejected" | "User Role Changed";
 
 
 export type StageType = 'custom' | 'deploy' | 'approval';
+
+/*
+===================================================
+Audit resourceMeta
+
+Structured snapshot for rich rendering, captured alongside resourceLabel
+at write time. `kind` selects how AuditResourceLabel renders the row/modal;
+null (no meta) falls back to plain resourceLabel text.
+===================================================
+*/
+export type AuditMeta =
+  | { kind: 'run'; pipelineName: string; runNumber: number; status?: 'succeeded' | 'failed' }
+  | { kind: 'environment'; name: string; type: EnvType; prevName?: string; prevType?: EnvType }
+  | { kind: 'secret'; key: string; type: EnvType; prevKey?: string };
+
+
 
 export type PipelineRun = {
   id: string;
