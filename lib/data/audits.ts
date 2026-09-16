@@ -1,10 +1,11 @@
 import prisma from "@/lib/prisma";
 import type { AuditAction as PrismaAuditAction, ResourceType as PrismaResourceType, AuditLog as PrismaAuditLog } from "@/generated/prisma";
-import type { AuditAction, ResourceType } from "@/lib/types";
+import type { AuditAction, AuditMeta, ResourceType } from "@/lib/types";
 
-export type Audit = Omit<PrismaAuditLog, "action" | "resourceType"> & {
+export type Audit = Omit<PrismaAuditLog, "action" | "resourceType" | "resourceMeta"> & {
   action: AuditAction;
   resourceType: ResourceType;
+  resourceMeta: AuditMeta | null;
   user: string | null;
 }
 
@@ -39,6 +40,11 @@ const RESOURCE_MAP: Record<PrismaResourceType, ResourceType> = {
   WEBHOOK: "webhook",
 };
 
+function parseAuditMeta(value: unknown): AuditMeta | null {
+  if (typeof value !== 'object' || value === null || !('kind' in value)) return null;
+  return value as AuditMeta;
+}
+
 export async function getAudits(): Promise<Audit[]> {
   const audits = await prisma.auditLog.findMany({
     orderBy: { createdAt: "desc" },
@@ -51,6 +57,7 @@ export async function getAudits(): Promise<Audit[]> {
     ...audit,
     action: ACTION_MAP[audit.action],
     resourceType: RESOURCE_MAP[audit.resourceType],
+    resourceMeta: parseAuditMeta(audit.resourceMeta),
     user: audit.user?.name ?? null
   }));
 }
@@ -69,6 +76,7 @@ export async function getAuditById(id: string): Promise<Audit | null> {
     ...audit,
     action: ACTION_MAP[audit.action],
     resourceType: RESOURCE_MAP[audit.resourceType],
+    resourceMeta: parseAuditMeta(audit.resourceMeta),
     user: audit.user?.name ?? null
   }
 }

@@ -20,6 +20,7 @@ const row = {
   resourceType: 'PIPELINE_RUN' as const,
   resourceId: 'run-1',
   resourceLabel: 'CI #4',
+  resourceMeta: { kind: 'run', pipelineName: 'CI', runNumber: 4 },
   createdAt: new Date('2026-01-01T00:00:00Z'),
   user: { name: 'Kyle G' },
 };
@@ -86,6 +87,30 @@ describe('getAudits', () => {
     prismaMock.auditLog.findMany.mockResolvedValue([] as never);
 
     await expect(getAudits()).resolves.toEqual([]);
+  });
+
+  it('passes a well-formed resourceMeta through untouched', async () => {
+    prismaMock.auditLog.findMany.mockResolvedValue([row] as never);
+
+    const [audit] = await getAudits();
+
+    expect(audit.resourceMeta).toEqual({ kind: 'run', pipelineName: 'CI', runNumber: 4 });
+  });
+
+  it('falls back to null for a resourceMeta with an unrecognized kind', async () => {
+    prismaMock.auditLog.findMany.mockResolvedValue([{ ...row, resourceMeta: { kind: 'unknown-future-kind' } }] as never);
+
+    const [audit] = await getAudits();
+
+    expect(audit.resourceMeta).toBeNull();
+  });
+
+  it('falls back to null when resourceMeta was never written', async () => {
+    prismaMock.auditLog.findMany.mockResolvedValue([{ ...row, resourceMeta: null }] as never);
+
+    const [audit] = await getAudits();
+
+    expect(audit.resourceMeta).toBeNull();
   });
 });
 
