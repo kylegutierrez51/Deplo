@@ -253,7 +253,7 @@ describe('validatePipelineGraph', () => {
 
     // one line per rule, not per stage
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatch(/"a", "b", "c"/);
+    expect(errors[0]).toMatch(/a, b, c/);
   });
 
   it('reports unrelated failures together', () => {
