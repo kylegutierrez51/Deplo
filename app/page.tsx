@@ -1,10 +1,10 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import LoginButton from "@/components/LoginButton";
-import Sidebar from "@/components/sidebar/Sidebar";
-import Subheader from "@/components/subheader/Subheader";
-import StatCards from "@/components/StatCards";
-import Pill from "@/components/Pill";
+import LoginButton from "@/components/auth/LoginButton";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
+import Subheader from "@/components/layout/subheader/Subheader";
+import StatCards from "@/components/ui/StatCards";
+import Pill from "@/components/ui/Pill";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
