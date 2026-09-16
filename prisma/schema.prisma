@@ -407,6 +407,7 @@ model AuditLog {
   resourceType ResourceType
   resourceId   String
   resourceLabel String? // human-readable snapshot of the resource, captured at write time so it survives resource deletion/rename
+  resourceMeta  Json? // structured snapshot for UI rendering (e.g. pill values); shape keyed by a `kind` discriminant (see @/lib/types - AuditMeta). Null for actions with no rich rendering (e.g., pipelines, webhooks)
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 

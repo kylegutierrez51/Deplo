@@ -32,6 +32,22 @@ export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline De
 
 export type StageType = 'custom' | 'deploy' | 'approval';
 
+/*
+===================================================
+Audit resourceMeta
+
+Structured snapshot for rich rendering, captured alongside resourceLabel
+at write time. `kind` selects how AuditResourceLabel renders the row/modal;
+null (no meta) falls back to plain resourceLabel text.
+===================================================
+*/
+export type AuditMeta =
+  | { kind: 'run'; pipelineName: string; runNumber: number; status?: 'succeeded' | 'failed' }
+  | { kind: 'environment'; name: string; type: EnvType; prevName?: string; prevType?: EnvType }
+  | { kind: 'secret'; key: string; type: EnvType; prevKey?: string };
+
+
+
 export type PipelineRun = {
   id: string;
   version: number;
