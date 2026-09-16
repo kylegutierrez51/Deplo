@@ -10,6 +10,9 @@ import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
 import loginStyles from "./page.module.css";
 import styles from "./dashboard.module.css";
+import AutoRefresh from "@/components/ui/AutoRefresh";
+
+const REFRESH_INTERVAL_MS = 20_000;
 
 export default async function Home() {
   const session = await auth();
@@ -52,6 +55,8 @@ export default async function Home() {
             ]
           } />
 
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
+
         <div className={styles['dashboard-grid']}>
 
           <section className={styles.panel} aria-label="Recent runs">
@@ -81,7 +86,7 @@ export default async function Home() {
                           <ion-icon name="stopwatch-outline"></ion-icon>
                           {run.startedAt && run.finishedAt
                             ? getDuration(run.startedAt, run.finishedAt)
-                            : run.startedAt ? 'Ongoing' : '—'}
+                            : run.startedAt ? getDuration(run.startedAt) : '—'}
                         </span>
                         <span className={styles['run-date']}>{formatDate(run.createdAt)}</span>
                       </div>
