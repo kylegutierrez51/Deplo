@@ -7,11 +7,21 @@ import { matchReservedLabel } from '@/lib/utils/string';
 
 // Node ids are uuids and mean nothing to the user, so name the stage the way the editor does.
 function stageLabel(node: CustomNode): string {
-  return node.data.name?.trim() || node.data.label?.trim() || node.id;
+  return node.data.name?.trim() || '';
 }
 
 function listStages(nodes: CustomNode[]): string {
-  return nodes.map(node => `"${stageLabel(node)}"`).join(', ');
+  let stages = '';
+  let listedAll = true;
+
+  for (const node of nodes) {
+    const name = stageLabel(node);
+    if (name.length) stages += stageLabel(node) + ", ";
+    else listedAll = false;
+  }
+
+  if (stages.length && !listedAll) return stages += '...';
+  return stages.slice(0, stages.length - 2);
 }
 
 function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
@@ -163,16 +173,22 @@ export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJs
 
   const reserved = nodes.filter(node => node.data.type === 'custom' && matchReservedLabel(node.data.label));
 
-  if (reserved.length) errors.push(
-    `${plural(reserved.length, 'A Custom stage cannot', 'Custom stages cannot')} be labeled "Approval" or "Deploy": ${listStages(reserved)}.`
-  );
+  if (reserved.length) {
+    const namedStages = listStages(reserved);
+    errors.push(
+      `${plural(reserved.length, 'A Custom stage cannot', 'Custom stages cannot')} be labeled "Approval" or "Deploy"${namedStages.length ? `: ${namedStages}` : ''}`
+    );
+  }
 
 
   const missingCommand = nodes.filter(node => node.data.type !== 'approval' && !configJson[node.id]?.command?.trim());
 
-  if (missingCommand.length) errors.push(
-    `${missingCommand.length} ${plural(missingCommand.length, 'stage')} ${plural(missingCommand.length, 'is', 'are')} missing a command: ${listStages(missingCommand)}.`
-  );
+  if (missingCommand.length) {
+    const namedStages = listStages(missingCommand);
+    errors.push(
+      `${missingCommand.length} ${plural(missingCommand.length, 'stage')} ${plural(missingCommand.length, 'is', 'are')} missing a command${namedStages.length ? `: ${namedStages}` : ''}`
+    );
+  }
 
   const cycle = detectCycle(edges, nodes);
 
@@ -185,9 +201,12 @@ export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJs
   if (requireApproval) {
     const ungated = findUngatedDeployStages(edges, nodes);
 
-    if (ungated.length) errors.push(
-      `The selected environment requires approval before deploying, but ${plural(ungated.length, 'this Deploy stage has', 'these Deploy stages have')} no Approval stage upstream: ${listStages(ungated)}.`
-    );
+    if (ungated.length) {
+      const namedStages = listStages(ungated);
+      errors.push(
+        `The selected environment requires approval before deploying, but ${plural(ungated.length, '1 Deploy stage has', `${ungated.length} Deploy stages have`)} no Approval stage upstream${namedStages.length ? `: ${namedStages}` : ''}`
+      );
+    }
   }
 
   return errors;

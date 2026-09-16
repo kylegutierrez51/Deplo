@@ -174,13 +174,13 @@ describe('the reserved label rule', () => {
     expect(screen.getByText(/reserved for the Approval stage type/)).toBeInTheDocument();
   });
 
-  // A node that already carries a reserved label got it from its stage type,
-  // so the field starts empty rather than immediately showing an error.
-  it('starts blank when the node already holds a reserved label', () => {
+  // The label persists exactly as stored, even a reserved one the node already
+  // carries, so the reader sees and can deliberately change what's actually there.
+  it('keeps a reserved label already on the node, and flags it', () => {
     setup({ label: 'Deploy' });
 
-    expect(screen.getByLabelText('LABEL')).toHaveValue('');
-    expect(screen.queryByText(/is reserved/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('LABEL')).toHaveValue('Deploy');
+    expect(screen.getByText(/is reserved/)).toBeInTheDocument();
   });
 
   // The rule warns but does not block — validatePipelineGraph is what actually
