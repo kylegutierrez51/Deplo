@@ -133,7 +133,8 @@ export async function cancelRun(id: string): Promise<FormState> {
         action: AuditAction.RUN_CANCELLED,
         resourceType: ResourceType.PIPELINE_RUN,
         resourceId: id,
-        resourceLabel: run.pipeline.name + ' #' + run.runNumber
+        resourceLabel: run.pipeline.name + ' #' + run.runNumber,
+        resourceMeta: { kind: 'run', pipelineName: run.pipeline.name, runNumber: run.runNumber }
       }, tx);
 
       return true;

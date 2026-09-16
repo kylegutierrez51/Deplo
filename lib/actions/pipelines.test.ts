@@ -960,6 +960,7 @@ describe('audit trail', () => {
       expect(prismaMock.auditLog.create).toHaveBeenCalledWith({
         data: {
           action: 'RUN_TRIGGERED', resourceType: 'PIPELINE_RUN', resourceId: 'run-1', resourceLabel: 'pipe-1 #1',
+          resourceMeta: { kind: 'run', pipelineName: 'pipe-1', runNumber: 1 },
           ...attributed,
         },
       });

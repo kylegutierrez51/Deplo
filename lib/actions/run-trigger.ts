@@ -79,7 +79,8 @@ export async function createPipelineRun(data: {
           action: AuditAction.RUN_TRIGGERED,
           resourceType: ResourceType.PIPELINE_RUN,
           resourceId: id,
-          resourceLabel: name + ' #' + runNumber
+          resourceLabel: name + ' #' + runNumber,
+          resourceMeta: { kind: 'run', pipelineName: name, runNumber }
         }, tx);
 
         return { id, name, runNumber };

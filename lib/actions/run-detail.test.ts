@@ -417,6 +417,7 @@ describe('the retry audit', () => {
         resourceType: 'PIPELINE_RUN',
         resourceId: 'run-2',
         resourceLabel: 'pipe-1 #2',
+        resourceMeta: { kind: 'run', pipelineName: 'pipe-1', runNumber: 2 },
       },
     });
   });
@@ -720,6 +721,7 @@ describe('cancelRun', () => {
         resourceType: 'PIPELINE_RUN',
         resourceId: 'run-1',
         resourceLabel: 'CI #4',
+        resourceMeta: { kind: 'run', pipelineName: 'CI', runNumber: 4 },
       });
     });
 
