@@ -8,6 +8,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
@@ -42,7 +43,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
         
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {webhookEvents.length > 0 &&
+        {webhookEvents.length > 0 ? (
           <>
             <StatCards
               cards={
@@ -93,7 +94,14 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
 
             <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : (
+          <EmptyState
+            icon="pulse-outline"
+            heading="No deliveries yet"
+            description="GitHub deliveries land here once a registered webhook fires."
+            action={{ label: "Manage webhooks", href: "/webhooks" }}
+          />
+        )}
       </main>
 
       {modal && (

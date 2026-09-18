@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LogsTab from '@/components/run-detail/logs/LogsTab';
 import type { JobLog, LogFilters } from '@/lib/data/run-detail';
+import type { RunStatus } from '@/lib/types';
 
 /*
  * Two controls that have to agree: the stage listbox picks what LogViewer shows,
@@ -39,9 +40,9 @@ const LOGS: JobLog[] = [
   log('s2', 'unit-tests', 3),
 ];
 
-const setup = (logs: JobLog[] = LOGS, logFilters: LogFilters[] = FILTERS) => {
+const setup = (logs: JobLog[] = LOGS, logFilters: LogFilters[] = FILTERS, runStatus: RunStatus = 'running') => {
   const user = userEvent.setup();
-  const { rerender } = render(<LogsTab logs={logs} logFilters={logFilters} />);
+  const { rerender } = render(<LogsTab logs={logs} logFilters={logFilters} runStatus={runStatus} />);
 
   /*
    * Stands in for an AutoRefresh tick: router.refresh() re-executes the server component
@@ -49,7 +50,7 @@ const setup = (logs: JobLog[] = LOGS, logFilters: LogFilters[] = FILTERS) => {
    * piece of state in here survives. A fresh render() would prove nothing.
    */
   const poll = (logs: JobLog[], logFilters: LogFilters[] = FILTERS) =>
-    rerender(<LogsTab logs={logs} logFilters={logFilters} />);
+    rerender(<LogsTab logs={logs} logFilters={logFilters} runStatus={runStatus} />);
 
   return { user, poll };
 };
@@ -185,11 +186,37 @@ describe('a refresh that arrives while the tab is open', () => {
   it('picks up the stages when they arrive after mount', () => {
     const { poll } = setup([], []);
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('No logs yet');
 
     poll(LOGS);
 
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(stages()).toHaveTextContent('typecheck');
     expect(attempts()).toHaveTextContent('Attempt 1');
     expect(screen.getByText('typecheck attempt 1')).toBeInTheDocument();
+  });
+});
+
+/*
+ * With no stages to pick from, the tab has nothing to seed and renders the reason
+ * instead of the controls — the reason is which one depends on where the run is.
+ */
+describe('an empty tab explains why', () => {
+  it('tells a queued run the runner has not picked it up yet', () => {
+    setup([], [], 'queued');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Waiting for the runner');
+  });
+
+  it('tells a cancelled run it never started', () => {
+    setup([], [], 'cancelled');
+
+    expect(screen.getByRole('status')).toHaveTextContent('It was cancelled before any stage started.');
+  });
+
+  it('tells a succeeded run none of its stages produced output', () => {
+    setup([], [], 'succeeded');
+
+    expect(screen.getByRole('status')).toHaveTextContent('None of its stages produced output.');
   });
 });

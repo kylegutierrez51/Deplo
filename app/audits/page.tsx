@@ -7,6 +7,7 @@ import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
 import Pagination from "@/components/ui/pagination/Pagination";
+import EmptyState from "@/components/ui/EmptyState";
 import AuditModalController from "@/components/audits/AuditModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getAudits, getAuditById } from '@/lib/data/audits';
@@ -42,7 +43,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {audits.length > 0 &&
+        {audits.length > 0 ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -92,7 +93,13 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
 
             <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
           </>
-        }
+        ) : (
+          <EmptyState
+            icon="reader-outline"
+            heading="Nothing recorded yet"
+            description="Every create, edit, delete and approval decision is logged here."
+          />
+        )}
       </main>
 
       {modal && (

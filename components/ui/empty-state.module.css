@@ -1,0 +1,90 @@
+/*
+ * Solid borders on these pages mean "a thing exists" (stat cards, tables,
+ * panels); a dashed border means "a thing could exist here" — the same idiom
+ * the graph editor uses for an empty slot. That's also what keeps this panel
+ * from reading as a loading skeleton: a skeleton mimics the shape of content
+ * that's on its way, this frames an absence that isn't.
+ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-sm);
+  padding: var(--space-2xl) var(--space-lg);
+  min-height: 320px;
+  border: 1px dashed var(--light-gray-clr);
+  border-radius: var(--radius-lg);
+}
+
+.empty-state.fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.empty-state > ion-icon {
+  font-size: 40px;
+  color: var(--icon-clr);
+}
+
+.empty-state h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--white-clr);
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: var(--font-size-body);
+  color: var(--subtitle-clr);
+  max-width: 46ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.action {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--space-sm);
+  color: var(--white-clr);
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  background-color: var(--btn-subheader-clr);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.action:hover {
+  background-color: var(--btn-subheader-clr-hover);
+}
+
+.action ion-icon {
+  margin-right: var(--space-xs);
+  font-size: 20px;
+  color: inherit;
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: 2px;
+}
+
+@media (max-width: 570px) {
+  .action {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* Under 874px .logs on the run detail page stops growing (flex: none), so the
+   filled panel has no column to stretch into and would collapse to its content.
+   Give it the same floor the list pages have. */
+@media (max-width: 874px) {
+  .empty-state.fill {
+    min-height: 320px;
+  }
+}

@@ -70,7 +70,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
             </>
           }
           logs={
-            <LogsTab logs={run.logs} logFilters={run.logFilters} />
+            <LogsTab logs={run.logs} logFilters={run.logFilters} runStatus={run.status} />
           }
         />
 
