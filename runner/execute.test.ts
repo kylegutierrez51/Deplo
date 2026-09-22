@@ -7,6 +7,7 @@
  * rather than of the code.
  */
 import { execute, killAllChildren } from './execute';
+import { buildScrubber } from './scrubber';
 import { mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -202,6 +203,90 @@ describe('progress snapshots', () => {
 
   it('runs no timer at all when no callback is given', async () => {
     expect((await run(node("console.log('x')"), { snapshotMs: 10 })).logSnippet).toBe('x');
+  });
+});
+
+/*
+ * The unit tier proves the matching in scrubber.test.ts. What only a real spawn proves is
+ * the wiring: that both streams are covered, that the masking happens before the console
+ * echo as well as before the ring buffer, and that a value torn across two real pipe writes
+ * still never reaches either sink.
+ */
+describe('secret scrubbing', () => {
+  const SECRET = 'sup3r-s3cret-value';
+
+  const runScrubbed = (script: string) => {
+    const logged: string[] = [];
+
+    (console.log as jest.Mock).mockImplementation((line: string) => { logged.push(line); });
+    (console.error as jest.Mock).mockImplementation((line: string) => { logged.push(line); });
+
+    return run(node(script), { scrub: buildScrubber([SECRET]) })
+      .then(result => ({ ...result, console: logged.join(' | ') }));
+  };
+
+  it('masks a value the command prints on stdout', async () => {
+    const { logSnippet } = await runScrubbed(`console.log('token=' + '${SECRET}')`);
+
+    expect(logSnippet).toBe('token=***');
+  });
+
+  it('masks a value the command prints on stderr', async () => {
+    const { logSnippet } = await runScrubbed(`console.error('token=' + '${SECRET}')`);
+
+    expect(logSnippet).toBe('token=***');
+  });
+
+  /*
+   * The console echo bypasses the line buffer entirely, so masking inside createLineBuffer
+   * would leave this path untouched — and this is the output that container log collectors
+   * ship off the box.
+   */
+  it('masks the value in the runner console too, not only the snippet', async () => {
+    const { console: echoed } = await runScrubbed(`console.log('token=' + '${SECRET}')`);
+
+    expect(echoed).toContain('***');
+    expect(echoed).not.toContain(SECRET);
+  });
+
+  /*
+   * Each console line is prefixed with the command, which is user-authored config and can
+   * have a credential typed directly into it rather than referenced as $VAR. Left raw, that
+   * one mistake is re-printed once per chunk for the whole life of the stage.
+   */
+  it('masks a value hardcoded into the command itself, in the prefix', async () => {
+    const { console: echoed } = await runScrubbed(`console.log('x');console.log('${SECRET}')`);
+
+    expect(echoed).not.toContain(SECRET);
+  });
+
+  /*
+   * Two writes with no newline between them land as separate 'data' chunks, which is the
+   * case a per-chunk matcher misses. The split point is inside the value on purpose.
+   */
+  it('masks a value split across two separate writes', async () => {
+    const head = SECRET.slice(0, 7);
+    const tail = SECRET.slice(7);
+
+    const { logSnippet } = await runScrubbed(
+      `process.stdout.write('token=' + '${head}');setTimeout(function(){process.stdout.write('${tail}' + ' end')},300)`,
+    );
+
+    expect(logSnippet).toBe('token=*** end');
+  }, 20_000);
+
+  // The withheld tail is released on close. Without that, a command killed or exiting
+  // mid-value loses its last line — usually the one saying why it stopped.
+  it('still emits a trailing partial match when the command exits inside one', async () => {
+    const { logSnippet } = await runScrubbed(`process.stdout.write('${SECRET.slice(0, 8)}')`);
+
+    expect(logSnippet).toBe(SECRET.slice(0, 8));
+  });
+
+  it('leaves output alone when no secret is registered', async () => {
+    const { logSnippet } = await run(node("console.log('plain')"), { scrub: buildScrubber([]) });
+
+    expect(logSnippet).toBe('plain');
   });
 });
 
