@@ -10,6 +10,7 @@ import modalStyles from '@/components/ui/modals/modal.module.css';
 import secretStyles from './secret-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
+import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 
 const styles = { ...modalStyles, ...secretStyles };
 
@@ -122,6 +123,13 @@ export default function SecretModal({
     }
   };
 
+  const formAction = mode === 'create' ? createFormAction : editFormAction;
+
+  const submit = (formData: FormData) => {
+    formData.set('value', String(formData.get('value') ?? '').trim());
+    formAction(formData);
+  };
+
   const title = mode === 'view' ? 'Secret' : ((mode === 'create' ? 'Add Secret' : 'Edit Secret'));
 
   const footer = mode === 'view' ? (
@@ -143,7 +151,7 @@ export default function SecretModal({
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} title={title} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={submit} title={title} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
             <div className={styles.item}>
@@ -228,6 +236,8 @@ export default function SecretModal({
                   placeholder="Secret value - encrypted at rest with AES-256-GCM"
                   defaultValue={value}
                   required
+                  minLength={MIN_MASKABLE_LENGTH}
+                  onBlur={e => { e.currentTarget.value = e.currentTarget.value.trim(); }}
                 ></input>
                 <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
                   <ion-icon
