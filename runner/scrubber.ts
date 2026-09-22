@@ -204,9 +204,6 @@ export function buildScrubber(values: Iterable<string>): Scrubber {
         // this var truncates the pattern to 'tgc' (safe = 3)
         let safe = buffer.length - nodes[state].depth;
 
-        console.log('safe: ' + safe);
-
-
         // from example above, this truncates the 'c' in 'tgc' (since it can risk matching 'cat') by making safe = 2 ('tg')
         for (let at = merged.length - 1; at >= 0; at--) {
           const [start, end] = merged[at];
