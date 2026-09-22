@@ -108,7 +108,7 @@ export default function StageDetailView({ node, envPresent }: { node: StageResul
                   <ion-icon name="lock-closed-outline"></ion-icon>
                   <label>SECRETS</label>
                 </div>
-                <div className={styles.info}>Injected at runtime. Never logged.</div>
+                <div className={styles.info}>Injected at runtime. Masked in logs.</div>
               </div>
             </div>
             <div className={styles['secrets-list']}>

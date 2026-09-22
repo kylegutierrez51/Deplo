@@ -151,6 +151,63 @@ describe('the value field', () => {
   });
 });
 
+/*
+ * A pasted secret routinely drags a trailing newline or stray spaces along with it, and the
+ * command receives the value verbatim — so an API key saved as "sk-abc\n" is a different
+ * credential from "sk-abc". Two separate paths trim it, because neither covers the other.
+ */
+describe('trimming the value', () => {
+  const valueField = () => screen.getByPlaceholderText(/Secret value/);
+  const submitForm = () => fireEvent.submit(document.getElementById('modal-form')!);
+  /** The `value` field of the FormData the most recent server action call received. */
+  const submitted = (action: typeof add) => action.mock.calls.at(-1)![1].get('value');
+
+  beforeEach(() => { add.mockClear(); update.mockClear(); });
+
+  // Trimming on blur is what makes the browser's minLength agree with the server's floor,
+  // which counts the trimmed value: "  ab  " is six characters as typed and two as saved.
+  it('trims the field when it loses focus, so the user sees what will be saved', async () => {
+    const { user } = setup({ mode: 'create', value: '' });
+
+    await user.type(valueField(), '  hunter2  ');
+    await user.tab();
+
+    expect(valueField()).toHaveValue('hunter2');
+  });
+
+  // Enter submits the form without the field ever losing focus, so the blur trim never runs.
+  it('submits the trimmed value even when the field is never left', async () => {
+    const { user } = setup({ mode: 'create', value: '' });
+
+    await user.type(valueField(), '  hunter2  ');
+    submitForm();
+
+    await waitFor(() => expect(add).toHaveBeenCalled());
+    expect(submitted(add)).toBe('hunter2');
+  });
+
+  // An existing value was not necessarily written through this form — prisma/seed.ts writes
+  // Secret rows directly — so a padded one is cleaned up by saving it, untouched.
+  it('trims an existing padded value on save without the field being edited', async () => {
+    setup({ mode: 'edit', value: '  super-secret-value  ' });
+
+    submitForm();
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(submitted(update)).toBe('super-secret-value');
+  });
+
+  it('leaves whitespace inside the value alone', async () => {
+    const { user } = setup({ mode: 'create', value: '' });
+
+    await user.type(valueField(), ' pass phrase ');
+    submitForm();
+
+    await waitFor(() => expect(add).toHaveBeenCalled());
+    expect(submitted(add)).toBe('pass phrase');
+  });
+});
+
 describe('the environment autocomplete', () => {
   it('shows nothing before the user types', () => {
     setup({ mode: 'create', environmentName: '' });

@@ -1,6 +1,7 @@
 "use server"
 
 import { encryptSecret } from '@/lib/utils/crypto';
+import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 import { EnvType, FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
@@ -8,6 +9,14 @@ import { auth } from '@/auth';
 import { Prisma } from '@/generated/prisma/client';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
+
+const tooShortToMask = (value: string | null): FormState | null =>
+  (value ?? '').trim().length < MIN_MASKABLE_LENGTH
+    ? {
+      status: 'error',
+      message: `A secret value must be at least ${MIN_MASKABLE_LENGTH} characters, so it can be masked in run logs.`,
+    }
+    : null;
 
 export async function addSecret(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
@@ -25,6 +34,9 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
   const value = formData.get('value') as string;
   const environmentId = formData.get('env_id') as string;
   const notes = formData.get('notes') as string;
+
+  const tooShort = tooShortToMask(value);
+  if (tooShort) return tooShort;
 
   const { encryptedValue, iv, authTag } = encryptSecret(value);
 
@@ -93,6 +105,9 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
   const value = formData.get('value') as string;
   const environmentId = formData.get('env_id') as string;
   const notes = formData.get('notes') as string;
+
+  const tooShort = tooShortToMask(value);
+  if (tooShort) return tooShort;
 
   const { encryptedValue, iv, authTag } = encryptSecret(value);
 

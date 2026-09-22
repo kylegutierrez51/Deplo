@@ -80,10 +80,10 @@ describe('configuration fields', () => {
 
   // The keys come from lib/data/run-detail, which never selects the encrypted
   // columns; this pins that the view has nothing else to show either.
-  it('renders the never-logged notice above the secrets', () => {
+  it('renders the masking notice above the secrets', () => {
     setup({ secretKeys: ['API_KEY'] });
 
-    expect(screen.getByText('Injected at runtime. Never logged.')).toBeInTheDocument();
+    expect(screen.getByText('Injected at runtime. Masked in logs.')).toBeInTheDocument();
   });
 });
 

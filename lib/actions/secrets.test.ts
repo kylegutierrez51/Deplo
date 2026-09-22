@@ -4,6 +4,7 @@ import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
 import { decryptSecret } from '@/lib/utils/crypto';
 import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession } from '@/test/mocks/auth';
+import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -304,5 +305,42 @@ describe('audit trail', () => {
     await addSecret(idle, form({ value: 'super-secret' }));
 
     expect(JSON.stringify(tx.auditLog.create.mock.calls[0][0].data)).not.toContain('super-secret');
+  });
+});
+
+describe('the maskable-length floor', () => {
+  const tooShort = 'a'.repeat(MIN_MASKABLE_LENGTH - 1);
+
+  it('refuses a value too short to be masked', async () => {
+    const result = await addSecret(idle, form({ value: tooShort }));
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain(String(MIN_MASKABLE_LENGTH));
+  });
+
+  it('writes nothing when the value is too short', async () => {
+    await addSecret(idle, form({ value: tooShort }));
+
+    expect(prismaMock.secret.create).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+  });
+
+  it('refuses a value that is only long enough before trimming', async () => {
+    const result = await addSecret(idle, form({ value: `  ${tooShort}  ` }));
+
+    expect(result.status).toBe('error');
+  });
+
+  it('accepts a value exactly at the floor', async () => {
+    const result = await addSecret(idle, form({ value: 'a'.repeat(MIN_MASKABLE_LENGTH) }));
+
+    expect(result.status).toBe('success');
+  });
+
+  it('refuses to shorten an existing value below the floor', async () => {
+    const result = await updateSecret(idle, form({ id: 'sec-1', value: tooShort }));
+
+    expect(result.status).toBe('error');
+    expect(prismaMock.secret.update).not.toHaveBeenCalled();
   });
 });

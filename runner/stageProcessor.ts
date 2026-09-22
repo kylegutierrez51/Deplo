@@ -9,6 +9,7 @@ import { RUNNER_WORKSPACE_ROOT } from './connection';
 import { advanceRun } from "./runProcessor";
 import { execute } from "./execute";
 import { resolveSecrets } from "./secrets";
+import { buildScrubber, type Scrubber } from "./scrubber";
 import type { CustomNode } from "@/lib/types";
 import { CANCELLED_NOTE } from "@/lib/stage-notes";
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
@@ -99,10 +100,15 @@ async function attemptStage(
     ? node.data.timeout * 1000
     : DEFAULT_TIMEOUT_MS;
 
+
+  let scrubber: Scrubber | undefined;
+
   try {
     // Resolved here rather than carried on the job: Redis persists to disk, so a decrypted
     // value in job.data is a credential in an AOF file.
     const secrets = await resolveSecrets(node.data.secrets ?? {}, environmentId);
+
+    scrubber = buildScrubber(Object.values(secrets));
 
     const inherited = { ...process.env };
     for (const key of WITHHELD_FROM_COMMANDS) delete inherited[key];
@@ -138,6 +144,7 @@ async function attemptStage(
         cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
         env,
         timeoutMs,
+        scrub: scrubber,
         signal: abort.signal,
         onSnapshot: tail => {
           if (savingProgress) return;
@@ -180,7 +187,10 @@ async function attemptStage(
     };
   } catch (error: unknown) {
     // Unresolvable secrets and a child that could not be spawned both land here.
-    const message = error instanceof Error ? error.message : String(error);
+    const raw = error instanceof Error ? error.message : String(error);
+    
+    const message = scrubber ? scrubber.scrub(raw) : raw;
+
     console.error(`stage ${job.stageId} of run ${job.runId} could not run:`, message);
 
     return {

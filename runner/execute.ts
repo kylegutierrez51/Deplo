@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import type { Scrubber } from './scrubber';
 
 export const LOG_SNIPPET_LINES = 50;
 
@@ -27,6 +28,7 @@ export interface ExecuteOptions {
   env: NodeJS.ProcessEnv;
   timeoutMs: number;
   maxLines?: number;
+  scrub?: Scrubber;
   onSnapshot?: (logSnippet: string) => void;
   snapshotMs?: number;
   signal?: AbortSignal;
@@ -53,6 +55,7 @@ export function execute(
   {
     command, cwd, env, timeoutMs,
     maxLines = LOG_SNIPPET_LINES,
+    scrub,
     onSnapshot,
     snapshotMs = SNAPSHOT_INTERVAL_MS,
     signal,
@@ -123,16 +126,26 @@ export function execute(
     };
 
     
+    // One cursor per stream
+    const outScrub = scrub?.cursor();
+    const errScrub = scrub?.cursor();
+
+    const label = scrub ? scrub.scrub(command) : command;
+
     child.stdout.on('data', chunk => {
-      const text = String(chunk);
+      const text = outScrub ? outScrub.push(String(chunk)) : String(chunk);
+      if (!text) return;
+
       log.write(text);
-      console.log(`[${command}] ${text}`);
+      console.log(`[${label}] ${text}`);
     });
 
     child.stderr.on('data', chunk => {
-      const text = String(chunk);
+      const text = errScrub ? errScrub.push(String(chunk)) : String(chunk);
+      if (!text) return;
+
       log.write(text);
-      console.error(`[${command}] ${text}`);
+      console.error(`[${label}] ${text}`);
     });
 
     child.stdout.on('error', () => { });
@@ -140,13 +153,20 @@ export function execute(
 
     child.on('error', error => finish(() => reject(error)));
 
-    child.on('close', (exitCode, signalCode) => finish(() => resolve({
-      exitCode,
-      signal: signalCode,
-      timedOut,
-      cancelled,
-      logSnippet: log.flush(),
-    })));
+    child.on('close', (exitCode, signalCode) => finish(() => {
+      for (const cursor of [outScrub, errScrub]) {
+        const tail = cursor?.end();
+        if (tail) log.write(tail);
+      }
+
+      resolve({
+        exitCode,
+        signal: signalCode,
+        timedOut,
+        cancelled,
+        logSnippet: log.flush(),
+      });
+    }));
   });
 }
 
