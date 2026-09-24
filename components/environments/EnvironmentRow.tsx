@@ -1,7 +1,8 @@
 "use client"
 
 import styles from '@/app/environments/env.module.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { Environment } from "@/lib/data/environments";
 import { capitalize } from "@/lib/utils/string";
@@ -9,8 +10,9 @@ import { formatDate } from "@/lib/utils/date";
 
 export default function EnvironmentRow({ env }: { env: Environment }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const open = () => router.push(`/environments?id=${env.id}`);
+  const open = () => router.push(withParams('/environments', searchParams, { id: env.id, mode: null })); 
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>

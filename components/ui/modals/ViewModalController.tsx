@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { withParams } from "@/lib/utils/url";
 import type { ComponentType } from 'react';
 
 interface ViewModalBaseProps {
@@ -15,7 +16,8 @@ export default function ViewModalController<T extends object>({ mode, record, ba
   ModalComponent: ComponentType<T & ViewModalBaseProps>;
 }) {
   const router = useRouter();
-  const close = () => router.push(basePath);
+  const searchParams = useSearchParams();
+  const close = () => router.push(withParams(basePath, searchParams, { id: null, mode: null })); 
 
   return (
     <ModalComponent

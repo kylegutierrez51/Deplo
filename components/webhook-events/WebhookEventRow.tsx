@@ -1,6 +1,7 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { WebhookEvent } from "@/lib/data/webhook-events";
 import { capitalize, getRepoName, getBranch } from "@/lib/utils/string";
@@ -10,7 +11,9 @@ export default function WebhookEventRow({ event }: { event: WebhookEvent }) {
   const { status, eventType, pipeline, branch, commitSha, commitMessage, receivedAt } = event;
   
   const router = useRouter();
-  const open = () => router.push(`events?id=${event.id}`);
+  
+  const searchParams = useSearchParams();
+  const open = () => router.push(withParams('/webhooks/events', searchParams, { id: event.id, mode: null })); 
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>

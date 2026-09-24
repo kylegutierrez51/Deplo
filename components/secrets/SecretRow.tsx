@@ -1,6 +1,7 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { Secret } from "@/lib/data/secrets";
 import { capitalize } from '@/lib/utils/string';
@@ -8,8 +9,9 @@ import { formatDate } from '@/lib/utils/date';
 
 export default function SecretRow({ secret }: { secret: Secret }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const open = () => router.push(`/secrets?id=${secret.id}`);
+  const open = () => router.push(withParams('/secrets', searchParams, { id: secret.id, mode: null })); 
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>

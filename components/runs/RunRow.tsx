@@ -1,7 +1,8 @@
 "use client"
 
 import styles from "@/app/runs/runs.module.css";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { Run } from "@/lib/data/runs";
 import { capitalize } from "@/lib/utils/string";
@@ -13,7 +14,10 @@ export default function RunRow({ run }: { run: Run }) {
 
 
   const router = useRouter();
-  const open = () => router.push(`/runs?id=${run.id}`);
+
+
+  const searchParams = useSearchParams();
+  const open = () => router.push(withParams('/runs', searchParams, { id: run.id, mode: null })); 
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>

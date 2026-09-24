@@ -3,7 +3,8 @@
 import styles from "@/app/pipelines/pipelines.module.css";
 import { capitalize } from "@/lib/utils/string";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import type { Pipeline } from "@/lib/data/pipelines";
 import Pill from '@/components/ui/Pill';
 
@@ -12,7 +13,9 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
   const { repoUrl, name, runNumber, status, commitMessage, lastRun, id } = pipeline;
   
   const router = useRouter();
-  const open = () => router.push(`/pipelines?id=${id}`);
+  
+  const searchParams = useSearchParams();
+  const open = () => router.push(withParams('/pipelines', searchParams, { id, mode: null })); 
 
   const repoName = repoUrl ? repoUrl.slice(repoUrl.lastIndexOf('/') + 1) : null;
 
