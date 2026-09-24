@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import WebhookEventRow from '@/components/webhook-events/WebhookEventRow';
 import type { WebhookEvent } from '@/lib/data/webhook-events';
 
@@ -16,9 +17,22 @@ import type { WebhookEvent } from '@/lib/data/webhook-events';
  */
 jest.mock('@/lib/prisma');
 
+/*
+ * mock-prefixed so the hoisted factory may close over them; both are read at render or
+ * click time, after the module body has run.
+ */
+const mockPush = jest.fn();
+let mockSearch = '';
+
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => new URLSearchParams(mockSearch),
 }));
+
+beforeEach(() => {
+  mockPush.mockClear();
+  mockSearch = '';
+});
 
 const event = (over: Partial<WebhookEvent> = {}): WebhookEvent => ({
   id: 'evt-1',
@@ -115,5 +129,29 @@ describe('column alignment', () => {
     setup({ pipeline: null, branch: null, commitSha: null, commitMessage: null });
 
     expect(screen.getAllByRole('cell')).toHaveLength(7);
+  });
+});
+
+/*
+ * The row opens the event modal by pushing ?id=, and the list page keeps its filters in the
+ * same query string. The path is absolute: this row used to push the relative `events?id=`,
+ * which only resolved correctly because of where the page happens to live.
+ */
+describe('opening the event', () => {
+  it('pushes the event id onto /webhooks/events', async () => {
+    setup();
+
+    await userEvent.click(screen.getAllByRole('cell')[0]);
+
+    expect(mockPush).toHaveBeenCalledWith('/webhooks/events?id=evt-1');
+  });
+
+  it('keeps the filters already in the URL', async () => {
+    mockSearch = 'status=failed&event-type=push';
+    setup();
+
+    await userEvent.click(screen.getAllByRole('cell')[0]);
+
+    expect(mockPush).toHaveBeenCalledWith('/webhooks/events?status=failed&event-type=push&id=evt-1');
   });
 });
