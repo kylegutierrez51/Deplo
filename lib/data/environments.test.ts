@@ -1,4 +1,6 @@
 import { getEnvironments, getEnvironmentById } from '@/lib/data/environments';
+import { parseFilters } from '@/lib/filters/parse';
+import { ENVIRONMENT_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 
 jest.mock('@/lib/prisma');
@@ -95,5 +97,31 @@ describe('getEnvironmentById', () => {
     const env = await getEnvironmentById('env-1');
 
     expect(env?.type).toBe('development');
+  });
+});
+
+describe('getEnvironments filtering', () => {
+  const query = async (params: Record<string, string>) => {
+    prismaMock.environment.findMany.mockResolvedValue([] as never);
+    await getEnvironments(parseFilters(params, ENVIRONMENT_FILTERS));
+    return prismaMock.environment.findMany.mock.calls[0][0];
+  };
+
+  afterEach(() => jest.useRealTimers());
+
+  it('adds no condition by default', async () => {
+    expect((await query({}))?.where).toEqual({});
+  });
+
+  it('translates the environment type into its Prisma enum', async () => {
+    expect((await query({ environment: 'preview' }))?.where).toEqual({ type: 'PREVIEW' });
+  });
+
+  it('keeps only environments updated since midnight UTC for today', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+
+    expect((await query({ updated: 'today' }))?.where).toEqual({
+      updatedAt: { gte: new Date('2026-09-22T00:00:00Z') },
+    });
   });
 });

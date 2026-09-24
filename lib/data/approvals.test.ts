@@ -1,4 +1,6 @@
-import { getApprovals } from '@/lib/data/approvals';
+import { getApprovals, getApprovalStats } from '@/lib/data/approvals';
+import { parseFilters } from '@/lib/filters/parse';
+import { APPROVAL_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import type { StageStatus as PrismaStageStatus } from '@/generated/prisma';
 
@@ -351,5 +353,61 @@ describe('waitingTime', () => {
     });
 
     expect(row.waitingTime).toBe('30m');
+  });
+});
+
+describe('getApprovals filtering', () => {
+  const query = async (params: Record<string, string>) => {
+    prismaMock.stageResult.findMany.mockResolvedValue([] as never);
+    prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
+    await getApprovals(parseFilters(params, APPROVAL_FILTERS));
+    return prismaMock.stageResult.findMany.mock.calls[0][0];
+  };
+
+  it('filters on the run\'s environment type and still asks only for waiting approvals', async () => {
+    expect((await query({ environment: 'production' }))?.where).toEqual({
+      stageType: 'APPROVAL',
+      status: 'AWAITING_APPROVAL',
+      run: { environment: { type: 'PRODUCTION' } },
+    });
+  });
+
+  it('sorts newest first for most-recent', async () => {
+    expect((await query({ recency: 'most-recent' }))?.orderBy).toEqual({ createdAt: 'desc' });
+  });
+});
+
+describe('getApprovalStats', () => {
+  const WAITING = { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' };
+
+  afterEach(() => jest.useRealTimers());
+
+  it('counts the whole queue and the production share of it', async () => {
+    prismaMock.stageResult.count.mockResolvedValueOnce(5).mockResolvedValueOnce(2);
+    prismaMock.stageResult.findFirst.mockResolvedValue(null);
+
+    const stats = await getApprovalStats();
+
+    expect(stats).toMatchObject({ pending: 5, production: 2, longestWait: '0m' });
+    expect(prismaMock.stageResult.count).toHaveBeenNthCalledWith(1, { where: WAITING });
+    expect(prismaMock.stageResult.count).toHaveBeenNthCalledWith(2, {
+      where: { ...WAITING, run: { environment: { type: 'PRODUCTION' } } },
+    });
+  });
+
+  it('measures the longest wait from the oldest waiting row', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+    prismaMock.stageResult.count.mockResolvedValue(1);
+    prismaMock.stageResult.findFirst.mockResolvedValue(
+      { startedAt: new Date('2026-09-22T11:15:00Z'), createdAt: new Date('2026-09-22T11:00:00Z') } as never,
+    );
+
+    const stats = await getApprovalStats();
+
+    expect(stats.longestWait).toBe('45m');
+    expect(prismaMock.stageResult.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: WAITING,
+      orderBy: { createdAt: 'asc' },
+    }));
   });
 });

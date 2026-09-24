@@ -1,4 +1,6 @@
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
+import { parseFilters } from '@/lib/filters/parse';
+import { WEBHOOK_EVENT_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 
 /*
@@ -181,5 +183,29 @@ describe('getWebhookEventById', () => {
       commitMessage: 'fix the thing',
       branch: 'refs/heads/main',
     });
+  });
+});
+
+describe('getWebhookEvents filtering', () => {
+  const run = async (params: Record<string, string>) => {
+    prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
+    groupByMock().mockResolvedValue([] as never);
+    await getWebhookEvents(parseFilters(params, WEBHOOK_EVENT_FILTERS));
+  };
+
+  it('translates status and event type into their Prisma enums', async () => {
+    await run({ status: 'failed', 'event-type': 'pull-request' });
+
+    expect(prismaMock.webhookEvent.findMany.mock.calls[0][0]?.where).toEqual({
+      status: 'FAILED',
+      eventType: 'PULL_REQUEST',
+    });
+  });
+
+  // The counts feed the stat cards, which describe every delivery.
+  it('leaves the status counts unfiltered', async () => {
+    await run({ status: 'failed' });
+
+    expect(groupByMock().mock.calls[0][0]).not.toHaveProperty('where');
   });
 });
