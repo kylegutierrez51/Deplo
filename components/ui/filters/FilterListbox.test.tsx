@@ -299,6 +299,43 @@ describe('keeping the active row in view', () => {
 });
 
 /*
+ * A URL-driven filter owns its value: back/forward moves it without the reader touching
+ * the control, so the prop has to win over whatever the control last committed.
+ */
+describe('controlled mode', () => {
+  const controlled = (value: string, setFilteredOption = noop) => (
+    <FilterListbox id="status" name="status" options={OPTIONS} value={value} setFilteredOption={setFilteredOption} />
+  );
+
+  it('shows the value prop rather than the first option', () => {
+    render(controlled('n2'));
+
+    expect(within(screen.getByRole('combobox')).getByText('build')).toBeInTheDocument();
+  });
+
+  it('follows the value prop when it changes', () => {
+    const { rerender } = render(controlled('n1'));
+
+    rerender(controlled('n3'));
+
+    expect(within(screen.getByRole('combobox')).getByText('deploy')).toBeInTheDocument();
+    expect(document.querySelector('input[type="hidden"][name="status"]')).toHaveValue('n3');
+  });
+
+  it('reports a click but keeps showing the prop until the owner changes it', async () => {
+    const setFilteredOption = jest.fn();
+    const user = userEvent.setup();
+    render(controlled('n1', setFilteredOption));
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getAllByRole('option')[2]);
+
+    expect(setFilteredOption).toHaveBeenCalledWith('n3');
+    expect(within(screen.getByRole('combobox')).getByText('checkout')).toBeInTheDocument();
+  });
+});
+
+/*
  * The Run Detail page polls with router.refresh(), which re-executes the server
  * component and reconciles the result into the existing tree - this component keeps
  * its state while its `options` prop changes underneath it. Stages become eligible
