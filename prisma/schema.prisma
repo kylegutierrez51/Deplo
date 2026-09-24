@@ -103,9 +103,13 @@ model Pipeline {
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   definitions   PipelineDefinition[]
-  runs          PipelineRun[]
+  runs          PipelineRun[] @relation("PipelineRuns")
   webhooks Webhook[]
   webhookEvents WebhookEvent[]
+
+  // allows pipeline page to filter by it's last run's status
+  lastRunId String?      @unique
+  lastRun   PipelineRun? @relation("PipelineLastRun", fields: [lastRunId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,7 +183,8 @@ model PipelineRun {
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])
 
-  pipeline   Pipeline           @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  pipeline   Pipeline           @relation("PipelineRuns", fields: [pipelineId], references: [id], onDelete: Cascade)
+  lastRunOf  Pipeline?          @relation("PipelineLastRun")
   definition PipelineDefinition @relation(fields: [definitionId], references: [id])
 
   stages StageResult[]
