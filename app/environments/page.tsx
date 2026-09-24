@@ -2,7 +2,7 @@ import styles from './env.module.css';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from "@/components/layout/subheader/AddButton";
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import EnvironmentRow from '@/components/environments/EnvironmentRow';
@@ -11,12 +11,18 @@ import EmptyState from '@/components/ui/EmptyState';
 import EnvModalController from '@/components/environments/EnvModalController';
 import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
 import { redirect } from 'next/navigation';
+import { ENVIRONMENT_FILTERS } from '@/lib/filters/options';
+import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; updated?: string; }>;
 
 export default async function Environments({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
-  const environments = await getEnvironments();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, ENVIRONMENT_FILTERS);
+  const filtered = hasActiveFilters(filters, ENVIRONMENT_FILTERS);
+
+  const environments = await getEnvironments(filters);
 
   const record = id ? await getEnvironmentById(id) : undefined;
 
@@ -41,40 +47,34 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
 
-        {environments.length > 0 ? (
+        {environments.length > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Search environments..."} />
-                <FilterListbox
-                  id={"environment"} name={"environment"}
-                  options={[
-                    { value: "all", label: "All environment types" },
-                    { value: "production", label: "Production" },
-                    { value: "staging", label: "Staging" },
-                    { value: "development", label: "Development" },
-                    { value: "preview", label: "Preview" },
-                    { value: "custom", label: "Custom" },
-                  ]} />
-                <FilterListbox
-                  id={"status"} name={"status"}
-                  options={[
-                    { value: "all", label: "All time" },
-                    { value: "today", label: "Today" },
-                    { value: "7days", label: "Last 7 days" },
-                    { value: "30days", label: "Last 30 days" },
-                    { value: "90days", label: "Last 90 days" },
-                  ]} />
+                <QueryFilterListbox id={"environment"} name={"environment"} options={ENVIRONMENT_FILTERS.environment} value={filters.environment} />
+                <QueryFilterListbox id={"updated"} name={"updated"} options={ENVIRONMENT_FILTERS.updated} value={filters.updated} />
               </div>
             </div>
-            
-            <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
-              {environments.map((env, i) => (
-                <EnvironmentRow key={i} env={env} />
-              ))}
-            </DataTable>
 
-            <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+            {environments.length > 0 ? (
+              <>
+                <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
+                  {environments.map((env) => (
+                    <EnvironmentRow key={env.id} env={env} />
+                  ))}
+                </DataTable>
+
+                <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching environments"
+                description="No environments match these filters."
+                action={{ label: "Clear filters", href: "/environments" }}
+              />
+            )}
           </>
         ) : (
           <EmptyState

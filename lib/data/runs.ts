@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import type { RunStatus as PrismaRunStatus, RunTrigger as PrismaRunTrigger, PipelineRun as PrismaPipelineRun, EnvironmentType } from "@/generated/prisma";
 import type { RunStatus, RunTrigger } from "@/lib/types";
+import { ALL, RUN_FILTERS, type RunFilters } from "@/lib/filters/options";
+import { invert, parseFilters } from "@/lib/filters/parse";
 
 export type Run = Omit<PrismaPipelineRun, | 'triggeredById' | 'status' | 'trigger'> & {
   environment: {
@@ -28,9 +30,19 @@ const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
   API: "api"
 };
 
-export async function getRuns(): Promise<Run[]> {
+const STATUS_TO_PRISMA = invert(RUN_STATUS_MAP);
+const TRIGGER_TO_PRISMA = invert(RUN_TRIGGER_MAP);
+
+export async function getRuns(filters: RunFilters = parseFilters({}, RUN_FILTERS)): Promise<Run[]> {
+  const { status, trigger, environment, recency } = filters;
+
   const runs = await prisma.pipelineRun.findMany({
-    orderBy: { createdAt: "desc" },
+    where: {
+      ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
+      ...(trigger !== ALL && { trigger: TRIGGER_TO_PRISMA[trigger] }),
+      ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
+    },
+    orderBy: { createdAt: recency === "least-recent" ? "asc" : "desc" },
     include: {
       triggeredBy: { select: { name: true }},
       environment: { select: { name: true, type: true }},
@@ -49,6 +61,11 @@ export async function getRuns(): Promise<Run[]> {
     status: RUN_STATUS_MAP[run.status],
     trigger: RUN_TRIGGER_MAP[run.trigger]
   }));
+}
+
+// Unfiltered on purpose: the page badge counts every active run regardless of filters
+export async function countActiveRuns(): Promise<number> {
+  return prisma.pipelineRun.count({ where: { status: "RUNNING" } });
 }
 
 export async function getRunById(id: string): Promise<Run | null> {

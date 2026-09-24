@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma';
 import { decryptSecret } from '@/lib/utils/crypto';
 import type { Secret as PrismaSecret, EnvironmentType } from '@/generated/prisma';
+import { ALL, SECRET_FILTERS, type SecretFilters } from '@/lib/filters/options';
+import { parseFilters } from '@/lib/filters/parse';
 
 export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
   environment: {
@@ -12,8 +14,13 @@ export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
 
 export type SecretDetail = Secret & { value: string };
 
-export async function getSecrets(): Promise<Secret[]> {
+export async function getSecrets(filters: SecretFilters = parseFilters({}, SECRET_FILTERS)): Promise<Secret[]> {
+  const { environment } = filters;
+
   const secrets = await prisma.secret.findMany({
+    where: {
+      ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       environment: {

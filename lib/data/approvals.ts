@@ -1,5 +1,7 @@
 import prisma from '@/lib/prisma';
-import type { StageType as PrismaStageType, StageStatus as PrismaStageStatus } from '@/generated/prisma';
+import type { StageType as PrismaStageType, StageStatus as PrismaStageStatus, EnvironmentType } from '@/generated/prisma';
+import { ALL, APPROVAL_FILTERS, type ApprovalFilters } from '@/lib/filters/options';
+import { parseFilters } from '@/lib/filters/parse';
 import type { EnvType } from '@/lib/types';
 import { getDuration } from '@/lib/utils/date';
 
@@ -48,10 +50,17 @@ const approvalRunInclude = {
   stages: { orderBy: [{ stageId: 'asc' as const }, { attempt: 'asc' as const }] },
 };
 
-export async function getApprovals(): Promise<Approval[]> {
+const WAITING = { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' } as const;
+
+export async function getApprovals(filters: ApprovalFilters = parseFilters({}, APPROVAL_FILTERS)): Promise<Approval[]> {
+  const { environment, recency } = filters;
+
   const approvalStages = await prisma.stageResult.findMany({
-    where: { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' },
-    orderBy: { createdAt: 'asc' },
+    where: {
+      ...WAITING,
+      ...(environment !== ALL && { run: { environment: { type: environment.toUpperCase() as EnvironmentType } } }),
+    },
+    orderBy: { createdAt: recency === 'most-recent' ? 'desc' : 'asc' },
     include: { run: { include: approvalRunInclude } },
   });
 
@@ -84,4 +93,25 @@ export async function getApprovals(): Promise<Approval[]> {
       stagesComplete: new Map([...latestStages].filter(([_, status]) => ["SUCCEEDED", "APPROVED"].includes(status))).size + '/' + latestStages.size
     };
   });
+}
+
+export type ApprovalStats = { pending: number; production: number; longestWait: string };
+
+// Filters do not affect approval stat cards
+export async function getApprovalStats(): Promise<ApprovalStats> {
+  const [pending, production, oldest] = await Promise.all([
+    prisma.stageResult.count({ where: WAITING }),
+    prisma.stageResult.count({ where: { ...WAITING, run: { environment: { type: 'PRODUCTION' } } } }),
+    prisma.stageResult.findFirst({
+      where: WAITING,
+      orderBy: { createdAt: 'asc' },
+      select: { startedAt: true, createdAt: true },
+    }),
+  ]);
+
+  return {
+    pending,
+    production,
+    longestWait: oldest ? getDuration(oldest.startedAt ?? oldest.createdAt) : '0m',
+  };
 }

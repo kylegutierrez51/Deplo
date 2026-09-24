@@ -2,7 +2,7 @@ import styles from "./secrets.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
@@ -12,12 +12,18 @@ import SecretModalController from '@/components/secrets/SecretModalController';
 import { getSecretById, getSecrets } from '@/lib/data/secrets';
 import { getEnvironments } from '@/lib/data/environments';
 import { redirect } from 'next/navigation';
+import { SECRET_FILTERS } from '@/lib/filters/options';
+import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; }>;
 
 export default async function Secrets({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
-  const secrets = await getSecrets();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, SECRET_FILTERS);
+  const filtered = hasActiveFilters(filters, SECRET_FILTERS);
+
+  const secrets = await getSecrets(filters);
 
   const record = id ? await getSecretById(id) : undefined;
 
@@ -43,31 +49,33 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
           <AddButton text={"New Secret"} url={"secrets"} />
         </Subheader>
-        {secrets.length > 0 ? (
+        {secrets.length > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Filter by key or notes..."} />
-                <FilterListbox
-                  id={"environment"} name={"environment"}
-                  options={[
-                    { value: "all", label: "All environment types" },
-                    { value: "production", label: "Production" },
-                    { value: "staging", label: "Staging" },
-                    { value: "development", label: "Development" },
-                    { value: "preview", label: "Preview" },
-                    { value: "custom", label: "Custom" },
-                  ]} />
+                <QueryFilterListbox id={"environment"} name={"environment"} options={SECRET_FILTERS.environment} value={filters.environment} />
               </div>
             </div>
 
-            <DataTable columns={["Key", "Environment", "Last Updated"]}>
-              {secrets.map((secret, i) => (
-                <SecretRow key={i} secret={secret} />
-              ))}
-            </DataTable>
+            {secrets.length > 0 ? (
+              <>
+                <DataTable columns={["Key", "Environment", "Last Updated"]}>
+                  {secrets.map((secret) => (
+                    <SecretRow key={secret.id} secret={secret} />
+                  ))}
+                </DataTable>
 
-            <Pagination showing="1-10" totalRows={secrets.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination showing="1-10" totalRows={secrets.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching secrets"
+                description="No secrets match these filters."
+                action={{ label: "Clear filters", href: "/secrets" }}
+              />
+            )}
           </>
         ) : environments.length > 0 ? (
           <EmptyState

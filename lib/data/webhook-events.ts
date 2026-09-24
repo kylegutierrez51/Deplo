@@ -1,6 +1,8 @@
 import prisma from '../prisma';
 import type { WebhookEvent as PrismaWebhookEvent, WebhookEventStatus as PrismaWebhookEventStatus, EventType as PrismaEventType } from "@/generated/prisma";
 import type { WebhookEventStatus, EventType } from '@/lib/types';
+import { ALL, WEBHOOK_EVENT_FILTERS, type WebhookEventFilters } from '@/lib/filters/options';
+import { invert, parseFilters } from '@/lib/filters/parse';
 
 export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   status: WebhookEventStatus;
@@ -39,9 +41,19 @@ export type WebhookEventsResult = {
   counts: WebhookEventCounts;
 };
 
-export async function getWebhookEvents(): Promise<WebhookEventsResult> {
+const STATUS_TO_PRISMA = invert(WEBHOOK_EVENT_STATUS_MAP);
+const EVENT_TYPE_TO_PRISMA = invert(WEBHOOK_EVENT_TYPE_MAP);
+
+
+export async function getWebhookEvents(filters: WebhookEventFilters = parseFilters({}, WEBHOOK_EVENT_FILTERS)): Promise<WebhookEventsResult> {
+  const { status, 'event-type': eventType } = filters;
+
   const [webhookEvents, statusCounts] = await Promise.all([
     prisma.webhookEvent.findMany({
+      where: {
+        ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
+        ...(eventType !== ALL && { eventType: EVENT_TYPE_TO_PRISMA[eventType] }),
+      },
       orderBy: { receivedAt: "desc" },
       include: {
         pipeline: { select: { name: true, repoUrl: true }},

@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import type { AuditAction as PrismaAuditAction, ResourceType as PrismaResourceType, AuditLog as PrismaAuditLog } from "@/generated/prisma";
 import type { AuditAction, AuditMeta, ResourceType } from "@/lib/types";
+import { ALL, AUDIT_FILTERS, type AuditFilters } from "@/lib/filters/options";
+import { dateRangeCutoff, invert, parseFilters } from "@/lib/filters/parse";
 
 export type Audit = Omit<PrismaAuditLog, "action" | "resourceType" | "resourceMeta"> & {
   action: AuditAction;
@@ -45,9 +47,18 @@ function parseAuditMeta(value: unknown): AuditMeta | null {
   return value as AuditMeta;
 }
 
-export async function getAudits(): Promise<Audit[]> {
+const RESOURCE_TO_PRISMA = invert(RESOURCE_MAP);
+
+export async function getAudits(filters: AuditFilters = parseFilters({}, AUDIT_FILTERS)): Promise<Audit[]> {
+  const { resource, range, recency } = filters;
+  const createdSince = dateRangeCutoff(range);
+
   const audits = await prisma.auditLog.findMany({
-    orderBy: { createdAt: "desc" },
+    where: {
+      ...(resource !== ALL && { resourceType: RESOURCE_TO_PRISMA[resource] }),
+      ...(createdSince && { createdAt: { gte: createdSince } }),
+    },
+    orderBy: { createdAt: recency === "least-recent" ? "asc" : "desc" },
     include: {
       user: { select: { name: true }}
     }
