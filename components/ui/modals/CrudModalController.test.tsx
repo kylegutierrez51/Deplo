@@ -18,9 +18,12 @@ jest.mock('next/navigation', () => {
     __router: routerSpies,
     useRouter: () => routerSpies,
     usePathname: () => '/',
-    useSearchParams: () => new URLSearchParams(),
+    // read at render time, so it sees whatever a test assigned to mockSearch
+    useSearchParams: () => new URLSearchParams(mockSearch),
   };
 });
+
+let mockSearch = '';
 
 const { __router: router } = jest.requireMock('next/navigation') as {
   __router: Record<string, jest.Mock>;
@@ -104,7 +107,10 @@ function setup(over: Overrides = {}) {
 
 const toasts = () => screen.getByTestId('toasts').textContent;
 
-beforeEach(resetNavigation);
+beforeEach(() => {
+  resetNavigation();
+  mockSearch = '';
+});
 
 describe('prop wiring', () => {
   it('spreads the record onto the modal', () => {
@@ -172,6 +178,40 @@ describe('navigation', () => {
     await user.click(screen.getByRole('button', { name: 'onClose' }));
 
     expect(router.push).toHaveBeenCalledWith('/environments');
+  });
+
+  /*
+   * The page's filters share the query string with id/mode. Every transition rewrites
+   * only the modal's own params, so filtering, opening a row and closing it lands back
+   * on the same filtered list.
+   */
+  describe('with filters in the URL', () => {
+    beforeEach(() => { mockSearch = 'environment=staging&id=rec-1&mode=edit'; });
+
+    it('keeps them on close', async () => {
+      const { user } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'onClose' }));
+
+      expect(router.push).toHaveBeenCalledWith('/secrets?environment=staging');
+    });
+
+    it('keeps them when entering edit mode', async () => {
+      mockSearch = 'environment=staging&id=rec-1';
+      const { user } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'onEdit' }));
+
+      expect(router.push).toHaveBeenCalledWith('/secrets?environment=staging&id=rec-1&mode=edit');
+    });
+
+    it('keeps them when dropping back to view mode', async () => {
+      const { user } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'onEditOrDeleteClose' }));
+
+      expect(router.push).toHaveBeenCalledWith('/secrets?environment=staging&id=rec-1');
+    });
   });
 });
 

@@ -1369,3 +1369,30 @@ runQueue().getWorkersCount() -- counts Redis clients whose connection name is 'b
 
 
 ===================================================================================================================================
+
+lib/filters/options.ts
+
+ValueOf / FiltersOf -- type-only helpers that derive filter types from the option arrays, so the unions are never written by hand
+
+
+ - ValueOf<O> = O[number]['value'] -- takes ONE option array and returns the union of its 'value' strings
+    1. O[number] -- the union of every element in the array ({ value: 'all', ... } | { value: 'production', ... } | ...)
+    2. ['value'] -- pulls 'value' out of each member -> 'all' | 'production' | ...
+
+
+ - FiltersOf<D> = { [K in keyof D]: ValueOf<D[K]> } -- a mapped type (a for-loop over keys): same keys as the filter object, each one typed as ValueOf its array
+
+
+
+ - Example: EnvironmentFilters = FiltersOf<typeof ENVIRONMENT_FILTERS>
+    keyof D = 'environment' | 'updated', so the result is:
+    {
+      environment: 'all' | 'production' | 'staging' | 'development' | 'preview' | 'custom';
+      updated:     'all' | 'today' | '7days' | '30days' | '90days';
+    }
+
+
+ - 'as const' is required -- without it, every 'value' widens to plain string and the unions are lost
+
+
+ - Why this file is added: one source of truth. Add an option to the array and it joins the type everywhere automatically; a typo like '7day' becomes a compile error

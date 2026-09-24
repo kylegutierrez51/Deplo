@@ -1,6 +1,6 @@
-import { enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
-import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
+import { prismaMock, resetPrismaMock, runTransactionsInline } from '@/test/mocks/prisma';
 
 jest.mock('@/lib/prisma');
 
@@ -66,5 +66,57 @@ describe('enqueueOrDiscardRun', () => {
     prismaMock.pipelineRun.delete.mockRejectedValue(new Error('connection terminated'));
 
     expect(await enqueueOrDiscardRun('run-1')).toBe(false);
+  });
+});
+
+/*
+ * Pipeline.lastRunId is what the pipelines list filters status through, so it has to name
+ * the newest run. The real concurrency (the row lock, commits landing out of order) is
+ * only provable against Postgres; these pin the statements that carry it.
+ */
+describe('the lastRun pointer', () => {
+  it('re-points the pipeline at its newest remaining run after a discard', async () => {
+    enqueue.mockRejectedValue(new Error('ECONNREFUSED'));
+    prismaMock.pipelineRun.delete.mockResolvedValue({ pipelineId: 'p1' } as never);
+    prismaMock.pipelineRun.findFirst.mockResolvedValue({ id: 'run-0' } as never);
+
+    await enqueueOrDiscardRun('run-1');
+
+    expect(prismaMock.pipelineRun.findFirst).toHaveBeenCalledWith({
+      select: { id: true },
+      orderBy: { runNumber: 'desc' },
+      where: { pipelineId: 'p1' },
+    });
+    // Only when the discarded run was the pointer — a newer trigger in between keeps its own.
+    expect(prismaMock.pipeline.updateMany).toHaveBeenCalledWith({
+      where: { id: 'p1', lastRunId: null },
+      data: { lastRunId: 'run-0' },
+    });
+  });
+
+  it('leaves the pipeline idle when the discarded run was its only one', async () => {
+    enqueue.mockRejectedValue(new Error('ECONNREFUSED'));
+    prismaMock.pipelineRun.delete.mockResolvedValue({ pipelineId: 'p1' } as never);
+    prismaMock.pipelineRun.findFirst.mockResolvedValue(null);
+
+    await enqueueOrDiscardRun('run-1');
+
+    expect(prismaMock.pipeline.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('advances the pointer to a new run only if it is newer than the current one', async () => {
+    runTransactionsInline();
+    prismaMock.pipelineRun.findFirst.mockResolvedValue({ runNumber: 4 } as never);
+    prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-5', runNumber: 5, pipeline: { name: 'CI' } } as never);
+
+    await createPipelineRun({
+      pipelineId: 'p1', definitionId: 'd1', environmentId: null, trigger: 'manual', user: { id: 'u1', name: 'kyle' },
+    });
+
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    expect(prismaMock.pipeline.updateMany).toHaveBeenCalledWith({
+      where: { id: 'p1', OR: [{ lastRunId: null }, { lastRun: { runNumber: { lt: 5 } } }] },
+      data: { lastRunId: 'run-5' },
+    });
   });
 });

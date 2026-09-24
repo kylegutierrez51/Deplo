@@ -1,7 +1,8 @@
 "use client"
 
 import styles from '@/app/audits/audit.module.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { withParams } from '@/lib/utils/url';
 import Link from 'next/link';
 import type { Audit } from "@/lib/data/audits";
 import { formatDate } from '@/lib/utils/date';
@@ -13,7 +14,9 @@ export default function AuditRow({ audit }: { audit: Audit }) {
   const { action, resourceType, resourceLabel, resourceMeta, resourceId, user, actor, createdAt } = audit;
 
   const router = useRouter();
-  const open = () => router.push(`/audits?id=${audit.id}`);
+
+  const searchParams = useSearchParams();
+  const open = () => router.push(withParams('/audits', searchParams, { id: audit.id, mode: null }));
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>

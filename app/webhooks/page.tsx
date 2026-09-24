@@ -3,7 +3,7 @@ import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import SubheaderLink from '@/components/layout/subheader/SubheaderLink';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
 import WebhookCard from "@/components/webhooks/WebhookCard";
@@ -14,14 +14,20 @@ import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";
 import { redirect } from 'next/navigation';
+import { WEBHOOK_FILTERS } from '@/lib/filters/options';
+import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 
 const REFRESH_INTERVAL_MS = 15_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; active?: string; recency?: string; }>;
 
 export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
-  const webhooks = await getWebhooks();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, WEBHOOK_FILTERS);
+  const filtered = hasActiveFilters(filters, WEBHOOK_FILTERS);
+
+  const webhooks = await getWebhooks(filters);
   const pipelines = await getPipelines();
 
   const record = id ? await getWebhookById(id) : undefined;
@@ -51,37 +57,37 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-          {webhooks.length > 0 ? (
+          {webhooks.length > 0 || filtered ? (
             <>
               <div className={styles.filters}>
                 <div className={styles['filters-bar']}>
                   <SearchInput placeholder={"Search webhooks..."} />
-                  <FilterListbox
-                    id={"active"} name={"active"}
-                    options={[
-                      { value: "all", label: "All Statuses" },
-                      { value: "active", label: "Active" },
-                      { value: "inactive", label: "Inactive" }
-                    ]} />
-                  <FilterListbox
-                    id={"recency"} name={"recency"}
-                    options={[
-                      { value: "most-recent", label: "Most recently registered" },
-                      { value: "least-recent", label: "Least recently registered" }
-                    ]} />
+                  <QueryFilterListbox id={"active"} name={"active"} options={WEBHOOK_FILTERS.active} value={filters.active} />
+                  <QueryFilterListbox id={"recency"} name={"recency"} options={WEBHOOK_FILTERS.recency} value={filters.recency} />
                 </div>
               </div>
 
-              <div className={styles['webhook-layout']}>
-                {webhooks.map((webhook, i) => (
-                  <WebhookCardShell key={i} id={webhook.id}>
-                    <WebhookCard
-                      webhook={webhook} />
-                  </WebhookCardShell>
-                ))}
-              </div>
+              {webhooks.length > 0 ? (
+                <>
+                  <div className={styles['webhook-layout']}>
+                    {webhooks.map((webhook) => (
+                      <WebhookCardShell key={webhook.id} id={webhook.id}>
+                        <WebhookCard
+                          webhook={webhook} />
+                      </WebhookCardShell>
+                    ))}
+                  </div>
 
-              <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                  <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                </>
+              ) : (
+                <EmptyState
+                  icon="funnel-outline"
+                  heading="No matching webhooks"
+                  description="No webhooks match these filters."
+                  action={{ label: "Clear filters", href: "/webhooks" }}
+                />
+              )}
             </>
           ) : (
             <EmptyState

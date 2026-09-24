@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
-import type { Environment as PrismaEnvironment } from "@/generated/prisma/client";
+import type { Environment as PrismaEnvironment, EnvironmentType } from "@/generated/prisma/client";
+import { ALL, ENVIRONMENT_FILTERS, type EnvironmentFilters } from "@/lib/filters/options";
+import { dateRangeCutoff, parseFilters } from "@/lib/filters/parse";
 
 export type Environment = Omit<PrismaEnvironment, "type" | "createdById"> & {
   secrets: number;
@@ -7,8 +9,15 @@ export type Environment = Omit<PrismaEnvironment, "type" | "createdById"> & {
   createdBy?: string | null;
 };
 
-export async function getEnvironments(): Promise<Environment[]> {
+export async function getEnvironments(filters: EnvironmentFilters = parseFilters({}, ENVIRONMENT_FILTERS)): Promise<Environment[]> {
+  const { environment, updated } = filters;
+  const updatedSince = dateRangeCutoff(updated);
+
   const envs = await prisma.environment.findMany({
+    where: {
+      ...(environment !== ALL && { type: environment.toUpperCase() as EnvironmentType }),
+      ...(updatedSince && { updatedAt: { gte: updatedSince } }),
+    },
     include: { secrets: true },
     orderBy: { createdAt: "desc" }
   });

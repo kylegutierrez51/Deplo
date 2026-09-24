@@ -14,9 +14,14 @@ export interface FilterListboxOption {
 interface FilterListboxProps {
   id: string;
   name: string;
-  options: FilterListboxOption[];
+  options: readonly FilterListboxOption[];
   setFilteredOption?: (value: string) => void;
   defaultValue?: string;
+  /*
+   * Controlled mode: overrides the internal selection, so the trigger follows URL changes
+   * like back/forward. Omit it for uncontrolled behaviour (LogsTab).
+   */
+  value?: string;
   styles?: Record<string, string>;
   responsive?: boolean;
 }
@@ -34,6 +39,7 @@ export default function FilterListbox({
   options,
   setFilteredOption,
   defaultValue,
+  value,
   styles = own,
   responsive = true,
 }: FilterListboxProps) {
@@ -47,7 +53,8 @@ export default function FilterListbox({
   const groupRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find((option) => option.value === selected) ?? options[0];
+  const current = value ?? selected;
+  const selectedOption = options.find((option) => option.value === current) ?? options[0];
   const selectedValue = selectedOption?.value ?? '';
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selectedValue));
 
@@ -132,7 +139,6 @@ export default function FilterListbox({
         closeAndFocus();
         break;
       case 'Tab':
-        setOpen(false);
         commit(activeIndex);
         break;
     }

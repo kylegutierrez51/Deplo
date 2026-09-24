@@ -2,7 +2,7 @@ import styles from "./runs.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import RunRow from "@/components/runs/RunRow";
@@ -10,18 +10,22 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import RunModalController from "@/components/runs/RunModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getRuns, getRunById } from "@/lib/data/runs";
+import { getRuns, getRunById, countActiveRuns } from "@/lib/data/runs";
+import { RUN_FILTERS } from "@/lib/filters/options";
+import { hasActiveFilters, parseFilters } from "@/lib/filters/parse";
 import { redirect } from 'next/navigation';
 
 const REFRESH_INTERVAL_MS = 10_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; trigger?: string; environment?: string; recency?: string; }>;
 
 export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id, } = await searchParams;
-  const runs = await getRuns();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, RUN_FILTERS);
+  const filtered = hasActiveFilters(filters, RUN_FILTERS);
 
-  const activeRuns = runs.filter(r => r.status === 'running').length;
+  const [runs, activeRuns] = await Promise.all([getRuns(filters), countActiveRuns()]);
 
   const record = id ? await getRunById(id) : undefined;
 
@@ -49,65 +53,38 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {runs.length > 0 ? (
+        {runs.length > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput
                   placeholder={"Search pipelines, commits..."} />
-                <FilterListbox
-                  id={"status"} name={"status"}
-                  options={
-                    [
-                      { value: "all", label: "All statuses" },
-                      { value: "queued", label: "Queued" },
-                      { value: "running", label: "Running" },
-                      { value: "succeeded", label: "Succeeded" },
-                      { value: "failed", label: "Failed" },
-                      { value: "cancelled", label: "Cancelled" },
-                    ]
-                  } />
-                <FilterListbox
-                  id={"trigger"} name={"trigger"}
-                  options={
-                    [
-                      { value: "all", label: "All triggers" },
-                      { value: "webhook", label: "Webhook" },
-                      { value: "manual", label: "Manual" },
-                      { value: "api", label: "API" },
-                    ]
-                  } />
-                <FilterListbox
-                  id={"environment"} name={"environment"}
-                  options={
-                    [
-                      { value: "all", label: "All environment types" },
-                      { value: "production", label: "Production" },
-                      { value: "staging", label: "Staging" },
-                      { value: "development", label: "Development" },
-                      { value: "preview", label: "Preview" },
-                      { value: "custom", label: "Custom" },
-                    ]
-                  } />
-                <FilterListbox
-                  id={"recency"} name={"recency"}
-                  options={
-                    [
-                      { value: "most-recent", label: "Most recent" },
-                      { value: "least-recent", label: "Least recent" }
-                    ]
-                  } />
+                <QueryFilterListbox id={"status"} name={"status"} options={RUN_FILTERS.status} value={filters.status} />
+                <QueryFilterListbox id={"trigger"} name={"trigger"} options={RUN_FILTERS.trigger} value={filters.trigger} />
+                <QueryFilterListbox id={"environment"} name={"environment"} options={RUN_FILTERS.environment} value={filters.environment} />
+                <QueryFilterListbox id={"recency"} name={"recency"} options={RUN_FILTERS.recency} value={filters.recency} />
               </div>
             </div>
 
-            <DataTable
-              columns={["Pipeline", "Environment", "Trigger", "Duration", "Created At"]}>
-              {runs.map((run, i) => (
-                <RunRow key={i} run={run} />
-              ))}
-            </DataTable>
+            {runs.length > 0 ? (
+              <>
+                <DataTable
+                  columns={["Pipeline", "Environment", "Trigger", "Duration", "Created At"]}>
+                  {runs.map((run) => (
+                    <RunRow key={run.id} run={run} />
+                  ))}
+                </DataTable>
 
-            <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching runs"
+                description="No runs match these filters."
+                action={{ label: "Clear filters", href: "/runs" }}
+              />
+            )}
           </>
         ) : (
           <EmptyState

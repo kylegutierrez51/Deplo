@@ -3,7 +3,7 @@ import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import StatCards from "@/components/ui/StatCards";
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
@@ -12,14 +12,20 @@ import EmptyState from "@/components/ui/EmptyState";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
+import { WEBHOOK_EVENT_FILTERS } from '@/lib/filters/options';
+import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 
 const REFRESH_INTERVAL_MS = 15_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; 'event-type'?: string; }>;
 
 export default async function WebhookEvents({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
-  const { events: webhookEvents, counts } = await getWebhookEvents();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, WEBHOOK_EVENT_FILTERS);
+  const filtered = hasActiveFilters(filters, WEBHOOK_EVENT_FILTERS);
+
+  const { events: webhookEvents, counts } = await getWebhookEvents(filters);
 
   const record = id ? await getWebhookEventById(id) : undefined;
 
@@ -43,7 +49,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
         
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {webhookEvents.length > 0 ? (
+        {webhookEvents.length > 0 || filtered ? (
           <>
             <StatCards
               cards={
@@ -60,39 +66,30 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
                 <SearchInput
                   placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
                   styles={styles} />
-                <FilterListbox
-                  id={"status"} name={"status"}
-                  styles={styles}
-                  options={
-                    [
-                      { value: "all", label: "All statuses" },
-                      { value: "processed", label: "Processed" },
-                      { value: "pending", label: "Pending" },
-                      { value: "ignored", label: "Ignored" },
-                      { value: "failed", label: "Failed" },
-                    ]
-                  } />
-                <FilterListbox
-                  id={"event-type"} name={"event-type"}
-                  styles={styles}
-                  options={
-                    [
-                      { value: "all", label: "All event types" },
-                      { value: "push", label: "Push" },
-                      { value: "pull_request", label: "Pull Request" },
-                    ]
-                  } />
+                <QueryFilterListbox id={"status"} name={"status"} styles={styles} options={WEBHOOK_EVENT_FILTERS.status} value={filters.status} />
+                <QueryFilterListbox id={"event-type"} name={"event-type"} styles={styles} options={WEBHOOK_EVENT_FILTERS['event-type']} value={filters['event-type']} />
               </div>
             </div>
 
-            <DataTable
-              columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
-              {webhookEvents.map((event, i) => (
-                <WebhookEventRow key={i} event={event} />
-              ))}
-            </DataTable>
+            {webhookEvents.length > 0 ? (
+              <>
+                <DataTable
+                  columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
+                  {webhookEvents.map((event) => (
+                    <WebhookEventRow key={event.id} event={event} />
+                  ))}
+                </DataTable>
 
-            <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching deliveries"
+                description="No deliveries match these filters."
+                action={{ label: "Clear filters", href: "/webhooks/events" }}
+              />
+            )}
           </>
         ) : (
           <EmptyState

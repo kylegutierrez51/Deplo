@@ -1,4 +1,6 @@
 import { getPipelines, getPipelineById, getPipelineDefinition } from '@/lib/data/pipelines';
+import { parseFilters } from '@/lib/filters/parse';
+import { PIPELINE_FILTERS } from '@/lib/filters/options';
 import { toDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import type { CustomNode } from '@/lib/types';
@@ -20,7 +22,8 @@ const row = (over: Record<string, unknown> = {}) => ({
   createdById: 'user-1',
   createdAt: new Date('2026-01-01T00:00:00Z'),
   updatedAt: new Date('2026-01-01T00:00:00Z'),
-  runs: [],
+  lastRunId: null,
+  lastRun: null,
   ...over,
 });
 
@@ -32,7 +35,7 @@ describe('getPipelines status', () => {
     ['FAILED', 'failed'],
     ['CANCELLED', 'cancelled'],
   ])('reports the latest run status %s as %s', async (prismaStatus, expected) => {
-    prismaMock.pipeline.findMany.mockResolvedValue([row({ runs: [run(prismaStatus)] })] as never);
+    prismaMock.pipeline.findMany.mockResolvedValue([row({ lastRun: run(prismaStatus) })] as never);
 
     const [pipeline] = await getPipelines();
 
@@ -52,24 +55,20 @@ describe('getPipelines status', () => {
     expect(pipeline.runNumber).toBeUndefined();
   });
 
-  it('takes only the newest run to decide status', async () => {
+  it('reads status through the lastRun pointer', async () => {
     prismaMock.pipeline.findMany.mockResolvedValue([] as never);
 
     await getPipelines();
 
     expect(prismaMock.pipeline.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        include: expect.objectContaining({
-          runs: { orderBy: { createdAt: 'desc' }, take: 1 },
-        }),
-      }),
+      expect.objectContaining({ include: { lastRun: true } }),
     );
   });
 
   // lastRun links to the run detail page, so an in-flight run is still worth
   // linking to (it's the one case where you'd actually want to jump in and watch).
   it('returns the latest run id even while it is still in flight', async () => {
-    prismaMock.pipeline.findMany.mockResolvedValue([row({ runs: [run('RUNNING', null)] })] as never);
+    prismaMock.pipeline.findMany.mockResolvedValue([row({ lastRun: run('RUNNING', null) })] as never);
 
     const [pipeline] = await getPipelines();
 
@@ -79,13 +78,34 @@ describe('getPipelines status', () => {
 
   it('surfaces the newest run number and drops the raw relation', async () => {
     prismaMock.pipeline.findMany.mockResolvedValue([
-      row({ runs: [{ ...run('SUCCEEDED'), runNumber: 12 }] }),
+      row({ lastRunId: 'r1', lastRun: { ...run('SUCCEEDED'), runNumber: 12 } }),
     ] as never);
 
     const [pipeline] = await getPipelines();
 
     expect(pipeline.runNumber).toBe(12);
-    expect(pipeline).not.toHaveProperty('runs');
+    expect(pipeline.lastRun).toBe('r1');
+    expect(pipeline).not.toHaveProperty('lastRunId');
+  });
+});
+
+describe('getPipelines filtering', () => {
+  const whereFor = async (params: Record<string, string>) => {
+    prismaMock.pipeline.findMany.mockResolvedValue([] as never);
+    await getPipelines(parseFilters(params, PIPELINE_FILTERS));
+    return prismaMock.pipeline.findMany.mock.calls[0][0]?.where;
+  };
+
+  it('adds no condition by default', async () => {
+    expect(await whereFor({})).toEqual({});
+  });
+
+  it("filters on the latest run's status", async () => {
+    expect(await whereFor({ status: 'failed' })).toEqual({ lastRun: { status: 'FAILED' } });
+  });
+
+  it('treats idle as having no latest run', async () => {
+    expect(await whereFor({ status: 'idle' })).toEqual({ lastRunId: null });
   });
 });
 
@@ -104,7 +124,7 @@ describe('getPipelineById', () => {
 
   it('flattens the creator to a name', async () => {
     prismaMock.pipeline.findUnique.mockResolvedValue(
-      row({ createdBy: { name: 'kyle' }, runs: [run('SUCCEEDED')] }) as never,
+      row({ createdBy: { name: 'kyle' }, lastRun: run('SUCCEEDED') }) as never,
     );
 
     expect((await getPipelineById('p1'))?.createdBy).toBe('kyle');

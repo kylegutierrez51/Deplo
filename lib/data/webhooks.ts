@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma';
 import type { EventType } from '@/lib/types';
 import type { EventType as PrismaEventType, Webhook as PrismaWebhook } from '@/generated/prisma';
+import { ALL, WEBHOOK_FILTERS, type WebhookFilters } from '@/lib/filters/options';
+import { parseFilters } from '@/lib/filters/parse';
 
 const EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
   PUSH: 'push',
@@ -12,9 +14,14 @@ export type Webhook = Omit<PrismaWebhook, "createdById" | "events"> & {
   pipelineName?: string | null;
 }
 
-export async function getWebhooks(): Promise<Webhook[]> {
+export async function getWebhooks(filters: WebhookFilters = parseFilters({}, WEBHOOK_FILTERS)): Promise<Webhook[]> {
+  const { active, recency } = filters;
+
   const webhooks = await prisma.webhook.findMany({
-    orderBy: { createdAt: "desc" },
+    where: {
+      ...(active !== ALL && { isActive: active === 'active' }),
+    },
+    orderBy: { createdAt: recency === 'least-recent' ? 'asc' : 'desc' },
     include: {
       pipeline: {
         select: { name: true }

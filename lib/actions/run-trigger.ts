@@ -38,7 +38,8 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
     );
 
     try {
-      await prisma.pipelineRun.delete({ where: { id: runId } });
+      const { pipelineId } = await prisma.pipelineRun.delete({ where: { id: runId } });
+      await repointLastRun(pipelineId);
     } catch (cleanup: unknown) {
       console.error(
         `run ${runId} could not be discarded after the failed enqueue:`,
@@ -48,6 +49,28 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
 
     return false;
   }
+}
+
+/*
+==============================================================================================
+ * When the last run of a pipeline gets deleted in `enqueueOrDiscardRun()`, 'lastRunId' gets set to NULL.
+ * 
+ * So go get the run before that and update it as the pipeline's last run
+==============================================================================================
+*/
+async function repointLastRun(pipelineId: string): Promise<void> {
+  const latest = await prisma.pipelineRun.findFirst({
+    select: { id: true },
+    orderBy: { runNumber: 'desc' },
+    where: { pipelineId },
+  });
+
+  if (!latest) return;
+
+  await prisma.pipeline.updateMany({
+    where: { id: pipelineId, lastRunId: null },
+    data: { lastRunId: latest.id },
+  });
 }
 
 export async function createPipelineRun(data: {
@@ -68,9 +91,25 @@ export async function createPipelineRun(data: {
       });
 
       return await prisma.$transaction(async (tx) => {
+        /* Prevents another transaction from modifying the pipeline's lastRun by placing an exclusive lock on it. 
+        The lock is released when the transaction ends. */
+        await tx.$queryRaw`SELECT 1 FROM "pipelines" WHERE "id" = ${data.pipelineId} FOR UPDATE`;
+
         const { id, runNumber, pipeline: { name } } = await tx.pipelineRun.create({
           select: { id: true, runNumber: true, pipeline: { select: { name: true } } },
           data: { ...runData, triggeredById: user.id, trigger: TRIGGER_MAP[trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
+        });
+
+        // Points the pipeline's lastRun at the run that was just created, but only if that run's `runNumber` is greater than the current one.
+        await tx.pipeline.updateMany({
+          where: { 
+            id: data.pipelineId, 
+            OR: [
+              { lastRunId: null }, 
+              { lastRun: { runNumber: { lt: runNumber } } }
+            ] 
+          },
+          data: { lastRunId: id },
         });
 
         await addAudit({

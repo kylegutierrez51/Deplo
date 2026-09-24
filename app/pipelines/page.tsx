@@ -2,21 +2,27 @@ import styles from "./pipelines.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
-import FilterListbox from "@/components/ui/filters/FilterListbox";
+import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
-import { getPipelineById, getPipelines } from '@/lib/data/pipelines';
+import { countPipelines, getPipelineById, getPipelines } from '@/lib/data/pipelines';
+import { PIPELINE_FILTERS } from '@/lib/filters/options';
+import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 import { redirect } from 'next/navigation';
 
-type SearchParams = Promise<{ mode?: string; id?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; }>;
 
 export default async function Pipelines({ searchParams }: { searchParams: SearchParams }) {
-  const { mode, id } = await searchParams;
-  const pipelines = await getPipelines();
+  const params = await searchParams;
+  const { mode, id } = params;
+  const filters = parseFilters(params, PIPELINE_FILTERS);
+  const filtered = hasActiveFilters(filters, PIPELINE_FILTERS);
+
+  const [pipelines, totalPipelines] = await Promise.all([getPipelines(filters), countPipelines()]);
 
   const record = id ? await getPipelineById(id) : undefined;
 
@@ -38,36 +44,37 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
       <main className="page-content">
         <Subheader
           title="Pipelines"
-          subtitle={<><span id="subtitle-count">{pipelines?.length > 0 ? pipelines.length : 0}</span> pipelines across your repositories</>}>
+          subtitle={<><span id="subtitle-count">{totalPipelines}</span> pipelines across your repositories</>}>
           <AddButton text={"New Pipeline"} url={"pipelines"} />
         </Subheader>
 
-        {pipelines.length > 0 ? (
+        {pipelines.length > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Search pipelines..."} />
-                <FilterListbox
-                  id={"status"} name={"status"}
-                  options={[
-                    { value: "all", label: "All statuses" },
-                    { value: "queued", label: "Queued" },
-                    { value: "running", label: "Running" },
-                    { value: "succeeded", label: "Succeeded" },
-                    { value: "failed", label: "Failed" },
-                    { value: "cancelled", label: "Cancelled" },
-                    { value: "idle", label: "Idle" },
-                  ]} />
+                <QueryFilterListbox id={"status"} name={"status"} options={PIPELINE_FILTERS.status} value={filters.status} />
               </div>
             </div>
 
-            <DataTable columns={["Pipeline", "Recent Status", "Repository", "Latest Run", ""]}>
-              {pipelines.map((pipeline, i) => (
-                <PipelineRow key={i} pipeline={pipeline} />
-              ))}
-            </DataTable>
+            {pipelines.length > 0 ? (
+              <>
+                <DataTable columns={["Pipeline", "Recent Status", "Repository", "Latest Run", ""]}>
+                  {pipelines.map((pipeline) => (
+                    <PipelineRow key={pipeline.id} pipeline={pipeline} />
+                  ))}
+                </DataTable>
 
-            <Pagination showing="1-10" totalRows={pipelines.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination showing="1-10" totalRows={pipelines.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching pipelines"
+                description="No pipelines match these filters."
+                action={{ label: "Clear filters", href: "/pipelines" }}
+              />
+            )}
           </>
         ) : (
           <EmptyState

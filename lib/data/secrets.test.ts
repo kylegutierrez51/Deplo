@@ -1,4 +1,6 @@
 import { getSecrets, getSecretById } from '@/lib/data/secrets';
+import { parseFilters } from '@/lib/filters/parse';
+import { SECRET_FILTERS } from '@/lib/filters/options';
 import { encryptSecret } from '@/lib/utils/crypto';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 
@@ -105,5 +107,21 @@ describe('getSecretById', () => {
     );
 
     await expect(getSecretById('sec-1')).rejects.toThrow();
+  });
+});
+
+describe('getSecrets filtering', () => {
+  const query = async (params: Record<string, string>) => {
+    prismaMock.secret.findMany.mockResolvedValue([] as never);
+    await getSecrets(parseFilters(params, SECRET_FILTERS));
+    return prismaMock.secret.findMany.mock.calls[0][0];
+  };
+
+  it('adds no condition by default', async () => {
+    expect((await query({}))?.where).toEqual({});
+  });
+
+  it('filters on the owning environment\'s type', async () => {
+    expect((await query({ environment: 'production' }))?.where).toEqual({ environment: { type: 'PRODUCTION' } });
   });
 });

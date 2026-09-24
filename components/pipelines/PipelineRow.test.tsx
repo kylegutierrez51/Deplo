@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PipelineRow from '@/components/pipelines/PipelineRow';
 import type { Pipeline } from '@/lib/data/pipelines';
 
@@ -14,9 +15,22 @@ import type { Pipeline } from '@/lib/data/pipelines';
  */
 jest.mock('@/lib/prisma');
 
+/*
+ * mock-prefixed so the hoisted factory may close over them; both are read at render or
+ * click time, after the module body has run.
+ */
+const mockPush = jest.fn();
+let mockSearch = '';
+
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => new URLSearchParams(mockSearch),
 }));
+
+beforeEach(() => {
+  mockPush.mockClear();
+  mockSearch = '';
+});
 
 const pipeline = (over: Partial<Pipeline> = {}): Pipeline => ({
   id: 'p1',
@@ -124,5 +138,46 @@ describe('no repository', () => {
     setup({ repoUrl: null });
 
     expect(screen.getAllByRole('cell')).toHaveLength(5);
+  });
+});
+
+/*
+ * The row opens the pipeline modal by pushing ?id=, and the list page keeps its filters in
+ * the same query string — so the push has to add the id to what is there, not replace it.
+ */
+describe('opening the pipeline', () => {
+  it('pushes the pipeline id onto /pipelines', async () => {
+    setup();
+
+    await userEvent.click(screen.getByText('CI'));
+
+    expect(mockPush).toHaveBeenCalledWith('/pipelines?id=p1');
+  });
+
+  it('keeps the filters already in the URL', async () => {
+    mockSearch = 'status=failed';
+    setup();
+
+    await userEvent.click(screen.getByText('CI'));
+
+    expect(mockPush).toHaveBeenCalledWith('/pipelines?status=failed&id=p1');
+  });
+
+  // A stale mode (say, from a create modal left in history) must not ride along into view mode.
+  it('drops a leftover mode', async () => {
+    mockSearch = 'status=failed&mode=create';
+    setup();
+
+    await userEvent.click(screen.getByText('CI'));
+
+    expect(mockPush).toHaveBeenCalledWith('/pipelines?status=failed&id=p1');
+  });
+
+  it('does not open the modal when the latest-run link is clicked', async () => {
+    setup();
+
+    await userEvent.click(screen.getByRole('link', { name: /view the latest run of CI/i }));
+
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

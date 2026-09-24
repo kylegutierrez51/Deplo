@@ -1,4 +1,6 @@
 import { getAudits, getAuditById } from '@/lib/data/audits';
+import { parseFilters } from '@/lib/filters/parse';
+import { AUDIT_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 
 jest.mock('@/lib/prisma');
@@ -78,6 +80,7 @@ describe('getAudits', () => {
     await getAudits();
 
     expect(prismaMock.auditLog.findMany).toHaveBeenCalledWith({
+      where: {},
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { name: true } } },
     });
@@ -122,5 +125,31 @@ describe('getAuditById', () => {
       resourceType: 'pipeline-run',
       user: 'Kyle G',
     });
+  });
+});
+
+describe('getAudits filtering', () => {
+  const query = async (params: Record<string, string>) => {
+    prismaMock.auditLog.findMany.mockResolvedValue([] as never);
+    await getAudits(parseFilters(params, AUDIT_FILTERS));
+    return prismaMock.auditLog.findMany.mock.calls[0][0];
+  };
+
+  afterEach(() => jest.useRealTimers());
+
+  it('translates the resource into its Prisma enum', async () => {
+    expect((await query({ resource: 'pipeline-run' }))?.where).toEqual({ resourceType: 'PIPELINE_RUN' });
+  });
+
+  it('keeps only entries created inside the range', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+
+    expect((await query({ range: '7days' }))?.where).toEqual({
+      createdAt: { gte: new Date('2026-09-15T12:00:00Z') },
+    });
+  });
+
+  it('sorts oldest first for least-recent', async () => {
+    expect((await query({ recency: 'least-recent' }))?.orderBy).toEqual({ createdAt: 'asc' });
   });
 });

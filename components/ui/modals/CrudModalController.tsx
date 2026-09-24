@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { withParams } from "@/lib/utils/url";
 import { useState, startTransition } from "react";
 import type { ComponentType } from 'react';
 import { useToast } from '@/components/ui/toast/ToastContext';
@@ -24,10 +25,12 @@ export default function CrudModalController<T extends { id: string }, Extra exte
   extraProps?: Extra;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [modalKey, setModalKey] = useState(0);
   const { showToast } = useToast();
 
-  const onClose = () => router.push(basePath); // clear modal query params
+  // clear the modal's params, keep everything else (the page's filters)
+  const onClose = () => router.push(withParams(basePath, searchParams, { id: null, mode: null })); 
 
   const onCreate = (message: string) => {
     showToast({
@@ -54,14 +57,14 @@ export default function CrudModalController<T extends { id: string }, Extra exte
     onClose();
   }
 
-  const onEdit = () => router.push(`${basePath}?id=${record?.id}&mode=edit`);
-  const onEditOrDeleteClose = () => router.push(`${basePath}?id=${record?.id}`);
+  const onEdit = () => router.push(withParams(basePath, searchParams, { id: record?.id, mode: 'edit' }));
+  const onEditOrDeleteClose = () => router.push(withParams(basePath, searchParams, { id: record?.id, mode: null }));
 
   const onSave = (message: string) => {
     if (mode === 'edit') {
       startTransition(() => {
         setModalKey(k => k + 1);
-        router.push(`${basePath}?id=${record?.id}`);
+        router.push(withParams(basePath, searchParams, { id: record?.id, mode: null }));
       });
       router.refresh();  // reruns page server component so the table reflects the edit
       showToast({
