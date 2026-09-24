@@ -2,8 +2,10 @@ import prisma from '@/lib/prisma';
 import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@/generated/prisma/client";
 import { fromDefinition } from '@/lib/pipeline/definition';
 import type { GraphJson, PipelineStatus } from '@/lib/types';
+import { ALL, PIPELINE_FILTERS, type PipelineFilters } from '@/lib/filters/options';
+import { invert, parseFilters } from '@/lib/filters/parse';
 
-export type Pipeline = Omit<PrismaPipeline, "createdById"> & {
+export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
   lastRun: string | null;
   status: PipelineStatus;
   runNumber?: number;
@@ -19,43 +21,62 @@ const RUN_STATUS_MAP: Record<PrismaRunStatus, PipelineStatus> = {
   CANCELLED: 'cancelled',
 };
 
-export async function getPipelines(): Promise<Pipeline[]> {
+const STATUS_TO_PRISMA = invert(RUN_STATUS_MAP);
+
+
+
+/*
+ Gets the pipelines with the filtered status. 
+
+ We do this approach rather than just doing the following strategy: 
+    1. 'runs: orderBy: { createdAt: "desc" }, take: 1'
+    2. check if that run has the filtered status 
+
+  because it breaks when pagination is added -- a page of 10 might filter to just 3 runs with the filtered status, even if 10+ runs have that status
+*/
+function statusWhere(status: PipelineFilters['status']) {
+  if (status === ALL) return {};
+  if (status === 'idle') return { lastRunId: null };
+  return { lastRun: { status: STATUS_TO_PRISMA[status] } };
+}
+
+export async function getPipelines(filters: PipelineFilters = parseFilters({}, PIPELINE_FILTERS)): Promise<Pipeline[]> {
   const pipelines = await prisma.pipeline.findMany({
+    where: statusWhere(filters.status),
     orderBy: { createdAt: "desc" },
-    include: {
-      runs: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
+    include: { lastRun: true },
   });
 
-  return pipelines.map(({ runs, ...pipeline }) => ({
+  return pipelines.map(({ lastRun, lastRunId: _lastRunId, ...pipeline }) => ({
     ...pipeline,
-    status: runs[0] ? RUN_STATUS_MAP[runs[0].status] : 'idle',
-    lastRun: runs[0]?.id ?? null,
-    runNumber: runs[0]?.runNumber,
+    status: lastRun ? RUN_STATUS_MAP[lastRun.status] : 'idle',
+    lastRun: lastRun?.id ?? null,
+    runNumber: lastRun?.runNumber,
   }));
+}
+
+// the subtitle counts every pipeline regardless of filtering
+export async function countPipelines(): Promise<number> {
+  return prisma.pipeline.count();
 }
 
 export async function getPipelineById(id: string): Promise<Pipeline | null> {
   const pipeline = await prisma.pipeline.findUnique({
     where: { id },
     include: {
-      runs: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
+      lastRun: true,
       createdBy: { select: { name: true } }
      }
   })
 
   if (!pipeline) return null;
 
+  const { lastRun, lastRunId: _lastRunId, ...rest } = pipeline;
+
   return {
-    ...pipeline,
-    status: pipeline.runs[0] ? RUN_STATUS_MAP[pipeline.runs[0].status] : 'idle',
-    lastRun: pipeline.runs[0]?.id ?? null,
+    ...rest,
+    status: lastRun ? RUN_STATUS_MAP[lastRun.status] : 'idle',
+    lastRun: lastRun?.id ?? null,
     createdBy: pipeline.createdBy?.name ?? null
   }
 }
