@@ -161,6 +161,8 @@ export const WEBHOOK_FILTERS = {
   recency: [
     { value: 'most-recent', label: 'Most recently registered' },
     { value: 'least-recent', label: 'Least recently registered' },
+    { value: 'delivered-recent', label: 'Most recently delivered' },
+    { value: 'delivered-least', label: 'Least recently delivered' },
   ],
 } as const satisfies FilterDefinitions;
 
