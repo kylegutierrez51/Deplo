@@ -2,11 +2,11 @@ import {
   loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress,
   isRunCancelled,
   type StageOutcome,
-} from "./db";
+} from "../db";
 import type { Payload } from "./stageQueue";
 import path from "node:path";
-import { RUNNER_WORKSPACE_ROOT } from './connection';
-import { advanceRun } from "./runProcessor";
+import { RUNNER_WORKSPACE_ROOT } from '../setup/connection';
+import { advanceRun } from "../runs/runProcessor";
 import { execute } from "./execute";
 import { resolveSecrets } from "./secrets";
 import { buildScrubber, type Scrubber } from "./scrubber";

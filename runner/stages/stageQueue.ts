@@ -1,5 +1,5 @@
-import './env';
-import { connection } from './connection';
+import '../setup/env';
+import { connection } from '../setup/connection';
 import { Queue } from "bullmq";
 import { STAGE_QUEUE } from "@/lib/queue/names"
 

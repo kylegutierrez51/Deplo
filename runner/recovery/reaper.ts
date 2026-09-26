@@ -1,9 +1,9 @@
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
   findRunningStages, openRetry, cancelOrphanedStages,
-} from './db';
-import { advanceRun, processRun } from './runProcessor';
-import { reclaimStageJob } from './stageQueue';
+} from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
+import { reclaimStageJob } from '../stages/stageQueue';
 
 /*
 ==============================================================================================

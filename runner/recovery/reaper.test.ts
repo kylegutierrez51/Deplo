@@ -2,9 +2,9 @@ import { reapAbandonedWork } from './reaper';
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
   findRunningStages, openRetry, cancelOrphanedStages,
-} from './db';
-import { advanceRun, processRun } from './runProcessor';
-import { reclaimStageJob } from './stageQueue';
+} from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
+import { reclaimStageJob } from '../stages/stageQueue';
 
 // Explicit factories, not automocks: db reaches lib/prisma, runProcessor reaches stageQueue,
 // and stageQueue constructs a bullmq Queue at module scope. Loading any of them for real

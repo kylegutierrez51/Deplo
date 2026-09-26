@@ -1,5 +1,5 @@
-import { findStalledRuns } from './db';
-import { advanceRun, processRun } from './runProcessor';
+import { findStalledRuns } from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
 
 /*
 ==============================================================================================

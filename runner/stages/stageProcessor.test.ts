@@ -7,7 +7,7 @@
  * the code.
  */
 import { processStage } from './stageProcessor';
-import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from './db';
+import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from '../db';
 import { execute } from './execute';
 import { resolveSecrets } from './secrets';
 import { advanceRun } from './runProcessor';

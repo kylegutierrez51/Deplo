@@ -1,11 +1,11 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
 import { addAudit } from '@/lib/actions/audits';
-import { RUNNER_WORKSPACE_ROOT } from './connection';
+import { RUNNER_WORKSPACE_ROOT } from './setup/connection';
 import type { GraphJson, StageType } from '@/lib/types';
 import { AuditAction, ResourceType, type RunStatus, type StageStatus } from '@/generated/prisma';
 import { Prisma, type StageType as PrismaStageType } from '@/generated/prisma/client';
-import type { Outcomes } from './scheduler';
+import type { Outcomes } from './runs/scheduler';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 

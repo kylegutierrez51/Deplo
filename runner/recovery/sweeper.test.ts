@@ -1,6 +1,6 @@
 import { sweepStalledRuns, startStalledRunSweep, stopStalledRunSweep } from './sweeper';
-import { findStalledRuns } from './db';
-import { advanceRun, processRun } from './runProcessor';
+import { findStalledRuns } from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
 
 // Explicit factories, not automocks, for the reason reaper.test.ts gives: db reaches
 // lib/prisma and runProcessor reaches stageQueue, which constructs a bullmq Queue at module
