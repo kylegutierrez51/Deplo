@@ -2,7 +2,7 @@
 
 import { capitalize } from "@/lib/utils/string";
 import { formatDate } from "@/lib/utils/date";
-import { useState, useEffect, useActionState } from 'react';
+import { useState, useActionState } from 'react';
 import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
 import type { PipelineStatus, FormState } from "@/lib/types";
@@ -61,28 +61,18 @@ export default function PipelineModal({
   onError,
 }: PipelineModalProps) {
   const [deleteModal, setDeleteModal] = useState(false);
-  const [createState, createFormAction] = useActionState(addPipeline, initialState);
-  const [editState, editFormAction] = useActionState(updatePipeline, initialState);
-
-  useEffect(() => {
-    if (createState.status === 'success') {
-      onCreate(createState.message);
-    }
-    else if (createState.status === 'error') {
-      onError(createState.message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createState]);
-
-  useEffect(() => {
-    if (editState.status === 'success') {
-      onSave(editState.message);
-    }
-    else if (editState.status === 'error') {
-      onError(editState.message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
-  }, [editState]);
+  const [, createFormAction] = useActionState(async (prev: FormState, formData: FormData) => {
+    const result = await addPipeline(prev, formData);
+    if (result.status === 'success') onCreate(result.message);
+    else if (result.status === 'error') onError(result.message);
+    return result;
+  }, initialState);
+  const [, editFormAction] = useActionState(async (prev: FormState, formData: FormData) => {
+    const result = await updatePipeline(prev, formData);
+    if (result.status === 'success') onSave(result.message);
+    else if (result.status === 'error') onError(result.message);
+    return result;
+  }, initialState);
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
