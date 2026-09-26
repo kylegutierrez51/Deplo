@@ -3,6 +3,7 @@ import { decryptSecret } from '@/lib/utils/crypto';
 import type { Secret as PrismaSecret, EnvironmentType } from '@/generated/prisma';
 import { ALL, SECRET_FILTERS, type SecretFilters } from '@/lib/filters/options';
 import { parseFilters } from '@/lib/filters/parse';
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
   environment: {
@@ -14,14 +15,16 @@ export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
 
 export type SecretDetail = Secret & { value: string };
 
-export async function getSecrets(filters: SecretFilters = parseFilters({}, SECRET_FILTERS)): Promise<Secret[]> {
-  const { environment } = filters;
+function secretsWhere({ environment }: SecretFilters) {
+  return {
+    ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
+  };
+}
 
+async function findSecrets(args: { where: ReturnType<typeof secretsWhere>; skip?: number; take?: number }): Promise<Secret[]> {
   const secrets = await prisma.secret.findMany({
-    where: {
-      ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
-    },
-    orderBy: { createdAt: "desc" },
+    ...args,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: {
       environment: {
         select: { type: true, name: true }
@@ -36,6 +39,19 @@ export async function getSecrets(filters: SecretFilters = parseFilters({}, SECRE
       type: s.environment.type.toLowerCase() as Secret["environment"]["type"],
     },
   }));
+}
+
+// Unpaginated: Used by the pipeline editor to get every secret for a selected environment
+export async function getSecrets(filters: SecretFilters = parseFilters({}, SECRET_FILTERS)): Promise<Secret[]> {
+  return findSecrets({ where: secretsWhere(filters) });
+}
+
+export async function getSecretsPage(filters: SecretFilters, page: number, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Secret>> {
+  const where = secretsWhere(filters);
+  const total = await prisma.secret.count({ where });
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
+
+  return { rows: await findSecrets({ where, skip, take }), total, ...meta };
 }
 
 export async function getSecretById(id: string): Promise<SecretDetail | null> {

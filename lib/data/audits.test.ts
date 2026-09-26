@@ -1,11 +1,17 @@
-import { getAudits, getAuditById } from '@/lib/data/audits';
+import { getAuditsPage, getAuditById } from '@/lib/data/audits';
 import { parseFilters } from '@/lib/filters/parse';
 import { AUDIT_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 
 jest.mock('@/lib/prisma');
 
-beforeEach(resetPrismaMock);
+beforeEach(() => {
+  resetPrismaMock();
+  prismaMock.auditLog.count.mockResolvedValue(0);
+});
+
+// Most cases are about the mapped rows, not the window they arrived in; paging is covered in pagination.test.ts
+const getAudits = async (...args: Parameters<typeof getAuditsPage>) => (await getAuditsPage(...args)).rows;
 
 /*
  * Translation at the boundary, as with every lib/data reader: the Prisma enums become the
@@ -81,7 +87,9 @@ describe('getAudits', () => {
 
     expect(prismaMock.auditLog.findMany).toHaveBeenCalledWith({
       where: {},
-      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 10,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: { user: { select: { name: true } } },
     });
   });
@@ -150,6 +158,6 @@ describe('getAudits filtering', () => {
   });
 
   it('sorts oldest first for least-recent', async () => {
-    expect((await query({ recency: 'least-recent' }))?.orderBy).toEqual({ createdAt: 'asc' });
+    expect((await query({ recency: 'least-recent' }))?.orderBy).toEqual([{ createdAt: 'asc' }, { id: 'asc' }]);
   });
 });

@@ -64,7 +64,7 @@ describe('getSecrets', () => {
     await getSecrets();
 
     expect(prismaMock.secret.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+      expect.objectContaining({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }),
     );
   });
 });

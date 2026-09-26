@@ -3,6 +3,7 @@ import type { RunStatus as PrismaRunStatus, RunTrigger as PrismaRunTrigger, Pipe
 import type { RunStatus, RunTrigger } from "@/lib/types";
 import { ALL, RUN_FILTERS, type RunFilters } from "@/lib/filters/options";
 import { invert, parseFilters } from "@/lib/filters/parse";
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from "@/lib/utils/pagination";
 
 export type Run = Omit<PrismaPipelineRun, | 'triggeredById' | 'status' | 'trigger'> & {
   environment: {
@@ -33,23 +34,30 @@ const RUN_TRIGGER_MAP: Record<PrismaRunTrigger, RunTrigger> = {
 const STATUS_TO_PRISMA = invert(RUN_STATUS_MAP);
 const TRIGGER_TO_PRISMA = invert(RUN_TRIGGER_MAP);
 
-export async function getRuns(filters: RunFilters = parseFilters({}, RUN_FILTERS)): Promise<Run[]> {
+export async function getRunsPage(filters: RunFilters = parseFilters({}, RUN_FILTERS), page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Run>> {
   const { status, trigger, environment, recency } = filters;
+  const where = {
+    ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
+    ...(trigger !== ALL && { trigger: TRIGGER_TO_PRISMA[trigger] }),
+    ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
+  };
+  const direction = recency === "least-recent" ? "asc" : "desc";
+
+  const total = await prisma.pipelineRun.count({ where });
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
 
   const runs = await prisma.pipelineRun.findMany({
-    where: {
-      ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
-      ...(trigger !== ALL && { trigger: TRIGGER_TO_PRISMA[trigger] }),
-      ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
-    },
-    orderBy: { createdAt: recency === "least-recent" ? "asc" : "desc" },
+    where,
+    skip,
+    take,
+    orderBy: [{ createdAt: direction }, { id: direction }],
     include: {
       triggeredBy: { select: { name: true }},
       environment: { select: { name: true, type: true }},
       pipeline: { select: { name: true, repoUrl: true }}
     }
   });
-  return runs.map((run) => ({
+  const rows = runs.map((run) => ({
     ...run,
     environment: run.environment ? {
       ...run.environment,
@@ -61,6 +69,7 @@ export async function getRuns(filters: RunFilters = parseFilters({}, RUN_FILTERS
     status: RUN_STATUS_MAP[run.status],
     trigger: RUN_TRIGGER_MAP[run.trigger]
   }));
+  return { rows, total, ...meta };
 }
 
 // Unfiltered on purpose: the page badge counts every active run regardless of filters

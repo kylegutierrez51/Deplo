@@ -45,6 +45,16 @@ Pagination
   background-color: var(--dark-clr-2);
 }
 
+/* Prev on the first page / Next on the last page */
+.view-option[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.view-option[aria-disabled="true"]:hover {
+  background-color: transparent;
+}
+
 .view-option ion-icon[name="chevron-back-outline"],
 .view-option ion-icon[name="chevron-forward-outline"] {
   font-size: 20px;
@@ -54,7 +64,45 @@ Pagination
 
 .page-numbers {
   display: flex;
-  gap: var(--space-gap-md);
+  gap: var(--space-md);
+}
+
+/* Same box as the current page's span at all times, so hover only changes the colour and never the size */
+.page-number a {
+  color: inherit;
+  padding: var(--space-xs) 8px;
+  border-radius: var(--radius-sm);
+}
+
+.page-number a:hover {
+  background-color: var(--gray-clr);
+}
+
+/* The ellipsis is a button, reset to look like the page links around it */
+.page-jump {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs) 8px;
+  border-radius: var(--radius-sm);
+}
+
+.page-jump:hover {
+  background-color: var(--gray-clr);
+}
+
+/* Wide enough for a few digits, without making the row jump much when it replaces the ellipsis */
+.page-jump-input {
+  width: 4ch;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background-color: transparent;
+  border: 1px solid var(--color-border-mid);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-xs);
 }
 
 .page-number span {

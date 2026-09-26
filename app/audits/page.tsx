@@ -10,13 +10,14 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import AuditModalController from "@/components/audits/AuditModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getAudits, getAuditById } from '@/lib/data/audits';
+import { getAuditsPage, getAuditById } from '@/lib/data/audits';
 import { AUDIT_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; resource?: string; range?: string; recency?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; resource?: string; range?: string; recency?: string; page?: string; }>;
 
 export default async function AuditLog({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -24,7 +25,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
   const filters = parseFilters(params, AUDIT_FILTERS);
   const filtered = hasActiveFilters(filters, AUDIT_FILTERS);
 
-  const audits = await getAudits(filters);
+  const audits = await getAuditsPage(filters, parsePage(params.page));
 
   const record = id ? await getAuditById(id) : undefined;
 
@@ -49,7 +50,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {audits.length > 0 || filtered ? (
+        {audits.total > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -61,16 +62,16 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
               </div>
             </div>
 
-            {audits.length > 0 ? (
+            {audits.total > 0 ? (
               <>
                 <DataTable
                   columns={["Action", "Resource", "Actor", "Time", ""]}>
-                  {audits.map((audit) => (
+                  {audits.rows.map((audit) => (
                     <AuditRow key={audit.id} audit={audit} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={audits.page} pageCount={audits.pageCount} total={audits.total} pageSize={audits.pageSize} />
               </>
             ) : (
               <EmptyState

@@ -4,6 +4,7 @@ import { ALL, APPROVAL_FILTERS, type ApprovalFilters } from '@/lib/filters/optio
 import { parseFilters } from '@/lib/filters/parse';
 import type { EnvType } from '@/lib/types';
 import { getDuration } from '@/lib/utils/date';
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type StageType = Lowercase<PrismaStageType>;
 export type StageStatus = Lowercase<PrismaStageStatus>;
@@ -52,22 +53,29 @@ const approvalRunInclude = {
 
 const WAITING = { stageType: 'APPROVAL', status: 'AWAITING_APPROVAL' } as const;
 
-export async function getApprovals(filters: ApprovalFilters = parseFilters({}, APPROVAL_FILTERS)): Promise<Approval[]> {
+export async function getApprovalsPage(filters: ApprovalFilters = parseFilters({}, APPROVAL_FILTERS), page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Approval>> {
   const { environment, recency } = filters;
+  const where = {
+    ...WAITING,
+    ...(environment !== ALL && { run: { environment: { type: environment.toUpperCase() as EnvironmentType } } }),
+  };
+  const direction = recency === 'most-recent' ? 'desc' : 'asc';
+
+  const total = await prisma.stageResult.count({ where });
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
 
   const approvalStages = await prisma.stageResult.findMany({
-    where: {
-      ...WAITING,
-      ...(environment !== ALL && { run: { environment: { type: environment.toUpperCase() as EnvironmentType } } }),
-    },
-    orderBy: { createdAt: recency === 'most-recent' ? 'desc' : 'asc' },
+    where,
+    skip,
+    take,
+    orderBy: [{ createdAt: direction }, { id: direction }],
     include: { run: { include: approvalRunInclude } },
   });
 
   const commitMessageByRunId = await getCommitMessagesByRunId(approvalStages.map((a) => a.runId))
 
 
-  return approvalStages.map((approvalStage) => {
+  const rows = approvalStages.map((approvalStage) => {
     const { run } = approvalStage;
 
     const latestStages = new Map<string, PrismaStageStatus>(
@@ -93,6 +101,7 @@ export async function getApprovals(filters: ApprovalFilters = parseFilters({}, A
       stagesComplete: new Map([...latestStages].filter(([_, status]) => ["SUCCEEDED", "APPROVED"].includes(status))).size + '/' + latestStages.size
     };
   });
+  return { rows, total, ...meta };
 }
 
 export type ApprovalStats = { pending: number; production: number; longestWait: string };

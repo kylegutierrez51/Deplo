@@ -3,6 +3,7 @@ import type { WebhookEvent as PrismaWebhookEvent, WebhookEventStatus as PrismaWe
 import type { WebhookEventStatus, EventType } from '@/lib/types';
 import { ALL, WEBHOOK_EVENT_FILTERS, type WebhookEventFilters } from '@/lib/filters/options';
 import { invert, parseFilters } from '@/lib/filters/parse';
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   status: WebhookEventStatus;
@@ -36,8 +37,7 @@ type GithubWebhookPayload = {
 
 export type WebhookEventCounts = Record<WebhookEventStatus, number>;
 
-export type WebhookEventsResult = {
-  events: WebhookEvent[];
+export type WebhookEventsPage = Page<WebhookEvent> & {
   counts: WebhookEventCounts;
 };
 
@@ -45,25 +45,32 @@ const STATUS_TO_PRISMA = invert(WEBHOOK_EVENT_STATUS_MAP);
 const EVENT_TYPE_TO_PRISMA = invert(WEBHOOK_EVENT_TYPE_MAP);
 
 
-export async function getWebhookEvents(filters: WebhookEventFilters = parseFilters({}, WEBHOOK_EVENT_FILTERS)): Promise<WebhookEventsResult> {
+export async function getWebhookEventsPage(filters: WebhookEventFilters = parseFilters({}, WEBHOOK_EVENT_FILTERS), page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<WebhookEventsPage> {
   const { status, 'event-type': eventType } = filters;
+  const where = {
+    ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
+    ...(eventType !== ALL && { eventType: EVENT_TYPE_TO_PRISMA[eventType] }),
+  };
 
-  const [webhookEvents, statusCounts] = await Promise.all([
-    prisma.webhookEvent.findMany({
-      where: {
-        ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
-        ...(eventType !== ALL && { eventType: EVENT_TYPE_TO_PRISMA[eventType] }),
-      },
-      orderBy: { receivedAt: "desc" },
-      include: {
-        pipeline: { select: { name: true, repoUrl: true }},
-      },
-    }),
+  const [total, statusCounts] = await Promise.all([
+    prisma.webhookEvent.count({ where }),
+    // the stat cards count every delivery, regardless of filters
     prisma.webhookEvent.groupBy({
       by: ["status"],
       _count: true,
     }),
   ]);
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
+
+  const webhookEvents = await prisma.webhookEvent.findMany({
+    where,
+    skip,
+    take,
+    orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+    include: {
+      pipeline: { select: { name: true, repoUrl: true }},
+    },
+  });
 
   const counts: WebhookEventCounts = {
     pending: 0,
@@ -76,7 +83,9 @@ export async function getWebhookEvents(filters: WebhookEventFilters = parseFilte
   }
 
   return {
-    events: webhookEvents.map((webhookEvent) => ({
+    total,
+    ...meta,
+    rows: webhookEvents.map((webhookEvent) => ({
       ...webhookEvent,
       pipeline: webhookEvent.pipeline ? {
         ...webhookEvent.pipeline,

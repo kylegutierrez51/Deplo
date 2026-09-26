@@ -29,6 +29,7 @@ export default function QueryFilterListbox({ name, options, value, ...rest }: Qu
     setOptimistic(next);
 
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('page'); // start from 1st page
     if (next === options[0]?.value) params.delete(name);
     else params.set(name, next);
 

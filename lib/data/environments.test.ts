@@ -49,7 +49,7 @@ describe('getEnvironments', () => {
     await getEnvironments();
 
     expect(prismaMock.environment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+      expect.objectContaining({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }),
     );
   });
 

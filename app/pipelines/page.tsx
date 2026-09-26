@@ -9,12 +9,13 @@ import PipelineRow from "@/components/pipelines/PipelineRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
-import { countPipelines, getPipelineById, getPipelines } from '@/lib/data/pipelines';
+import { countPipelines, getPipelineById, getPipelinesPage } from '@/lib/data/pipelines';
 import { PIPELINE_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 import { redirect } from 'next/navigation';
 
-type SearchParams = Promise<{ mode?: string; id?: string; status?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; page?: string; }>;
 
 export default async function Pipelines({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -22,7 +23,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
   const filters = parseFilters(params, PIPELINE_FILTERS);
   const filtered = hasActiveFilters(filters, PIPELINE_FILTERS);
 
-  const [pipelines, totalPipelines] = await Promise.all([getPipelines(filters), countPipelines()]);
+  const [pipelines, totalPipelines] = await Promise.all([getPipelinesPage(filters, parsePage(params.page)), countPipelines()]);
 
   const record = id ? await getPipelineById(id) : undefined;
 
@@ -48,7 +49,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
           <AddButton text={"New Pipeline"} url={"pipelines"} />
         </Subheader>
 
-        {pipelines.length > 0 || filtered ? (
+        {pipelines.total > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -57,15 +58,15 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
               </div>
             </div>
 
-            {pipelines.length > 0 ? (
+            {pipelines.total > 0 ? (
               <>
                 <DataTable columns={["Pipeline", "Recent Status", "Repository", "Latest Run", ""]}>
-                  {pipelines.map((pipeline) => (
+                  {pipelines.rows.map((pipeline) => (
                     <PipelineRow key={pipeline.id} pipeline={pipeline} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={pipelines.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={pipelines.page} pageCount={pipelines.pageCount} total={pipelines.total} pageSize={pipelines.pageSize} />
               </>
             ) : (
               <EmptyState
