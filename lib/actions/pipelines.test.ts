@@ -713,7 +713,7 @@ describe('updatePipeline', () => {
 
     expect(prismaMock.pipeline.update).toHaveBeenCalledWith({
       where: { id: 'p1' },
-      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc' },
+      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', updatedAt: expect.any(Date) },
     });
     expect(result).toEqual({ status: 'success', message: 'Pipeline updated' });
     expect(revalidate).toHaveBeenCalledWith('/pipelines');
