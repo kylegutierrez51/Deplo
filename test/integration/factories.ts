@@ -4,6 +4,7 @@ import type { CustomNode } from '@/lib/types';
 import type { Edge } from '@xyflow/react';
 import type { Prisma } from '@/generated/prisma/client';
 import { createPipelineRun } from '@/lib/actions/run-trigger';
+import { encryptSecret, generateWebhookSecret } from '@/lib/utils/crypto';
 
 /*
  * Small builders for integration tests. Deliberately not prisma/seed.ts, which
@@ -38,6 +39,12 @@ export function makeEnvironment(over: Partial<{ name: string; requireApproval: b
       requireApproval: over.requireApproval ?? false,
       createdById: over.createdById ?? null,
     },
+  });
+}
+
+export function makeWebhook(over: Partial<{ lastDelivery: Date | null; createdAt: Date }> = {}) {
+  return prisma.webhook.create({
+    data: { ...encryptSecret(generateWebhookSecret()), ...over },
   });
 }
 

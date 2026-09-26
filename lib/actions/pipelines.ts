@@ -101,7 +101,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 
       await tx.pipeline.update({
         where: { id },
-        data: { name, repoUrl, description },
+        data: { name, repoUrl, description, updatedAt: new Date() },
       });
 
       await addAudit({
@@ -234,6 +234,12 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
             createdById,
           },
           select: { id: true, pipeline: { select: { name: true } } }
+        });
+
+        // The definition is the pipeline's content, so a new version is an edit to it.
+        await tx.pipeline.update({
+          where: { id: pipelineId },
+          data: { updatedAt: new Date() },
         });
 
         await addAudit({

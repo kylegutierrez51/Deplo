@@ -11,19 +11,25 @@ import type { EnvType, EventType, PipelineStatus, ResourceType, RunStatus, RunTr
 
 export type FilterOption = { readonly value: string; readonly label: string };
 
+
 /** The query keys a page filters on, each mapped to the options it accepts. */
 export type FilterDefinitions = Record<string, readonly FilterOption[]>;
 
+
 type ValueOf<O extends readonly FilterOption[]> = O[number]['value'];
+
 
 export type FiltersOf<D extends FilterDefinitions> = { [K in keyof D]: ValueOf<D[K]> };
 
+
 export const ALL = 'all';
+
 
 export const RECENCY_OPTIONS = [
   { value: 'most-recent', label: 'Most recent' },
   { value: 'least-recent', label: 'Least recent' },
 ] as const;
+
 
 export const ENV_TYPE_OPTIONS = [
   { value: ALL, label: 'All environment types' },
@@ -34,6 +40,7 @@ export const ENV_TYPE_OPTIONS = [
   { value: 'custom', label: 'Custom' },
 ] as const satisfies readonly { value: EnvType | typeof ALL; label: string }[];
 
+
 export const RUN_STATUS_OPTIONS = [
   { value: ALL, label: 'All statuses' },
   { value: 'queued', label: 'Queued' },
@@ -43,12 +50,14 @@ export const RUN_STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ] as const satisfies readonly { value: RunStatus | typeof ALL; label: string }[];
 
+
 export const RUN_TRIGGER_OPTIONS = [
   { value: ALL, label: 'All triggers' },
   { value: 'webhook', label: 'Webhook' },
   { value: 'manual', label: 'Manual' },
   { value: 'api', label: 'API' },
 ] as const satisfies readonly { value: RunTrigger | typeof ALL; label: string }[];
+
 
 export const RUN_FILTERS = {
   status: RUN_STATUS_OPTIONS,
@@ -57,7 +66,9 @@ export const RUN_FILTERS = {
   recency: RECENCY_OPTIONS,
 } as const satisfies FilterDefinitions;
 
+
 export type RunFilters = FiltersOf<typeof RUN_FILTERS>;
+
 
 /* Values are windows back from now; lib/filters/parse.ts turns them into a cutoff date. */
 export const DATE_RANGE_OPTIONS = [
@@ -68,29 +79,48 @@ export const DATE_RANGE_OPTIONS = [
   { value: '90days', label: 'Last 90 days' },
 ] as const;
 
+
 export type DateRange = (typeof DATE_RANGE_OPTIONS)[number]['value'];
+
+
+export const UPDATED_RANGE_OPTIONS = [
+  { value: ALL, label: 'Updated any time' },
+  { value: 'today', label: 'Updated today' },
+  { value: '7days', label: 'Updated in last 7 days' },
+  { value: '30days', label: 'Updated in last 30 days' },
+  { value: '90days', label: 'Updated in last 90 days' },
+] as const satisfies readonly { value: DateRange; label: string }[];
+
 
 export const PIPELINE_FILTERS = {
   status: [
     ...RUN_STATUS_OPTIONS,
     { value: 'idle', label: 'Idle' },
   ] as const satisfies readonly { value: PipelineStatus | typeof ALL; label: string }[],
+  updated: UPDATED_RANGE_OPTIONS,
 } as const satisfies FilterDefinitions;
+
 
 export type PipelineFilters = FiltersOf<typeof PIPELINE_FILTERS>;
 
+
 export const ENVIRONMENT_FILTERS = {
   environment: ENV_TYPE_OPTIONS,
-  updated: DATE_RANGE_OPTIONS,
+  updated: UPDATED_RANGE_OPTIONS,
 } as const satisfies FilterDefinitions;
+
 
 export type EnvironmentFilters = FiltersOf<typeof ENVIRONMENT_FILTERS>;
 
+
 export const SECRET_FILTERS = {
   environment: ENV_TYPE_OPTIONS,
+  updated: UPDATED_RANGE_OPTIONS,
 } as const satisfies FilterDefinitions;
 
+
 export type SecretFilters = FiltersOf<typeof SECRET_FILTERS>;
+
 
 export const AUDIT_FILTERS = {
   resource: [
@@ -105,6 +135,7 @@ export const AUDIT_FILTERS = {
   recency: RECENCY_OPTIONS,
 } as const satisfies FilterDefinitions;
 
+
 export type AuditFilters = FiltersOf<typeof AUDIT_FILTERS>;
 
 
@@ -117,7 +148,9 @@ export const APPROVAL_FILTERS = {
   ],
 } as const satisfies FilterDefinitions;
 
+
 export type ApprovalFilters = FiltersOf<typeof APPROVAL_FILTERS>;
+
 
 export const WEBHOOK_FILTERS = {
   active: [
@@ -128,10 +161,14 @@ export const WEBHOOK_FILTERS = {
   recency: [
     { value: 'most-recent', label: 'Most recently registered' },
     { value: 'least-recent', label: 'Least recently registered' },
+    { value: 'delivered-recent', label: 'Most recently delivered' },
+    { value: 'delivered-least', label: 'Least recently delivered' },
   ],
 } as const satisfies FilterDefinitions;
 
+
 export type WebhookFilters = FiltersOf<typeof WEBHOOK_FILTERS>;
+
 
 export const WEBHOOK_EVENT_FILTERS = {
   status: [
@@ -146,6 +183,11 @@ export const WEBHOOK_EVENT_FILTERS = {
     { value: 'push', label: 'Push' },
     { value: 'pull-request', label: 'Pull Request' },
   ] as const satisfies readonly { value: EventType | typeof ALL; label: string }[],
+  received: [
+    { value: 'most-recent', label: 'Most Recently Received' },
+    { value: 'least-recent', label: 'Least Recently Received'}
+  ]
 } as const satisfies FilterDefinitions;
+
 
 export type WebhookEventFilters = FiltersOf<typeof WEBHOOK_EVENT_FILTERS>;

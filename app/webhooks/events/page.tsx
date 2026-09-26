@@ -70,6 +70,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
                   styles={styles} />
                 <QueryFilterListbox id={"status"} name={"status"} styles={styles} options={WEBHOOK_EVENT_FILTERS.status} value={filters.status} />
                 <QueryFilterListbox id={"event-type"} name={"event-type"} styles={styles} options={WEBHOOK_EVENT_FILTERS['event-type']} value={filters['event-type']} />
+                <QueryFilterListbox id={"received"} name={"received"} styles={styles} options={WEBHOOK_EVENT_FILTERS.received} value={filters.received} />
               </div>
             </div>
 

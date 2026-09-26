@@ -34,4 +34,20 @@ describe('getWebhooksPage filtering', () => {
   it('sorts oldest first for least-recent', async () => {
     expect((await queryFor({ recency: 'least-recent' }))?.orderBy).toEqual([{ createdAt: 'asc' }, { id: 'asc' }]);
   });
+
+  it('sorts by latest delivery, never-delivered last, for delivered-recent', async () => {
+    expect((await queryFor({ recency: 'delivered-recent' }))?.orderBy).toEqual([
+      { lastDelivery: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }, { id: 'desc' },
+    ]);
+  });
+
+  it('sorts by oldest delivery, never-delivered first, for delivered-least', async () => {
+    expect((await queryFor({ recency: 'delivered-least' }))?.orderBy).toEqual([
+      { lastDelivery: { sort: 'asc', nulls: 'first' } }, { createdAt: 'desc' }, { id: 'desc' },
+    ]);
+  });
+
+  it('falls back to newest registered for an unrecognised sort', async () => {
+    expect((await queryFor({ recency: 'nope' }))?.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
+  });
 });

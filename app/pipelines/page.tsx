@@ -55,6 +55,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Search pipelines..."} />
                 <QueryFilterListbox id={"status"} name={"status"} options={PIPELINE_FILTERS.status} value={filters.status} />
+                <QueryFilterListbox id={"updated"} name={"updated"} options={PIPELINE_FILTERS.updated} value={filters.updated} />
               </div>
             </div>
 

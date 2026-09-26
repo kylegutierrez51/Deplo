@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "pipelines" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;

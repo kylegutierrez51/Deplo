@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { decryptSecret } from '@/lib/utils/crypto';
 import type { Secret as PrismaSecret, EnvironmentType } from '@/generated/prisma';
 import { ALL, SECRET_FILTERS, type SecretFilters } from '@/lib/filters/options';
-import { parseFilters } from '@/lib/filters/parse';
+import { dateRangeCutoff, parseFilters } from '@/lib/filters/parse';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
@@ -15,9 +15,11 @@ export type Secret = Omit<PrismaSecret, 'encryptedValue' | 'authTag' | 'iv'> & {
 
 export type SecretDetail = Secret & { value: string };
 
-function secretsWhere({ environment }: SecretFilters) {
+function secretsWhere({ environment, updated }: SecretFilters) {
+  const updatedSince = dateRangeCutoff(updated);
   return {
     ...(environment !== ALL && { environment: { type: environment.toUpperCase() as EnvironmentType } }),
+    ...(updatedSince && { updatedAt: { gte: updatedSince } }),
   };
 }
 

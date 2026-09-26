@@ -107,6 +107,23 @@ describe('getPipelines filtering', () => {
   it('treats idle as having no latest run', async () => {
     expect(await whereFor({ status: 'idle' })).toEqual({ lastRunId: null });
   });
+
+  it('keeps only pipelines updated since midnight UTC for today', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+
+    expect(await whereFor({ updated: 'today' })).toEqual({
+      updatedAt: { gte: new Date('2026-09-22T00:00:00Z') },
+    });
+  });
+
+  it('applies status and last updated together', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+
+    expect(await whereFor({ status: 'idle', updated: 'today' })).toEqual({
+      lastRunId: null,
+      updatedAt: { gte: new Date('2026-09-22T00:00:00Z') },
+    });
+  });
 });
 
 describe('getPipelineById', () => {

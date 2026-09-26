@@ -124,4 +124,12 @@ describe('getSecrets filtering', () => {
   it('filters on the owning environment\'s type', async () => {
     expect((await query({ environment: 'production' }))?.where).toEqual({ environment: { type: 'PRODUCTION' } });
   });
+
+  it('keeps only secrets updated since midnight UTC for today', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-22T12:00:00Z'));
+
+    expect((await query({ updated: 'today' }))?.where).toEqual({
+      updatedAt: { gte: new Date('2026-09-22T00:00:00Z') },
+    });
+  });
 });

@@ -183,6 +183,56 @@ describe('the sweep and ON DELETE RESTRICT', () => {
   });
 });
 
+/*
+ * Pipeline.updatedAt means "last authored change", so it is set by hand rather than by
+ * @updatedAt — which Prisma applies client-side to every update, including the lastRunId
+ * writes a run trigger makes. Only a real client can show which writes stamp it.
+ */
+describe('the pipeline updatedAt', () => {
+  const longAgo = new Date('2020-01-01T00:00:00Z');
+
+  const backdated = async () => {
+    const pipeline = await makePipeline();
+    await prisma.pipeline.update({ where: { id: pipeline.id }, data: { updatedAt: longAgo } });
+    return pipeline;
+  };
+
+  const updatedAtOf = async (pipelineId: string) =>
+    (await prisma.pipeline.findUniqueOrThrow({ where: { id: pipelineId } })).updatedAt;
+
+  it('moves when a save mints a new version', async () => {
+    const pipeline = await backdated();
+
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+
+    expect((await updatedAtOf(pipeline.id)).getTime()).toBeGreaterThan(longAgo.getTime());
+  });
+
+  it('stays put for a save that changed nothing', async () => {
+    const pipeline = await makePipeline();
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+    await prisma.pipeline.update({ where: { id: pipeline.id }, data: { updatedAt: longAgo } });
+
+    await savePipelineDefinition(pipeline.id, [stage('a')], []);
+
+    expect(await updatedAtOf(pipeline.id)).toEqual(longAgo);
+  });
+
+  // Triggering a run moves lastRunId, which under @updatedAt made a months-old pipeline
+  // look freshly edited every time a webhook fired.
+  it('stays put when a run is triggered', async () => {
+    const user = await makeUser();
+    const pipeline = await backdated();
+    const definition = await makeDefinition(pipeline.id, 0, [stage('a')]);
+
+    const run = await makeRun(pipeline.id, definition.id, user.id);
+
+    const after = await prisma.pipeline.findUniqueOrThrow({ where: { id: pipeline.id } });
+    expect(after.lastRunId).toBe(run.id);
+    expect(after.updatedAt).toEqual(longAgo);
+  });
+});
+
 describe('cascades', () => {
   it('removes a pipeline\'s definitions when the pipeline goes', async () => {
     const pipeline = await makePipeline();
