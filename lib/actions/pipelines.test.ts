@@ -890,6 +890,31 @@ describe('audit trail', () => {
         expect(tx.auditLog.create).not.toHaveBeenCalled();
       });
 
+      // The definition is the pipeline's content, so a new version is an edit to the pipeline.
+      // Inside the transaction so the timestamp cannot move for a version that rolled back.
+      it('stamps the pipeline as updated in the same transaction as the new version', async () => {
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+
+        await savePipelineDefinition('p1', [node('a')], []);
+
+        expect(tx.pipeline.update).toHaveBeenCalledWith({
+          where: { id: 'p1' },
+          data: { updatedAt: expect.any(Date) },
+        });
+        expect(prismaMock.pipeline.update).not.toHaveBeenCalled();
+      });
+
+      it('leaves the pipeline untouched for a save that changed nothing', async () => {
+        const nodes = [node('a')];
+        const { graphJson, configJson } = toDefinition(nodes, []);
+        prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+
+        await savePipelineDefinition('p1', nodes, []);
+
+        expect(tx.pipeline.update).not.toHaveBeenCalled();
+        expect(prismaMock.pipeline.update).not.toHaveBeenCalled();
+      });
+
       // The losing attempt throws at the insert, before its audit, and its transaction is
       // rolled back — so one edit is one entry however many attempts it took.
       it('writes one audit for a save that lost a version race and retried', async () => {
