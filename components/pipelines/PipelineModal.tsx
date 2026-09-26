@@ -61,18 +61,19 @@ export default function PipelineModal({
   onError,
 }: PipelineModalProps) {
   const [deleteModal, setDeleteModal] = useState(false);
-  const [, createFormAction] = useActionState(async (prev: FormState, formData: FormData) => {
+  const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await addPipeline(prev, formData);
     if (result.status === 'success') onCreate(result.message);
     else if (result.status === 'error') onError(result.message);
     return result;
   }, initialState);
-  const [, editFormAction] = useActionState(async (prev: FormState, formData: FormData) => {
+  const [, editFormAction, editPending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await updatePipeline(prev, formData);
     if (result.status === 'success') onSave(result.message);
     else if (result.status === 'error') onError(result.message);
     return result;
   }, initialState);
+  const pending = createPending || editPending;
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
@@ -103,19 +104,19 @@ export default function PipelineModal({
     </>
   ) : (mode === 'create' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Create</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose} disabled={pending}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" disabled={pending}>{pending ? 'Creating…' : 'Create'}</button>
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditOrDeleteClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Save Changes</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditOrDeleteClose} disabled={pending}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" disabled={pending}>{pending ? 'Saving…' : 'Save Changes'}</button>
     </>
   );
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} title={title} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
             <div className={styles['item-flex']}>

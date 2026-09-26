@@ -11,9 +11,10 @@ interface ModalProps {
   footer: React.ReactNode;
   children: React.ReactNode;
   action?: (formData: FormData) => void | Promise<void>;
+  pending?: boolean;
 }
 
-export default function Modal({ title, subtitle, icon, mode, onClose, footer, children, action }: ModalProps) {
+export default function Modal({ title, subtitle, icon, mode, onClose, footer, children, action, pending = false }: ModalProps) {
   return (
     <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)' }} onClick={mode === 'view' ? onClose : undefined}>
       <div className={styles.container} onClick={e => e.stopPropagation()}>
@@ -30,7 +31,7 @@ export default function Modal({ title, subtitle, icon, mode, onClose, footer, ch
               {subtitle && <p>{subtitle}</p>}
             </div>
           </div>
-          <button className={styles.closeBtn} type="button" onClick={onClose}>
+          <button className={styles.closeBtn} type="button" aria-label="Close" onClick={onClose} disabled={pending}>
             <ion-icon name="close-outline"></ion-icon>
           </button>
         </div>

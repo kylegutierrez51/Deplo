@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import SecretModal from '@/components/secrets/SecretModal';
 import { addSecret, deleteSecret, updateSecret } from '@/lib/actions/secrets';
+import type { FormState } from '@/lib/types';
 
 /*
  * The representative useActionState modal — EnvironmentModal, PipelineModal and
@@ -292,6 +293,52 @@ describe("reporting the server's message", () => {
     await waitFor(() => expect(onError).toHaveBeenCalledWith('This secret no longer exists'));
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Closing mid-save would let a late result toast and navigate after the modal
+   * is gone (an edit's onSave would reopen it), so the modal locks until the
+   * action settles.
+   */
+  describe('while a save is in flight', () => {
+    function deferred() {
+      let resolve!: (state: FormState) => void;
+      const promise = new Promise<FormState>(r => { resolve = r; });
+      return { promise, resolve };
+    }
+
+    it('locks create until the action settles', async () => {
+      const pending = deferred();
+      add.mockReturnValueOnce(pending.promise);
+      setup({ mode: 'create' });
+
+      submitForm();
+
+      expect(await screen.findByRole('button', { name: 'Creating…' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
+
+      await act(async () => pending.resolve({ status: 'error', message: 'Key taken' }));
+
+      expect(screen.getByRole('button', { name: 'Create' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Close' })).toBeEnabled();
+    });
+
+    it('locks edit until the action settles', async () => {
+      const pending = deferred();
+      update.mockReturnValueOnce(pending.promise);
+      setup({ mode: 'edit' });
+
+      submitForm();
+
+      expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+
+      await act(async () => pending.resolve({ status: 'error', message: 'This secret no longer exists' }));
+
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled();
+    });
   });
 
   describe('deleting', () => {
