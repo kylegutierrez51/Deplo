@@ -64,8 +64,10 @@ export default function EnvironmentModal({
   onSave,
   onError,
 }: EnvironmentModalProps) {
+  const [enteredName, setEnteredName] = useState(name || '');
   const [envType, setEnvType] = useState<EnvType>(type);
   const [approvalEnabled, setApprovalEnabled] = useState(requireApproval);
+  const [deleteModal, setDeleteModal] = useState(false);
   const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await addEnvironment(prev, formData);
     if (result.status === 'success') onCreate(result.message);
@@ -79,7 +81,6 @@ export default function EnvironmentModal({
     return result;
   }, initialState);
   const pending = createPending || editPending;
-  const [deleteModal, setDeleteModal] = useState(false);
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
@@ -171,7 +172,8 @@ export default function EnvironmentModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="name">Name</label>
-              <input name="name" id="name" placeholder="e.g. staging, qa-integration" defaultValue={name} required />
+              <input name="name" id="name" placeholder="e.g. staging, qa-integration" required
+                value={enteredName} onChange={(e) => setEnteredName(e.target.value)} />
               <span className={styles.nameHint}>Lowercase letters, numbers, and hyphens only. This is the key used to scope secrets and pipeline targets.</span>
             </div>
 

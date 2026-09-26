@@ -60,6 +60,9 @@ export default function PipelineModal({
   onSave,
   onError,
 }: PipelineModalProps) {
+  const [enteredName, setEnteredName] = useState(name || '');
+  const [enteredRepoUrl, setEnteredRepoUrl] = useState(repoUrl || '');
+  const [enteredDescription, setEnteredDescription] = useState(description || '');
   const [deleteModal, setDeleteModal] = useState(false);
   const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await addPipeline(prev, formData);
@@ -182,17 +185,20 @@ export default function PipelineModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="name">Name</label>
-              <input name="name" id="name" placeholder="e.g. build-frontend" defaultValue={name} required />
+              <input name="name" id="name" placeholder="e.g. build-frontend" required
+                value={enteredName} onChange={(e) => setEnteredName(e.target.value)} />
             </div>
 
             <div className={styles.item}>
               <label htmlFor="repo_url">Repo URL <span className={styles.optionalBadge}>optional</span></label>
-              <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client" defaultValue={repoUrl || ''} />
+              <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client"
+                value={enteredRepoUrl} onChange={(e) => setEnteredRepoUrl(e.target.value)} />
             </div>
 
             <div className={styles.item}>
               <label htmlFor="description">Description <span className={styles.optionalBadge}>optional</span></label>
-              <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main" defaultValue={description || ''}></textarea>
+              <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main"
+                value={enteredDescription} onChange={(e) => setEnteredDescription(e.target.value)}></textarea>
             </div>
           </>
         )}
