@@ -112,7 +112,7 @@ model Pipeline {
   lastRun   PipelineRun? @relation("PipelineLastRun", fields: [lastRunId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   @@map("pipelines")
 }
