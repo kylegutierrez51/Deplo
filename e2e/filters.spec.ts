@@ -87,5 +87,5 @@ test('an unrecognised value falls back to the default', async ({ page }) => {
 
   expect(response?.status()).toBe(200);
   await expect(listbox(page, 'environment')).toContainText('All environment types');
-  await expect(listbox(page, 'updated')).toContainText('All time');
+  await expect(listbox(page, 'updated')).toContainText('Updated any time');
 });
