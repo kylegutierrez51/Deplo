@@ -1,39 +1,28 @@
-"use client"
-
 import styles from './pagination.module.css';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface PaginationButtonProps {
   direction: 'next' | 'prev';
-  page: number;
-  disabled?: boolean;
+  /* Where the button goes; absent on the first/last page, which renders it disabled */
+  href?: string;
 }
 
-export default function PaginationButton({ direction, page, disabled }: PaginationButtonProps) {
-  const router = useRouter();
-  const pathName = usePathname();
-  const searchParams = useSearchParams();
+export default function PaginationButton({ direction, href }: PaginationButtonProps) {
+  const content = direction === "next" ? (
+    <>
+      <div>Next</div>
+      <ion-icon name={`chevron-forward-outline`}></ion-icon>
+    </>
+  ) : (
+    <>
+      <ion-icon name={`chevron-back-outline`}></ion-icon>
+      <div>Prev</div>
+    </>
+  );
 
-  const handleClick = () => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(page));
-    router.push(`${pathName}?${params.toString()}`)
-  }
-
-  return (
-    <button type="button" className={styles['view-option']} onClick={handleClick} disabled={disabled}>
-      {direction === "next" ? (
-        <>
-          <div>Next</div>
-          <ion-icon name={`chevron-forward-outline`}></ion-icon>
-        </>
-      ) : (
-        <>
-          <ion-icon name={`chevron-back-outline`}></ion-icon>
-          <div>Prev</div>
-
-        </>
-      )}
-    </button>
-  )
+  return href ? (
+    <Link href={href} className={styles['view-option']} rel={direction}>{content}</Link>
+  ) : (
+    <span className={styles['view-option']} aria-disabled="true">{content}</span>
+  );
 }
