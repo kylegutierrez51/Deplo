@@ -4,6 +4,7 @@ import { fromDefinition } from '@/lib/pipeline/definition';
 import type { GraphJson, PipelineStatus } from '@/lib/types';
 import { ALL, PIPELINE_FILTERS, type PipelineFilters } from '@/lib/filters/options';
 import { invert, parseFilters } from '@/lib/filters/parse';
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
   lastRun: string | null;
@@ -40,10 +41,10 @@ function statusWhere(status: PipelineFilters['status']) {
   return { lastRun: { status: STATUS_TO_PRISMA[status] } };
 }
 
-export async function getPipelines(filters: PipelineFilters = parseFilters({}, PIPELINE_FILTERS)): Promise<Pipeline[]> {
+async function findPipelines(args: { where: ReturnType<typeof statusWhere>; skip?: number; take?: number }): Promise<Pipeline[]> {
   const pipelines = await prisma.pipeline.findMany({
-    where: statusWhere(filters.status),
-    orderBy: { createdAt: "desc" },
+    ...args,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: { lastRun: true },
   });
 
@@ -53,6 +54,19 @@ export async function getPipelines(filters: PipelineFilters = parseFilters({}, P
     lastRun: lastRun?.id ?? null,
     runNumber: lastRun?.runNumber,
   }));
+}
+
+// Unpaginated: Used by WebhookModal so users can select pipelines
+export async function getPipelines(filters: PipelineFilters = parseFilters({}, PIPELINE_FILTERS)): Promise<Pipeline[]> {
+  return findPipelines({ where: statusWhere(filters.status) });
+}
+
+export async function getPipelinesPage(filters: PipelineFilters, page: number, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Pipeline>> {
+  const where = statusWhere(filters.status);
+  const total = await prisma.pipeline.count({ where });
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
+
+  return { rows: await findPipelines({ where, skip, take }), total, ...meta };
 }
 
 // the subtitle counts every pipeline regardless of filtering

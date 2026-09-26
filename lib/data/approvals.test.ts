@@ -1,4 +1,4 @@
-import { getApprovals, getApprovalStats } from '@/lib/data/approvals';
+import { getApprovalsPage, getApprovalStats } from '@/lib/data/approvals';
 import { parseFilters } from '@/lib/filters/parse';
 import { APPROVAL_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -18,7 +18,13 @@ import type { StageStatus as PrismaStageStatus } from '@/generated/prisma';
  */
 jest.mock('@/lib/prisma');
 
-beforeEach(resetPrismaMock);
+beforeEach(() => {
+  resetPrismaMock();
+  prismaMock.stageResult.count.mockResolvedValue(0);
+});
+
+// Most cases are about the mapped rows, not the window they arrived in; paging is covered in pagination.test.ts
+const getApprovals = async (...args: Parameters<typeof getApprovalsPage>) => (await getApprovalsPage(...args)).rows;
 
 const stage = (stageId: string, status: PrismaStageStatus, attempt = 1) => ({
   id: `${stageId}-${attempt}`,
@@ -175,7 +181,7 @@ describe('the query it issues', () => {
   });
 
   it('puts the longest-waiting approval first', () => {
-    expect(call()).toMatchObject({ orderBy: { createdAt: 'asc' } });
+    expect(call()).toMatchObject({ orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] });
   });
 
   /*
@@ -373,7 +379,7 @@ describe('getApprovals filtering', () => {
   });
 
   it('sorts newest first for most-recent', async () => {
-    expect((await query({ recency: 'most-recent' }))?.orderBy).toEqual({ createdAt: 'desc' });
+    expect((await query({ recency: 'most-recent' }))?.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
   });
 });
 

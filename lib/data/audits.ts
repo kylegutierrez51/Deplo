@@ -3,6 +3,7 @@ import type { AuditAction as PrismaAuditAction, ResourceType as PrismaResourceTy
 import type { AuditAction, AuditMeta, ResourceType } from "@/lib/types";
 import { ALL, AUDIT_FILTERS, type AuditFilters } from "@/lib/filters/options";
 import { dateRangeCutoff, invert, parseFilters } from "@/lib/filters/parse";
+import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from "@/lib/utils/pagination";
 
 export type Audit = Omit<PrismaAuditLog, "action" | "resourceType" | "resourceMeta"> & {
   action: AuditAction;
@@ -49,28 +50,36 @@ function parseAuditMeta(value: unknown): AuditMeta | null {
 
 const RESOURCE_TO_PRISMA = invert(RESOURCE_MAP);
 
-export async function getAudits(filters: AuditFilters = parseFilters({}, AUDIT_FILTERS)): Promise<Audit[]> {
+export async function getAuditsPage(filters: AuditFilters = parseFilters({}, AUDIT_FILTERS), page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Audit>> {
   const { resource, range, recency } = filters;
   const createdSince = dateRangeCutoff(range);
+  const where = {
+    ...(resource !== ALL && { resourceType: RESOURCE_TO_PRISMA[resource] }),
+    ...(createdSince && { createdAt: { gte: createdSince } }),
+  };
+  const direction = recency === "least-recent" ? "asc" : "desc";
+
+  const total = await prisma.auditLog.count({ where });
+  const { skip, take, ...meta } = pageWindow(page, total, pageSize);
 
   const audits = await prisma.auditLog.findMany({
-    where: {
-      ...(resource !== ALL && { resourceType: RESOURCE_TO_PRISMA[resource] }),
-      ...(createdSince && { createdAt: { gte: createdSince } }),
-    },
-    orderBy: { createdAt: recency === "least-recent" ? "asc" : "desc" },
+    where,
+    skip,
+    take,
+    orderBy: [{ createdAt: direction }, { id: direction }],
     include: {
       user: { select: { name: true }}
     }
   });
 
-  return audits.map(({ ...audit }) => ({
+  const rows = audits.map(({ ...audit }) => ({
     ...audit,
     action: ACTION_MAP[audit.action],
     resourceType: RESOURCE_MAP[audit.resourceType],
     resourceMeta: parseAuditMeta(audit.resourceMeta),
     user: audit.user?.name ?? null
   }));
+  return { rows, total, ...meta };
 }
 
 export async function getAuditById(id: string): Promise<Audit | null> {

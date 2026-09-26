@@ -1,4 +1,4 @@
-import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
+import { getWebhookEventsPage, getWebhookEventById } from '@/lib/data/webhook-events';
 import { parseFilters } from '@/lib/filters/parse';
 import { WEBHOOK_EVENT_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -10,7 +10,10 @@ import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
  */
 jest.mock('@/lib/prisma');
 
-beforeEach(resetPrismaMock);
+beforeEach(() => {
+  resetPrismaMock();
+  prismaMock.webhookEvent.count.mockResolvedValue(0);
+});
 
 /*
  * groupBy's Prisma signature is a heavily-overloaded generic, so jest-mock-extended
@@ -40,14 +43,14 @@ const pushPayload = {
   head_commit: { message: 'fix the thing' },
 };
 
-describe('getWebhookEvents counts', () => {
+describe('getWebhookEventsPage counts', () => {
   // groupBy only returns statuses that actually occur, so the four buckets are
   // pre-zeroed — otherwise the UI would render undefined for an unused status.
   it('zero-fills every status when there are no events', async () => {
     prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
     groupByMock().mockResolvedValue([] as never);
 
-    const { counts } = await getWebhookEvents();
+    const { counts } = await getWebhookEventsPage();
 
     expect(counts).toEqual({ pending: 0, processed: 0, ignored: 0, failed: 0 });
   });
@@ -58,7 +61,7 @@ describe('getWebhookEvents counts', () => {
       { status: 'PROCESSED', _count: 7 },
     ] as never);
 
-    const { counts } = await getWebhookEvents();
+    const { counts } = await getWebhookEventsPage();
 
     expect(counts).toEqual({ pending: 0, processed: 7, ignored: 0, failed: 0 });
   });
@@ -72,17 +75,17 @@ describe('getWebhookEvents counts', () => {
       { status: 'FAILED', _count: 4 },
     ] as never);
 
-    const { counts } = await getWebhookEvents();
+    const { counts } = await getWebhookEventsPage();
 
     expect(counts).toEqual({ pending: 1, processed: 2, ignored: 3, failed: 4 });
   });
 });
 
-describe('getWebhookEvents payload extraction', () => {
+describe('getWebhookEventsPage payload extraction', () => {
   const eventsFrom = async (payload: unknown) => {
     prismaMock.webhookEvent.findMany.mockResolvedValue([row({ payload })] as never);
     groupByMock().mockResolvedValue([] as never);
-    const { events } = await getWebhookEvents();
+    const { rows: events } = await getWebhookEventsPage();
     return events[0];
   };
 
@@ -117,11 +120,11 @@ describe('getWebhookEvents payload extraction', () => {
   });
 });
 
-describe('getWebhookEvents translation', () => {
+describe('getWebhookEventsPage translation', () => {
   const single = async (over: Record<string, unknown>) => {
     prismaMock.webhookEvent.findMany.mockResolvedValue([row(over)] as never);
     groupByMock().mockResolvedValue([] as never);
-    const { events } = await getWebhookEvents();
+    const { rows: events } = await getWebhookEventsPage();
     return events[0];
   };
 
@@ -152,10 +155,10 @@ describe('getWebhookEvents translation', () => {
     prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
     groupByMock().mockResolvedValue([] as never);
 
-    await getWebhookEvents();
+    await getWebhookEventsPage();
 
     expect(prismaMock.webhookEvent.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { receivedAt: 'desc' } }),
+      expect.objectContaining({ orderBy: [{ receivedAt: 'desc' }, { id: 'desc' }] }),
     );
   });
 });
@@ -186,11 +189,11 @@ describe('getWebhookEventById', () => {
   });
 });
 
-describe('getWebhookEvents filtering', () => {
+describe('getWebhookEventsPage filtering', () => {
   const run = async (params: Record<string, string>) => {
     prismaMock.webhookEvent.findMany.mockResolvedValue([] as never);
     groupByMock().mockResolvedValue([] as never);
-    await getWebhookEvents(parseFilters(params, WEBHOOK_EVENT_FILTERS));
+    await getWebhookEventsPage(parseFilters(params, WEBHOOK_EVENT_FILTERS));
   };
 
   it('translates status and event type into their Prisma enums', async () => {
