@@ -88,6 +88,7 @@ export type EnvironmentFilters = FiltersOf<typeof ENVIRONMENT_FILTERS>;
 
 export const SECRET_FILTERS = {
   environment: ENV_TYPE_OPTIONS,
+  updated: DATE_RANGE_OPTIONS,
 } as const satisfies FilterDefinitions;
 
 export type SecretFilters = FiltersOf<typeof SECRET_FILTERS>;

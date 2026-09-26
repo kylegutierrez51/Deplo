@@ -56,6 +56,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
               <div className={styles['filters-bar']}>
                 <SearchInput placeholder={"Filter by key or notes..."} />
                 <QueryFilterListbox id={"environment"} name={"environment"} options={SECRET_FILTERS.environment} value={filters.environment} />
+                <QueryFilterListbox id={"updated"} name={"updated"} options={SECRET_FILTERS.updated} value={filters.updated} />
               </div>
             </div>
 
