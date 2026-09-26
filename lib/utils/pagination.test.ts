@@ -69,4 +69,38 @@ describe('pageRange', () => {
   it('lists every page when there are few enough', () => {
     expect(pageRange(3, 5)).toEqual([1, 2, 3, 4, 5]);
   });
+
+  /*
+   * Six and seven pages are too few for the middle shape, so the start and end shapes
+   * meet there. Collapsing them anyway gave [1, '...', 2, 3, 4, 5, 6] for page 3 of 6,
+   * an ellipsis hiding nothing, and [1, '...', 3, ...] for page 4, one hiding only page 2.
+   */
+  it('lists every page up to seven, where collapsing would hide one page or none', () => {
+    expect(pageRange(3, 6)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(pageRange(4, 6)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(pageRange(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('starts collapsing at eight pages', () => {
+    expect(pageRange(4, 8)).toEqual([1, 2, 3, 4, 5, '...', 8]);
+    expect(pageRange(5, 8)).toEqual([1, '...', 4, 5, 6, 7, 8]);
+  });
+
+  // Collected rather than asserted in the loop, so a failure names every page that produced one.
+  it('never uses an ellipsis for fewer than two pages', () => {
+    const offenders: string[] = [];
+
+    for (let pageCount = 1; pageCount <= 30; pageCount++) {
+      for (let current = 1; current <= pageCount; current++) {
+        const items = pageRange(current, pageCount);
+        items.forEach((item, i) => {
+          if (item !== '...') return;
+          const hidden = (items[i + 1] as number) - (items[i - 1] as number) - 1;
+          if (hidden < 2) offenders.push(`page ${current} of ${pageCount}: ${JSON.stringify(items)}`);
+        });
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
 });

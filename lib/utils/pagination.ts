@@ -50,21 +50,42 @@ export function pageWindow(page: number, total: number, pageSize: number = DEFAU
 }
 
 /*
- * First, last, and the current page with one neighbour either side, e.g. 9 of 22 gives
- * [1, '...', 8, 9, 10, '...', 22]. A gap hiding exactly one page shows that page instead,
- * since an ellipsis would take the same space and say less.
- */
-export function pageRange(current: number, pageCount: number): PageItem[] {
-  const shown = [...new Set([1, current - 1, current, current + 1, pageCount])]
-    .filter((page) => page >= 1 && page <= pageCount)
-    .sort((a, b) => a - b);
+returns list of pages
 
-  const items: PageItem[] = [];
-  for (const page of shown) {
-    const previous = items.at(-1);
-    if (typeof previous === 'number' && page - previous === 2) items.push(page - 1);
-    else if (typeof previous === 'number' && page - previous > 2) items.push('...');
-    items.push(page);
+examples for each condition (in order):
+ 1. [1, 2, 3, 4, 5]
+ 2. [1, ..., 4, 5, 6, ..., 9]
+ 3. [1, ..., 5, 6, 7, 8, 9]
+ 4. [1, 2, 3, 4, 5, ..., 9]
+*/
+export function pageRange(current: number, pageCount: number): PageItem[] {
+  if (pageCount <= 7) {
+    const range: PageItem[] = [];
+    for (let i = 1; i <= pageCount; i++) {
+      range.push(i);
+    }
+    return range;
   }
-  return items;
+
+  const left = 1 + 3;
+  const right = pageCount - 3;
+
+  if (current > left && current < right) {
+    return [1, "...", current - 1, current, current + 1, "...", pageCount];
+  }
+  else if(current >= right) {
+    const range: PageItem[] = [1, "...", current - 1];
+    for (let i = current; i <= pageCount; i++) {
+      range.push(i);
+    }
+    return range;
+  }
+  else { // current <= left
+    const range: PageItem[] = [];
+    for (let i = 1; i <= current + 1; i++) {
+      range.push(i);
+    }
+    range.push("...", pageCount)
+    return range;
+  }
 }
