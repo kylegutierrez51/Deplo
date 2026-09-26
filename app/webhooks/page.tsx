@@ -11,15 +11,17 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getWebhooks, getWebhookById } from "@/lib/data/webhooks";
+import { getWebhooksPage, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";
 import { redirect } from 'next/navigation';
 import { WEBHOOK_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 
 const REFRESH_INTERVAL_MS = 15_000;
+const PAGE_SIZE = 4;
 
-type SearchParams = Promise<{ mode?: string; id?: string; active?: string; recency?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; active?: string; recency?: string; page?: string; }>;
 
 export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -27,7 +29,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
   const filters = parseFilters(params, WEBHOOK_FILTERS);
   const filtered = hasActiveFilters(filters, WEBHOOK_FILTERS);
 
-  const webhooks = await getWebhooks(filters);
+  const webhooks = await getWebhooksPage(filters, parsePage(params.page), PAGE_SIZE);
   const pipelines = await getPipelines();
 
   const record = id ? await getWebhookById(id) : undefined;
@@ -57,7 +59,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-          {webhooks.length > 0 || filtered ? (
+          {webhooks.total > 0 || filtered ? (
             <>
               <div className={styles.filters}>
                 <div className={styles['filters-bar']}>
@@ -67,10 +69,10 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
                 </div>
               </div>
 
-              {webhooks.length > 0 ? (
+              {webhooks.total > 0 ? (
                 <>
                   <div className={styles['webhook-layout']}>
-                    {webhooks.map((webhook) => (
+                    {webhooks.rows.map((webhook) => (
                       <WebhookCardShell key={webhook.id} id={webhook.id}>
                         <WebhookCard
                           webhook={webhook} />
@@ -78,7 +80,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
                     ))}
                   </div>
 
-                  <Pagination showing="1-3" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                  <Pagination page={webhooks.page} pageCount={webhooks.pageCount} total={webhooks.total} pageSize={webhooks.pageSize} />
                 </>
               ) : (
                 <EmptyState

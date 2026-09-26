@@ -9,12 +9,13 @@ import EnvironmentRow from '@/components/environments/EnvironmentRow';
 import Pagination from '@/components/ui/pagination/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import EnvModalController from '@/components/environments/EnvModalController';
-import { getEnvironmentById, getEnvironments } from '@/lib/data/environments';
+import { getEnvironmentById, getEnvironmentsPage } from '@/lib/data/environments';
 import { redirect } from 'next/navigation';
 import { ENVIRONMENT_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 
-type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; updated?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; updated?: string; page?: string; }>;
 
 export default async function Environments({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -22,7 +23,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
   const filters = parseFilters(params, ENVIRONMENT_FILTERS);
   const filtered = hasActiveFilters(filters, ENVIRONMENT_FILTERS);
 
-  const environments = await getEnvironments(filters);
+  const environments = await getEnvironmentsPage(filters, parsePage(params.page));
 
   const record = id ? await getEnvironmentById(id) : undefined;
 
@@ -47,7 +48,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           <AddButton text={"New Environment"} url={"environments"} />
         </Subheader>
 
-        {environments.length > 0 || filtered ? (
+        {environments.total > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -57,15 +58,15 @@ export default async function Environments({ searchParams }: { searchParams: Sea
               </div>
             </div>
 
-            {environments.length > 0 ? (
+            {environments.total > 0 ? (
               <>
                 <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
-                  {environments.map((env) => (
+                  {environments.rows.map((env) => (
                     <EnvironmentRow key={env.id} env={env} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={environments.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={environments.page} pageCount={environments.pageCount} total={environments.total} pageSize={environments.pageSize} />
               </>
             ) : (
               <EmptyState

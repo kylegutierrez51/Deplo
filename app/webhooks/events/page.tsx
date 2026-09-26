@@ -11,13 +11,14 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import WebhookEventModalController from "@/components/webhook-events/WebhookEventModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getWebhookEvents, getWebhookEventById } from '@/lib/data/webhook-events';
+import { getWebhookEventsPage, getWebhookEventById } from '@/lib/data/webhook-events';
 import { WEBHOOK_EVENT_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 
 const REFRESH_INTERVAL_MS = 15_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; status?: string; 'event-type'?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; 'event-type'?: string; page?: string; }>;
 
 export default async function WebhookEvents({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -25,7 +26,8 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
   const filters = parseFilters(params, WEBHOOK_EVENT_FILTERS);
   const filtered = hasActiveFilters(filters, WEBHOOK_EVENT_FILTERS);
 
-  const { events: webhookEvents, counts } = await getWebhookEvents(filters);
+  const webhookEvents = await getWebhookEventsPage(filters, parsePage(params.page));
+  const { counts } = webhookEvents;
 
   const record = id ? await getWebhookEventById(id) : undefined;
 
@@ -49,7 +51,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
         
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {webhookEvents.length > 0 || filtered ? (
+        {webhookEvents.total > 0 || filtered ? (
           <>
             <StatCards
               cards={
@@ -71,16 +73,16 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
               </div>
             </div>
 
-            {webhookEvents.length > 0 ? (
+            {webhookEvents.total > 0 ? (
               <>
                 <DataTable
                   columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
-                  {webhookEvents.map((event) => (
+                  {webhookEvents.rows.map((event) => (
                     <WebhookEventRow key={event.id} event={event} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={webhookEvents.page} pageCount={webhookEvents.pageCount} total={webhookEvents.total} pageSize={webhookEvents.pageSize} />
               </>
             ) : (
               <EmptyState

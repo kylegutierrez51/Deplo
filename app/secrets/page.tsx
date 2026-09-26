@@ -9,13 +9,14 @@ import SecretRow from '@/components/secrets/SecretRow';
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import SecretModalController from '@/components/secrets/SecretModalController';
-import { getSecretById, getSecrets } from '@/lib/data/secrets';
+import { getSecretById, getSecretsPage } from '@/lib/data/secrets';
 import { getEnvironments } from '@/lib/data/environments';
 import { redirect } from 'next/navigation';
 import { SECRET_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
+import { parsePage } from '@/lib/utils/pagination';
 
-type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; page?: string; }>;
 
 export default async function Secrets({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -23,7 +24,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
   const filters = parseFilters(params, SECRET_FILTERS);
   const filtered = hasActiveFilters(filters, SECRET_FILTERS);
 
-  const secrets = await getSecrets(filters);
+  const secrets = await getSecretsPage(filters, parsePage(params.page));
 
   const record = id ? await getSecretById(id) : undefined;
 
@@ -49,7 +50,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
           subtitle="Encrypted environment variables injected into pipeline stages at runtime.">
           <AddButton text={"New Secret"} url={"secrets"} />
         </Subheader>
-        {secrets.length > 0 || filtered ? (
+        {secrets.total > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -58,15 +59,15 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
               </div>
             </div>
 
-            {secrets.length > 0 ? (
+            {secrets.total > 0 ? (
               <>
                 <DataTable columns={["Key", "Environment", "Last Updated"]}>
-                  {secrets.map((secret) => (
+                  {secrets.rows.map((secret) => (
                     <SecretRow key={secret.id} secret={secret} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={secrets.length} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={secrets.page} pageCount={secrets.pageCount} total={secrets.total} pageSize={secrets.pageSize} />
               </>
             ) : (
               <EmptyState

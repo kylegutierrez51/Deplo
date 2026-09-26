@@ -10,14 +10,15 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import RunModalController from "@/components/runs/RunModalController";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getRuns, getRunById, countActiveRuns } from "@/lib/data/runs";
+import { getRunsPage, getRunById, countActiveRuns } from "@/lib/data/runs";
 import { RUN_FILTERS } from "@/lib/filters/options";
 import { hasActiveFilters, parseFilters } from "@/lib/filters/parse";
+import { parsePage } from "@/lib/utils/pagination";
 import { redirect } from 'next/navigation';
 
 const REFRESH_INTERVAL_MS = 10_000;
 
-type SearchParams = Promise<{ mode?: string; id?: string; status?: string; trigger?: string; environment?: string; recency?: string; }>;
+type SearchParams = Promise<{ mode?: string; id?: string; status?: string; trigger?: string; environment?: string; recency?: string; page?: string; }>;
 
 export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -25,7 +26,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
   const filters = parseFilters(params, RUN_FILTERS);
   const filtered = hasActiveFilters(filters, RUN_FILTERS);
 
-  const [runs, activeRuns] = await Promise.all([getRuns(filters), countActiveRuns()]);
+  const [runs, activeRuns] = await Promise.all([getRunsPage(filters, parsePage(params.page)), countActiveRuns()]);
 
   const record = id ? await getRunById(id) : undefined;
 
@@ -53,7 +54,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-        {runs.length > 0 || filtered ? (
+        {runs.total > 0 || filtered ? (
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
@@ -66,16 +67,16 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
               </div>
             </div>
 
-            {runs.length > 0 ? (
+            {runs.total > 0 ? (
               <>
                 <DataTable
                   columns={["Pipeline", "Environment", "Trigger", "Duration", "Created At"]}>
-                  {runs.map((run) => (
+                  {runs.rows.map((run) => (
                     <RunRow key={run.id} run={run} />
                   ))}
                 </DataTable>
 
-                <Pagination showing="1-10" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} />
+                <Pagination page={runs.page} pageCount={runs.pageCount} total={runs.total} pageSize={runs.pageSize} />
               </>
             ) : (
               <EmptyState

@@ -8,20 +8,22 @@ import ApprovalCard from "@/components/approvals/ApprovalCard";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import { getApprovals, getApprovalStats } from "@/lib/data/approvals";
+import { getApprovalsPage, getApprovalStats } from "@/lib/data/approvals";
 import { APPROVAL_FILTERS } from "@/lib/filters/options";
 import { hasActiveFilters, parseFilters } from "@/lib/filters/parse";
-import { Suspense } from "react";
+import { parsePage } from "@/lib/utils/pagination";
 
 const REFRESH_INTERVAL_MS = 10_000;
+const PAGE_SIZE = 6;
 
-type SearchParams = Promise<{ environment?: string; recency?: string; }>;
+type SearchParams = Promise<{ environment?: string; recency?: string; page?: string; }>;
 
 export default async function Approvals({ searchParams }: { searchParams: SearchParams }) {
-  const filters = parseFilters(await searchParams, APPROVAL_FILTERS);
+  const params = await searchParams;
+  const filters = parseFilters(params, APPROVAL_FILTERS);
   const filtered = hasActiveFilters(filters, APPROVAL_FILTERS);
 
-  const [approvals, stats] = await Promise.all([getApprovals(filters), getApprovalStats()]);
+  const [approvals, stats] = await Promise.all([getApprovalsPage(filters, parsePage(params.page), PAGE_SIZE), getApprovalStats()]);
 
   return (
     <>
@@ -38,7 +40,7 @@ export default async function Approvals({ searchParams }: { searchParams: Search
           {/* always re-render Approvals page every 10s to detect if approval stages are present, otherwise user will have to refresh page to see new approval stages */}
           <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-          {approvals.length > 0 || filtered ? (
+          {approvals.total > 0 || filtered ? (
             <>
               <StatCards
                 cards={
@@ -61,10 +63,10 @@ export default async function Approvals({ searchParams }: { searchParams: Search
                 </div>
               </div>
 
-              {approvals.length > 0 ? (
+              {approvals.total > 0 ? (
                 <>
                   <div className={styles['approvals-layout']}>
-                    {approvals.map((a) => (
+                    {approvals.rows.map((a) => (
                       <div key={a.id} className={styles['approval-card-wrapper']}>
                         <ApprovalCard
                           id={a.id}
@@ -84,9 +86,7 @@ export default async function Approvals({ searchParams }: { searchParams: Search
                       </div>
                     ))}
                   </div>
-                  <Suspense>
-                    <Pagination showing="1-4" totalRows={20} pages={[1, '...', 8, 9, 10, '...', 22]} currentPage={9} styles={styles} />
-                  </Suspense>
+                  <Pagination page={approvals.page} pageCount={approvals.pageCount} total={approvals.total} pageSize={approvals.pageSize}  />
                 </>
               ) : (
                 <EmptyState
