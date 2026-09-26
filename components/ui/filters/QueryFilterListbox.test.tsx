@@ -60,6 +60,15 @@ describe('QueryFilterListbox', () => {
     expect(replace).toHaveBeenCalledWith('/runs', { scroll: false });
   });
 
+  // A new filter is a new result set; staying on page 9 of the old one would land on a clamped last page.
+  it('sends the reader back to the first page', async () => {
+    search = 'page=9&trigger=webhook';
+
+    await choose('Failed');
+
+    expect(replace).toHaveBeenCalledWith('/runs?trigger=webhook&status=failed', { scroll: false });
+  });
+
   it('shows the server-parsed value on the trigger', () => {
     render(<QueryFilterListbox id="status" name="status" options={OPTIONS} value="running" />);
 
