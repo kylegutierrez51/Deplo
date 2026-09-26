@@ -75,6 +75,7 @@ export const PIPELINE_FILTERS = {
     ...RUN_STATUS_OPTIONS,
     { value: 'idle', label: 'Idle' },
   ] as const satisfies readonly { value: PipelineStatus | typeof ALL; label: string }[],
+  updated: DATE_RANGE_OPTIONS,
 } as const satisfies FilterDefinitions;
 
 export type PipelineFilters = FiltersOf<typeof PIPELINE_FILTERS>;

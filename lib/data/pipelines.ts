@@ -3,7 +3,7 @@ import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@
 import { fromDefinition } from '@/lib/pipeline/definition';
 import type { GraphJson, PipelineStatus } from '@/lib/types';
 import { ALL, PIPELINE_FILTERS, type PipelineFilters } from '@/lib/filters/options';
-import { invert, parseFilters } from '@/lib/filters/parse';
+import { dateRangeCutoff, invert, parseFilters } from '@/lib/filters/parse';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
@@ -41,7 +41,15 @@ function statusWhere(status: PipelineFilters['status']) {
   return { lastRun: { status: STATUS_TO_PRISMA[status] } };
 }
 
-async function findPipelines(args: { where: ReturnType<typeof statusWhere>; skip?: number; take?: number }): Promise<Pipeline[]> {
+function pipelinesWhere({ status, updated }: PipelineFilters) {
+  const updatedSince = dateRangeCutoff(updated);
+  return {
+    ...statusWhere(status),
+    ...(updatedSince && { updatedAt: { gte: updatedSince } }),
+  };
+}
+
+async function findPipelines(args: { where: ReturnType<typeof pipelinesWhere>; skip?: number; take?: number }): Promise<Pipeline[]> {
   const pipelines = await prisma.pipeline.findMany({
     ...args,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -58,11 +66,11 @@ async function findPipelines(args: { where: ReturnType<typeof statusWhere>; skip
 
 // Unpaginated: Used by WebhookModal so users can select pipelines
 export async function getPipelines(filters: PipelineFilters = parseFilters({}, PIPELINE_FILTERS)): Promise<Pipeline[]> {
-  return findPipelines({ where: statusWhere(filters.status) });
+  return findPipelines({ where: pipelinesWhere(filters) });
 }
 
 export async function getPipelinesPage(filters: PipelineFilters, page: number, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Pipeline>> {
-  const where = statusWhere(filters.status);
+  const where = pipelinesWhere(filters);
   const total = await prisma.pipeline.count({ where });
   const { skip, take, ...meta } = pageWindow(page, total, pageSize);
 
