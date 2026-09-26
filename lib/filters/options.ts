@@ -183,6 +183,10 @@ export const WEBHOOK_EVENT_FILTERS = {
     { value: 'push', label: 'Push' },
     { value: 'pull-request', label: 'Pull Request' },
   ] as const satisfies readonly { value: EventType | typeof ALL; label: string }[],
+  received: [
+    { value: 'most-recent', label: 'Most Recently Received' },
+    { value: 'least-recent', label: 'Least Recently Received'}
+  ]
 } as const satisfies FilterDefinitions;
 
 

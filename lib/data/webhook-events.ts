@@ -44,12 +44,11 @@ export type WebhookEventsPage = Page<WebhookEvent> & {
 const STATUS_TO_PRISMA = invert(WEBHOOK_EVENT_STATUS_MAP);
 const EVENT_TYPE_TO_PRISMA = invert(WEBHOOK_EVENT_TYPE_MAP);
 
-
 export async function getWebhookEventsPage(filters: WebhookEventFilters = parseFilters({}, WEBHOOK_EVENT_FILTERS), page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<WebhookEventsPage> {
-  const { status, 'event-type': eventType } = filters;
+  const { status, 'event-type': eventType, received } = filters;
   const where = {
     ...(status !== ALL && { status: STATUS_TO_PRISMA[status] }),
-    ...(eventType !== ALL && { eventType: EVENT_TYPE_TO_PRISMA[eventType] }),
+    ...(eventType !== ALL && { eventType: EVENT_TYPE_TO_PRISMA[eventType] })
   };
 
   const [total, statusCounts] = await Promise.all([
@@ -62,11 +61,13 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
   ]);
   const { skip, take, ...meta } = pageWindow(page, total, pageSize);
 
+  const direction = received === 'least-recent' ? 'asc' : 'desc';
+
   const webhookEvents = await prisma.webhookEvent.findMany({
     where,
     skip,
     take,
-    orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+    orderBy: [{ receivedAt: direction }, { id: direction }],
     include: {
       pipeline: { select: { name: true, repoUrl: true }},
     },

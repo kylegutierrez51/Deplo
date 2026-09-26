@@ -211,4 +211,29 @@ describe('getWebhookEventsPage filtering', () => {
 
     expect(groupByMock().mock.calls[0][0]).not.toHaveProperty('where');
   });
+
+  const orderFor = async (params: Record<string, string>) => {
+    await run(params);
+    return prismaMock.webhookEvent.findMany.mock.calls[0][0]?.orderBy;
+  };
+
+  it('sorts newest received first for most-recent', async () => {
+    expect(await orderFor({ received: 'most-recent' })).toEqual([{ receivedAt: 'desc' }, { id: 'desc' }]);
+  });
+
+  it('sorts oldest received first for least-recent', async () => {
+    expect(await orderFor({ received: 'least-recent' })).toEqual([{ receivedAt: 'asc' }, { id: 'asc' }]);
+  });
+
+  it('falls back to newest received first for an unrecognised sort', async () => {
+    expect(await orderFor({ received: 'nope' })).toEqual([{ receivedAt: 'desc' }, { id: 'desc' }]);
+  });
+
+  // The sort is not a filter: it must not narrow the rows or the total the pager counts.
+  it('leaves the where clause and the count untouched', async () => {
+    await run({ received: 'least-recent' });
+
+    expect(prismaMock.webhookEvent.findMany.mock.calls[0][0]?.where).toEqual({});
+    expect(prismaMock.webhookEvent.count).toHaveBeenCalledWith({ where: {} });
+  });
 });
