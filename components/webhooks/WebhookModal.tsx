@@ -62,6 +62,7 @@ export default function WebhookModal({
   onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
+  const [enteredBranchFilter, setEnteredBranchFilter] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
   const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
@@ -136,6 +137,7 @@ export default function WebhookModal({
     const value = branchInputRef.current?.value.trim();
     if (!value) return;
     setBranchFilters(prev => [...prev, value]);
+    setEnteredBranchFilter('');
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
 
@@ -307,6 +309,8 @@ export default function WebhookModal({
                 ref={branchInputRef}
                 placeholder="e.g. main, release/*, feature/* — press Enter to add"
                 onKeyDown={handleBranchKeyDown}
+                value={enteredBranchFilter}
+                onChange={(e) => setEnteredBranchFilter(e.target.value)}
               />
               <p className={styles.fieldHint}>
                 <ion-icon name="information-circle-outline"></ion-icon>

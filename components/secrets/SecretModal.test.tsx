@@ -359,3 +359,37 @@ describe("reporting the server's message", () => {
     });
   });
 });
+
+/*
+ * React 19 resets a <form action> once its action settles, which snaps every
+ * uncontrolled field back to its defaultValue: blank in create mode, the saved
+ * record in edit mode. A failed save must not throw away what the user typed, so
+ * these fields are controlled. Waiting for the submit button to re-enable matters:
+ * the reset lands in the same commit that ends the pending state, after onError.
+ */
+describe.each([
+  ['create', 'Create'],
+  ['edit', /save changes/i],
+] as const)('a failed %s', (mode, submitLabel) => {
+  it('keeps what the user typed', async () => {
+    const action = mode === 'create' ? add : update;
+    action.mockResolvedValueOnce({ status: 'error', message: 'A secret with this key already exists' });
+    const { user, onError } = setup({ mode });
+    const valueInput = document.querySelector<HTMLInputElement>('input[name="value"]')!;
+
+    await user.clear(screen.getByLabelText('Key'));
+    await user.type(screen.getByLabelText('Key'), 'NEW_KEY');
+    await user.clear(valueInput);
+    await user.type(valueInput, 'a-brand-new-value');
+    await user.clear(screen.getByLabelText(/notes/i));
+    await user.type(screen.getByLabelText(/notes/i), 'typed before the failure');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: submitLabel })).toBeEnabled());
+
+    expect(screen.getByLabelText('Key')).toHaveValue('NEW_KEY');
+    expect(valueInput).toHaveValue('a-brand-new-value');
+    expect(screen.getByLabelText(/notes/i)).toHaveValue('typed before the failure');
+  });
+});

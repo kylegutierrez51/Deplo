@@ -298,3 +298,31 @@ describe("reporting the server's message", () => {
     });
   });
 });
+
+/*
+ * React 19 resets a <form action> once its action settles, which snaps every
+ * uncontrolled field back to its defaultValue: blank in create mode, the saved
+ * record in edit mode. A failed save must not throw away what the user typed, so
+ * these fields are controlled. Waiting for the submit button to re-enable matters:
+ * the reset lands in the same commit that ends the pending state, after onError.
+ */
+describe.each([
+  ['create', 'Create'],
+  ['edit', /save changes/i],
+] as const)('a failed %s', (mode, submitLabel) => {
+  it('keeps a branch filter that was typed but not yet added', async () => {
+    const action = mode === 'create' ? add : update;
+    action.mockResolvedValueOnce({ status: 'error', message: 'This webhook no longer exists' });
+    const { onError } = setup({ mode });
+    const user = userEvent.setup();
+    const branchInput = screen.getByPlaceholderText(/press Enter to add/i);
+
+    await user.type(branchInput, 'feature/*');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: submitLabel })).toBeEnabled());
+
+    expect(branchInput).toHaveValue('feature/*');
+  });
+});

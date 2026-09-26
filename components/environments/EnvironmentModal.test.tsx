@@ -102,3 +102,31 @@ describe("reporting the server's message", () => {
     });
   });
 });
+
+/*
+ * React 19 resets a <form action> once its action settles, which snaps every
+ * uncontrolled field back to its defaultValue: blank in create mode, the saved
+ * record in edit mode. A failed save must not throw away what the user typed, so
+ * these fields are controlled. Waiting for the submit button to re-enable matters:
+ * the reset lands in the same commit that ends the pending state, after onError.
+ */
+describe.each([
+  ['create', 'Create'],
+  ['edit', /save changes/i],
+] as const)('a failed %s', (mode, submitLabel) => {
+  it('keeps what the user typed', async () => {
+    const action = mode === 'create' ? add : update;
+    action.mockResolvedValueOnce({ status: 'error', message: 'An environment with this name already exists' });
+    const { onError } = setup({ mode });
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText('Name'));
+    await user.type(screen.getByLabelText('Name'), 'qa-integration');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: submitLabel })).toBeEnabled());
+
+    expect(screen.getByLabelText('Name')).toHaveValue('qa-integration');
+  });
+});

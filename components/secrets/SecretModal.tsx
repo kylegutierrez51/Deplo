@@ -60,6 +60,9 @@ export default function SecretModal({
   onSave,
   onError
 }: SecretModalProps) {
+  const [enteredKey, setEnteredKey] = useState(secretKey || '');
+  const [enteredValue, setEnteredValue] = useState(value || '');
+  const [enteredNotes, setEnteredNotes] = useState(notes || '');
   const [secretVisible, setSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState(environmentName ?? "");
@@ -177,13 +180,13 @@ export default function SecretModal({
             <div className={styles.item}>
               <label>Environment</label>
               <div className={styles.buttonGroup}>
-                {environmentName ? 
+                {environmentName ?
                   <>
-                    {environmentName} <Pill variant={environmentType} label={environmentType} /> 
+                    {environmentName} <Pill variant={environmentType} label={environmentType} />
                   </>
                   : "None"
                 }
-                
+
               </div>
             </div>
 
@@ -214,7 +217,8 @@ export default function SecretModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="key">Key</label>
-              <input name="key" id="key" placeholder="e.g. DATABASE_URL" defaultValue={secretKey} required />
+              <input name="key" id="key" placeholder="e.g. DATABASE_URL" value={enteredKey} required
+                onChange={(e) => setEnteredKey(e.target.value)} />
             </div>
 
             <div className={styles.item}>
@@ -225,10 +229,11 @@ export default function SecretModal({
                   name="value"
                   key="value"
                   placeholder="Secret value - encrypted at rest with AES-256-GCM"
-                  defaultValue={value}
+                  value={enteredValue}
                   required
                   minLength={MIN_MASKABLE_LENGTH}
-                  onBlur={e => { e.currentTarget.value = e.currentTarget.value.trim(); }}
+                  onChange={(e) => setEnteredValue(e.target.value)}
+                  onBlur={() => setEnteredValue(v => v.trim())}
                 ></input>
                 <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
                   <ion-icon
@@ -288,7 +293,8 @@ export default function SecretModal({
 
             <div className={styles.item}>
               <label htmlFor="notes">Notes <span className={styles.optionalBadge}>optional</span></label>
-              <textarea name="notes" id="notes" placeholder="e.g. Rotated quarterly, scoped to read-only" defaultValue={notes || ''}></textarea>
+              <textarea name="notes" id="notes" placeholder="e.g. Rotated quarterly, scoped to read-only"
+                value={enteredNotes} onChange={(e) => setEnteredNotes(e.target.value)} ></textarea>
             </div>
           </>
         )}
