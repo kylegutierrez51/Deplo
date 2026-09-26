@@ -191,6 +191,13 @@ Footer Button Variants
   background-color: var(--red-btn-hover-clr);
 }
 
+/* A save is in flight: the modal can't be closed or resubmitted until it settles */
+.footerBtn:disabled,
+.closeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /*
 ===============================================
 Common Form Utilities

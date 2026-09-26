@@ -266,8 +266,8 @@ describe("reporting the server's message", () => {
   });
 
   /*
-   * A failed edit reports the edit action's message. Reading createState here
-   * instead reports the create form's untouched initial message — an empty toast.
+   * A failed edit reports the edit action's message. An edit wrapper that awaited
+   * the create action instead would report the wrong result entirely.
    */
   it("reports a failed edit with the edit action's message", async () => {
     update.mockResolvedValueOnce({ status: 'error', message: 'This webhook no longer exists' });

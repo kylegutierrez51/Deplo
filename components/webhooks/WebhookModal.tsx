@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useActionState } from 'react';
+import { useState, useRef, useActionState } from 'react';
 import { formatDate } from '@/lib/utils/date';
 import type { FormState, EventType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
@@ -78,28 +78,19 @@ export default function WebhookModal({
   const [revealedSecretVisible, setRevealedSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [createState, createFormAction] = useActionState(addWebhook, initialState);
-  const [editState, editFormAction] = useActionState(updateWebhook, initialState);
-
-  useEffect(() => {
-    if (createState.status === 'success') {
-      onCreate(createState.message);
-    }
-    else if (createState.status === 'error') {
-      onError(createState.message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createState]);
-
-  useEffect(() => {
-    if (editState.status === 'success') {
-      onSave(editState.message);
-    }
-    else if (editState.status === 'error') {
-      onError(editState.message);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- don't add onSave as a dep so that this effect doesn't rerun when CrudModalController re-renders via showToast() and hands down a new function reference
-  }, [editState]);
+  const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
+    const result = await addWebhook(prev, formData);
+    if (result.status === 'success') onCreate(result.message);
+    else if (result.status === 'error') onError(result.message);
+    return result;
+  }, initialState);
+  const [, editFormAction, editPending] = useActionState(async (prev: FormState, formData: FormData) => {
+    const result = await updateWebhook(prev, formData);
+    if (result.status === 'success') onSave(result.message);
+    else if (result.status === 'error') onError(result.message);
+    return result;
+  }, initialState);
+  const pending = createPending || editPending;
 
 
   const handleDeleteClose = () => {
@@ -195,19 +186,19 @@ export default function WebhookModal({
     </>
   ) : (mode === 'create' ? (
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Create</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose} disabled={pending}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" disabled={pending}>{pending ? 'Creating…' : 'Create'}</button>
     </>
   ) :
     <>
-      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditOrDeleteClose}>Cancel</button>
-      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form">Save Changes</button>
+      <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onEditOrDeleteClose} disabled={pending}>Cancel</button>
+      <button className={`${styles.footerBtn} ${styles.createBtn}`} type="submit" form="modal-form" disabled={pending}>{pending ? 'Saving…' : 'Save Changes'}</button>
     </>
   );
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} title={title} subtitle={subtitle} icon={icon} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} subtitle={subtitle} icon={icon} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
             <div className={styles.fieldGroup}>
