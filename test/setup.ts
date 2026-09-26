@@ -11,7 +11,7 @@ global.TextDecoder ??= TextDecoder as typeof global.TextDecoder;
 
 /*
  * Everything below patches the DOM, so it only applies under jsdom. A file that opts
- * into `@jest-environment node` — runner/execute.test.ts, which spawns real processes —
+ * into `@jest-environment node` — runner/stages/execute.test.ts, which spawns real processes —
  * has no Element to patch, and this file runs for it too.
  */
 if (typeof window !== 'undefined') {

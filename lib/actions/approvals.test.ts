@@ -334,7 +334,7 @@ describe('waking the runner', () => {
    * itself was correct and rewriting it would throw away a real answer over a Redis blip.
    *
    * This used to leave the run waiting at RUNNING forever, recoverable only by restarting
-   * the runner. runner/sweeper.ts closes it: the run is RUNNING with an APPROVED stage and
+   * the runner. runner/recovery/sweeper.ts closes it: the run is RUNNING with an APPROVED stage and
    * nothing scheduled, so the sweep re-enters it once it has been still past the grace
    * period and advanceRun dispatches whatever the approval unblocked. That is what makes
    * reporting success honest rather than optimistic — the enqueue failing is a delay, not

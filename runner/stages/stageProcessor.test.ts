@@ -218,7 +218,7 @@ describe('the command environment', () => {
    * secret and the case above would misfile it.
    *
    * Node tooling sets NODE_ENV only when nothing already has, which makes an inherited value
-   * an override that wins rather than a default a command falls back to. runner/env.ts
+   * an override that wins rather than a default a command falls back to. runner/setup/env.ts
    * dotenv-loads .env, so the runner has one to pass on, and passing it on made `next build`
    * in a stage bundle React's development build and fail prerendering /_global-error, and
    * made `jest` skip .env.test and point the integration tier at the development database.

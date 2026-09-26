@@ -5,7 +5,7 @@ import type { ConnectionOptions } from 'bullmq';
  * Where Redis is. The web app and the runner are two separate processes that both talk
  * to it, so both have to look its address up; this is the web app's copy of that lookup.
  *
- * The runner's own runner/connection.ts cannot be reused here. The dependency only runs
+ * The runner's own runner/setup/connection.ts cannot be reused here. The dependency only runs
  * one way — runner/ imports from lib/, never the reverse — and that file also demands
  * RUNNER_WORKSPACE_ROOT, which the web server has no business knowing about.
  *
@@ -18,7 +18,7 @@ import type { ConnectionOptions } from 'bullmq';
  * missing variable surfaces inside the server action that has a catch and a message for
  * the user, rather than as a build failure unrelated to whoever triggered it.
  *
- * runner/connection.ts can afford constants precisely because it has the opposite
+ * runner/setup/connection.ts can afford constants precisely because it has the opposite
  * problem: a runner with no Redis has nothing to do, so refusing to start is correct.
 ==============================================================================================
 */

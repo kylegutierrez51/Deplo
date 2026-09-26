@@ -57,13 +57,13 @@ const config = {
     'runner/**/*.ts',
     '!**/*.d.ts',
     '!lib/prisma.ts',
-    '!runner/connection.ts',
-    '!runner/env.ts',
+    '!runner/setup/connection.ts',
+    '!runner/setup/env.ts',
     // Wiring, not logic: these construct a Queue or a Worker at module scope, which
     // means importing them opens an ioredis connection. Same exclusion as lib/prisma.ts.
     '!lib/queue/runs.ts',
     '!runner/index.ts',
-    '!runner/stageQueue.ts',
+    '!runner/stages/stageQueue.ts',
   ],
 };
 
