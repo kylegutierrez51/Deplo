@@ -10,7 +10,7 @@ import { processStage } from './stageProcessor';
 import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from '../db';
 import { execute } from './execute';
 import { resolveSecrets } from './secrets';
-import { advanceRun } from './runProcessor';
+import { advanceRun } from '../runs/runProcessor';
 import type { CustomNode } from '@/lib/types';
 
 /*
@@ -20,7 +20,7 @@ import type { CustomNode } from '@/lib/types';
  * msgpackr, plus a live ioredis socket. db and secrets open a pg connection through
  * lib/prisma the same way. Same reasoning as the next/cache note in CLAUDE.md.
  */
-jest.mock('./db', () => ({
+jest.mock('../db', () => ({
   loadRunContext: jest.fn(),
   markStageRunning: jest.fn(),
   finishStage: jest.fn(),
@@ -30,7 +30,7 @@ jest.mock('./db', () => ({
 }));
 jest.mock('./execute', () => ({ execute: jest.fn() }));
 jest.mock('./secrets', () => ({ resolveSecrets: jest.fn() }));
-jest.mock('./runProcessor', () => ({ advanceRun: jest.fn() }));
+jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn() }));
 
 /*
  * processStage owns a RUNNING row from the moment markStageRunning wins, so the property
