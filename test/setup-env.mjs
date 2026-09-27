@@ -29,7 +29,7 @@ process.env.ENCRYPTION_KEY ??=
   '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 /*
- * runner/connection.ts throws at module scope on any of these, and runner/db.ts imports
+ * runner/setup/connection.ts throws at module scope on any of these, and runner/db.ts imports
  * it for RUNNER_WORKSPACE_ROOT — so a test that touches runner/db.ts fails at import
  * without them. Same reasoning as ENCRYPTION_KEY above, and the same practical trigger:
  * .env* is gitignored and the CI workflow exports neither, so the ??= is what CI and a

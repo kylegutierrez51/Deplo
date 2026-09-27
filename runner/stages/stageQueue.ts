@@ -1,5 +1,5 @@
-import './env';
-import { connection } from './connection';
+import '../setup/env';
+import { connection } from '../setup/connection';
 import { Queue } from "bullmq";
 import { STAGE_QUEUE } from "@/lib/queue/names"
 
@@ -52,25 +52,12 @@ async function removeStageJob(jobId: string): Promise<boolean> {
 
 /*
 ==============================================================================================
- * Frees a stage's job id so the stage can be enqueued again, breaking a dead process's lock
- * to do it.
- *
- * BOOT ONLY, AND ONLY UNDER THE SINGLE-RUNNER ASSUMPTION. Deleting the lock of a job that a
- * living worker is processing is exactly the corruption Queue.remove refuses to perform:
- * that worker finishes, tries to move a job whose keys are gone, and the stage's result is
- * lost with no trace. The one thing that makes this safe is *when* it runs — reapAbandonedWork
- * calls it before worker.run(), so this process holds no locks, and the single-runner
- * assumption says no other process does either. Every lock visible at that moment is therefore
- * an orphan of the run that died. Calling this from anywhere else is a bug.
- *
- * Why break it at all: the job id is derived from runId/stageId/attempt, and BullMQ answers
- * an add on a known id by handing back the existing job and enqueuing nothing. So while that
- * dead job holds the id, the stage cannot be re-dispatched at all — and it will not run
- * either, since maxStalledCount: 0 has the stalled checker mark it unrecoverable and fail it
- * without ever calling the processor. Left alone the row sits QUEUED forever.
- *
- * Returns false only if the job is *still* locked after the break, which at boot should not
- * happen — the caller treats that as a stage it cannot recover rather than one to retry.
+ * Tries to remove a stage's job so the stage can be enqueued again. If that fails, the job
+ * is still locked by the process that died, so this deletes the lock and tries once more.
+ * Returns false if the job still could not be removed.
+ * 
+ * This function must ONLY be called at boot, before the workers start. Currently, it is 
+ * called in the reaper, which runs on boot.
 ==============================================================================================
  */
 export async function reclaimStageJob(payload: Payload): Promise<boolean> {

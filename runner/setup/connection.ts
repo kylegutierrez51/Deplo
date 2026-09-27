@@ -1,4 +1,4 @@
-// Assumes runner/env.ts has already run — it is the first import of the entrypoint.
+// Assumes runner/setup/env.ts has already run. It is the first import of the entrypoint.
 // Importing this module without that ordering throws even when .env is populated.
 
 const REDIS_HOST = process.env.REDIS_HOST?.trim() || (() => {

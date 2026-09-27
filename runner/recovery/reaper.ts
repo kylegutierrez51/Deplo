@@ -1,32 +1,22 @@
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
   findRunningStages, openRetry, cancelOrphanedStages,
-} from './db';
-import { advanceRun, processRun } from './runProcessor';
-import { reclaimStageJob } from './stageQueue';
+} from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
+import { reclaimStageJob } from '../stages/stageQueue';
 
 /*
 ==============================================================================================
- * Cleans up after a runner that died without finishing what it started. Runs once at boot,
- * before either worker begins consuming.
+ * Runs once at boot and cleans up after a runner that died mid-work: retries or fails
+ * stages it left RUNNING, re-dispatches stages it left QUEUED, and hands every unfinished
+ * run back to the scheduler.
  *
- * Every transition in this system is a compare-and-swap on an expected status, which works
- * while a process is alive and does nothing whatsoever when one is not. A stage killed
- * mid-command — Ctrl-C, OOM, power loss — leaves a row RUNNING that no caller will ever
- * move again, and a run RUNNING behind it forever. maxStalledCount: 0 is what makes this
- * necessary rather than optional: BullMQ deliberately will not re-execute the job, because
- * CI commands are frequently not idempotent, so the reaper is the visible replacement for
- * the automatic retry we turned off.
+ * Needed because nothing else will touch that work. BullMQ is set not to re-run a job its
+ * worker died on (maxStalledCount: 0), so those rows would sit RUNNING or QUEUED forever.
  *
- * ASSUMES A SINGLE RUNNER PROCESS. A row carries no way to distinguish "abandoned by a dead
- * process" from "owned by a living one", so booting a second runner against the same
- * database would fail the first one's live stages. Multi-runner is out of scope, and this
- * is the reason.
- *
- * Boot is also the *only* time this runs, which is a real limitation rather than a design
- * goal: a run stalled by a transient Postgres or Redis error mid-flight stays stalled until
- * someone restarts the runner. A repeatable job doing this same pass on an interval is the
- * fix, and is deferred.
+ * Safe only because it runs before either worker starts and only one runner exists: every
+ * RUNNING row and lock it finds must belong to the dead process. A second runner against
+ * the same database would have its live stages failed.
 ==============================================================================================
 */
 export async function reapAbandonedWork(): Promise<void> {
@@ -104,28 +94,15 @@ async function retryRunningStages(): Promise<number> {
 
 /*
 ==============================================================================================
- * Decides every QUEUED stage row against the queue, because the row alone cannot say which
- * of three things happened to its job when the runner died.
+ * For each QUEUED stage row, removes its job from Redis and resets the row to PENDING so
+ * the run pass dispatches it again. If the job cannot be removed, the row is failed.
  *
- * The job never existed — the process died between claimStageForQueue committing and
- * enqueueStageJob returning. Or it is still sitting in Redis, waiting or delayed, and would
- * be delivered perfectly well on its own. Or it was already active, in which case
- * maxStalledCount: 0 has BullMQ fail it without ever entering the processor.
+ * Needed because a QUEUED row doesn't say what happened to its job: it may never have been
+ * added, may still be waiting, or may have been running when the runner died. Removing the
+ * job first matters, because BullMQ silently ignores an add whose job id already exists.
  *
- * Only the middle one recovers unaided, and nothing on the row distinguishes it from the
- * other two — which is why this costs a round trip each. reclaimStageJob collapses all
- * three: it frees the job id, breaking the dead process's lock when it has to, and once no
- * job holds that id the row goes back to PENDING and the run pass dispatches it again.
- * Re-adding without freeing the id first is the trap, since the id is derived from
- * runId/stageId/attempt and BullMQ answers a known id by enqueuing nothing.
- *
- * failQueuedStage is the fallback for a job that is somehow still locked after the break,
- * which at boot means something outside this process's model is holding it — most likely
- * the second runner the single-process assumption says does not exist. Failing the row is
- * the safe reading: it never runs the command twice, and it finalizes the run instead of
- * leaving it hung with nothing scheduled to move it.
- *
- * Per row, so one unreachable job cannot strand the others or stop the boot.
+ * Failing a row that can't be reclaimed is the safe choice: it never runs the command
+ * twice, and the run finishes instead of hanging.
 ==============================================================================================
  */
 async function reapQueuedStages(): Promise<{ requeued: number, failed: number }> {

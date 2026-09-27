@@ -53,7 +53,7 @@ describe('the stage queue connection', () => {
    * blocking connection, never on a plain Queue — so left at ioredis's real default of 20, a
    * Redis outage of a few minutes was enough to exhaust it, and the resulting
    * MaxRetriesPerRequestError left a stage QUEUED with no job behind it and no path back,
-   * since readyStages only ever reconsiders a PENDING row. runner/connection.ts sets it
+   * since readyStages only ever reconsiders a PENDING row. runner/setup/connection.ts sets it
    * explicitly so the command buffers and is sent once Redis reconnects, instead of giving up.
    */
   it('disables maxRetriesPerRequest so a Redis outage buffers instead of failing the claim', () => {

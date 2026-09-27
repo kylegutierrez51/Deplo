@@ -1,20 +1,20 @@
-import './env';
+import './setup/env';
 import { Worker } from 'bullmq';
-import { connection } from './connection';
+import { connection } from './setup/connection';
 import { RUN_QUEUE, STAGE_QUEUE } from '@/lib/queue/names';
-import { processRun } from './runProcessor';
-import { processStage } from './stageProcessor';
-import { reapAbandonedWork } from './reaper';
-import { startStalledRunSweep, stopStalledRunSweep } from './sweeper';
-import { killAllChildren } from './execute';
+import { processRun } from './runs/runProcessor';
+import { processStage } from './stages/stageProcessor';
+import { reapAbandonedWork } from './recovery/reaper';
+import { startStalledRunSweep, stopStalledRunSweep } from './recovery/sweeper';
+import { killAllChildren } from './stages/execute';
 import type { RunJobData } from '@/lib/queue/runs';
-import type { Payload } from './stageQueue';
+import type { Payload } from './stages/stageQueue';
 
 /*
 ==============================================================================================
  * The runner's entrypoint, and the only file that creates a consumer.
  *
- * './env' must stay the first import. ESM hoists every import above all statements, so a
+ * './setup/env' must stay the first import. ESM hoists every import above all statements, so a
  * module that reads process.env at its own module scope — lib/utils/crypto.ts throws on a
  * missing ENCRYPTION_KEY — would otherwise win the race against dotenv. Secret resolution
  * depends on that ordering.

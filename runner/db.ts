@@ -1,11 +1,11 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
 import { addAudit } from '@/lib/actions/audits';
-import { RUNNER_WORKSPACE_ROOT } from './connection';
+import { RUNNER_WORKSPACE_ROOT } from './setup/connection';
 import type { GraphJson, StageType } from '@/lib/types';
 import { AuditAction, ResourceType, type RunStatus, type StageStatus } from '@/generated/prisma';
 import { Prisma, type StageType as PrismaStageType } from '@/generated/prisma/client';
-import type { Outcomes } from './scheduler';
+import type { Outcomes } from './runs/scheduler';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -37,12 +37,12 @@ interface RunContext {
 
 /*
 ==============================================================================================
- * The runner's only read. Everything a run needs to make its next decision — the graph,
- * the per-stage config, and the current state of every stage — in one query.
+ * The runner's only read. Returns everything a run needs to make its next decision:
+ * the graph, the per-stage config, and the current state of every stage
  *
  * There is no `config` field because there is no need for one: fromDefinition folds
- * configJson into each node's `data`, so command/timeout/retries/env_vars/secrets ride
- * along on the graph. A node with no config entry simply arrives with those keys absent
+ * configJson into each node's `data`, so command/timeout/retries/env_vars/secrets ride along 
+ * on the returned graph. A node with no config entry simply arrives with those keys absent
 ==============================================================================================
  */
 export async function loadRunContext(runId: string): Promise<RunContext | null> {
@@ -87,10 +87,10 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
 
 /*
 ==============================================================================================
- * Create a data array, used to create the StageResult rows
+ * Create a data array, used to create the StageResult rows in the database
  * Once done, make a directory for the run to work in BEFORE creating the StageResult rows
- * So that a failure in mkdir() leaves nothing to execute rather than a full set of stages that 
- * would die at spawn.
+ * so that a failure in mkdir() leaves nothing to execute rather than a full set of stages that 
+ * would die at spawn because of a directory error
 ==============================================================================================
 */
 export async function materializeStages(runId: string, graph: GraphJson): Promise<void> {
@@ -203,36 +203,16 @@ export async function recordStageProgress(
 
 /*
 ==============================================================================================
- * Opens the next attempt of a stage whose command has just failed, as a new PENDING row.
+ * Opens the next attempt of a failed stage as a new PENDING row, if it has retries left
+ * (e.g., maxRetries=2 means attempts 1–3). Creates a new row rather than an update, 
+ * so that the earlier attempt keeps its own logs and exit code.
  *
- * Creates a new row rather than a mutation of the current one, so the Run Detail page can
- * show what the earlier attempt did in the Logs.
- * It also keeps every compare-and-swap addressing exactly one row: `where` names an attempt,
- * so the ownership signal never blurs across two of them.
- * 
- * The first query ensures that it only retries the stage if the Run is still 'RUNNING'.
- * The second query still checks if the Run is 'RUNNING' 
- * incase another job called `finalizeRun()` in between the 2 queries.
- * 
- * The first and second queries prevent runs from showing up as 'PENDING' even when a 
- * Run is failed.
- * 
- * Returns whether a new PENDING row now exists because of this call. `false` covers "the
- * retry budget is spent", "another caller opened it first" and "the run is no longer
- * RUNNING" alike, and the caller wants the same thing in every case — record the failure and
- * let the scheduler decide.
+ * Both queries check that the run is still RUNNING. The create goes through
+ * pipelineRun.update so that check and the insert are one statement; otherwise another
+ * job could finalize the run in between, leaving a PENDING retry on a finished run.
  *
- * The budget is `attempt <= maxRetries`: maxRetries 2 means attempts 1, 2 and 3, so two
- * retries after the first try. maxRetries 0 — the default — never retries.
- * 
- * MORE DETAILED INFO -- Why the 2nd query exists:
- * The write goes through pipelineRun.update rather than stageResult.create so that guard is
- * part of the same statement as the insert, the way every updateMany in this file names the
- * status it expects. Reading the run status first and inserting second would leave the
- * window open — a few milliseconds instead of a few seconds, but with concurrency: 5 that is
- * exactly the kind of gap a sibling lands in. The filter on the findFirst is the cheap
- * early-out; this `where` is the one that actually holds. P2025 is what it reports when the
- * run has moved on, and is a lost race like any other.
+ * Returns false if there are no retries left, another caller opened it first, or the run
+ * has finished. The caller does the same thing in every case: records the failure.
 ==============================================================================================
 */
 export async function openRetry(runId: string, stageId: string, attempt: number): Promise<boolean> {
@@ -330,7 +310,8 @@ export async function findUnfinishedRuns(): Promise<{ id: string, status: RunSta
 
 /*
 ==============================================================================================
- * Every unfinished run that has been sitting still long enough to be worth re-entering, for the periodic sweep in sweeper.ts.
+ * Every unfinished run that has been sitting still long enough to be worth re-entering, 
+ * for the periodic sweep in sweeper.ts.
  *
  * QUEUED is measured from createdAt and RUNNING from startedAt, which is the last moment
  * either status is known to have been written. Neither is a record of progress — a stage can
@@ -384,19 +365,11 @@ export async function updateQueuedToPending(runId: string, stageId: string, atte
 
 /*
 ==============================================================================================
- * Fails a QUEUED row whose BullMQ job could not be taken back.
+ * Fails a QUEUED row whose BullMQ job the reaper could not remove from Redis.
  *
- * The reaper resets a queued stage to PENDING so advanceRun can dispatch it again, which
- * only works once the old job is gone from Redis — the job id is derived from
- * runId/stageId/attempt, and BullMQ silently returns the existing job rather than enqueuing
- * when that id is already in the keyspace. A job still locked by the dead process cannot be
- * removed, so re-enqueuing would be a no-op and the row would sit QUEUED forever with
- * nothing scheduled to move it.
- *
- * That job is not coming back either: maxStalledCount: 0 means the stalled checker stamps a
- * failure reason on it and it fails without ever entering the processor. So the stage really
- * did fail, and saying so out loud is what turns a silently hung run into one that finalizes
- * and can be triggered again.
+ * Needed because the stage can't be re-dispatched while its old job still holds the 
+ * job id, and that job will never run either (maxStalledCount: 0). Left alone, the row would
+ * sit QUEUED forever; failing it lets the run finish and be triggered again.
 ==============================================================================================
 */
 export async function failQueuedStage(runId: string, stageId: string, attempt: number): Promise<boolean> {

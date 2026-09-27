@@ -1,32 +1,17 @@
-import { findStalledRuns } from './db';
-import { advanceRun, processRun } from './runProcessor';
+import { findStalledRuns } from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
 
 /*
 ==============================================================================================
- * Re-enters unfinished runs on a timer, for the case where nothing else ever will.
+ * Every minute, finds runs that have stopped moving and hands them back to the scheduler.
  *
- * A run job that exhausts its attempts leaves no trace on the run row. defaultJobOptions in
- * lib/queue/runs.ts allows three tries with a 2s exponential backoff, so a Postgres blip
- * lasting six seconds at the wrong moment burns the whole budget; the job lands in the
- * failed set, nothing writes to the run, and it sits at QUEUED with the runner alive and
- * happily processing everything else. Nothing in the app can rescue it either — RETRYABLE in
- * lib/actions/run-detail.ts refuses to re-run anything that has not finished, so the only
- * thing anyone can do with it is cancel it.
+ * A run can stall while the runner is still alive, e.g. a brief Postgres outage uses up all
+ * of a run job's retries and leaves the run stuck at QUEUED. Without this, only restarting
+ * the runner would recover it.
  *
- * Until this existed the sole recovery was reapAbandonedWork at boot, which is to say
- * restarting the runner.
- *
- * THIS IS DELIBERATELY NOT THE REAPER ON A TIMER. reapAbandonedWork is only safe before
- * worker.run(): reclaimStageJob deletes a job's BullMQ lock, which after a crash belongs to
- * a dead process and mid-flight belongs to a live one, and reapStaleStages would fail the
- * rows of stages that are simply still running. Both would tear apart the work this is
- * supposed to protect.
- *
- * What is left is the one phase that is safe to repeat: read the unfinished runs and hand
- * them back to the scheduler. Every write it can reach from there is a compare-and-swap on
- * an expected status, and readyStages is idempotent by design — the same property that
- * stops a redelivered job or two parents finishing at once from double-enqueuing — so
- * re-entering a run that is progressing normally reads the row and does nothing.
+ * Re-entering a run that is fine is harmless: every write is a compare-and-swap, so a
+ * healthy run just reads its rows and does nothing. This is not the reaper on a timer; the
+ * reaper deletes locks and fails RUNNING rows, which is only safe at boot.
 ==============================================================================================
 */
 

@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import type { Scrubber } from './scrubber';
 
-export const LOG_SNIPPET_LINES = 50;
+export const LOG_SNIPPET_LINES = 150;
 
 const KILL_GRACE_MS = 5_000;
 const MAX_LINE_CHARS = 2_000;

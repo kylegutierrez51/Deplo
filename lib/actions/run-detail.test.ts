@@ -595,7 +595,7 @@ describe('cancelRun', () => {
       });
     });
 
-    // The one the runner owns. It is mid-command, and only runner/execute.ts can stop it;
+    // The one the runner owns. It is mid-command, and only runner/stages/execute.ts can stop it;
     // writing the row here would record it cancelled while its command was still running.
     it('leaves the RUNNING stage to the runner', async () => {
       await cancel();

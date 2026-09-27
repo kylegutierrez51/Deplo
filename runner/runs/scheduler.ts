@@ -28,7 +28,7 @@ const isUnstarted = (status: StageStatus | undefined) => (status ?? 'PENDING') =
 
 /*
 ==============================================================================================
- * The stages eligible to be acted on, recomputed from the full outcome set rather than
+ * Returns the stages eligible to be acted on, recomputed from the full outcome set rather than
  * tracked incrementally. Idempotent: a stage already QUEUED or RUNNING is not returned
  * again, so a redelivered job or two parents finishing at once cannot double-enqueue.
  *

@@ -1,12 +1,12 @@
 import { sweepStalledRuns, startStalledRunSweep, stopStalledRunSweep } from './sweeper';
-import { findStalledRuns } from './db';
-import { advanceRun, processRun } from './runProcessor';
+import { findStalledRuns } from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
 
 // Explicit factories, not automocks, for the reason reaper.test.ts gives: db reaches
 // lib/prisma and runProcessor reaches stageQueue, which constructs a bullmq Queue at module
 // scope. Loading either for real opens a socket.
-jest.mock('./db', () => ({ findStalledRuns: jest.fn() }));
-jest.mock('./runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
+jest.mock('../db', () => ({ findStalledRuns: jest.fn() }));
+jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
 
 const stalled = findStalledRuns as jest.MockedFunction<typeof findStalledRuns>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;

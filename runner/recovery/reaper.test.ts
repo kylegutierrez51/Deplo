@@ -2,20 +2,20 @@ import { reapAbandonedWork } from './reaper';
 import {
   reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending, failQueuedStage,
   findRunningStages, openRetry, cancelOrphanedStages,
-} from './db';
-import { advanceRun, processRun } from './runProcessor';
-import { reclaimStageJob } from './stageQueue';
+} from '../db';
+import { advanceRun, processRun } from '../runs/runProcessor';
+import { reclaimStageJob } from '../stages/stageQueue';
 
 // Explicit factories, not automocks: db reaches lib/prisma, runProcessor reaches stageQueue,
 // and stageQueue constructs a bullmq Queue at module scope. Loading any of them for real
 // opens a socket — and bullmq is ESM far enough down that the suite does not even parse.
-jest.mock('./db', () => ({
+jest.mock('../db', () => ({
   reapStaleStages: jest.fn(), findUnfinishedRuns: jest.fn(),
   findQueuedStages: jest.fn(), updateQueuedToPending: jest.fn(), failQueuedStage: jest.fn(),
   findRunningStages: jest.fn(), openRetry: jest.fn(), cancelOrphanedStages: jest.fn(),
 }));
-jest.mock('./runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
-jest.mock('./stageQueue', () => ({ reclaimStageJob: jest.fn() }));
+jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
+jest.mock('../stages/stageQueue', () => ({ reclaimStageJob: jest.fn() }));
 
 const reap = reapStaleStages as jest.MockedFunction<typeof reapStaleStages>;
 const unfinished = findUnfinishedRuns as jest.MockedFunction<typeof findUnfinishedRuns>;
