@@ -21,7 +21,7 @@ export type RunTrigger = "webhook" | "manual" | "api";
 
 export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
 
-export type EventType = 'push' | 'pull-request' | 'ping' | 'unrecognized';
+export type EventType = 'push' | 'pull-request';
 
 export type ResourceType = 'pipeline' | 'pipeline-run' | 'environment' | 'secret' | 'webhook';
 
@@ -101,29 +101,3 @@ Runner availability
 export type RunnerAvailability =
   | { available: true }
   | { available: false; reason: 'no-workers' | 'unreachable' };
-
-
-/*
-===================================================
-Webhook Event
-===================================================
-*/
-
-export type JSONValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JSONObject
-
-export type JSONObject = { [key: string]: JSONValue };
-
-export type WebhookEventData = {
-  eventType: EventType,
-  payload: JSONObject,
-  headers: JSONObject,
-  status?: WebhookEventStatus,
-  runId?: string,
-  pipelineId: string | null,
-  webhookId: string
-}

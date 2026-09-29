@@ -1,4 +1,4 @@
-import { randomBytes, createCipheriv, createDecipheriv, createHmac, timingSafeEqual } from "node:crypto";
+import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
 
 const ENCRYPTION_KEY = Buffer.from(
   process.env.ENCRYPTION_KEY ?? (() => { throw new Error("ENCRYPTION_KEY is not set"); })(),
@@ -29,16 +29,4 @@ export function decryptSecret(encryptedData: ReturnType<typeof encryptSecret>): 
   ]);
 
   return decrypted.toString("utf8");
-}
-
-// GitHub signs the raw request body: X-Hub-Signature-256 is "sha256=" + hex HMAC-SHA256.
-// rawBody must be the exact bytes received, not re-serialized JSON.
-export function verifyWebhookSignature(secret: string, rawBody: string, signature: string | null): boolean {
-  if (!signature) return false;
-
-  const expected = Buffer.from(`sha256=${createHmac("sha256", secret).update(rawBody, "utf8").digest("hex")}`);
-  const received = Buffer.from(signature);
-
-  // timingSafeEqual throws on a length mismatch
-  return expected.length === received.length && timingSafeEqual(expected, received);
 }

@@ -1,5 +1,4 @@
-import { createHmac } from 'node:crypto';
-import { encryptSecret, decryptSecret, generateWebhookSecret, verifyWebhookSignature } from '@/lib/utils/crypto';
+import { encryptSecret, decryptSecret, generateWebhookSecret } from '@/lib/utils/crypto';
 
 /*
  * This is the only thing standing between the secrets table and plaintext on
@@ -113,36 +112,5 @@ describe('module initialisation', () => {
     } finally {
       process.env.ENCRYPTION_KEY = original;
     }
-  });
-});
-
-describe('verifyWebhookSignature', () => {
-  const secret = 'whsec_test';
-  const body = '{"zen":"Keep it logically awesome."}';
-  const sign = (b: string, s = secret) => `sha256=${createHmac('sha256', s).update(b).digest('hex')}`;
-
-  it('accepts a signature computed over the same body and secret', () => {
-    expect(verifyWebhookSignature(secret, body, sign(body))).toBe(true);
-  });
-
-  it('rejects a signature made with a different secret', () => {
-    expect(verifyWebhookSignature(secret, body, sign(body, 'other'))).toBe(false);
-  });
-
-  // Re-serializing parsed JSON changes the bytes, which is why the route reads req.text().
-  it('rejects a body that differs only in whitespace', () => {
-    expect(verifyWebhookSignature(secret, JSON.stringify(JSON.parse(body), null, 2), sign(body))).toBe(false);
-  });
-
-  it('rejects a missing header', () => {
-    expect(verifyWebhookSignature(secret, body, null)).toBe(false);
-  });
-
-  it('rejects a header of the wrong length without throwing', () => {
-    expect(verifyWebhookSignature(secret, body, 'sha256=abc')).toBe(false);
-  });
-
-  it('rejects the legacy sha1 header format', () => {
-    expect(verifyWebhookSignature(secret, body, `sha1=${createHmac('sha1', secret).update(body).digest('hex')}`)).toBe(false);
   });
 });
