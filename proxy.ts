@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/auth.config";
 
 export const config = {
-  matcher: ["/((?!api/auth|api/webhook|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };
 
 export default async function proxy(request: NextRequest) {
