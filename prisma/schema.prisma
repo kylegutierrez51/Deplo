@@ -309,8 +309,10 @@ model Secret {
 // ─────────────────────────────────────────────
 
 enum EventType {
+  PING
   PUSH
   PULL_REQUEST
+  UNRECOGNIZED
 }
 
 model Webhook {

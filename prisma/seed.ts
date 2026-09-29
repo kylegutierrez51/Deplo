@@ -201,8 +201,6 @@ async function main() {
 */
   const webhookSeeds = [
     { isActive: true, events: [EventType.PUSH, EventType.PULL_REQUEST], branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "coco" },
-    { isActive: false, events: [EventType.PUSH], branchFilters: [], createdBy: null },
-    { isActive: true, events: [EventType.PULL_REQUEST], branchFilters: ["main"], createdBy: "sarah.chen" },
   ];
   await Promise.all(
     webhookSeeds.map((w) => {
