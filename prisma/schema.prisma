@@ -102,6 +102,10 @@ model Pipeline {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  // Preselected in the editor's environment picker; a run still targets whatever is selected there.
+  defaultEnvironmentId String?
+  defaultEnvironment   Environment? @relation(fields: [defaultEnvironmentId], references: [id], onDelete: SetNull)
+
   definitions   PipelineDefinition[]
   runs          PipelineRun[] @relation("PipelineRuns")
   webhooks Webhook[]
@@ -182,6 +186,8 @@ model PipelineRun {
 
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])
+  // copied at creation incase the environmentId is deleted, to show that a run was originally executed with an environment
+  environmentName String?
 
   pipeline   Pipeline           @relation("PipelineRuns", fields: [pipelineId], references: [id], onDelete: Cascade)
   lastRunOf  Pipeline?          @relation("PipelineLastRun")
@@ -271,8 +277,9 @@ model Environment {
 
   requireApproval Boolean
 
-  secrets Secret[]
-  runs    PipelineRun[]
+  secrets             Secret[]
+  runs                PipelineRun[]
+  defaultForPipelines Pipeline[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
