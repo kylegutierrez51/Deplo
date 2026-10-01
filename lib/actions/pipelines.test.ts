@@ -665,6 +665,31 @@ describe('addPipeline', () => {
     );
   });
 
+  it('saves the picked default environment', async () => {
+    await addPipeline(idle, form({ default_environment_id: 'env-1' }));
+
+    expect(prismaMock.pipeline.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ defaultEnvironmentId: 'env-1' }),
+    }));
+  });
+
+  // The picker submits '' for "None"; an empty string would fail the foreign key.
+  it.each([['picked as None', { default_environment_id: '' }], ['absent', {}]])('saves no default environment when %s', async (_label, over) => {
+    await addPipeline(idle, form(over));
+
+    expect(prismaMock.pipeline.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ defaultEnvironmentId: null }),
+    }));
+  });
+
+  it('reports a default environment deleted from under the form', async () => {
+    prismaMock.pipeline.create.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await addPipeline(idle, form({ default_environment_id: 'env-gone' }));
+
+    expect(result).toEqual({ status: 'error', message: 'The selected default environment no longer exists. Pick another.' });
+  });
+
   it('reports a friendly message when the insert fails', async () => {
     prismaMock.pipeline.create.mockRejectedValue(prismaError('P2002') as never);
 
@@ -730,10 +755,26 @@ describe('updatePipeline', () => {
 
     expect(prismaMock.pipeline.update).toHaveBeenCalledWith({
       where: { id: 'p1' },
-      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', updatedAt: expect.any(Date) },
+      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', defaultEnvironmentId: null, updatedAt: expect.any(Date) },
     });
     expect(result).toEqual({ status: 'success', message: 'Pipeline updated' });
     expect(revalidate).toHaveBeenCalledWith('/pipelines');
+  });
+
+  it('sets and clears the default environment', async () => {
+    await updatePipeline(idle, form({ default_environment_id: 'env-1' }));
+    await updatePipeline(idle, form({ default_environment_id: '' }));
+
+    expect(prismaMock.pipeline.update.mock.calls[0][0].data).toMatchObject({ defaultEnvironmentId: 'env-1' });
+    expect(prismaMock.pipeline.update.mock.calls[1][0].data).toMatchObject({ defaultEnvironmentId: null });
+  });
+
+  it('reports a default environment deleted from under the edit', async () => {
+    prismaMock.pipeline.update.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await updatePipeline(idle, form({ default_environment_id: 'env-gone' }));
+
+    expect(result).toEqual({ status: 'error', message: 'The selected default environment no longer exists. Pick another.' });
   });
 
   // The label is a snapshot taken at write time, so a rename has to record both
