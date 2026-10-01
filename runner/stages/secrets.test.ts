@@ -29,16 +29,16 @@ describe('resolving nothing', () => {
   it.each([
     ['the stage selected no secrets', {}, 'env-1'],
     ['the stage has an entry for another environment only', { 'env-2': ['s1'] }, 'env-1'],
-    ['the run has no environment and the stage wanted nothing', { 'env-1': [] }, null],
+    ['the run has no environment and the stage has no secrets attached to it from any environment', { 'env-1': [] }, null],
+    ['the run has no environment and the stage has secrets attached', { 'env-1': ['s1'] }, null],
   ])('returns an empty map when %s', async (_label, secrets, environmentId) => {
     expect(await resolveSecrets(secrets, environmentId)).toEqual({});
   });
 
-  // The one case that must NOT come back empty. A stage asking for secrets on a run with no
-  // environment has nothing to resolve against, and answering {} would hand the command an
-  // empty $API_KEY — exactly the silent omission the throw below exists to prevent.
-  it('throws when the stage wants secrets and the run has no environment', async () => {
-    await expect(resolveSecrets({ 'env-1': ['s1'] }, null)).rejects.toThrow(/no environment/);
+  it('does not query at all when the run has no environment', async () => {
+    await resolveSecrets({ 'env-1': ['s1'] }, null);
+
+    expect(prismaMock.secret.findMany).not.toHaveBeenCalled();
   });
 
   // Not merely an optimization: findMany with an empty `in` matches nothing, so without

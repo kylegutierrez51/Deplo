@@ -18,11 +18,8 @@ export async function resolveSecrets(
   secretsByEnvironment: Record<string, string[]>,
   environmentId: string | null,
 ): Promise<Record<string, string>> {
-  // returns an empty map if there is no environment targeted for the run
-  if (!environmentId) {
-    if (Object.values(secretsByEnvironment).every(ids => ids.length === 0)) return {};
-    throw new Error('stage selects secrets but its run targets no environment');
-  }
+
+  if (!environmentId) return {};
 
   const ids = [...new Set(secretsByEnvironment[environmentId] ?? [])];
 

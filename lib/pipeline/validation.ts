@@ -5,6 +5,7 @@ import { matchReservedLabel } from '@/lib/utils/string';
 
 // Everything a run is checked against before a PipelineRun row is created.
 
+
 // Node ids are uuids and mean nothing to the user, so name the stage the way the editor does.
 function stageLabel(node: CustomNode): string {
   return node.data.name?.trim() || '';
@@ -28,6 +29,8 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
   return count === 1 ? singular : pluralForm;
 }
 
+
+
 // target -> sources. buildMaps covers the forward direction; every "what runs before this stage" question needs this one.
 function buildReverseAdjacency(edges: Edge[]): Map<string, string[]> {
   const reverse = new Map<string, string[]>();
@@ -39,11 +42,15 @@ function buildReverseAdjacency(edges: Edge[]): Map<string, string[]> {
   return reverse;
 }
 
+
+
 /** Edges naming a stage the graph no longer holds. */
 export function findDanglingEdges(edges: Edge[], nodes: CustomNode[]): Edge[] {
   const ids = new Set(nodes.map(node => node.id));
   return edges.filter(edge => !ids.has(edge.source) || !ids.has(edge.target));
 }
+
+
 
 /*
 ==============================================================================================
@@ -79,6 +86,8 @@ export function detectCycle(edges: Edge[], nodes: CustomNode[]): string[] | null
   return describeCycle(stuck, edges, nodes);
 }
 
+
+
 /*==============================================================================================
  - Walks backwards from a stuck stage until it revisits one — that repeat is the cycle.
  - Backwards is what makes this terminate. A stage survives Kahn's only because an
@@ -112,6 +121,8 @@ function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): 
   });
 }
 
+
+
 /*
 ==============================================================================================
  * Deploy stages with no Approval stage anywhere upstream.
@@ -125,7 +136,6 @@ function describeCycle(stuck: Set<string>, edges: Edge[], nodes: CustomNode[]): 
  * A deploy stage with no parents at all fails, which is the point — nothing gates it.
 ==============================================================================================
 */
-
 export function findUngatedDeployStages(edges: Edge[], nodes: CustomNode[]): CustomNode[] {
   const reverse = buildReverseAdjacency(edges);
   const typeById = new Map(nodes.map(node => [node.id, node.data.type]));
@@ -152,7 +162,9 @@ export function findUngatedDeployStages(edges: Edge[], nodes: CustomNode[]): Cus
   return nodes.filter(node => node.data.type === 'deploy' && !hasApprovalAncestor(node.id));
 }
 
-export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJson, requireApproval: boolean): string[] {
+
+
+export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJson, environment: { requireApproval: boolean } | null): string[] {
   const { nodes, edges } = graphJson;
   const errors: string[] = [];
 
@@ -198,7 +210,7 @@ export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJs
     return errors;
   }
 
-  if (requireApproval) {
+  if (environment?.requireApproval) {
     const ungated = findUngatedDeployStages(edges, nodes);
 
     if (ungated.length) {
