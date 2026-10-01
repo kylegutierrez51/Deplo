@@ -122,7 +122,7 @@ export default function StageDetailView({ node, envPresent }: { node: StageResul
                 ))
                 : (envPresent === true ?
                   <div className={styles.empty}>No secrets selected.</div>
-                  : <div className={styles.empty}>Since the environment was not found, secrets for this stage may have been deleted.</div>
+                  : <div className={styles.empty}>No secrets.</div>
                 )}
             </div>
           </>
