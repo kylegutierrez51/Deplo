@@ -254,11 +254,28 @@ describe('addPipelineRun guards', () => {
     return { id: 'def-1', version: 0, graphJson, configJson, ...over };
   };
 
-  it('refuses without a target environment', async () => {
+  // An environment is optional: without one there is no approval rule and nothing to look up.
+  it('creates a run that targets no environment', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition() as never);
+
     const result = await addPipelineRun('p1', null, nodes, []);
 
-    expect(result).toEqual({ status: 'error', message: 'Select an environment to target.' });
-    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
+    expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ environmentId: null }),
+    }));
+  });
+
+  // Secrets are selected per environment, so ones kept from an earlier choice are simply not resolved.
+  it('creates a run with no environment even when a stage kept secret selections', async () => {
+    const withSecrets = [node('a', { secrets: { 'env-1': ['s1'] } })];
+    const { graphJson, configJson } = toDefinition(withSecrets, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+
+    const result = await addPipelineRun('p1', null, withSecrets, []);
+
+    expect(result.status).toBe('success');
   });
 
   // The only action that hard-fails on an anonymous caller, because a run has to
@@ -544,11 +561,11 @@ describe('validatePipeline', () => {
     expect(result).toEqual({ status: 'error', message: 'Sign in to validate a pipeline.' });
   });
 
-  // requireApproval decides whether the approval rule applies, so there is no answer without one.
-  it('refuses without a target environment', async () => {
-    const result = await validatePipeline(null, [node('a')], []);
+  // Without an environment there is no approval rule, so an ungated deploy is valid.
+  it('validates against no environment', async () => {
+    const result = await validatePipeline(null, [node('a'), node('d', { type: 'deploy' })], [{ id: 'e0', source: 'a', target: 'd' }]);
 
-    expect(result).toEqual({ status: 'error', message: 'Select an environment to validate against.' });
+    expect(result).toEqual({ status: 'success', message: 'Pipeline is valid' });
     expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
   });
 
