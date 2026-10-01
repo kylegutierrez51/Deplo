@@ -11,6 +11,8 @@ function stageLabel(node: CustomNode): string {
   return node.data.name?.trim() || '';
 }
 
+
+
 function listStages(nodes: CustomNode[]): string {
   let stages = '';
   let listedAll = true;
@@ -191,7 +193,6 @@ export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJs
       `${plural(reserved.length, 'A Custom stage cannot', 'Custom stages cannot')} be labeled "Approval" or "Deploy"${namedStages.length ? `: ${namedStages}` : ''}`
     );
   }
-
 
   const missingCommand = nodes.filter(node => node.data.type !== 'approval' && !configJson[node.id]?.command?.trim());
 

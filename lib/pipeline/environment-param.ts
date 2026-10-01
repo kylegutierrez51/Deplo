@@ -1,4 +1,3 @@
-
 // In the Pipeline Editor, when no environment is selected, makes the URL: `?environment=none`
 export const NO_ENVIRONMENT = 'none';
 
@@ -13,7 +12,7 @@ export const NO_ENVIRONMENT = 'none';
  * Having a defaultEnvironment initially set does not set `?environment=<defaultEnvironmentId>`.
  * When the defaultEnvironment is removed by the user, the URL is set to `?environment=none`.
  * When the URL names an environment that doesn't exist, fallback to the default environment
- * Having `?environment=a&environment=b` returns null.
+ * Having `?environment=a&environment=b` falls back to the default environment
  * 
  */
 export function resolveInitialEnvironment(

@@ -50,7 +50,7 @@ export default function EnvironmentSelect({ environments, defaultEnvironmentId }
     Object.values(node.data.secrets ?? {}).some(ids => ids.length));
 
   const unusedSecretsHint = withSecrets.length
-    ? `You do not have an environment selected, so these nodes have secrets that won't be used: ${withSecrets.map(node => node.data.name?.trim() || 'unnamed stage').join(', ')}`
+    ? `You do not have an environment selected, so these stages have secrets that won't be used: ${withSecrets.map(node => node.data.name?.trim() || 'unnamed stage').join(', ')}`
     : null;
 
   return (

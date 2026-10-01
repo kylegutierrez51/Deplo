@@ -56,7 +56,7 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
 ==============================================================================================
  * When the last run of a pipeline gets deleted in `enqueueOrDiscardRun()`, 'lastRunId' gets set to NULL.
  * 
- * So go get the run before that and update it as the pipeline's last run
+ * So get the run before that and update it as the pipeline's last run
 ==============================================================================================
 */
 async function repointLastRun(pipelineId: string): Promise<void> {
@@ -99,7 +99,7 @@ export async function createPipelineRun(data: {
         await tx.$queryRaw`SELECT 1 FROM "pipelines" WHERE "id" = ${data.pipelineId} FOR UPDATE`;
 
         /* 
-         * gets the name of the environment incase this new PipelineRun has an environmentId attached. 
+         * gets the name of the environment in case this new PipelineRun has an environmentId attached. 
          * This is to show that a run was originally executed with an environment, 
          * to prevent reruns that have deleted environment ids.
          */
