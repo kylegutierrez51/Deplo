@@ -47,13 +47,29 @@ const revalidate = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
 const enqueue = enqueuePipelineRun as jest.MockedFunction<typeof enqueuePipelineRun>;
 const reachable = isQueueReachable as jest.MockedFunction<typeof isQueueReachable>;
 
+/** A stored definition for `stages`, shaped the way toDefinition writes it. */
+const storedDefinition = (stages: { id: string, type?: string, secrets?: Record<string, string[]> }[] = [{ id: 'a' }]) => ({
+  graphJson: { nodes: stages.map(({ id, type = 'custom' }) => ({ id, position: { x: 0, y: 0 }, data: { type, name: id } })), edges: [] },
+  configJson: Object.fromEntries(stages.map(({ id, secrets = {} }) => [id, { command: 'npm test', secrets }])),
+});
+
 /** The old run as findUnique's `select` returns it. */
-const existingRun = (status: PrismaRunStatus = 'FAILED') =>
+const existingRun = (status: PrismaRunStatus = 'FAILED', over: Record<string, unknown> = {}) =>
   prismaMock.pipelineRun.findUnique.mockResolvedValue({
     status,
     pipelineId: 'pipe-1',
     definitionId: 'def-3',
     environmentId: 'env-2',
+    environmentName: 'staging',
+    definition: storedDefinition(),
+    ...over,
+  } as never);
+
+/** The environment as both getEnvironmentById and createPipelineRun's name snapshot read it. */
+const environment = (requireApproval = false) =>
+  prismaMock.environment.findUnique.mockResolvedValue({
+    id: 'env-2', name: 'staging', type: 'STAGING', requireApproval,
+    createdById: null, createdAt: new Date(), updatedAt: new Date(), secrets: [], createdBy: null,
   } as never);
 
 /** The new run as createPipelineRun's `select` returns it — the audit label reads the last two. */
@@ -78,6 +94,7 @@ beforeEach(() => {
   setSession();
   runTransactionsInline();
   existingRun();
+  environment();
   created();
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
@@ -158,6 +175,53 @@ describe('which runs may be retried', () => {
   });
 });
 
+/*
+ * Deleting an environment nulls environmentId on its runs, so environmentName — copied at
+ * creation — is what says the run had one. Retrying without it would be a different run:
+ * no approval rule, and no secrets to resolve.
+ */
+describe('the environment a retry targets', () => {
+  it('refuses a run whose environment has been deleted', async () => {
+    existingRun('FAILED', { environmentId: null, environmentName: 'prod' });
+
+    expect(await retry()).toEqual({
+      status: 'error',
+      message: 'This run targeted "prod", which has since been deleted. Start a new run from the pipeline editor instead.',
+    });
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+  });
+
+  it('retries a run that never targeted an environment', async () => {
+    existingRun('FAILED', { environmentId: null, environmentName: null });
+
+    expect((await retry()).status).toBe('success');
+    expect(inserted().data).toEqual(expect.objectContaining({ environmentId: null, environmentName: null }));
+  });
+
+  // The definition passed when the run was created; the environment may have changed since.
+  it('refuses when the environment has since started requiring approval', async () => {
+    existingRun('FAILED', { definition: storedDefinition([{ id: 'd', type: 'deploy' }]) });
+    environment(true);
+
+    const result = await retry();
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Approval stage upstream/);
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+  });
+
+  // Rows written before environmentName existed read null for both, so they retry as environment-less,
+  // secret selections and all — the runner resolves none without an environment.
+  it('retries a run with no environment whose stages kept secret selections', async () => {
+    existingRun('FAILED', {
+      environmentId: null, environmentName: null,
+      definition: storedDefinition([{ id: 'a', secrets: { 'env-9': ['s1'] } }]),
+    });
+
+    expect((await retry()).status).toBe('success');
+  });
+});
+
 describe('the new run', () => {
   // The heart of it: a new row, and the old one left exactly as it was. Any update or
   // delete against the old run is the reused-row design coming back.
@@ -203,6 +267,7 @@ describe('the new run', () => {
     expect(inserted().data).toEqual(expect.objectContaining({
       pipelineId: 'pipe-1',
       environmentId: 'env-2',
+      environmentName: 'staging',
     }));
   });
 

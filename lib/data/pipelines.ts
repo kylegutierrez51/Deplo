@@ -12,6 +12,7 @@ export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
   runNumber?: number;
   createdBy?: string | null;
   commitMessage?: string | null;
+  defaultEnvironment?: string | null;
 }
 
 const RUN_STATUS_MAP: Record<PrismaRunStatus, PipelineStatus> = {
@@ -87,19 +88,21 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
     where: { id },
     include: {
       lastRun: true,
-      createdBy: { select: { name: true } }
+      createdBy: { select: { name: true } },
+      defaultEnvironment: { select: { name: true } }
      }
   })
 
   if (!pipeline) return null;
 
-  const { lastRun, lastRunId: _lastRunId, ...rest } = pipeline;
+  const { lastRun, lastRunId: _lastRunId, defaultEnvironment, ...rest } = pipeline;
 
   return {
     ...rest,
     status: lastRun ? RUN_STATUS_MAP[lastRun.status] : 'idle',
     lastRun: lastRun?.id ?? null,
-    createdBy: pipeline.createdBy?.name ?? null
+    createdBy: pipeline.createdBy?.name ?? null,
+    defaultEnvironment: defaultEnvironment?.name ?? null
   }
 }
 

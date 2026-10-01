@@ -6,7 +6,8 @@ import prisma from "@/lib/prisma";
 import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/client';
 import { AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
-import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
+import { fromDefinition, toDefinition } from '@/lib/pipeline/definition';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
 
@@ -28,7 +29,10 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
   try {
     const run = await prisma.pipelineRun.findUnique({
       where: { id },
-      select: { status: true, pipelineId: true, definitionId: true, environmentId: true }
+      select: {
+        status: true, pipelineId: true, definitionId: true, environmentId: true, environmentName: true,
+        definition: { select: { graphJson: true, configJson: true } }
+      }
     });
 
     if (!run) {
@@ -42,6 +46,19 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       status: 'error',
       message: 'This run has not finished yet.'
     }
+
+    // cannot retry a run that had its environment deleted
+    if (!run.environmentId && run.environmentName) return {
+      status: 'error',
+      message: `This run targeted "${run.environmentName}", which has since been deleted. Start a new run from the pipeline editor instead.`
+    }
+
+    // If the Environment turns on 'requireApproval', then this blocks users from re-running pipelines
+    // that don't have an approval upstream for deploy stages
+    const { nodes, edges } = fromDefinition(run.definition.graphJson, run.definition.configJson);
+    const isReadyState = await verifyPipelineRunReady(toDefinition(nodes, edges), run.environmentId);
+
+    if (isReadyState.status === 'error') return isReadyState;
 
     // When redis is down, this guard lets user waits <= 500ms instead of 5000ms.
     // Since it caches, each subsequent trigger in the next 5 seconds makes user wait less than 500ms
