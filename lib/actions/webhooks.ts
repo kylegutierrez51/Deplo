@@ -45,6 +45,11 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   const secret = formData.get('webhook_secret') as string;
   const events = validateAndMapEvents(formData);
 
+  if (!pipelineId) return {
+    status: 'error',
+    message: 'Select a pipeline from the list.'
+  }
+
   if (!events) {
     return {
       status: 'error',
@@ -115,6 +120,11 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
       status: 'error',
       message: 'Error adding trigger event data. Please try again.'
     }
+  }
+
+  if (!pipelineId) return {
+    status: 'error',
+    message: 'Select a pipeline from the list.'
   }
 
   try {

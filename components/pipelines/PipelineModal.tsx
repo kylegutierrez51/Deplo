@@ -11,7 +11,6 @@ import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
 import Pill from '@/components/ui/Pill';
-import FilterListbox from '@/components/ui/filters/FilterListbox';
 import type { Environment } from '@/lib/data/environments';
 
 const styles = { ...modalStyles, ...pipelineStyles };
@@ -71,6 +70,9 @@ export default function PipelineModal({
   const [enteredName, setEnteredName] = useState(name || '');
   const [enteredRepoUrl, setEnteredRepoUrl] = useState(repoUrl || '');
   const [enteredDescription, setEnteredDescription] = useState(description || '');
+  const [query, setQuery] = useState(defaultEnvironment ?? '');
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(defaultEnvironmentId);
+  const [openMatches, setOpenMatches] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
     const result = await addPipeline(prev, formData);
@@ -86,10 +88,27 @@ export default function PipelineModal({
   }, initialState);
   const pending = createPending || editPending;
 
-  const environmentOptions = [
-    { value: '', label: 'None' },
-    ...environments.map(env => ({ value: env.id, label: env.name, status: env.type })),
-  ];
+  const matches = () => {
+    if (!query) return [];
+    const q = query.toLowerCase();
+    return environments.filter(env => env.name.toLowerCase().includes(q));
+  }
+
+  // Typing a name in full counts as picking it
+  const exactMatch = () => {
+    const q = query.trim().toLowerCase();
+    const found = environments.filter(env => env.name.toLowerCase() === q);
+    return found.length === 1 ? found[0] : undefined;
+  }
+
+  const handleEnvironmentBlur = () => {
+    const match = exactMatch();
+    if (!selectedEnvironmentId && match) {
+      setQuery(match.name);
+      setSelectedEnvironmentId(match.id);
+    }
+    setTimeout(() => setOpenMatches(false), 100);
+  }
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
@@ -216,15 +235,55 @@ export default function PipelineModal({
             </div>
 
             <div className={styles.item}>
-              <label htmlFor="description">Description <span className={styles.optionalBadge}>optional</span></label>
-              <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main"
-                value={enteredDescription} onChange={(e) => setEnteredDescription(e.target.value)}></textarea>
+              <label htmlFor="default_environment">Default Environment <span className={styles.optionalBadge}>optional</span></label>
+              <input type="hidden" name="default_environment_id" value={selectedEnvironmentId ?? exactMatch()?.id ?? ''} />
+              <div className={styles.autocompleteWrapper}>
+                <input
+                  type="text"
+                  id="default_environment"
+                  placeholder="e.g. staging"
+                  autoComplete="off"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setSelectedEnvironmentId(null);
+                    setOpenMatches(true);
+                  }}
+                  onFocus={() => setOpenMatches(true)}
+                  onBlur={handleEnvironmentBlur}
+                />
+                {openMatches && query && (
+                  <ul className={styles.autocompleteList}>
+                    {matches().length > 0 ? (
+                      matches().map(env => (
+                        <li key={env.id}>
+                          <button
+                            type="button"
+                            className={styles.autocompleteOption}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setQuery(env.name);
+                              setSelectedEnvironmentId(env.id);
+                              setOpenMatches(false);
+                            }}
+                          >
+                            <span>{env.name}</span>
+                            <span className={styles.autocompleteMuted}>{capitalize(env.type)}</span>
+                          </button>
+                        </li>
+                      ))
+                    ) : (
+                      <li className={styles.autocompleteEmpty}>No matching environments</li>
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
 
             <div className={styles.item}>
-              <label htmlFor="default_environment_id">Default Environment <span className={styles.optionalBadge}>optional</span></label>
-              <FilterListbox id="default_environment_id" name="default_environment_id" options={environmentOptions}
-                defaultValue={defaultEnvironmentId ?? ''} responsive={false} />
+              <label htmlFor="description">Description <span className={styles.optionalBadge}>optional</span></label>
+              <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main"
+                value={enteredDescription} onChange={(e) => setEnteredDescription(e.target.value)}></textarea>
             </div>
           </>
         )}

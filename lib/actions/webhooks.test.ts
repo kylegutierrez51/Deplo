@@ -84,6 +84,15 @@ describe('addWebhook', () => {
     expect(result).toEqual({ status: 'error', message: 'Selected pipeline no longer exists.' });
   });
 
+  // Typed text that matches no pipeline leaves the hidden pipeline_id empty. Writing '' would fail the
+  // foreign key and report the pipeline as deleted, when the user simply never picked one.
+  it('refuses an empty pipeline without writing', async () => {
+    const result = await addWebhook(idle, form({ pipeline_id: '' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Select a pipeline from the list.' });
+    expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
   it('falls back to a generic message for anything else', async () => {
     prismaMock.webhook.create.mockRejectedValue(new Error('network') as never);
 
@@ -168,6 +177,13 @@ describe('updateWebhook', () => {
     const result = await updateWebhook(idle, form({ id: 'wh-1' }));
 
     expect(result).toEqual({ status: 'error', message: 'This webhook no longer exists.' });
+  });
+
+  it('refuses an empty pipeline without writing', async () => {
+    const result = await updateWebhook(idle, form({ id: 'wh-1', pipeline_id: '' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Select a pipeline from the list.' });
+    expect(prismaMock.webhook.update).not.toHaveBeenCalled();
   });
 
   it('falls back to a generic message for anything else', async () => {

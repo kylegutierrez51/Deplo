@@ -60,3 +60,56 @@
 .latest-run-link:hover {
   text-decoration: underline;
 }
+.autocompleteWrapper {
+  position: relative;
+}
+
+.autocompleteWrapper > input {
+  width: 100%;
+}
+
+.autocompleteList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background-color: rgb(48, 48, 48);
+  border: 1px solid gray;
+  border-radius: var(--radius-lg);
+}
+
+.autocompleteOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--white-clr);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.autocompleteOption:hover {
+  background-color: var(--gray-clr);
+}
+
+.autocompleteMuted {
+  color: rgb(160, 160, 160);
+  font-size: 12px;
+}
+
+.autocompleteEmpty {
+  padding: 8px 10px;
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}

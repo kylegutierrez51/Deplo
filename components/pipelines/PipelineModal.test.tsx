@@ -229,8 +229,8 @@ describe.each([
 });
 
 /*
- * The default environment is what the editor's picker opens on. It is optional, so the
- * form offers "None" as well as every environment and submits '' for it, which the
+ * The default environment is what the editor's picker opens on. It is optional: the
+ * field is a type-to-filter autocomplete, and leaving it empty submits '', which the
  * actions read as null.
  */
 describe('the default environment', () => {
@@ -269,7 +269,7 @@ describe('the default environment', () => {
   it('opens on the saved default in edit mode and submits it unchanged', async () => {
     setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
 
-    expect(screen.getByRole('combobox')).toHaveTextContent('prod');
+    expect(screen.getByLabelText(/default environment/i)).toHaveValue('prod');
     fireEvent.submit(document.getElementById('modal-form')!);
 
     await waitFor(() => expect(submitted()('edit')).toBe('env-2'));
@@ -279,11 +279,45 @@ describe('the default environment', () => {
     setup({ mode: 'create', environments });
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('combobox'));
-    await user.click(screen.getByRole('option', { name: /staging/i }));
+    await user.type(screen.getByLabelText(/default environment/i), 'stag');
+    await user.click(screen.getByRole('button', { name: /staging/i }));
     fireEvent.submit(document.getElementById('modal-form')!);
 
     await waitFor(() => expect(submitted()('create')).toBe('env-1'));
+  });
+
+  it('submits the environment whose name was typed in full without clicking it', async () => {
+    setup({ mode: 'create', environments });
+    const user = userEvent.setup();
+
+    const input = screen.getByLabelText(/default environment/i);
+    await user.type(input, 'Staging');
+    await user.tab();
+    expect(input).toHaveValue('staging');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('create')).toBe('env-1'));
+  });
+
+  it('submits no default for a name that only partly matches', async () => {
+    setup({ mode: 'create', environments });
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/default environment/i), 'stag');
+    await user.tab();
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('create')).toBe(''));
+  });
+
+  it('submits no default once the user clears the saved one', async () => {
+    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText(/default environment/i));
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('edit')).toBe(''));
   });
 });
 

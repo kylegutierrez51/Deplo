@@ -326,3 +326,52 @@ describe.each([
     expect(branchInput).toHaveValue('feature/*');
   });
 });
+
+/*
+ * Typing a pipeline's full name counts as picking it, so a webhook can be saved without
+ * clicking the suggestion. Pipeline names are not unique, so a name two pipelines share
+ * stays unresolved rather than silently binding the webhook to whichever came first.
+ */
+describe('resolving a typed pipeline name', () => {
+  const pipelines = [
+    { id: 'p-1', name: 'deploy-api', repoUrl: null },
+    { id: 'p-2', name: 'build-web', repoUrl: null },
+    { id: 'p-3', name: 'build-web', repoUrl: null },
+  ] as unknown as Props['pipelines'];
+
+  const submittedPipelineId = () =>
+    new FormData(document.getElementById('modal-form') as HTMLFormElement).get('pipeline_id');
+
+  it('selects the pipeline whose name was typed in full, ignoring case, and normalizes the text on blur', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', pipelineName: null, pipelines });
+
+    const input = screen.getByLabelText('Pipeline to trigger');
+    await user.type(input, 'DEPLOY-API');
+    expect(submittedPipelineId()).toBe('p-1');
+
+    await user.tab();
+    expect(input).toHaveValue('deploy-api');
+    expect(submittedPipelineId()).toBe('p-1');
+  });
+
+  it('selects nothing for a partial name', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', pipelineName: null, pipelines });
+
+    await user.type(screen.getByLabelText('Pipeline to trigger'), 'deploy');
+    await user.tab();
+
+    expect(submittedPipelineId()).toBe('');
+  });
+
+  it('selects nothing for a name two pipelines share', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', pipelineName: null, pipelines });
+
+    await user.type(screen.getByLabelText('Pipeline to trigger'), 'build-web');
+    await user.tab();
+
+    expect(submittedPipelineId()).toBe('');
+  });
+});

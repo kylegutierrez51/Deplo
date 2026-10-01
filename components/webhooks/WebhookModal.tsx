@@ -159,6 +159,24 @@ export default function WebhookModal({
   }
 
 
+  // Typing a name in full counts as picking it, unless there's 2 pipelines with the same name
+  const exactMatch = () => {
+    const q = query.trim().toLowerCase();
+    const found = pipelines?.filter(p => p.name.toLowerCase() === q) ?? [];
+    return found.length === 1 ? found[0] : undefined;
+  }
+
+
+  const handlePipelineBlur = () => {
+    const match = exactMatch();
+    if (!selectedPipelineId && match) {
+      setQuery(match.name);
+      setSelectedPipelineId(match.id);
+    }
+    setTimeout(() => setOpenMatches(false), 100);
+  }
+
+
   const handleGenerateSecret = () => {
     const bytes = new Uint8Array(32);
     crypto.getRandomValues(bytes);
@@ -253,7 +271,7 @@ export default function WebhookModal({
 
             <div className={styles.fieldGroup}>
               <label htmlFor="pipeline-name">Pipeline to trigger</label>
-              <input type="hidden" name="pipeline_id" value={selectedPipelineId ?? ''} />
+              <input type="hidden" name="pipeline_id" value={selectedPipelineId ?? exactMatch()?.id ?? ''} />
               <div className={styles.autocompleteWrapper}>
                 <input
                   type="text"
@@ -268,7 +286,7 @@ export default function WebhookModal({
                     setOpenMatches(true);
                   }}
                   onFocus={() => setOpenMatches(true)}
-                  onBlur={() => setTimeout(() => setOpenMatches(false), 100)}
+                  onBlur={handlePipelineBlur}
                   required
                 />
                 {openMatches && query && (
