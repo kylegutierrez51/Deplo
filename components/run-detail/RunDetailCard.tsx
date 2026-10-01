@@ -1,15 +1,16 @@
 import styles from './run-detail-card.module.css'
 import RunDetailActions from './RunDetailActions';
 import Pill from '@/components/ui/Pill';
+import EnvironmentLabel from '@/components/runs/EnvironmentLabel';
 import { capitalize } from '@/lib/utils/string';
-import type { RunStatus, EnvType } from '@/lib/types';
+import type { RunStatus, RunEnvironment } from '@/lib/types';
 
 interface RunDetailData {
   id: string;
   pipelineName: string;
   runNumber: number;
   status: RunStatus;
-  environment: { type: EnvType; name: string } | null;
+  environment: RunEnvironment | null;
   commitHash: string | null;
   commitMessage: string | null;
   branch: string | null;
@@ -43,8 +44,7 @@ export default function RunDetailCard({ run }: { run: RunDetailData }) {
               <>
                 <span className={styles.divider} aria-hidden="true" />
                 <div className={styles['rdc-env-detail']}>
-                  <span className={styles['rdc-meta-item']}>{environment.name}</span>
-                  <Pill variant={environment.type} label={capitalize(environment.type)} />
+                  <EnvironmentLabel environment={environment} nameClassName={styles['rdc-meta-item']} />
                 </div>
               </>
             ) : (
