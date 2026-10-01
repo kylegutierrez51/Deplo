@@ -120,3 +120,40 @@ describe('the lastRun pointer', () => {
     });
   });
 });
+
+/*
+ * Deleting an environment nulls environmentId on every run that targeted it, so the name is
+ * copied onto the row at creation — it is how retryRun tells a run whose environment was
+ * deleted from one that never had an environment.
+ */
+describe('the environment snapshot', () => {
+  const trigger = (environmentId: string | null) => createPipelineRun({
+    pipelineId: 'p1', definitionId: 'd1', environmentId, trigger: 'manual', user: { id: 'u1', name: 'kyle' },
+  });
+
+  beforeEach(() => {
+    runTransactionsInline();
+    prismaMock.pipelineRun.findFirst.mockResolvedValue(null);
+    prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1', runNumber: 1, pipeline: { name: 'CI' } } as never);
+  });
+
+  it("records the targeted environment's name", async () => {
+    prismaMock.environment.findUnique.mockResolvedValue({ name: 'prod' } as never);
+
+    await trigger('env-1');
+
+    expect(prismaMock.environment.findUnique).toHaveBeenCalledWith({ where: { id: 'env-1' }, select: { name: true } });
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ environmentId: 'env-1', environmentName: 'prod' }),
+    }));
+  });
+
+  it('records no name for a run that targets no environment', async () => {
+    await trigger(null);
+
+    expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ environmentId: null, environmentName: null }),
+    }));
+  });
+});

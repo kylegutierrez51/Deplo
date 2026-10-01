@@ -31,6 +31,7 @@ const run = (over: Partial<Run> = {}): Run => ({
   pipelineId: 'p1',
   definitionId: 'd1',
   environmentId: null,
+  environmentName: null,
   environment: null,
   status: 'succeeded',
   trigger: 'manual',
