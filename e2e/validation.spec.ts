@@ -28,14 +28,16 @@ async function openEditor(page: import('@playwright/test').Page) {
   return id;
 }
 
-// The first guard in addPipelineRun past sign-in: a run pins a stored definition, and a
-// fresh pipeline has none. An environment is optional, so none is selected here.
-test('refuses to run a pipeline that has never been saved', async ({ page }) => {
+// An environment is optional, so a run with none selected gets past what used to be the first
+// guard and reaches the graph checks. addPipeline seeds an empty version 0 definition, which the
+// fresh editor matches, so the first of those to fire is the empty-graph one.
+test('runs with no environment selected go on to the graph checks', async ({ page }) => {
   await openEditor(page);
 
   await page.getByRole('button', { name: /run pipeline/i }).click();
 
-  await expect(page.getByText(/save your current pipeline/i)).toBeVisible();
+  await expect(page.getByText(/this pipeline has no stages/i)).toBeVisible();
+  await expect(page.getByText(/select an environment/i)).not.toBeVisible();
 });
 
 // The Validate button reaches the server and reports back without starting a run.
