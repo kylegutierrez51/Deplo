@@ -4,10 +4,12 @@ import { useState } from 'react';
 import type { Environment } from '@/lib/data/environments';
 import Pill from '@/components/ui/Pill';
 import { usePipelineGraph } from './PipelineGraphProvider';
+import { NO_ENVIRONMENT } from '@/lib/pipeline/environment-param';
 import styles from './environment-select.module.css';
 
 interface EnvironmentSelectProps {
   environments: Environment[];
+  defaultEnvironmentId: string | null;
 }
 
 /*
@@ -16,20 +18,19 @@ interface EnvironmentSelectProps {
  - Uses the native history API rather than router.replace, since it reruns the server component (app/pipelines/[id]/page.tsx -- 4 queries) on every selection, and nothing here needs re-rendering. 
  - Use replaceState rather than pushState so if a user goes back in history, it does not walk through every environment the user tried.
 
- - When a user selects an environment, add it to the params. When a user deselects an environment, remove it from the params
+ - When a user deselects an environment, write NO_ENVIRONMENT (`?environment=none`).
 */
 function syncEnvironmentParam(environmentId: string | null) {
   const params = new URLSearchParams(window.location.search);
 
-  if (environmentId) params.set('environment', environmentId);
-  else params.delete('environment');
+  params.set('environment', environmentId ?? NO_ENVIRONMENT);
 
   const query = params.toString();
   window.history.replaceState(null, '', query ? `${window.location.pathname}?${query}` : window.location.pathname);
 }
 
-export default function EnvironmentSelect({ environments }: EnvironmentSelectProps) {
-  const { selectedEnvironmentId, setSelectedEnvironmentId } = usePipelineGraph();
+export default function EnvironmentSelect({ environments, defaultEnvironmentId }: EnvironmentSelectProps) {
+  const { selectedEnvironmentId, setSelectedEnvironmentId, nodes } = usePipelineGraph();
   const selectedName = environments.find(env => env.id === selectedEnvironmentId)?.name ?? '';
 
   const [query, setQuery] = useState(selectedName);
@@ -43,13 +44,28 @@ export default function EnvironmentSelect({ environments }: EnvironmentSelectPro
 
   const results = matches();
 
+  /* If a node has secrets for an environment, but a user has no environment selected, 
+   * display a small warning on the header */
+  const withSecrets = selectedEnvironmentId ? [] : nodes.filter(node =>
+    Object.values(node.data.secrets ?? {}).some(ids => ids.length));
+
+  const unusedSecretsHint = withSecrets.length
+    ? `You do not have an environment selected, so these nodes have secrets that won't be used: ${withSecrets.map(node => node.data.name?.trim() || 'unnamed stage').join(', ')}`
+    : null;
+
   return (
     <div className={styles.autocompleteWrapper}>
+      {unusedSecretsHint && (
+        <span id="unused-secrets-hint" role="img" aria-label={unusedSecretsHint} title={unusedSecretsHint} className={styles.unusedSecretsHint}>
+          <ion-icon name="alert-circle-outline"></ion-icon>
+        </span>
+      )}
       <input
         type="text"
+        aria-describedby={unusedSecretsHint ? 'unused-secrets-hint' : undefined}
         placeholder="Select environment"
         autoComplete="off"
-        className={styles.input}
+        className={`${styles.input}${unusedSecretsHint ? ` ${styles.inputWithHint}` : ''}`}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -76,7 +92,10 @@ export default function EnvironmentSelect({ environments }: EnvironmentSelectPro
                     setOpenMatches(false);
                   }}
                 >
-                  <span>{env.name}</span>
+                  <span>
+                    {env.name}
+                    {env.id === defaultEnvironmentId && <span className={styles.defaultBadge}>default</span>}
+                  </span>
                   <Pill variant={env.type} label={env.type} />
                 </button>
               </li>

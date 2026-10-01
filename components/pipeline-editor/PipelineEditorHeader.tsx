@@ -10,10 +10,11 @@ import type { Environment } from '@/lib/data/environments';
 
 interface PipelineEditorHeaderProps {
   pipelineName: string,
-  environments: Environment[]
+  environments: Environment[],
+  defaultEnvironmentId: string | null
 }
 
-export default function PipelineEditorHeader({ pipelineName, environments }: PipelineEditorHeaderProps) {
+export default function PipelineEditorHeader({ pipelineName, environments, defaultEnvironmentId }: PipelineEditorHeaderProps) {
   const { nodes, edges } = usePipelineGraph();
 
   return (
@@ -37,12 +38,12 @@ export default function PipelineEditorHeader({ pipelineName, environments }: Pip
           </div>
         </div>
         <div className={styles['center-slot']}>
-          <EnvironmentSelect environments={environments} />
+          <EnvironmentSelect environments={environments} defaultEnvironmentId={defaultEnvironmentId} />
         </div>
         <div className={styles['right-slot']}>
           <HeaderButtons />
         </div>
       </div>
-    </header >
+    </header>
   )
 }

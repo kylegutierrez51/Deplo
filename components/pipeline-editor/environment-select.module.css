@@ -13,6 +13,22 @@
   font-size: var(--font-size-sm);
 }
 
+/* Room for the unused-secrets hint, which sits over the input's right edge. */
+.inputWithHint {
+  padding-right: calc(var(--space-md) + 22px);
+}
+
+.unusedSecretsHint {
+  position: absolute;
+  top: 50%;
+  right: var(--space-sm);
+  transform: translateY(-50%);
+  display: flex;
+  font-size: 18px;
+  color: var(--warning-text);
+  cursor: help;
+}
+
 .input::placeholder {
   color: rgb(180, 174, 174);
 }
@@ -55,6 +71,12 @@
 
 .autocompleteOption:hover {
   background-color: var(--gray-clr);
+}
+
+/* Marks the pipeline's default environment, the one the editor opens on. */
+.defaultBadge {
+  margin-left: var(--space-sm);
+  color: var(--subtitle-clr);
 }
 
 .autocompleteEmpty {
