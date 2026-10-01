@@ -1,0 +1,19 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* An environment that still exists reads at full strength. Two classes so it wins over a caller's
+   nameClassName (RunDetailCard's rdc-meta-item is muted) whatever order the modules load in. */
+.label .live {
+  color: var(--white-clr);
+}
+
+/* Muted like the "default" marker in the editor's environment picker. */
+.deleted {
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}

@@ -186,8 +186,10 @@ model PipelineRun {
 
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])
-  // copied at creation in case the environmentId is deleted, to show that a run was originally executed with an environment
+  
+  // copied at creation in case the environment is deleted, to show that a run was originally executed with an environment, and which one
   environmentName String?
+  environmentType EnvironmentType?
 
   pipeline   Pipeline           @relation("PipelineRuns", fields: [pipelineId], references: [id], onDelete: Cascade)
   lastRunOf  Pipeline?          @relation("PipelineLastRun")

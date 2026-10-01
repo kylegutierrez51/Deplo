@@ -9,6 +9,7 @@ import type { RunStatus, RunTrigger } from '@/lib/types';
 import type { Run } from '@/lib/data/runs';
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
+import EnvironmentLabel from './EnvironmentLabel';
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
@@ -72,10 +73,7 @@ export default function RunModal({
         <div className={styles['item-flex']}>
             <div className={styles.item}>
               <label>Environment</label>
-              <span>{environment ? 
-                <>
-                  {environment.name} <Pill variant={environment.type} label={capitalize(environment.type)} /> 
-                </> : 'None'}</span>
+              <span>{environment ? <EnvironmentLabel environment={environment} /> : 'None'}</span>
             </div>
           {trigger && (
             <div className={styles.item}>
