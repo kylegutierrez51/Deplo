@@ -11,6 +11,8 @@ import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import pipelineStyles from './pipeline-modal.module.css';
 import Pill from '@/components/ui/Pill';
+import FilterListbox from '@/components/ui/filters/FilterListbox';
+import type { Environment } from '@/lib/data/environments';
 
 const styles = { ...modalStyles, ...pipelineStyles };
 
@@ -23,6 +25,9 @@ interface PipelineModalProps {
   repoUrl: string | null;
   commitMessage?: string | null;
   description: string | null;
+  defaultEnvironmentId: string | null;
+  defaultEnvironment?: string | null;
+  environments: Environment[];
   createdBy?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +54,9 @@ export default function PipelineModal({
   repoUrl,
   commitMessage,
   description,
+  defaultEnvironmentId,
+  defaultEnvironment,
+  environments,
   createdBy,
   createdAt,
   updatedAt,
@@ -77,6 +85,11 @@ export default function PipelineModal({
     return result;
   }, initialState);
   const pending = createPending || editPending;
+
+  const environmentOptions = [
+    { value: '', label: 'None' },
+    ...environments.map(env => ({ value: env.id, label: env.name, status: env.type })),
+  ];
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
@@ -164,6 +177,13 @@ export default function PipelineModal({
               </div>
             )}
 
+            {defaultEnvironment && (
+              <div className={styles.item}>
+                <label>Default Environment</label>
+                <span>{defaultEnvironment}</span>
+              </div>
+            )}
+
             <div className={styles['created-updated-flex']}>
               <div className={styles.item}>
                 <label>Created By</label>
@@ -199,6 +219,12 @@ export default function PipelineModal({
               <label htmlFor="description">Description <span className={styles.optionalBadge}>optional</span></label>
               <textarea name="description" id="description" placeholder="e.g. Builds and deploys the web client on every push to main"
                 value={enteredDescription} onChange={(e) => setEnteredDescription(e.target.value)}></textarea>
+            </div>
+
+            <div className={styles.item}>
+              <label htmlFor="default_environment_id">Default Environment <span className={styles.optionalBadge}>optional</span></label>
+              <FilterListbox id="default_environment_id" name="default_environment_id" options={environmentOptions}
+                defaultValue={defaultEnvironmentId ?? ''} responsive={false} />
             </div>
           </>
         )}

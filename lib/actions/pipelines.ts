@@ -1,6 +1,6 @@
 "use server"
 
-import { FormState, type ConfigJson, type CustomNode, type GraphJson } from '@/lib/types';
+import { FormState, type CustomNode } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { auth } from '@/auth';
@@ -8,9 +8,7 @@ import { definitionsEqual, toDefinition } from '@/lib/pipeline/definition';
 import type { Edge } from '@xyflow/react';
 import { AuditAction, ResourceType } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import { getEnvironmentById } from '../data/environments';
-import { validatePipelineGraph } from '@/lib/pipeline/validation';
-import { enqueueOrDiscardRun, createPipelineRun } from '@/lib/actions/run-trigger';
+import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
 
@@ -34,12 +32,14 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
+  // The picker submits '' for "None".
+  const defaultEnvironmentId = (formData.get('default_environment_id') as string | null) || null;
 
   try {
     await prisma.$transaction(async (tx) => {
       const pipeline = await tx.pipeline.create({
         data: {
-          name, repoUrl, description, createdById,
+          name, repoUrl, description, defaultEnvironmentId, createdById,
           definitions: {
             create: { version: 0, graphJson: { nodes: [], edges: [] }, configJson: {}, createdById },
           },
@@ -66,6 +66,12 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
     };
 
   } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return {
+        status: 'error',
+        message: 'The selected default environment no longer exists. Pick another.'
+      }
+    }
     console.log(error instanceof Error ? error.message : '');
     return {
       status: 'error',
@@ -91,6 +97,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
   const name = formData.get('name') as string;
   const repoUrl = formData.get('repo_url') as string;
   const description = formData.get('description') as string;
+  const defaultEnvironmentId = (formData.get('default_environment_id') as string | null) || null;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -101,7 +108,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 
       await tx.pipeline.update({
         where: { id },
-        data: { name, repoUrl, description, updatedAt: new Date() },
+        data: { name, repoUrl, description, defaultEnvironmentId, updatedAt: new Date() },
       });
 
       await addAudit({
@@ -127,6 +134,12 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
       return {
         status: 'error',
         message: 'This pipeline no longer exists.'
+      }
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return {
+        status: 'error',
+        message: 'The selected default environment no longer exists. Pick another.'
       }
     }
     console.log(error instanceof Error ? error.message : '');
@@ -328,11 +341,6 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
   const userId = user.id;
 
-  if (!environmentId) return {
-    status: 'error',
-    message: 'Select an environment to target.'
-  }
-
   try {
     const latest = await prisma.pipelineDefinition.findFirst({
       where: { pipelineId },
@@ -416,12 +424,6 @@ export async function validatePipeline(environmentId: string | null, nodes: Cust
     message: 'Sign in to validate a pipeline.'
   }
 
-  // The environment's requireApproval decides whether the approval rule applies, so there is no answer without one.
-  if (!environmentId) return {
-    status: 'error',
-    message: 'Select an environment to validate against.'
-  }
-
   try {
     const isReadyState = await verifyPipelineRunReady(toDefinition(nodes, edges), environmentId);
 
@@ -438,36 +440,5 @@ export async function validatePipeline(environmentId: string | null, nodes: Cust
       status: 'error',
       message: 'Error validating pipeline. Please try again.'
     }
-  }
-}
-
-
-
-async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string): Promise<FormState> {
-  const { graphJson, configJson } = definition;
-
-  if (!graphJson.nodes.length) return {
-    status: 'error',
-    message: 'This pipeline has no stages. Add at least one.'
-  }
-
-  // The environment is fetched before the graph checks rather than after because requireApproval decides whether one of them runs at all. It is the only round trip here.
-  const environment = await getEnvironmentById(environmentId);
-
-  if (!environment) return {
-    status: 'error',
-    message: 'The selected environment no longer exists. Pick another.'
-  }
-
-  const errors = validatePipelineGraph(graphJson, configJson, environment.requireApproval);
-
-  if (errors.length) return {
-    status: 'error',
-    message: ['Cannot run pipeline:', ...errors.map(error => `• ${error}`)].join('\n')
-  }
-
-  return {
-    status: 'success',
-    message: ''
   }
 }
