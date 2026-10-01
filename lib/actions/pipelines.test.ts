@@ -355,7 +355,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', runNumber: 1 },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1 },
     }));
   });
 

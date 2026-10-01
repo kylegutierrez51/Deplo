@@ -31,7 +31,6 @@ const run = (over: Partial<Run> = {}): Run => ({
   pipelineId: 'p1',
   definitionId: 'd1',
   environmentId: null,
-  environmentName: null,
   environment: null,
   status: 'succeeded',
   trigger: 'manual',
@@ -79,5 +78,42 @@ describe('opening the run', () => {
     await userEvent.click(screen.getByText('CI'));
 
     expect(mockPush).toHaveBeenCalledWith('/runs?status=failed&id=run-1');
+  });
+});
+
+/*
+ * Deleting an environment nulls the run's environmentId, and the reader falls back to the name and
+ * type copied onto the run — flagged deleted, so the row does not present it as live.
+ */
+describe('the environment cell', () => {
+  it('shows a live environment with its type and no deleted note', () => {
+    setup({ environment: { name: 'prod', type: 'production', deleted: false } });
+
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.queryByText('deleted')).not.toBeInTheDocument();
+  });
+
+  it('marks a deleted environment, keeping its name and type', () => {
+    setup({ environment: { name: 'prod', type: 'production', deleted: true } });
+
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.getByText('deleted')).toBeInTheDocument();
+  });
+
+  // Runs created before the type was copied have a name and no type; there is no pill to draw.
+  it('shows a deleted environment with no recorded type without a pill', () => {
+    setup({ environment: { name: 'prod', type: null, deleted: true } });
+
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.getByText('deleted')).toBeInTheDocument();
+    expect(screen.queryByText('Production')).not.toBeInTheDocument();
+  });
+
+  it('says None for a run that never had an environment', () => {
+    setup({ environment: null });
+
+    expect(screen.getByText('None')).toBeInTheDocument();
   });
 });

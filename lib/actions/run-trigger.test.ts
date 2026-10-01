@@ -137,23 +137,24 @@ describe('the environment snapshot', () => {
     prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1', runNumber: 1, pipeline: { name: 'CI' } } as never);
   });
 
-  it("records the targeted environment's name", async () => {
-    prismaMock.environment.findUnique.mockResolvedValue({ name: 'prod' } as never);
+  // The type is copied with the name so a run against a deleted environment can still show what it was.
+  it("records the targeted environment's name and type", async () => {
+    prismaMock.environment.findUnique.mockResolvedValue({ name: 'prod', type: 'PRODUCTION' } as never);
 
     await trigger('env-1');
 
-    expect(prismaMock.environment.findUnique).toHaveBeenCalledWith({ where: { id: 'env-1' }, select: { name: true } });
+    expect(prismaMock.environment.findUnique).toHaveBeenCalledWith({ where: { id: 'env-1' }, select: { name: true, type: true } });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ environmentId: 'env-1', environmentName: 'prod' }),
+      data: expect.objectContaining({ environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION' }),
     }));
   });
 
-  it('records no name for a run that targets no environment', async () => {
+  it('records no name or type for a run that targets no environment', async () => {
     await trigger(null);
 
     expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ environmentId: null, environmentName: null }),
+      data: expect.objectContaining({ environmentId: null, environmentName: null, environmentType: null }),
     }));
   });
 });
