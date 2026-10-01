@@ -80,14 +80,14 @@ it("marks the pipeline's default environment in the list", async () => {
  * is true — a user who never selects secrets never sees it.
  */
 describe('the unused-secrets hint', () => {
-  const hint = () => screen.queryByRole('img', { name: /secrets won't be used/i });
+  const hint = () => screen.queryByRole('img', { name: /secrets that won't be used/i });
 
   it('names the stages whose secrets a run without an environment would drop', () => {
     setup(null, null, [stage('build', { 'env-1': ['s1'] }), stage('lint'), stage('deploy', { 'env-2': ['s2'] })]);
 
-    expect(hint()).toHaveAccessibleName("Secrets won't be used without an environment: build, deploy");
+    expect(hint()).toHaveAccessibleName("You do not have an environment selected, so these stages have secrets that won't be used: build, deploy");
     expect(screen.getByPlaceholderText('Select environment')).toHaveAccessibleDescription(
-      "Secrets won't be used without an environment: build, deploy",
+      "You do not have an environment selected, so these stages have secrets that won't be used: build, deploy",
     );
   });
 
