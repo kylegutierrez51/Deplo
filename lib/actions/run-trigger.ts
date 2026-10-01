@@ -104,7 +104,7 @@ export async function createPipelineRun(data: {
          * to prevent reruns that have deleted environment ids.
          */
         const environment = data.environmentId
-          ? await tx.environment.findUnique({ where: { id: data.environmentId }, select: { name: true } })
+          ? await tx.environment.findUnique({ where: { id: data.environmentId }, select: { name: true, type: true } })
           : null;
 
         const { id, runNumber, pipeline: { name } } = await tx.pipelineRun.create({
@@ -112,6 +112,7 @@ export async function createPipelineRun(data: {
           data: {
             ...runData,
             environmentName: environment?.name ?? null,
+            environmentType: environment?.type ?? null,
             triggeredById: user.id,
             trigger: TRIGGER_MAP[trigger],
             runNumber: (latest?.runNumber ?? 0) + 1
