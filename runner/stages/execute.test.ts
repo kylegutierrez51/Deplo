@@ -52,6 +52,33 @@ describe('exit status', () => {
     );
   });
 
+  /*
+   * Windows exit codes are unsigned 32-bit, so Node reports a negative one — npm's ENOENT is
+   * -4058 — as 4294963238. StageResult.exitCode is a Postgres integer, which rejects that
+   * value, and finishStage throwing strands the stage at RUNNING with nothing left to fail
+   * it. POSIX truncates the code to 0–255 before Node ever sees it, so there the value is
+   * already in range and only the Windows half of the expectation is doing any work.
+   */
+  it('reports a negative exit code as signed, so it fits the exitCode column', async () => {
+    const { exitCode } = await run(node('process.exit(-4058)'));
+
+    expect(exitCode).toBe(process.platform === 'win32' ? -4058 : -4058 & 0xff);
+    expect(exitCode).toBeGreaterThanOrEqual(-(2 ** 31));
+    expect(exitCode).toBeLessThan(2 ** 31);
+  });
+
+  /*
+   * Postgres text cannot hold U+0000, so a NUL anywhere in the snippet made finishStage throw
+   * (22021) and recordStageProgress silently fail. Binary output and UTF-16 text from Windows
+   * tools both carry them. String.fromCharCode rather than a \0 escape keeps the script free
+   * of backslashes, which the two shells treat differently.
+   */
+  it('drops NUL bytes from the output, which Postgres text cannot store', async () => {
+    const result = await run(node("process.stdout.write('a' + String.fromCharCode(0) + 'b')"));
+
+    expect(result.logSnippet).toBe('ab');
+  });
+
   // Bad cwd is the one spawn failure reachable under shell: true — an unknown command
   // is the *shell's* problem and comes back as an ordinary non-zero exit instead.
   it('rejects when the child cannot be spawned at all', async () => {

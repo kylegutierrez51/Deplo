@@ -12,6 +12,7 @@ import { execute } from './execute';
 import { resolveSecrets } from './secrets';
 import { advanceRun } from '../runs/runProcessor';
 import type { CustomNode } from '@/lib/types';
+import { UNSAVED_RESULT_NOTE } from '@/lib/stage-notes';
 
 /*
  * Explicit factories throughout, never a bare jest.mock: an automock loads the real module
@@ -422,6 +423,69 @@ describe('failures that never reached the command', () => {
 
     expect(run).not.toHaveBeenCalled();
     expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED' }));
+  });
+});
+
+/*
+ * finishStage is the write that releases the RUNNING row, and nothing retries it: the stage
+ * job has attempts: 1, the sweeper only re-enters runs, and the reaper only runs at boot. So a
+ * result the database refuses to store — an exit code out of integer range, a NUL byte in
+ * the log — used to strand the stage at RUNNING until the runner restarted. The fallback
+ * drops everything that came from the command and keeps only the status, which is the part
+ * the rest of the run depends on.
+ */
+describe('a result the database will not store', () => {
+  // clearAllMocks keeps queued *Once values, so a case that fails before consuming both would
+  // leak its leftover into the next one. mockReset drops the queue.
+  beforeEach(() => { finish.mockReset().mockResolvedValue(true); });
+
+  const refuseOnce = () => finish
+    .mockRejectedValueOnce(new Error('invalid byte sequence for encoding "UTF8": 0x00'))
+    .mockResolvedValueOnce(true);
+
+  it('writes the status again without the exit code or output', async () => {
+    exited(2, { logSnippet: 'bad output' });
+    refuseOnce();
+
+    await processStage(job);
+
+    expect(finish).toHaveBeenCalledTimes(2);
+    expect(finish.mock.calls[1]).toEqual(['run-1', 'build', 1, {
+      status: 'FAILED', exitCode: null, logSnippet: UNSAVED_RESULT_NOTE,
+    }]);
+  });
+
+  // The status is what downstream stages and runOutcome read; a success must stay a success.
+  it('keeps a success a success', async () => {
+    refuseOnce();
+
+    await processStage(job);
+
+    expect(finish.mock.calls[1][3]).toEqual(expect.objectContaining({ status: 'SUCCEEDED' }));
+  });
+
+  it('still advances the run so it can finalize', async () => {
+    refuseOnce();
+
+    await processStage(job);
+
+    expect(advance).toHaveBeenCalledWith('run-1');
+  });
+
+  // Postgres being unreachable fails the fallback too. Rejecting leaves the job failed and the
+  // row for the reaper, which is no worse than before — swallowing it would additionally
+  // advance a run whose stage never left RUNNING.
+  it('rejects when the fallback write fails as well', async () => {
+    finish.mockRejectedValue(new Error('connection terminated'));
+
+    await expect(processStage(job)).rejects.toThrow('connection terminated');
+    expect(advance).not.toHaveBeenCalled();
+  });
+
+  it('writes once when the first write succeeds', async () => {
+    await processStage(job);
+
+    expect(finish).toHaveBeenCalledTimes(1);
   });
 });
 

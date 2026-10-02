@@ -11,7 +11,7 @@ import { execute } from "./execute";
 import { resolveSecrets } from "./secrets";
 import { buildScrubber, type Scrubber } from "./scrubber";
 import type { CustomNode } from "@/lib/types";
-import { CANCELLED_NOTE } from "@/lib/stage-notes";
+import { CANCELLED_NOTE, UNSAVED_RESULT_NOTE } from "@/lib/stage-notes";
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
 
 
@@ -62,8 +62,39 @@ export async function processStage(job: Payload): Promise<void> {
     await openRetry(job.runId, job.stageId, job.attempt);
   }
 
-  await finishStage(job.runId, job.stageId, job.attempt, outcome);
+  await recordOutcome(job, outcome);
   await advanceRun(job.runId);
+}
+
+/*
+==============================================================================================
+ * Writes a stage attempt's terminal status once it finishes executing its shell command.
+ * If that fails, then it falls back to just logging the correct status, making exitCode = null 
+ * and replacing the entire logSnippet with a note indicating save failure.
+ * 
+ * Without this function, if finishStage() failed, then the stage would be shown as 'RUNNING'
+ * forever.
+ *
+ * A fallback that also fails means the database itself is unreachable, and that rejection is
+ * left to fail the job: the row stays RUNNING for the reaper, and advanceRun is not called on
+ * a stage that never left RUNNING.
+==============================================================================================
+*/
+async function recordOutcome(job: Payload, outcome: StageOutcome): Promise<void> {
+  try {
+    await finishStage(job.runId, job.stageId, job.attempt, outcome);
+  } catch (error: unknown) {
+    console.error(
+      `stage ${job.stageId} of run ${job.runId}: result not saved, recording its status alone:`,
+      error instanceof Error ? error.message : error,
+    );
+
+    await finishStage(job.runId, job.stageId, job.attempt, {
+      status: outcome.status,
+      exitCode: null,
+      logSnippet: UNSAVED_RESULT_NOTE,
+    });
+  }
 }
 
 interface StageAttempt {
