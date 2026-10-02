@@ -156,7 +156,14 @@ npm run test:integration  # against a real Postgres: constraints, cascades, conc
 npm run test:e2e          # Playwright: builds and starts the app, drives a real browser
 ```
 
-Integration tests delete everything in the database between tests, so point `DATABASE_URL` at a throwaway database before running them. The setup refuses to run against a database whose name looks like the dev database.
+Unit tests need no setup. The integration and E2E tests read their settings from `.env.test` instead of `.env`, and use a separate database in the same Postgres container:
+
+```bash
+cp .env.test.example .env.test
+docker exec deplo-postgres createdb -U deplo deplo_test
+```
+
+Integration tests delete everything in the database between tests, which is why they need their own database. The setup refuses to run against a database whose name looks like the dev database. They also apply migrations before they start, but E2E tests don't, so run `npm run test:integration` once before your first `npm run test:e2e`.
 
 ## Project structure
 
