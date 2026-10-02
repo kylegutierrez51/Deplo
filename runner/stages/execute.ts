@@ -160,7 +160,11 @@ export function execute(
       }
 
       resolve({
-        exitCode,
+        // Windows exit codes are unsigned 32-bit, so Node reports npm's -4058 as 4294963238 —
+        // out of range for a Postgres integer, so finishStage would
+        // throw and strand the row at RUNNING. `| 0` converts it to a signed value.
+        // POSIX (Linux) codes are already 0–255 and pass through unchanged.
+        exitCode: exitCode === null ? null : exitCode | 0,
         signal: signalCode,
         timedOut,
         cancelled,
@@ -231,7 +235,9 @@ function createLineBuffer(maxLines: number) {
 
   return {
     write(chunk: string) {
-      const parts = (partial + chunk).split('\n');
+      // Postgres text cannot store U+0000 (22021), so one NUL in binary output or UTF-16 text
+      // would fail every write of this snippet — the progress snapshots and finishStage alike.
+      const parts = (partial + chunk.replace(/\0/g, '')).split('\n');
       partial = parts.pop() ?? '';
       for (const line of parts) push(truncate(line.replace(/\r$/, ''))); // regex strips hidden Windows-style line at end of text (\r)
 
