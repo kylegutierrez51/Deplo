@@ -37,6 +37,9 @@ const setup = (over: Partial<Props> = {}) => {
     repoUrl: 'https://github.com/o/web-client',
     commitMessage: 'Fix the thing',
     description: null,
+    defaultEnvironmentId: null,
+    defaultEnvironment: null,
+    environments: [],
     createdBy: 'kyle',
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
@@ -224,3 +227,97 @@ describe.each([
     expect(screen.getByLabelText(/description/i)).toHaveValue('typed before the failure');
   });
 });
+
+/*
+ * The default environment is what the editor's picker opens on. It is optional: the
+ * field is a type-to-filter autocomplete, and leaving it empty submits '', which the
+ * actions read as null.
+ */
+describe('the default environment', () => {
+  const environments = [
+    { id: 'env-1', name: 'staging', type: 'staging' },
+    { id: 'env-2', name: 'prod', type: 'production' },
+  ] as Props['environments'];
+
+  // Nothing else in this file clears the action mocks, and a call left over from an earlier case would satisfy these.
+  beforeEach(() => { add.mockClear(); update.mockClear(); });
+
+  const submitted = () => (mode: 'create' | 'edit') =>
+    (mode === 'create' ? add : update).mock.lastCall?.[1].get('default_environment_id');
+
+  it('shows the default environment by name in view mode', () => {
+    setup({ defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+
+    expect(screen.getByText('Default Environment')).toBeInTheDocument();
+    expect(screen.getByText('prod')).toBeInTheDocument();
+  });
+
+  it('omits the field in view mode when there is no default', () => {
+    setup();
+
+    expect(screen.queryByText('Default Environment')).not.toBeInTheDocument();
+  });
+
+  it.each(['create', 'edit'] as const)('submits no default when none is picked in %s mode', async (mode) => {
+    setup({ mode, environments });
+
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()(mode)).toBe(''));
+  });
+
+  it('opens on the saved default in edit mode and submits it unchanged', async () => {
+    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+
+    expect(screen.getByLabelText(/default environment/i)).toHaveValue('prod');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('edit')).toBe('env-2'));
+  });
+
+  it('submits the environment the user picks', async () => {
+    setup({ mode: 'create', environments });
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/default environment/i), 'stag');
+    await user.click(screen.getByRole('button', { name: /staging/i }));
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('create')).toBe('env-1'));
+  });
+
+  it('submits the environment whose name was typed in full without clicking it', async () => {
+    setup({ mode: 'create', environments });
+    const user = userEvent.setup();
+
+    const input = screen.getByLabelText(/default environment/i);
+    await user.type(input, 'Staging');
+    await user.tab();
+    expect(input).toHaveValue('staging');
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('create')).toBe('env-1'));
+  });
+
+  it('submits no default for a name that only partly matches', async () => {
+    setup({ mode: 'create', environments });
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/default environment/i), 'stag');
+    await user.tab();
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('create')).toBe(''));
+  });
+
+  it('submits no default once the user clears the saved one', async () => {
+    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText(/default environment/i));
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(submitted()('edit')).toBe(''));
+  });
+});
+

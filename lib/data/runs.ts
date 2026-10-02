@@ -1,15 +1,13 @@
 import prisma from "@/lib/prisma";
 import type { RunStatus as PrismaRunStatus, RunTrigger as PrismaRunTrigger, PipelineRun as PrismaPipelineRun, EnvironmentType } from "@/generated/prisma";
-import type { RunStatus, RunTrigger } from "@/lib/types";
+import type { RunEnvironment, RunStatus, RunTrigger } from "@/lib/types";
+import { toRunEnvironment } from "./run-environment";
 import { ALL, RUN_FILTERS, type RunFilters } from "@/lib/filters/options";
 import { invert, parseFilters } from "@/lib/filters/parse";
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from "@/lib/utils/pagination";
 
-export type Run = Omit<PrismaPipelineRun, | 'triggeredById' | 'status' | 'trigger'> & {
-  environment: {
-    type: Lowercase<EnvironmentType>;
-    name: string;
-  } | null;
+export type Run = Omit<PrismaPipelineRun, | 'triggeredById' | 'status' | 'trigger' | 'environmentName' | 'environmentType'> & {
+  environment: RunEnvironment | null;
   pipelineName: string | null;
   repoUrl: string | null;
   triggeredBy?: string | null;
@@ -57,12 +55,9 @@ export async function getRunsPage(filters: RunFilters = parseFilters({}, RUN_FIL
       pipeline: { select: { name: true, repoUrl: true }}
     }
   });
-  const rows = runs.map((run) => ({
+  const rows = runs.map(({ environmentName: envName, environmentType: envType, ...run }) => ({
     ...run,
-    environment: run.environment ? {
-      ...run.environment,
-      type: run.environment.type.toLowerCase() as NonNullable<Run["environment"]>["type"],
-    } : null,
+    environment: toRunEnvironment({ environment: run.environment, environmentName: envName, environmentType: envType }),
     pipelineName: run.pipeline?.name,
     repoUrl: run.pipeline?.repoUrl,
     triggeredBy: run.triggeredBy?.name,
@@ -89,12 +84,11 @@ export async function getRunById(id: string): Promise<Run | null> {
 
   if (!run) return null;
 
+  const { environmentName, environmentType, ...rest } = run;
+
   return {
-    ...run,
-    environment: run.environment ? {
-      ...run.environment,
-      type: run.environment.type.toLowerCase() as NonNullable<Run["environment"]>["type"],
-    } : null,
+    ...rest,
+    environment: toRunEnvironment({ environment: run.environment, environmentName, environmentType }),
     pipelineName: run.pipeline?.name,
     repoUrl: run.pipeline?.repoUrl,
     triggeredBy: run.triggeredBy?.name,

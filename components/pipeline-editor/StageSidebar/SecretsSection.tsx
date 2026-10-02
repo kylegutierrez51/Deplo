@@ -44,7 +44,7 @@ export default function SecretsSection({ secrets, searchValue, onSearchChange, o
             />
           ))
         ) : (
-          <div className={styles.info}>Select an environment to see its secrets.</div>
+          <div className={styles.info}>Select an environment, in the header, to use its secrets.</div>
         )}
       </div>
     </>

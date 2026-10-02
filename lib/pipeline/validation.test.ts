@@ -194,7 +194,7 @@ describe('findDanglingEdges', () => {
 describe('validatePipelineGraph', () => {
   it('a sound gated pipeline passes', () => {
     const { nodes, edges } = graph('build ap:approval d:deploy', 'build>ap ap>d');
-    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), true);
+    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), { requireApproval: true });
     expect(errors).toEqual([]);
   });
 
@@ -204,7 +204,7 @@ describe('validatePipelineGraph', () => {
     const { nodes, edges } = graph('build ap:approval d:deploy', 'build>ap ap>d');
     const config = configFor(nodes, { ap: { command: null } });
 
-    expect(validatePipelineGraph({ nodes, edges }, config, true)).toEqual([]);
+    expect(validatePipelineGraph({ nodes, edges }, config, { requireApproval: true })).toEqual([]);
   });
 
   // StageTypeGrid labels these stages "Deploy" and "Approval" itself, so the
@@ -216,14 +216,14 @@ describe('validatePipelineGraph', () => {
     ];
     const edges: Edge[] = [{ id: 'e0', source: 'ap', target: 'd' }];
 
-    expect(validatePipelineGraph({ nodes, edges }, configFor(nodes), true)).toEqual([]);
+    expect(validatePipelineGraph({ nodes, edges }, configFor(nodes), { requireApproval: true })).toEqual([]);
   });
 
   it('a custom stage may not claim a reserved label, in any casing', () => {
     const nodes: CustomNode[] = [
       { id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'a', label: '  DePloY ' } },
     ];
-    const errors = validatePipelineGraph({ nodes, edges: [] }, configFor(nodes), false);
+    const errors = validatePipelineGraph({ nodes, edges: [] }, configFor(nodes), { requireApproval: false });
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/Custom stage/);
@@ -232,7 +232,7 @@ describe('validatePipelineGraph', () => {
   it('a whitespace-only command counts as missing', () => {
     const { nodes, edges } = graph('a b', 'a>b');
     const config = configFor(nodes, { a: { command: '   ' } });
-    const errors = validatePipelineGraph({ nodes, edges }, config, false);
+    const errors = validatePipelineGraph({ nodes, edges }, config, { requireApproval: false });
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/missing a command/);
@@ -243,13 +243,13 @@ describe('validatePipelineGraph', () => {
     const config = configFor(nodes);
     delete config.b;
 
-    expect(validatePipelineGraph({ nodes, edges }, config, false)[0]).toMatch(/missing a command/);
+    expect(validatePipelineGraph({ nodes, edges }, config, { requireApproval: false })[0]).toMatch(/missing a command/);
   });
 
   it('groups every stage missing a command into one line', () => {
     const { nodes, edges } = graph('a b c', 'a>b b>c');
     const config = configFor(nodes, { a: { command: null }, b: { command: null }, c: { command: null } });
-    const errors = validatePipelineGraph({ nodes, edges }, config, false);
+    const errors = validatePipelineGraph({ nodes, edges }, config, { requireApproval: false });
 
     // one line per rule, not per stage
     expect(errors).toHaveLength(1);
@@ -259,7 +259,7 @@ describe('validatePipelineGraph', () => {
   it('reports unrelated failures together', () => {
     const { nodes, edges } = graph('a d:deploy', 'a>d');
     const config = configFor(nodes, { a: { command: null } });
-    const errors = validatePipelineGraph({ nodes, edges }, config, true);
+    const errors = validatePipelineGraph({ nodes, edges }, config, { requireApproval: true });
 
     expect(errors).toHaveLength(2);
     expect(errors.some(error => /missing a command/.test(error))).toBe(true);
@@ -268,12 +268,12 @@ describe('validatePipelineGraph', () => {
 
   it('an ungated deploy passes when the environment does not require approval', () => {
     const { nodes, edges } = graph('a d:deploy', 'a>d');
-    expect(validatePipelineGraph({ nodes, edges }, configFor(nodes), false)).toEqual([]);
+    expect(validatePipelineGraph({ nodes, edges }, configFor(nodes), { requireApproval: false })).toEqual([]);
   });
 
   it('reports a cycle and stops before the approval check', () => {
     const { nodes, edges } = graph('a b d:deploy', 'a>b b>a b>d');
-    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), true);
+    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), { requireApproval: true });
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/Cycle detected/);
@@ -283,15 +283,30 @@ describe('validatePipelineGraph', () => {
   // dangling check has to come first and speak alone.
   it('a dangling edge is reported on its own, not as a cycle', () => {
     const { nodes, edges } = graph('a b', 'a>b b>ghost');
-    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), true);
+    const errors = validatePipelineGraph({ nodes, edges }, configFor(nodes), { requireApproval: true });
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/no longer exists/);
   });
 
+  // No environment means no target to protect, so there is nothing to gate a deploy for.
+  it('an ungated deploy passes when the run targets no environment', () => {
+    const { nodes, edges } = graph('a d:deploy', 'a>d');
+    expect(validatePipelineGraph({ nodes, edges }, configFor(nodes), null)).toEqual([]);
+  });
+
+  // Selections are per environment, and the runner resolves none without one, so secrets kept
+  // from an earlier choice must not stand between the user and an environment-less run.
+  it('secrets selected under an environment do not block a run that targets none', () => {
+    const { nodes, edges } = graph('a b', 'a>b');
+    const config = configFor(nodes, { a: { secrets: { 'env-1': ['s1'] } } });
+
+    expect(validatePipelineGraph({ nodes, edges }, config, null)).toEqual([]);
+  });
+
   it('reports a stage with no name', () => {
     const nodes: CustomNode[] = [{ id: 'n1', position: { x: 0, y: 0 }, data: { type: 'custom' } }];
-    const errors = validatePipelineGraph({ nodes, edges: [] }, configFor(nodes), false);
+    const errors = validatePipelineGraph({ nodes, edges: [] }, configFor(nodes), { requireApproval: false });
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/no name/);

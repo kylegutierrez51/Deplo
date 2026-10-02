@@ -8,6 +8,7 @@ import { getEnvironments } from "@/lib/data/environments";
 import { getSecrets } from "@/lib/data/secrets";
 import { getPipelineById, getPipelineDefinition } from "@/lib/data/pipelines";
 import { notFound } from "next/navigation";
+import { resolveInitialEnvironment } from "@/lib/pipeline/environment-param";
 
 interface EditorProps {
   params: Promise<{ id: string }>;
@@ -26,10 +27,8 @@ export default async function PipelineEditor({ params, searchParams }: EditorPro
   const secrets = await getSecrets();
   const { nodes, edges } = await getPipelineDefinition(id);
 
-  // An id left in the URL after its environment was deleted is dropped here, so the field renders empty rather than showing a name that resolves to nothing. If user enters an array (?environment=a&environment=b), returns null.
-  const initialEnvironmentId = environments.some(env => env.id === environment)
-    ? environment as string
-    : null;
+  // The URL's choice, then the pipeline's default, then none.
+  const initialEnvironmentId = resolveInitialEnvironment(environment, pipeline.defaultEnvironmentId, environments.map(env => env.id));
 
   return (
     <PipelineEditorChrome>
@@ -39,6 +38,7 @@ export default async function PipelineEditor({ params, searchParams }: EditorPro
         <PipelineEditorHeader
           pipelineName={pipeline.name}
           environments={environments}
+          defaultEnvironmentId={pipeline.defaultEnvironmentId}
         />
 
         <main className={`page-content ${styles['editor-main']}`}>

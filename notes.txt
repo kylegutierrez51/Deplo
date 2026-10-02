@@ -280,7 +280,7 @@ Logout:
 
 ===================================================================================================================================
 
-lib/prisma.ts
+lib/prisma.ts (OLD VERSION)
 
 Line 1 — Imports PrismaClient from the generated Prisma client. The @/generated/prisma/client path is where Prisma outputs the type-safe client after you run prisma generate.
 
@@ -1440,3 +1440,88 @@ So verifyWebhookSignature() repeats the stuff above.
 'timingSafeEqual' takes 2 strings and checks EVERY single byte of them, ensuring execution time is identical every time.
 
 If we didn't use that, the alternative is 'expected === received'. Because that returns false immediately on first mismatch, attackers could measure how fast the server responds and guess the secret based on if it took longer to reject.
+
+
+===================================================================================================================================
+
+lib/prisma.ts (updated) -- replacing a stale client after a dev reload
+
+Note: this supersedes the earlier "lib/prisma.ts" section above, which describes the file before this change.
+
+
+        1  import { PrismaClient } from "@/generated/prisma/client";
+        2  import { PrismaPg } from "@prisma/adapter-pg";
+
+Line 1 -- Imports the client class Prisma generated from your schema. Because Next compiles generated/prisma into its bundles, a dev reload can run this import again and produce a brand-new PrismaClient class. That's the root of the bug.
+
+Line 2 -- Imports the Postgres adapter, which lets Prisma talk to Postgres through the pg driver.
+
+
+        4  const globalForPrisma = global as unknown as {
+        5    prisma: PrismaClient | undefined;
+        6  };
+
+ - 'global' is Node's process-wide object. It lives outside any module, so anything stored on it survives a reload that re-runs modules.
+ - 'globalForPrisma' is the same object, given a type so TypeScript knows it may have a 'prisma' property. 'as unknown as' is the standard way to force that type.
+ - '| undefined' reflects that nothing is stored on the very first load.
+
+
+        8  // A dev reload can load a fresh copy of the Prisma runtime. ...
+        9  // copy, so the errors it throws fail `instanceof` checks ...
+        10 // Checked by constructor because a PrismaClient is a proxy ...
+
+The comment explains the two choices below: why a cached client sometimes gets replaced, and why the check doesn't use instanceof.
+
+
+        14 const cached = globalForPrisma.prisma;
+
+Reads whatever client an earlier load left on 'global'. It's undefined on the first load and on every production start.
+
+
+        15 const prisma = cached?.constructor === PrismaClient
+        16   ? cached
+        17   : new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+
+This is the core decision:
+
+Line 15 -- Asks whether the cached client was built by the PrismaClient class this file just imported.
+ - The '?.' makes the check 'undefined === PrismaClient', which is false, when nothing is cached.
+ - If the generated client was reloaded, PrismaClient is a new class, the old client's constructor is the old class, and the check is false.
+ - It can't use instanceof because Prisma's constructor returns a proxy, so even a fresh client fails that check.
+
+Line 16 -- If the classes match, reuse the cached client. This is the normal path in dev, and it means only one connection pool exists no matter how often this file loads.
+
+Line 17 -- Otherwise build a new client, connected through a new PrismaPg adapter using DATABASE_URL. The adapter is created here, inside the branch, so a pool is only opened when a client is actually built.
+
+
+        19 if (cached && cached !== prisma) cached.$disconnect().catch(() => {});
+
+If an old client existed and was just replaced, this closes its connection pool so it doesn't leak.
+ - 'cached &&' skips this on first load, when there was nothing to replace.
+ - 'cached !== prisma' skips it when the cached client was reused.
+ - '.catch(() => {})' ignores a failed disconnect. The old client is being thrown away anyway, and an unhandled rejection could crash the process.
+ - Nothing waits for the disconnect, so module loading isn't held up.
+
+
+        21 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+Saves the client on 'global' so the next reload can find it, in development only. Production has no hot reload: each module runs once, so there is nothing to save. As a result, 'cached' is always undefined in production and line 17 runs exactly once.
+
+
+        23 export default prisma;
+
+Exports the one shared client. Every 'import prisma from "@/lib/prisma"' in the app, plus the runner, gets it.
+
+
+What happens in each case:
+
+        Situation                                   cached                       Result
+        ------------------------------------------  ---------------------------  ------------------------------------------------
+        First dev load                              undefined                    New client, saved on global
+        Reload, generated client not re-run         Client with the same class   Reused; no new pool
+        Reload, generated client re-run             Client with the old class    Old one disconnected, new one built and saved
+        Production                                  Always undefined             One client, never saved on global
+
+The third row is the bug I hit. Before this change, the old client was reused there, and it threw the old error class, so the 'instanceof Prisma.PrismaClientKnownRequestError' check failed.
+
+===================================================================================================================================

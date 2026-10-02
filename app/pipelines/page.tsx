@@ -10,6 +10,7 @@ import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import PipelineModalController from '@/components/pipelines/PipelineModalController';
 import { countPipelines, getPipelineById, getPipelinesPage } from '@/lib/data/pipelines';
+import { getEnvironments } from '@/lib/data/environments';
 import { PIPELINE_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 import { parsePage } from '@/lib/utils/pagination';
@@ -37,6 +38,9 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
       record && mode === "edit" ? { mode: "edit" as const, record } :
         record ? { mode: "view" as const, record } :
           null;
+
+  // shows environment list in 'create' or 'edit' mode
+  const environments = modal && modal.mode !== "view" ? await getEnvironments() : [];
 
   return (
     <>
@@ -92,6 +96,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
         <PipelineModalController
           mode={modal.mode}
           pipeline={modal.record}
+          environments={environments}
         />
       )}
     </>

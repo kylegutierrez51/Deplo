@@ -1,6 +1,6 @@
 "use client"
 
-import type { RunStatus, EnvType } from '@/lib/types';
+import type { RunStatus, RunEnvironment } from '@/lib/types';
 import { useState, useTransition } from 'react';
 import { useToast } from '@/components/ui/toast/ToastContext';
 import styles from './run-detail-card.module.css'
@@ -11,7 +11,7 @@ import { capitalize } from '@/lib/utils/string';
 interface RunDetailActionsProps {
   id: string;
   status: RunStatus;
-  env: { type: EnvType; name: string; } | null
+  env: RunEnvironment | null
 }
 
 export default function RunDetailActions({ id, status, env }: RunDetailActionsProps) {
@@ -74,7 +74,7 @@ export default function RunDetailActions({ id, status, env }: RunDetailActionsPr
         <ConfirmationModal 
           message={'Cancel this run?'} 
           subMessage={env ? <><span className={styles['meta-label']}>Environment:</span>{env.name}</> : undefined}
-          pill={env ? {variant: env.type, label: capitalize(env.type)} : undefined} 
+          pill={env?.type ? {variant: env.type, label: capitalize(env.type)} : undefined} 
           action={"Cancel"}
           cancelAction={"Back"} 
           handleConfirmation={handleCancelRun} 

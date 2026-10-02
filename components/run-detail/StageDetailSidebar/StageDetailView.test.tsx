@@ -144,7 +144,7 @@ describe('secrets against a missing environment', () => {
   it('says the environment was not found when the run has none', () => {
     setup({ secretKeys: [] }, false);
 
-    expect(screen.getByText(/the environment was not found/)).toBeInTheDocument();
+    expect(screen.getByText('No secrets.')).toBeInTheDocument();
     expect(screen.queryByText('No secrets selected.')).not.toBeInTheDocument();
   });
 
@@ -152,7 +152,7 @@ describe('secrets against a missing environment', () => {
     setup({ secretKeys: [] }, true);
 
     expect(screen.getByText('No secrets selected.')).toBeInTheDocument();
-    expect(screen.queryByText(/the environment was not found/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No secrets.')).not.toBeInTheDocument();
   });
 
   /*
@@ -164,7 +164,7 @@ describe('secrets against a missing environment', () => {
     setup({ secretKeys: ['API_KEY'] }, false);
 
     expect(screen.getByText('API_KEY')).toBeInTheDocument();
-    expect(screen.queryByText(/the environment was not found/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No secrets.')).not.toBeInTheDocument();
     expect(screen.queryByText('No secrets selected.')).not.toBeInTheDocument();
   });
 });

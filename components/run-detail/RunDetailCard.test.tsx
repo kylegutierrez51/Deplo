@@ -31,7 +31,7 @@ const run = (over: Partial<RunProp> = {}): RunProp => ({
   pipelineName: 'CI',
   runNumber: 7,
   status: 'succeeded',
-  environment: { type: 'production', name: 'prod' },
+  environment: { type: 'production', name: 'prod', deleted: false },
   commitHash: 'abc1234',
   commitMessage: 'Fix the thing',
   branch: 'main',
@@ -159,5 +159,21 @@ describe('no repository', () => {
     setup({ repo: null, status: 'running' });
 
     expect(screen.getByRole('button', { name: /cancel run/i })).toBeInTheDocument();
+  });
+});
+
+describe('the environment', () => {
+  it('marks an environment that has since been deleted, keeping its name and type', () => {
+    setup({ environment: { name: 'prod', type: 'production', deleted: true } });
+
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.getByText('deleted')).toBeInTheDocument();
+  });
+
+  it('does not mark a live environment', () => {
+    setup();
+
+    expect(screen.queryByText('deleted')).not.toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ import type { Run } from "@/lib/data/runs";
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
 import RunLabel from './RunLabel';
+import EnvironmentLabel from './EnvironmentLabel';
 
 export default function RunRow({ run }: { run: Run }) {
   const { status, pipelineName, runNumber, repoUrl, environment, trigger, startedAt, finishedAt, createdAt } = run;
@@ -26,10 +27,7 @@ export default function RunRow({ run }: { run: Run }) {
         {repoUrl && <span>{repoUrl}</span>}
       </td>
       <td>
-        {environment ? 
-          <>
-            {environment.name} <Pill variant={environment.type} label={capitalize(environment.type)} /> 
-          </> : "None" }
+        {environment ? <EnvironmentLabel environment={environment} /> : "None"}
       </td>
       <td><Pill variant={trigger} label={trigger === 'api' ? 'API' : capitalize(trigger)} /></td>
       <td className={styles.filter}>

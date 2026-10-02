@@ -254,11 +254,28 @@ describe('addPipelineRun guards', () => {
     return { id: 'def-1', version: 0, graphJson, configJson, ...over };
   };
 
-  it('refuses without a target environment', async () => {
+  // An environment is optional: without one there is no approval rule and nothing to look up.
+  it('creates a run that targets no environment', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition() as never);
+
     const result = await addPipelineRun('p1', null, nodes, []);
 
-    expect(result).toEqual({ status: 'error', message: 'Select an environment to target.' });
-    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
+    expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ environmentId: null }),
+    }));
+  });
+
+  // Secrets are selected per environment, so ones kept from an earlier choice are simply not resolved.
+  it('creates a run with no environment even when a stage kept secret selections', async () => {
+    const withSecrets = [node('a', { secrets: { 'env-1': ['s1'] } })];
+    const { graphJson, configJson } = toDefinition(withSecrets, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', version: 0, graphJson, configJson } as never);
+
+    const result = await addPipelineRun('p1', null, withSecrets, []);
+
+    expect(result.status).toBe('success');
   });
 
   // The only action that hard-fails on an anonymous caller, because a run has to
@@ -338,7 +355,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', runNumber: 1 },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1 },
     }));
   });
 
@@ -544,11 +561,11 @@ describe('validatePipeline', () => {
     expect(result).toEqual({ status: 'error', message: 'Sign in to validate a pipeline.' });
   });
 
-  // requireApproval decides whether the approval rule applies, so there is no answer without one.
-  it('refuses without a target environment', async () => {
-    const result = await validatePipeline(null, [node('a')], []);
+  // Without an environment there is no approval rule, so an ungated deploy is valid.
+  it('validates against no environment', async () => {
+    const result = await validatePipeline(null, [node('a'), node('d', { type: 'deploy' })], [{ id: 'e0', source: 'a', target: 'd' }]);
 
-    expect(result).toEqual({ status: 'error', message: 'Select an environment to validate against.' });
+    expect(result).toEqual({ status: 'success', message: 'Pipeline is valid' });
     expect(prismaMock.environment.findUnique).not.toHaveBeenCalled();
   });
 
@@ -648,6 +665,31 @@ describe('addPipeline', () => {
     );
   });
 
+  it('saves the picked default environment', async () => {
+    await addPipeline(idle, form({ default_environment_id: 'env-1' }));
+
+    expect(prismaMock.pipeline.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ defaultEnvironmentId: 'env-1' }),
+    }));
+  });
+
+  // The picker submits '' for "None"; an empty string would fail the foreign key.
+  it.each([['picked as None', { default_environment_id: '' }], ['absent', {}]])('saves no default environment when %s', async (_label, over) => {
+    await addPipeline(idle, form(over));
+
+    expect(prismaMock.pipeline.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ defaultEnvironmentId: null }),
+    }));
+  });
+
+  it('reports a default environment deleted from under the form', async () => {
+    prismaMock.pipeline.create.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await addPipeline(idle, form({ default_environment_id: 'env-gone' }));
+
+    expect(result).toEqual({ status: 'error', message: 'The selected default environment no longer exists. Pick another.' });
+  });
+
   it('reports a friendly message when the insert fails', async () => {
     prismaMock.pipeline.create.mockRejectedValue(prismaError('P2002') as never);
 
@@ -713,10 +755,26 @@ describe('updatePipeline', () => {
 
     expect(prismaMock.pipeline.update).toHaveBeenCalledWith({
       where: { id: 'p1' },
-      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', updatedAt: expect.any(Date) },
+      data: { name: 'Renamed', repoUrl: 'https://github.com/o/r', description: 'desc', defaultEnvironmentId: null, updatedAt: expect.any(Date) },
     });
     expect(result).toEqual({ status: 'success', message: 'Pipeline updated' });
     expect(revalidate).toHaveBeenCalledWith('/pipelines');
+  });
+
+  it('sets and clears the default environment', async () => {
+    await updatePipeline(idle, form({ default_environment_id: 'env-1' }));
+    await updatePipeline(idle, form({ default_environment_id: '' }));
+
+    expect(prismaMock.pipeline.update.mock.calls[0][0].data).toMatchObject({ defaultEnvironmentId: 'env-1' });
+    expect(prismaMock.pipeline.update.mock.calls[1][0].data).toMatchObject({ defaultEnvironmentId: null });
+  });
+
+  it('reports a default environment deleted from under the edit', async () => {
+    prismaMock.pipeline.update.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await updatePipeline(idle, form({ default_environment_id: 'env-gone' }));
+
+    expect(result).toEqual({ status: 'error', message: 'The selected default environment no longer exists. Pick another.' });
   });
 
   // The label is a snapshot taken at write time, so a rename has to record both

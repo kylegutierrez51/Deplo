@@ -5,7 +5,8 @@ import type {
   StageStatus as PrismaStageStatus,
   StageResult
 } from "@/generated/prisma";
-import type { RunStatus, RunTrigger, EnvType, CustomNode } from "@/lib/types";
+import type { RunStatus, RunTrigger, RunEnvironment, CustomNode } from "@/lib/types";
+import { toRunEnvironment } from "./run-environment";
 import { getDuration } from "@/lib/utils/date";
 import { fromDefinition } from "@/lib/pipeline/definition";
 import { CANCELLED_NOTE } from "@/lib/stage-notes";
@@ -61,7 +62,7 @@ export type RunDetail = {
   edges: Edge[],
   pipelineName: string;
   status: RunStatus;
-  environment: { type: EnvType; name: string } | null;
+  environment: RunEnvironment | null;
   commitHash: string | null;
   commitMessage: string | null;
   branch: string | null;
@@ -258,9 +259,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     edges,
     pipelineName: run.pipeline.name,
     status: RUN_STATUS_MAP[run.status],
-    environment: run.environment
-      ? { type: run.environment.type.toLowerCase() as EnvType, name: run.environment.name }
-      : null,
+    environment: toRunEnvironment(run),
     commitHash: run.commitSha,
     commitMessage: commitMessage,
     branch: run.branch,

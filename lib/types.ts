@@ -13,6 +13,8 @@ export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-o
 
 export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
+export type RunEnvironment = { name: string; type: EnvType | null; deleted: boolean };
+
 export type PipelineStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'idle';
 
 export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";

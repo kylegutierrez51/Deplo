@@ -2,7 +2,9 @@ import prisma from '@/lib/prisma';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import type { RunTrigger as PrismaRunTrigger } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import type { RunTrigger } from '../types';
+import type { ConfigJson, FormState, GraphJson, RunTrigger } from '../types';
+import { getEnvironmentById } from '@/lib/data/environments';
+import { validatePipelineGraph } from '@/lib/pipeline/validation';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
 
@@ -46,7 +48,6 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
         cleanup instanceof Error ? cleanup.message : cleanup,
       );
     }
-
     return false;
   }
 }
@@ -55,7 +56,7 @@ export async function enqueueOrDiscardRun(runId: string): Promise<boolean> {
 ==============================================================================================
  * When the last run of a pipeline gets deleted in `enqueueOrDiscardRun()`, 'lastRunId' gets set to NULL.
  * 
- * So go get the run before that and update it as the pipeline's last run
+ * So get the run before that and update it as the pipeline's last run
 ==============================================================================================
 */
 async function repointLastRun(pipelineId: string): Promise<void> {
@@ -72,6 +73,8 @@ async function repointLastRun(pipelineId: string): Promise<void> {
     data: { lastRunId: latest.id },
   });
 }
+
+
 
 export async function createPipelineRun(data: {
   pipelineId: string,
@@ -95,9 +98,25 @@ export async function createPipelineRun(data: {
         The lock is released when the transaction ends. */
         await tx.$queryRaw`SELECT 1 FROM "pipelines" WHERE "id" = ${data.pipelineId} FOR UPDATE`;
 
+        /* 
+         * gets the name of the environment in case this new PipelineRun has an environmentId attached. 
+         * This is to show that a run was originally executed with an environment, 
+         * to prevent reruns that have deleted environment ids.
+         */
+        const environment = data.environmentId
+          ? await tx.environment.findUnique({ where: { id: data.environmentId }, select: { name: true, type: true } })
+          : null;
+
         const { id, runNumber, pipeline: { name } } = await tx.pipelineRun.create({
           select: { id: true, runNumber: true, pipeline: { select: { name: true } } },
-          data: { ...runData, triggeredById: user.id, trigger: TRIGGER_MAP[trigger], runNumber: (latest?.runNumber ?? 0) + 1 },
+          data: {
+            ...runData,
+            environmentName: environment?.name ?? null,
+            environmentType: environment?.type ?? null,
+            triggeredById: user.id,
+            trigger: TRIGGER_MAP[trigger],
+            runNumber: (latest?.runNumber ?? 0) + 1
+          },
         });
 
         // Points the pipeline's lastRun at the run that was just created, but only if that run's `runNumber` is greater than the current one.
@@ -137,3 +156,33 @@ export async function createPipelineRun(data: {
   throw new Error(`could not allocate a run number for pipeline ${data.pipelineId}`);
 }
 
+
+
+// The checks every trigger passes before a run row is written
+export async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string | null): Promise<FormState> {
+  const { graphJson, configJson } = definition;
+
+  if (!graphJson.nodes.length) return {
+    status: 'error',
+    message: 'This pipeline has no stages. Add at least one.'
+  }
+
+  const environment = environmentId ? await getEnvironmentById(environmentId) : null;
+
+  if (environmentId && !environment) return {
+    status: 'error',
+    message: 'The selected environment no longer exists. Pick another.'
+  }
+
+  const errors = validatePipelineGraph(graphJson, configJson, environment);
+
+  if (errors.length) return {
+    status: 'error',
+    message: ['Cannot run pipeline:', ...errors.map(error => `• ${error}`)].join('\n')
+  }
+
+  return {
+    status: 'success',
+    message: ''
+  }
+}
