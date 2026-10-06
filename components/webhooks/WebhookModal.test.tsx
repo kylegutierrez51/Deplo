@@ -28,6 +28,7 @@ const setup = (over: Partial<Props> = {}) => {
     lastDelivery: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
     pipelines: [],
+    environments: [],
     onClose: jest.fn(),
     onCreate: jest.fn(),
     onDelete: jest.fn(),
@@ -373,5 +374,62 @@ describe('resolving a typed pipeline name', () => {
     await user.tab();
 
     expect(submittedPipelineId()).toBe('');
+  });
+});
+
+
+/*
+ * The environment picker behaves like the pipeline one, but is optional: leaving it empty
+ * submits no id. Environment names are unique, so a full name always resolves.
+ */
+describe('picking an environment', () => {
+  const environments = [
+    { id: 'env-1', name: 'production', type: 'production' },
+    { id: 'env-2', name: 'prod-eu', type: 'production' },
+  ] as unknown as Props['environments'];
+
+  const submittedEnvironmentId = () =>
+    new FormData(document.getElementById('modal-form') as HTMLFormElement).get('environment_id');
+
+  it('submits no environment when left empty', () => {
+    setup({ mode: 'create', environments });
+
+    expect(screen.getByLabelText(/^Environment/)).not.toBeRequired();
+    expect(submittedEnvironmentId()).toBe('');
+  });
+
+  it('selects an environment from the suggestions', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', environments });
+
+    await user.type(screen.getByLabelText(/^Environment/), 'prod');
+    await user.click(screen.getByRole('button', { name: /prod-eu/ }));
+
+    expect(screen.getByLabelText(/^Environment/)).toHaveValue('prod-eu');
+    expect(submittedEnvironmentId()).toBe('env-2');
+  });
+
+  it('selects the environment whose name was typed in full, ignoring case', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', environments });
+
+    const input = screen.getByLabelText(/^Environment/);
+    await user.type(input, 'PRODUCTION');
+    await user.tab();
+
+    expect(input).toHaveValue('production');
+    expect(submittedEnvironmentId()).toBe('env-1');
+  });
+
+  it('seeds the saved environment in edit mode', () => {
+    setup({ mode: 'edit', environmentId: 'env-2', environmentName: 'prod-eu', environments });
+
+    expect(screen.getByLabelText(/^Environment/)).toHaveValue('prod-eu');
+    expect(submittedEnvironmentId()).toBe('env-2');
+  });
+
+  it('shows the environment in view mode', () => {
+    setup({ mode: 'view', environmentName: 'production', environments });
+    expect(screen.getByText('production')).toBeInTheDocument();
   });
 });
