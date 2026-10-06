@@ -282,6 +282,7 @@ model Environment {
   secrets             Secret[]
   runs                PipelineRun[]
   defaultForPipelines Pipeline[]
+  webhooks            Webhook[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -327,6 +328,7 @@ enum EventType {
 model Webhook {
   id            String    @id @default(cuid())
   pipelineId    String?
+  environmentId String?
   isActive      Boolean   @default(false)
   events        EventType[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
@@ -338,6 +340,7 @@ model Webhook {
   authTag        String 
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: SetNull)
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
