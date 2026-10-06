@@ -256,6 +256,14 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
   --pill-pull-request-bg: #c084fc1a;
   --pill-pull-request-border: #c084fc4d;
 
+  --pill-ping-text: #a3e635;
+  --pill-ping-bg: #a3e6351a;
+  --pill-ping-border: #a3e6354d;
+
+  --pill-unrecognized-text: #a8a29e;
+  --pill-unrecognized-bg: #a8a29e1a;
+  --pill-unrecognized-border: #a8a29e4d;
+
   /* Resource Types (Audit Log) — 'webhook' reuses the trigger's pill above */
   --pill-pipeline-text: #38bdf8;
   --pill-pipeline-bg: #38bdf81a;
@@ -503,6 +511,8 @@ Pill Base + Variants
 /* Event Types */
 .pill--push          { color: var(--pill-push-text);          background: var(--pill-push-bg);          border-color: var(--pill-push-border); }
 .pill--pull-request  { color: var(--pill-pull-request-text);  background: var(--pill-pull-request-bg);  border-color: var(--pill-pull-request-border); }
+.pill--ping          { color: var(--pill-ping-text);          background: var(--pill-ping-bg);          border-color: var(--pill-ping-border); }
+.pill--unrecognized  { color: var(--pill-unrecognized-text);  background: var(--pill-unrecognized-bg);  border-color: var(--pill-unrecognized-border); }
 
 /* Resource Types */
 .pill--pipeline      { color: var(--pill-pipeline-text);      background: var(--pill-pipeline-bg);      border-color: var(--pill-pipeline-border); }

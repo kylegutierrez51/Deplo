@@ -1,7 +1,7 @@
 export type PillVariant =
   | 'running' | 'succeeded' | 'failed' | 'queued' | 'cancelled'
   | 'production' | 'staging' | 'development' | 'preview' | 'custom'
-  | 'processed' | 'ignored' | 'pending' | 'push' | 'pull-request' | 'webhook'
+  | 'processed' | 'ignored' | 'pending' | 'push' | 'pull-request' | 'ping' | 'unrecognized' | 'webhook'
   | 'manual' | 'api' | 'total' | 'awaiting-approval' | 'idle'
   | 'approved' | 'unapproved'
   | 'pipeline' | 'pipeline-run' | 'environment' | 'secret';

@@ -26,7 +26,9 @@ const WEBHOOK_EVENT_STATUS_MAP: Record<PrismaWebhookEventStatus, WebhookEventSta
 
 const WEBHOOK_EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
   PUSH: "push",
-  PULL_REQUEST: "pull-request"
+  PULL_REQUEST: "pull-request",
+  PING: 'ping',
+  UNRECOGNIZED: 'unrecognized'
 };
 
 type GithubWebhookPayload = {

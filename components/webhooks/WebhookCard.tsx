@@ -6,7 +6,9 @@ import { EventType } from '@/lib/types';
 
 const EVENT_TYPE_MAP: Record<EventType, string> = {
   push: 'Push',
-  'pull-request': 'Pull Request'
+  'pull-request': 'Pull Request',
+  ping: 'Ping',
+  unrecognized: 'Unrecognized'
 };
 
 export default function WebhookCard({ webhook }: { webhook: Webhook}) {

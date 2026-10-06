@@ -12,6 +12,8 @@ import { addAudit } from './audits';
 const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
   push: 'PUSH',
   'pull-request': 'PULL_REQUEST',
+  ping: 'PING',
+  unrecognized: 'UNRECOGNIZED'
 };
 
 function validateAndMapEvents(formData: FormData): PrismaEventType[] | null {

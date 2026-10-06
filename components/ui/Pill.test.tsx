@@ -9,7 +9,7 @@ import Pill, { type PillVariant } from '@/components/ui/Pill';
 const VARIANTS: PillVariant[] = [
   'running', 'succeeded', 'failed', 'queued', 'cancelled',
   'production', 'staging', 'development', 'preview', 'custom',
-  'processed', 'ignored', 'pending', 'push', 'pull-request', 'webhook',
+  'processed', 'ignored', 'pending', 'push', 'pull-request', 'ping', 'unrecognized', 'webhook',
   'manual', 'api', 'total', 'awaiting-approval', 'idle',
   'approved', 'unapproved',
   'pipeline', 'pipeline-run', 'environment', 'secret',
@@ -28,7 +28,7 @@ describe('Pill', () => {
 
   // Every variant in the union needs a rule in globals.css. This pins the count
   // so the two lists cannot drift silently.
-  it('covers all 27 declared variants', () => {
-    expect(new Set(VARIANTS).size).toBe(27);
+  it('covers all 29 declared variants', () => {
+    expect(new Set(VARIANTS).size).toBe(29);
   });
 });
