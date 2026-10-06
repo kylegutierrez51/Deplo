@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import type { EventType } from '@/lib/types';
+import type { EventType, EnvType } from '@/lib/types';
 import type { EventType as PrismaEventType, Webhook as PrismaWebhook } from '@/generated/prisma';
 import type { Prisma } from '@/generated/prisma/client';
 import { ALL, WEBHOOK_FILTERS, type WebhookFilters } from '@/lib/filters/options';
@@ -21,6 +21,8 @@ export type Webhook = Omit<PrismaWebhook, "createdById" | "events"> & {
   createdBy?: string | null;
   events: EventType[];
   pipelineName?: string | null;
+  environmentName?: string | null;
+  environmentType?: EnvType | null;
 }
 
 
@@ -52,6 +54,9 @@ export async function getWebhooksPage(filters: WebhookFilters = parseFilters({},
     include: {
       pipeline: {
         select: { name: true }
+      },
+      environment: {
+        select: { name: true, type: true }
       }
     }
   });
@@ -60,6 +65,8 @@ export async function getWebhooksPage(filters: WebhookFilters = parseFilters({},
     ...w,
     events: w.events.map((event) => EVENT_TYPE_MAP[event]),
     pipelineName: w.pipeline?.name,
+    environmentName: w.environment?.name,
+    environmentType: w.environment ? w.environment.type.toLowerCase() as EnvType : null,
   }));
   return { rows, total, ...meta };
 }
@@ -73,6 +80,9 @@ export async function getWebhookById(id: string): Promise<Webhook | null> {
       pipeline: {
         select: { name: true }
       },
+      environment: {
+        select: { name: true, type: true }
+      },
       createdBy: { select: { name: true }}
     }
   });
@@ -83,6 +93,8 @@ export async function getWebhookById(id: string): Promise<Webhook | null> {
     ...webhook,
     events: webhook.events.map((event) => EVENT_TYPE_MAP[event]),
     pipelineName: webhook.pipeline?.name,
+    environmentName: webhook.environment?.name,
+    environmentType: webhook.environment ? webhook.environment.type.toLowerCase() as EnvType : null,
     createdBy: webhook.createdBy?.name ?? null,
   }
 }
