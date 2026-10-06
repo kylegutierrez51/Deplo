@@ -1,5 +1,4 @@
 import { EventType, WebhookEventStatus, WebhookEventData, FormState } from '@/lib/types';
-import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma } from '@/generated/prisma/client';
 import { EventType as PrismaEventType, AuditAction, ResourceType, WebhookEventStatus as PrismaWebhookEventStatus } from '@/generated/prisma';
@@ -107,5 +106,22 @@ export async function updateWebhookEvent(id: string, status: WebhookEventStatus,
       status: 'error',
       message: 'Error updating webhook event.',
     };
+  }
+}
+
+
+
+export async function triggerWebhookPipelineRun(webhookId: string) {
+  try {
+    const webhook = await prisma.webhook.findFirst({
+      where: { id: webhookId },
+      select: 
+
+    });
+    const latest = await prisma.pipelineDefinition.findFirst({
+      where: { pipelineId },
+      orderBy: { version: 'desc' },
+      select: { id: true, version: true, graphJson: true, configJson: true },
+    });
   }
 }

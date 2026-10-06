@@ -3,6 +3,7 @@ import { getWebhookById } from "@/lib/data/webhooks";
 import { decryptSecret, verifyWebhookSignature } from "@/lib/utils/crypto";
 import { addWebhookEvent, updateWebhookEvent } from "@/lib/webhooks/webhook-events";
 import { WebhookEventData } from "@/lib/types";
+import { checkBranches } from '@/lib/webhooks/branches';
 
 
 export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id]'>) {
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
 
   const secret = decryptSecret(webhook);
   if (!verifyWebhookSignature(secret, text, req.headers.get("x-hub-signature-256"))) {
+    console.log('error!');
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -29,11 +31,16 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
 
   const githubEvent = req.headers.get('x-github-event');
 
-  const eventData: WebhookEventData = { eventType: githubEvent === 'push' ? 'push' : 'pull-request', payload, headers, webhookId: webhook.id, pipelineId: webhook.pipelineId };
+  const eventType = githubEvent === 'push' ? 'push' :
+                    githubEvent === 'pull_request' ? 'pull-request' :
+                    githubEvent === 'ping' ? 'ping' :
+                    'unrecognized';
+
+  const eventData: WebhookEventData = { eventType, payload, headers, webhookId: webhook.id, pipelineId: webhook.pipelineId };
 
   const { webhookEventId, ..._rest } = await addWebhookEvent(eventData);
 
-  if (!webhookEventId) return; // error
+  if (!webhookEventId) return; // TODO: error
 
 
   if (githubEvent === 'ping') {
@@ -43,10 +50,8 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
   }
   else if (githubEvent === 'push' || githubEvent === 'pull_request') {
 
-
-
     // check for branch filters
-    const target = githubEvent == 'push' ? payload.ref.replace('refs/heads', '') : payload.pull_request.base.ref.replace('refs/heads', '');
+    const target = githubEvent == 'push' ? payload.ref.replace('refs/heads/', '') : payload.pull_request.base.ref.replace('refs/heads/', '');
     console.log('targeted branch: ' + target);
 
     if (!checkBranches(target, webhook.branchFilters)) {
@@ -54,6 +59,12 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
 
       return NextResponse.json({ status: 200, message: `The target: (${target}) did not match the branch filters: (${webhook.branchFilters})`});
     }
+
+    
+
+
+
+
 
 
 
@@ -64,25 +75,4 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
   }
 
   return NextResponse.json({ ok: true });
-}
-
-
-
-// stopping points: finds the first '/'. Else, to the end of the string
-// returns true if there are no branchFilters
-
-// main, release/*, hotfix/, bugfixx/*
-function checkBranches(target: string, branchFilters: string[]): boolean {
-  if (!branchFilters.length) return true;
-
-  for (const branch of branchFilters) {
-    if (target === branch) return true;
-    else if (target === branch.substring(0, target.length)) {
-      if(branch.length > target.length && branch[target.length] === '/') {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }
