@@ -4,24 +4,32 @@ import { useState, useRef, useActionState } from 'react';
 import { formatDate } from '@/lib/utils/date';
 import type { FormState, EventType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
+import type { Environment } from '@/lib/data/environments';
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
+import Autocomplete from '@/components/ui/Autocomplete';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
+import Pill from '../ui/Pill';
+import { capitalize } from '@/lib/utils/string';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
 interface WebhookModalProps {
   mode?: 'view' | 'edit' | 'create';
   id: string;
+  pipelineId?: string | null;
   pipelineName?: string | null;
+  environmentId?: string | null;
+  environmentName?: string | null;
   branchFilters: string[];
   events: EventType[];
   createdBy?: string | null;
   lastDelivery?: Date | null;
   createdAt: Date;
   pipelines: Pipeline[] | null;
+  environments: Environment[] | null;
   onClose: () => void;
   onCreate: (message: string) => void;
   onDelete: (message: string) => void;
@@ -45,13 +53,17 @@ const EVENT_DEFS: { key: EventType, label: string, desc: string }[] = [
 export default function WebhookModal({
   mode = 'view',
   id,
+  pipelineId,
   pipelineName,
+  environmentId,
+  environmentName,
   branchFilters = [],
   events = [],
   createdBy,
   lastDelivery,
   createdAt,
   pipelines,
+  environments,
   onClose,
   onCreate,
   onDelete,
@@ -66,12 +78,6 @@ export default function WebhookModal({
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
   const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
-
-  const [query, setQuery] = useState(pipelineName ?? '');
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
-    pipelines?.find(p => p.name === pipelineName)?.id ?? null
-  );
-  const [openMatches, setOpenMatches] = useState(false);
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [regenerateModal, setRegenerateModal] = useState(false);
@@ -152,31 +158,6 @@ export default function WebhookModal({
   };
 
 
-  const matches = () => {
-    if (!query) return [];
-    const q = query.toLowerCase();
-    return pipelines?.filter(p => p.name.toLowerCase().includes(q)) ?? [];
-  }
-
-
-  // Typing a name in full counts as picking it, unless there's 2 pipelines with the same name
-  const exactMatch = () => {
-    const q = query.trim().toLowerCase();
-    const found = pipelines?.filter(p => p.name.toLowerCase() === q) ?? [];
-    return found.length === 1 ? found[0] : undefined;
-  }
-
-
-  const handlePipelineBlur = () => {
-    const match = exactMatch();
-    if (!selectedPipelineId && match) {
-      setQuery(match.name);
-      setSelectedPipelineId(match.id);
-    }
-    setTimeout(() => setOpenMatches(false), 100);
-  }
-
-
   const handleGenerateSecret = () => {
     const bytes = new Uint8Array(32);
     crypto.getRandomValues(bytes);
@@ -229,6 +210,18 @@ export default function WebhookModal({
               </div>
             </div>
 
+            <div className={styles.fieldGroup}>
+              <label>Environment</label>
+              {environmentName ? (
+                <div className={styles.selectWrapper}>
+                  <ion-icon name="layers-outline" className={styles.selectIconLeft}></ion-icon>
+                  <span>{environmentName}</span>
+                </div>
+              ) : (
+                <span className={styles.emptyValue}>None — runs do not use secrets</span>
+              )}
+            </div>
+
             {filters.length > 0 && (
               <div className={styles.fieldGroup}>
                 <label>Branch filters</label>
@@ -243,7 +236,7 @@ export default function WebhookModal({
               {selectedEvents.length > 0 ? (
                 <div className={styles.branchPills}>
                   {EVENT_DEFS.filter(e => selectedEvents.includes(e.key))
-                    .map(e => <span key={e.key} className={styles.branchPill}>{e.label}</span>)}
+                    .map(e => <Pill key={e.key} variant={e.key} label={e.label} />)}
                 </div>
               ) : (
                 <span className={styles.emptyValue}>None — this webhook won&apos;t trigger</span>
@@ -271,50 +264,34 @@ export default function WebhookModal({
 
             <div className={styles.fieldGroup}>
               <label htmlFor="pipeline-name">Pipeline to trigger</label>
-              <input type="hidden" name="pipeline_id" value={selectedPipelineId ?? exactMatch()?.id ?? ''} />
-              <div className={styles.autocompleteWrapper}>
-                <input
-                  type="text"
-                  id="pipeline-name"
-                  name="pipeline_name"
-                  placeholder="e.g. deploy-api"
-                  autoComplete="off"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setSelectedPipelineId(null);
-                    setOpenMatches(true);
-                  }}
-                  onFocus={() => setOpenMatches(true)}
-                  onBlur={handlePipelineBlur}
-                  required
-                />
-                {openMatches && query && (
-                  <ul className={styles.autocompleteList}>
-                    {matches().length > 0 ? (
-                      matches().map(p => (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            className={styles.autocompleteOption}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              setQuery(p.name);
-                              setSelectedPipelineId(p.id);
-                              setOpenMatches(false);
-                            }}
-                          >
-                            <span>{p.name}</span>
-                            <span className={styles.autocompleteMuted}>{p.repoUrl}</span>
-                          </button>
-                        </li>
-                      ))
-                    ) : (
-                      <li className={styles.autocompleteEmpty}>No matching pipelines</li>
-                    )}
-                  </ul>
-                )}
-              </div>
+              <Autocomplete
+                id="pipeline-name"
+                idName="pipeline_id"
+                textName="pipeline_name"
+                placeholder="e.g. deploy-api"
+                emptyText="No matching pipelines"
+                options={pipelines?.map(p => ({ id: p.id, name: p.name, detail: p.repoUrl })) ?? []}
+                initialId={pipelineId}
+                initialName={pipelineName}
+                required
+              />
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label htmlFor="environment-name">
+                Environment
+                <span className={styles.optionalBadge}>optional</span>
+              </label>
+              <Autocomplete
+                id="environment-name"
+                idName="environment_id"
+                textName="environment_name"
+                placeholder="e.g. production"
+                emptyText="No matching environments"
+                options={environments?.map(e => ({ id: e.id, name: e.name, detail: capitalize(e.type) })) ?? []}
+                initialId={environmentId}
+                initialName={environmentName}
+              />
             </div>
 
             <div className={styles.fieldGroup}>

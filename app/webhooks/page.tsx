@@ -13,6 +13,7 @@ import WebhookModalController from '@/components/webhooks/WebhookModalController
 import AutoRefresh from "@/components/ui/AutoRefresh";
 import { getWebhooksPage, getWebhookById } from "@/lib/data/webhooks";
 import { getPipelines } from "@/lib/data/pipelines";
+import { getEnvironments } from "@/lib/data/environments";
 import { redirect } from 'next/navigation';
 import { WEBHOOK_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
@@ -31,6 +32,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
 
   const webhooks = await getWebhooksPage(filters, parsePage(params.page), PAGE_SIZE);
   const pipelines = await getPipelines();
+  const environments = await getEnvironments();
 
   const record = id ? await getWebhookById(id) : undefined;
 
@@ -107,6 +109,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
           mode={modal.mode}
           webhook={modal.record}
           pipelines={pipelines}
+          environments={environments}
         />
       )}
     </>

@@ -2,6 +2,7 @@ import styles from './webhook-card.module.css'
 import type { Webhook } from "@/lib/data/webhooks";
 import Pill from '../ui/Pill';
 import { formatDate } from '@/lib/utils/date';
+import { capitalize } from '@/lib/utils/string';
 import { EventType } from '@/lib/types';
 
 const EVENT_TYPE_MAP: Record<EventType, string> = {
@@ -29,6 +30,13 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                 <Pill key={index} variant={event} label={EVENT_TYPE_MAP[event]}/>
               ))}
             </div>
+            {webhook.environmentName && webhook.environmentType &&
+              <div className={styles.environment}>
+                <span>Environment:</span>
+                <span>{webhook.environmentName}</span>
+                <Pill variant={webhook.environmentType} label={capitalize(webhook.environmentType)} />
+              </div>
+            }
               {webhook.lastDelivery &&
                 <>
                   <div className={styles['last-delivery']}>

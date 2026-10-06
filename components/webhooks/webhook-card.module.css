@@ -71,6 +71,17 @@
   margin-bottom: var(--space-xs);
 }
 
+.environment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.environment span:first-child {
+  color: var(--subtitle-clr);
+}
+
 .last-delivery {
   display: flex;
   align-items: center;
