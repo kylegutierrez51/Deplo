@@ -28,6 +28,19 @@ function validateAndMapEvents(formData: FormData): PrismaEventType[] | null {
 }
 
 
+// The environment is optional, so an empty id means "none". Text that resolved to no
+// environment is refused instead, or a typo would silently save the webhook without one.
+function readEnvironmentId(formData: FormData): { environmentId: string | null } | null {
+  const environmentId = (formData.get('environment_id') as string | null) || null;
+  const typed = (formData.get('environment_name') as string | null)?.trim();
+  if (!environmentId && typed) return null;
+  return { environmentId };
+}
+
+const fkMessage = (environmentId: string | null) =>
+  environmentId ? 'Selected pipeline or environment no longer exists.' : 'Selected pipeline no longer exists.';
+
+
 export type RegenerateSecretState = FormState & { secret?: string };
 
 export async function addWebhook(prevState: FormState, formData: FormData): Promise<FormState> {
@@ -46,11 +59,19 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   const branchFilters = formData.getAll('branch_filters') as string[];
   const secret = formData.get('webhook_secret') as string;
   const events = validateAndMapEvents(formData);
+  const environment = readEnvironmentId(formData);
 
   if (!pipelineId) return {
     status: 'error',
     message: 'Select a pipeline from the list.'
   }
+
+  if (!environment) return {
+    status: 'error',
+    message: 'Select an environment from the list, or leave it empty.'
+  }
+
+  const { environmentId } = environment;
 
   if (!events) {
     return {
@@ -64,7 +85,7 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   try {
     await prisma.$transaction(async (tx) => {
       const webhook = await tx.webhook.create({
-        data: { pipelineId, branchFilters, events, encryptedValue, iv, authTag, createdById },
+        data: { pipelineId, environmentId, branchFilters, events, encryptedValue, iv, authTag, createdById },
         select: { id: true, pipeline: { select: { name: true } } }
       });
 
@@ -90,7 +111,7 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
       console.log(`${error.code}: ${error.message}`);
       return {
         status: 'error',
-        message: 'Selected pipeline no longer exists.'
+        message: fkMessage(environmentId)
       }
     }
     console.log(error instanceof Error ? error.message : '');
@@ -129,6 +150,14 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
     message: 'Select a pipeline from the list.'
   }
 
+  const environment = readEnvironmentId(formData);
+  if (!environment) return {
+    status: 'error',
+    message: 'Select an environment from the list, or leave it empty.'
+  }
+
+  const { environmentId } = environment;
+
   try {
     await prisma.$transaction(async (tx) => {
       const { pipeline: prevPipeline } = await tx.webhook.findUniqueOrThrow({
@@ -140,7 +169,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
       const webhook = await tx.webhook.update({
         where: { id },
-        data: { pipelineId, branchFilters, events },
+        data: { pipelineId, environmentId, branchFilters, events },
         select: { pipeline: { select: { name: true } } }
       });
       
@@ -174,7 +203,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
       if (error.code === 'P2003') return {
         status: 'error',
-        message: 'Selected pipeline no longer exists.'
+        message: fkMessage(environmentId)
       }
 
       if (error.code === 'P2025') return {
