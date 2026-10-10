@@ -47,6 +47,21 @@ describe('checkBranches', () => {
     expect(checkBranches('doc', ['docs'])).toBe(false);
   });
 
+  // A filter can name more than one segment, which comparing only the target's
+  // first segment cannot match.
+  it('matches a branch named exactly by a multi-segment filter', () => {
+    expect(checkBranches('feature/login', ['feature/login'])).toBe(true);
+  });
+
+  it.each(['release/v1', 'release/v1/', 'release/v1/*'])('matches a branch beneath the multi-segment filter %p', (filter) => {
+    expect(checkBranches('release/v1/hotfix', [filter])).toBe(true);
+  });
+
+  it('does not match a sibling of a multi-segment filter', () => {
+    expect(checkBranches('release/v2', ['release/v1'])).toBe(false);
+    expect(checkBranches('release/v10', ['release/v1/*'])).toBe(false);
+  });
+
   it('matches when any one of several filters matches', () => {
     expect(checkBranches('release/1.2', ['main', 'hotfix/', 'release/*'])).toBe(true);
   });
