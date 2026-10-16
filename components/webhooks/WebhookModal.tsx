@@ -309,7 +309,7 @@ export default function WebhookModal({
               />
               <p className={styles.fieldHint}>
                 <ion-icon name="information-circle-outline"></ion-icon>
-                Glob pattern. Leave empty to trigger on all branches.
+                Glob pattern. Case sensitive. Leave empty to trigger on all branches.
               </p>
               
               <div className={styles.branchPills}>
