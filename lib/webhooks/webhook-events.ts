@@ -86,7 +86,7 @@ export async function updateWebhookEvent(id: string, status: WebhookEventStatus,
   try {
       await prisma.webhookEvent.update({
         where: { id },
-        data: { status: STATUS_MAP[status] },
+        data: { status: STATUS_MAP[status], ...(runId && { runId }) },
       });
 
       return {
