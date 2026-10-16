@@ -433,3 +433,39 @@ describe('picking an environment', () => {
     expect(screen.getByText('production')).toBeInTheDocument();
   });
 });
+
+describe('the active toggle', () => {
+  const submittedActive = () =>
+    new FormData(document.getElementById('modal-form') as HTMLFormElement).get('is_active');
+
+  it('starts on for a new webhook', () => {
+    setup({ mode: 'create' });
+
+    expect(screen.getByRole('switch')).toBeChecked();
+    expect(submittedActive()).toBe('true');
+  });
+
+  it("starts from the webhook's stored state when editing", () => {
+    setup({ isActive: false });
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(submittedActive()).toBe('false');
+  });
+
+  it('submits the flipped value after a click', async () => {
+    const user = userEvent.setup();
+    setup({ isActive: true });
+
+    await user.click(screen.getByRole('switch'));
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(submittedActive()).toBe('false');
+  });
+
+  it('is shown as a status in view mode', () => {
+    setup({ mode: 'view', isActive: false });
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.getByText(/Inactive/)).toBeInTheDocument();
+  });
+});

@@ -82,10 +82,17 @@
   color: var(--subtitle-clr);
 }
 
+.environment span {
+  display: inline-block;
+  text-align: center;
+}
+
+
 .last-delivery {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 
 .last-delivery span {
@@ -97,7 +104,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-xs);
-  margin-top: var(--space-xs);
 }
 
 .branchPills {

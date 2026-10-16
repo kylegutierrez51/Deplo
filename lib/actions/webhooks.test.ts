@@ -68,6 +68,18 @@ describe('addWebhook', () => {
     });
   });
 
+  it('creates the webhook active when the form does not say otherwise', async () => {
+    await addWebhook(idle, form());
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ isActive: true });
+  });
+
+  it('creates the webhook inactive when switched off', async () => {
+    await addWebhook(idle, form({ is_active: 'false' }));
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ isActive: false });
+  });
+
   it('revalidates on success', async () => {
     const result = await addWebhook(idle, form());
 
@@ -190,8 +202,14 @@ describe('updateWebhook', () => {
 
     expect(prismaMock.webhook.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'wh-1' },
-      data: { pipelineId: 'p2', environmentId: null, branchFilters: ['main'], events: ['PUSH'] },
+      data: { pipelineId: 'p2', environmentId: null, isActive: true, branchFilters: ['main'], events: ['PUSH'] },
     }));
+  });
+
+  it.each([['true', true], ['false', false]])('writes is_active=%s as %s', async (value, expected) => {
+    await updateWebhook(idle, form({ id: 'wh-1', is_active: value }));
+
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({ isActive: expected });
   });
 
   it('writes the selected environment', async () => {

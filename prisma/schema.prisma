@@ -329,7 +329,7 @@ model Webhook {
   id            String    @id @default(cuid())
   pipelineId    String?
   environmentId String?
-  isActive      Boolean   @default(false)
+  isActive      Boolean   @default(true)
   events        EventType[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  DateTime?

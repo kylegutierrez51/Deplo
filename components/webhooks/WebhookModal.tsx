@@ -23,6 +23,7 @@ interface WebhookModalProps {
   pipelineName?: string | null;
   environmentId?: string | null;
   environmentName?: string | null;
+  isActive?: boolean;
   branchFilters: string[];
   events: EventType[];
   createdBy?: string | null;
@@ -57,6 +58,7 @@ export default function WebhookModal({
   pipelineName,
   environmentId,
   environmentName,
+  isActive = true,
   branchFilters = [],
   events = [],
   createdBy,
@@ -76,6 +78,7 @@ export default function WebhookModal({
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
   const [enteredBranchFilter, setEnteredBranchFilter] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
+  const [active, setActive] = useState(isActive);
   const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
 
@@ -204,8 +207,8 @@ export default function WebhookModal({
           <>
             <div className={styles.fieldGroup}>
               <label>Pipeline to trigger</label>
-              <div className={styles.selectWrapper}>
-                <ion-icon name="link-outline" className={styles.selectIconLeft}></ion-icon>
+              <div className={styles.iconValue}>
+                <ion-icon name="link-outline"></ion-icon>
                 <span>{pipelineName}</span>
               </div>
             </div>
@@ -213,13 +216,21 @@ export default function WebhookModal({
             <div className={styles.fieldGroup}>
               <label>Environment</label>
               {environmentName ? (
-                <div className={styles.selectWrapper}>
-                  <ion-icon name="layers-outline" className={styles.selectIconLeft}></ion-icon>
+                <div className={styles.iconValue}>
+                  <ion-icon name="layers-outline"></ion-icon>
                   <span>{environmentName}</span>
                 </div>
               ) : (
                 <span className={styles.emptyValue}>None — runs do not use secrets</span>
               )}
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>Status</label>
+              <span className={styles.iconValue}>
+                <ion-icon name={isActive ? 'radio-button-on-outline' : 'pause-circle-outline'}></ion-icon>
+                {isActive ? 'Active' : 'Inactive — deliveries are ignored'}
+              </span>
             </div>
 
             {filters.length > 0 && (
@@ -351,6 +362,18 @@ export default function WebhookModal({
                 {selectedEvents.map((key, i) => <input key={i} type="hidden" name="events" value={key} />)}
               </div>
             </div>
+
+            <label className={styles.activeToggleBox}>
+              <input type="hidden" name="is_active" value={active ? 'true' : 'false'} />
+              <input type="checkbox" role="switch" checked={active} onChange={() => setActive(v => !v)} className={styles.toggleInput} />
+              <span className={`${styles.toggleSwitch} ${active ? styles.toggleSwitchOn : ''}`}></span>
+              <span className={styles.toggleContent}>
+                <span className={styles.toggleTitle}>Active</span>
+                <span className={styles.toggleDescription}>
+                  Inactive webhooks ignore incoming deliveries and never trigger a run.
+                </span>
+              </span>
+            </label>
 
             {mode === 'create' ? (
               <div className={styles.fieldGroup}>

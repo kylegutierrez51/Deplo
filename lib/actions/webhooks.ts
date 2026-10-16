@@ -37,7 +37,11 @@ function readEnvironmentId(formData: FormData): { environmentId: string | null }
   return { environmentId };
 }
 
-const fkMessage = (environmentId: string | null) =>
+// The modal always sends 'true' or 'false'; a missing field falls back to active, matching
+// the column default, so a new webhook is never created switched off by accident.
+const readIsActive = (formData: FormData) => formData.get('is_active') !== 'false';
+
+const fkMessage =(environmentId: string | null) =>
   environmentId ? 'Selected pipeline or environment no longer exists.' : 'Selected pipeline no longer exists.';
 
 
@@ -60,6 +64,7 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   const secret = formData.get('webhook_secret') as string;
   const events = validateAndMapEvents(formData);
   const environment = readEnvironmentId(formData);
+  const isActive = readIsActive(formData);
 
   if (!pipelineId) return {
     status: 'error',
@@ -85,7 +90,7 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   try {
     await prisma.$transaction(async (tx) => {
       const webhook = await tx.webhook.create({
-        data: { pipelineId, environmentId, branchFilters, events, encryptedValue, iv, authTag, createdById },
+        data: { pipelineId, environmentId, isActive, branchFilters, events, encryptedValue, iv, authTag, createdById },
         select: { id: true, pipeline: { select: { name: true } } }
       });
 
@@ -137,6 +142,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
   const pipelineId = formData.get('pipeline_id') as string;
   const branchFilters = formData.getAll('branch_filters') as string[];
   const events = validateAndMapEvents(formData);
+  const isActive = readIsActive(formData);
 
   if (!events) {
     return {
@@ -169,7 +175,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
       const webhook = await tx.webhook.update({
         where: { id },
-        data: { pipelineId, environmentId, branchFilters, events },
+        data: { pipelineId, environmentId, isActive, branchFilters, events },
         select: { pipeline: { select: { name: true } } }
       });
       
