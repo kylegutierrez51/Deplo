@@ -63,12 +63,13 @@ const stageNode = (data: Record<string, unknown> = {}) => ({
   data: { type: 'custom', name: 'build', command: 'npm ci', ...data },
 }) as CustomNode;
 
-const context = (node = stageNode(), environmentId: string | null = 'env-1') =>
+const context = (node = stageNode(), environmentId: string | null = 'env-1', defaultDirectory: string | null = null) =>
   loadContext.mockResolvedValue({
     runId: 'run-1',
     runStatus: 'RUNNING',
     definitionId: 'def-1',
     environmentId,
+    defaultDirectory,
     graph: { nodes: [node], edges: [] },
     outcomes: new Map(),
     attempts: new Map([['build', 1]]),
@@ -253,6 +254,45 @@ describe('the command environment', () => {
     await processStage(job);
 
     expect(spawned().env.API_KEY).toBe('sk-live-123');
+  });
+});
+
+/*
+ * The pipeline's default directory is applied here, at run time, rather than written into
+ * each command by the editor — so changing the default moves every stage that inherits it.
+ * The rule that makes that safe is that it never displaces a directory a stage chose itself.
+ */
+describe('the default directory', () => {
+  it('prefixes a command that sets no directory of its own', async () => {
+    context(stageNode({ command: 'npm ci' }), 'env-1', '/srv/app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "/srv/app" && npm ci');
+  });
+
+  it('never overrides a directory the stage set', async () => {
+    context(stageNode({ command: 'cd "own" && npm ci' }), 'env-1', '/srv/app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "own" && npm ci');
+  });
+
+  it('leaves the command untouched when the pipeline has no default', async () => {
+    await processStage(job);
+
+    expect(spawned().command).toBe('npm ci');
+  });
+
+  // A directory prefix with nothing after it is a shell syntax error, not a command.
+  it('fails a stage that holds only a directory, without spawning it', async () => {
+    context(stageNode({ command: 'cd "app" && ' }));
+
+    await processStage(job);
+
+    expect(run).not.toHaveBeenCalled();
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED' }));
   });
 });
 

@@ -27,6 +27,7 @@ interface RunContext {
   runStatus: RunStatus,
   definitionId: string,
   environmentId: string | null,
+  defaultDirectory: string | null,
   graph: GraphJson,
   outcomes: Outcomes,
   /** stageId → the attempt number of that stage's latest row. Absent = never materialized. */
@@ -49,7 +50,7 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
   const run = await prisma.pipelineRun.findUnique({
     where: { id: runId },
     include: {
-      definition: { select: { graphJson: true, configJson: true } },
+      definition: { select: { graphJson: true, configJson: true, defaultDirectory: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
         // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
@@ -77,6 +78,7 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     runStatus: run.status,
     definitionId: run.definitionId,
     environmentId: run.environmentId,
+    defaultDirectory: run.definition.defaultDirectory ?? null,
     graph: fromDefinition(run.definition.graphJson, run.definition.configJson),
     outcomes,
     attempts,

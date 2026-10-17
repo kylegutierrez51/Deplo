@@ -71,6 +71,23 @@ describe('loadRunContext', () => {
     }));
   });
 
+  // Read off the definition the run pinned, so an edit to the default after the run started
+  // cannot move stages that are still to come.
+  it('carries the pinned definition\'s default directory', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
+      definition: { graphJson: graph('a'), configJson: {}, defaultDirectory: '/srv/app' },
+    }) as never);
+
+    const ctx = await loadRunContext('run-1');
+
+    expect(prismaMock.pipelineRun.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      include: expect.objectContaining({
+        definition: { select: expect.objectContaining({ defaultDirectory: true }) },
+      }),
+    }));
+    expect(ctx?.defaultDirectory).toBe('/srv/app');
+  });
+
   it('keys outcomes by stageId, not by the row id', async () => {
     prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
       stages: [{ stageId: 'a', status: 'SUCCEEDED' }, { stageId: 'b', status: 'QUEUED' }],
