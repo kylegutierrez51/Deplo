@@ -25,7 +25,7 @@ export default async function PipelineEditor({ params, searchParams }: EditorPro
 
   const environments = await getEnvironments();
   const secrets = await getSecrets();
-  const { nodes, edges } = await getPipelineDefinition(id);
+  const { nodes, edges, defaultDirectory } = await getPipelineDefinition(id);
 
   // The URL's choice, then the pipeline's default, then none.
   const initialEnvironmentId = resolveInitialEnvironment(environment, pipeline.defaultEnvironmentId, environments.map(env => env.id));
@@ -34,7 +34,7 @@ export default async function PipelineEditor({ params, searchParams }: EditorPro
     <PipelineEditorChrome>
       <Sidebar activeItem="pipelines" showToggle={false} />
 
-      <PipelineGraphProvider pipelineId={id} initialNodes={nodes} initialEdges={edges} initialEnvironmentId={initialEnvironmentId} secrets={secrets}>
+      <PipelineGraphProvider pipelineId={id} initialNodes={nodes} initialEdges={edges} initialEnvironmentId={initialEnvironmentId} initialDefaultDirectory={defaultDirectory} secrets={secrets}>
         <PipelineEditorHeader
           pipelineName={pipeline.name}
           environments={environments}

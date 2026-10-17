@@ -106,15 +106,18 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
   }
 }
 
-export async function getPipelineDefinition(pipelineId: string): Promise<GraphJson> {
+export async function getPipelineDefinition(pipelineId: string): Promise<GraphJson & { defaultDirectory: string | null }> {
   const definition = await prisma.pipelineDefinition.findFirst({
     where: { pipelineId },
     orderBy: { version: 'desc' },
   });
 
-  if (!definition) return { nodes: [], edges: [] };
+  if (!definition) return { nodes: [], edges: [], defaultDirectory: null };
 
-  return fromDefinition(definition.graphJson, definition.configJson);
+  return {
+    ...fromDefinition(definition.graphJson, definition.configJson),
+    defaultDirectory: definition.defaultDirectory ?? null,
+  }
 }
 
 // The newest saved definition with its id, which a run pins itself to. Null when the pipeline was never saved.
