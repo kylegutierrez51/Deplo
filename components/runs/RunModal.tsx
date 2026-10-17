@@ -48,7 +48,7 @@ export default function RunModal({
   const footer =
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Close</button>
-      <Link href={`/runs/${id}`} className={`${styles.footerBtn} ${styles.editBtn}`}>View Full Run</Link>
+      <Link target="_blank" href={`/runs/${id}`} className={`${styles.footerBtn} ${styles.editBtn}`}>View Full Run</Link>
     </>
 
   return (
