@@ -16,7 +16,7 @@ interface RunDetailData {
   branch: string | null;
   repo: string | null;
   trigger: string;
-  triggeredBy: string;
+  triggeredBy: string | null;
   duration: string;
   timeAgo: string;
 }
@@ -80,7 +80,7 @@ export default function RunDetailCard({ run }: { run: RunDetailData }) {
           <div className={styles['rdc-trigger-row']}>
             <div className={styles['rdc-meta-item']}>
               <ion-icon name="flash-outline"></ion-icon>
-              <span>Triggered by {trigger} <span className={styles['rdc-user']}>({triggeredBy})</span></span>
+              <span>Triggered by {trigger} {triggeredBy && <span className={styles['rdc-user']}>({triggeredBy})</span>}</span>
             </div>
             <div className={styles['rdc-meta-item']}>
               <ion-icon name="stopwatch-outline"></ion-icon>

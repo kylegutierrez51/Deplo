@@ -68,7 +68,7 @@ export type RunDetail = {
   branch: string | null;
   repo: string | null;
   trigger: RunTrigger;
-  triggeredBy: string;
+  triggeredBy: string | null;
   duration: string;
   timeAgo: string;
   jobCounts: JobCounts;
@@ -265,7 +265,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     branch: run.branch,
     repo: run.pipeline.repoUrl,
     trigger: RUN_TRIGGER_MAP[run.trigger],
-    triggeredBy: run.triggeredBy?.name ?? '—',
+    triggeredBy: run.triggeredBy?.name ?? null,
     duration: run.startedAt && run.finishedAt ? 
       getDuration(run.startedAt, run.finishedAt) 
       : run.startedAt 
