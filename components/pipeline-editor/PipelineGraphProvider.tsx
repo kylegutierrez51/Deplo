@@ -25,6 +25,8 @@ type GraphValue = {
   onReconnect: OnReconnect<Edge>;
   selectedEnvironmentId: string | null;
   setSelectedEnvironmentId: Dispatch<SetStateAction<string | null>>;
+  defaultDirectory: string;
+  setDefaultDirectory: Dispatch<SetStateAction<string>>;
   secrets: Secret[]
 }
 
@@ -37,18 +39,16 @@ interface PipelineGraphProviderProps {
   initialNodes: CustomNode[];
   initialEdges: Edge[];
   initialEnvironmentId: string | null;
+  initialDefaultDirectory?: string | null;
   secrets: Secret[];
 }
 
-/* initialNodes/initialEdges/initialEnvironmentId seed state and are then ignored —
-   useNodesState only reads its argument on mount. That's deliberate: saving
-   revalidates this route, and re-rendering with fresh props must not stomp on
-   edits made since. initialEnvironmentId comes from ?environment in the URL, so
-   the selection survives a refresh; EnvironmentSelect keeps that param in sync. */
-export function PipelineGraphProvider({ children, pipelineId, initialNodes, initialEdges, initialEnvironmentId, secrets }: PipelineGraphProviderProps) {
+
+export function PipelineGraphProvider({ children, pipelineId, initialNodes, initialEdges, initialEnvironmentId, initialDefaultDirectory, secrets }: PipelineGraphProviderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(initialEnvironmentId);
+  const [defaultDirectory, setDefaultDirectory] = useState<string>(initialDefaultDirectory ?? '');
   const { setPast, undo, redo } = useUndoRedo(nodes, setNodes, edges, setEdges);
 
   const updateNodeData = (id: string, patch: Record<string, unknown>) => {
@@ -94,12 +94,13 @@ export function PipelineGraphProvider({ children, pipelineId, initialNodes, init
         pipelineId,
         nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, updateNodeData, setPast, undo, redo,
         onConnect, onEdgesDelete, onNodeDragStart, onNodeDragStop, onReconnect,
-        selectedEnvironmentId, setSelectedEnvironmentId, secrets
+        selectedEnvironmentId, setSelectedEnvironmentId, defaultDirectory, setDefaultDirectory, secrets
       }}>
         {children}
     </GraphContext.Provider>
   )
 }
+
 
 export function usePipelineGraph() {
   const ctx = useContext(GraphContext);

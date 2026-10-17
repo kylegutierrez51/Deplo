@@ -47,6 +47,8 @@ Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for 
 
 Three tiers, three configs. CI (`.github/workflows/ci.yml`) runs all of them plus lint/typecheck on every push and PR.
 
+**When adding a feature, run only the affected tests** — the files for the modules you changed, e.g. `npx jest lib/pipeline/directory.test.ts runner/stages/stageProcessor.test.ts`. Do not run the full suite (`npm test`, `npm run test:integration`, `npm run test:e2e`); CI runs everything on the PR and catches what the targeted run missed.
+
 | Tier | Config | What belongs there |
 |---|---|---|
 | Unit + component | `jest.config.mjs` | Everything pure, plus server actions and data readers with Prisma mocked, plus React Testing Library. jsdom, no database. |

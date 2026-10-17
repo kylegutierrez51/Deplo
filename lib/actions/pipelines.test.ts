@@ -124,6 +124,37 @@ describe('savePipelineDefinition versioning', () => {
     expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
   });
 
+  // The default directory is content, so changing only it is an edit. This fails if the
+  // findFirst select drops the column: the stored side then reads as "no default".
+  it('creates a version when only the default directory changed', async () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({
+      id: 'def-3', version: 3, graphJson, configJson, defaultDirectory: '/srv/old',
+    } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-4', pipeline: { name: 'pipe-1' } } as never);
+
+    await savePipelineDefinition('p1', nodes, [], '/srv/new');
+
+    expect(prismaMock.pipelineDefinition.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({ defaultDirectory: true }),
+    }));
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ version: 4, defaultDirectory: '/srv/new' }) }),
+    );
+  });
+
+  it('stores a blank default directory as null', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+    await savePipelineDefinition('p1', [node('a')], [], '   ');
+
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ defaultDirectory: null }) }),
+    );
+  });
+
   it('records the signed-in user as the author', async () => {
     setSession('user-42');
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
@@ -310,6 +341,16 @@ describe('addPipelineRun guards', () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition() as never);
 
     const result = await addPipelineRun('p1', 'env-1', [node('a'), node('b')], []);
+
+    expect(result).toEqual({ status: 'error', message: 'Save or discard your current changes!' });
+  });
+
+  // The runner reads the default off the pinned definition, so an unsaved one would run
+  // every inheriting stage in a directory other than the one the editor shows.
+  it('refuses when only the default directory has drifted', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition({ defaultDirectory: '/srv/old' }) as never);
+
+    const result = await addPipelineRun('p1', null, nodes, [], '/srv/new');
 
     expect(result).toEqual({ status: 'error', message: 'Save or discard your current changes!' });
   });

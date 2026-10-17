@@ -4,7 +4,7 @@ import { FormState, type CustomNode } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { auth } from '@/auth';
-import { definitionsEqual, toDefinition } from '@/lib/pipeline/definition';
+import { definitionsEqual, normalizeDefaultDirectory, toDefinition } from '@/lib/pipeline/definition';
 import type { Edge } from '@xyflow/react';
 import { AuditAction, ResourceType } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
@@ -207,7 +207,7 @@ export async function deletePipeline(id: string): Promise<FormState> {
 
 
 // a save inserts an entirely new row with an incremented version
-export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
+export async function savePipelineDefinition(pipelineId: string, nodes: CustomNode[], edges: Edge[], rawDefaultDirectory: string | null = null): Promise<FormState> {
   const session = await auth();
   const user = session?.user;
   const createdById = user?.id ?? null;
@@ -220,18 +220,19 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
   const userId = user.id;
 
   const { graphJson, configJson } = toDefinition(nodes, edges);
+  const defaultDirectory = normalizeDefaultDirectory(rawDefaultDirectory);
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
     try {
       const latest = await prisma.pipelineDefinition.findFirst({
         where: { pipelineId },
         orderBy: { version: 'desc' },
-        select: { id: true, version: true, graphJson: true, configJson: true },
+        select: { id: true, version: true, graphJson: true, configJson: true, defaultDirectory: true },
       });
 
       // A save that changed nothing reuses the current version instead of creating a duplicate
-      // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save' 
-      if (latest && definitionsEqual({ graphJson, configJson }, latest)) return {
+      // meaning a new version counts distinct updates, to prevent new rows when a user spams 'Save'
+      if (latest && definitionsEqual({ graphJson, configJson, defaultDirectory }, latest)) return {
         status: 'success',
         message: 'Pipeline saved'
       }
@@ -244,6 +245,7 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
             version: (latest?.version ?? -1) + 1,
             graphJson: graphJson as unknown as Prisma.InputJsonValue,
             configJson,
+            defaultDirectory,
             createdById,
           },
           select: { id: true, pipeline: { select: { name: true } } }
@@ -330,7 +332,7 @@ async function deleteStaleDefinitions(pipelineId: string, keepId: string): Promi
 
 
 
-export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState & { runId?: string }> {
+export async function addPipelineRun(pipelineId: string, environmentId: string | null, nodes: CustomNode[], edges: Edge[], defaultDirectory: string | null = null): Promise<FormState & { runId?: string }> {
   const session = await auth();
   const user = session?.user;
 
@@ -345,7 +347,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     const latest = await prisma.pipelineDefinition.findFirst({
       where: { pipelineId },
       orderBy: { version: 'desc' },
-      select: { id: true, version: true, graphJson: true, configJson: true },
+      select: { id: true, version: true, graphJson: true, configJson: true, defaultDirectory: true },
     });
 
     if (!latest) return {
@@ -356,7 +358,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
     const { graphJson, configJson } = toDefinition(nodes, edges);
 
     // A run pins itself to a stored definition, so the editor has to match one.
-    if (!definitionsEqual({ graphJson, configJson }, latest)) {
+    if (!definitionsEqual({ graphJson, configJson, defaultDirectory }, latest)) {
       return {
         status: 'error',
         message: 'Save or discard your current changes!'

@@ -116,7 +116,11 @@ export function fromDefinition(graphJson: unknown, configJson: unknown): GraphJs
 }
 
 // comparison
-type DefinitionContent = { graphJson: unknown, configJson: unknown };
+type DefinitionContent = { graphJson: unknown, configJson: unknown, defaultDirectory?: string | null };
+
+export function normalizeDefaultDirectory(directory: string | null | undefined): string | null {
+  return directory?.trim() || null;
+}
 
 /**
  * Stringifies with object keys sorted at every depth.
@@ -145,5 +149,6 @@ export function canonicalize(value: unknown): string {
 
 export function definitionsEqual(a: DefinitionContent, b: DefinitionContent): boolean {
   return canonicalize(a.graphJson) === canonicalize(b.graphJson)
-    && canonicalize(a.configJson) === canonicalize(b.configJson);
+    && canonicalize(a.configJson) === canonicalize(b.configJson)
+    && normalizeDefaultDirectory(a.defaultDirectory) === normalizeDefaultDirectory(b.defaultDirectory);
 }

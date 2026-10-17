@@ -1,6 +1,7 @@
 import type { Edge } from '@xyflow/react';
 import type { ConfigJson, CustomNode, GraphJson } from '@/lib/types';
 import { buildMaps } from '@/lib/pipeline/adjacency';
+import { splitDirectory } from '@/lib/pipeline/directory';
 import { matchReservedLabel } from '@/lib/utils/string';
 
 // Everything a run is checked against before a PipelineRun row is created.
@@ -194,7 +195,10 @@ export function validatePipelineGraph(graphJson: GraphJson, configJson: ConfigJs
     );
   }
 
-  const missingCommand = nodes.filter(node => node.data.type !== 'approval' && !configJson[node.id]?.command?.trim());
+  // checks if the command's body is present
+  const missingCommand = nodes.filter(node =>
+    node.data.type !== 'approval' && !splitDirectory(configJson[node.id]?.command ?? '').body.trim()
+  );
 
   if (missingCommand.length) {
     const namedStages = listStages(missingCommand);

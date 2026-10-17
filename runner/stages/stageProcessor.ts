@@ -13,6 +13,7 @@ import { buildScrubber, type Scrubber } from "./scrubber";
 import type { CustomNode } from "@/lib/types";
 import { CANCELLED_NOTE, UNSAVED_RESULT_NOTE } from "@/lib/stage-notes";
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
+import { splitDirectory, withDefaultDirectory } from "@/lib/pipeline/directory";
 
 
 const DEFAULT_TIMEOUT_MS = DEFAULT_STAGE_TIMEOUT_S * 1000; // 1800s
@@ -56,7 +57,7 @@ export async function processStage(job: Payload): Promise<void> {
   if (!context) return;
 
   const node = context.graph.nodes.find(node => node.id === job.stageId);
-  const { outcome, retryable } = await attemptStage(node, context.environmentId, job);
+  const { outcome, retryable } = await attemptStage(node, context.environmentId, context.defaultDirectory, job);
 
   if (outcome.status === 'FAILED' && retryable) {
     await openRetry(job.runId, job.stageId, job.attempt);
@@ -116,16 +117,22 @@ interface StageAttempt {
 async function attemptStage(
   node: CustomNode | undefined,
   environmentId: string | null,
+  defaultDirectory: string | null,
   job: Payload,
 ): Promise<StageAttempt> {
-  const command = node?.data.command;
+  const stageCommand = node?.data.command;
 
-  if (!command) {
+  // The body, not the whole string: a directory prefix on its own is a shell syntax error.
+  if (!stageCommand || !splitDirectory(stageCommand).body.trim()) {
     return {
       outcome: { status: 'FAILED', exitCode: null, logSnippet: `Stage "${job.stageId}" has no command to run.` },
       retryable: false,
     };
   }
+
+  // Applied here rather than written into each command by the editor, so changing the default
+  // moves every stage that inherits it. A stage's own directory always wins.
+  const command = withDefaultDirectory(stageCommand, defaultDirectory);
 
   const timeoutMs = node.data.timeout && node.data.timeout > 0
     ? node.data.timeout * 1000

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
 import HeaderButtons from './HeaderButtons';
 import EnvironmentSelect from './EnvironmentSelect';
+import DefaultDirectoryPopover from './DefaultDirectoryPopover';
 import { MainSidebarToggle } from '../layout/sidebar/SidebarContext';
 import { usePipelineGraph } from './PipelineGraphProvider';
 import type { Environment } from '@/lib/data/environments';
@@ -26,9 +27,9 @@ export default function PipelineEditorHeader({ pipelineName, environments, defau
           </MainSidebarToggle>
           <div className={styles.divider}></div>
           <div className={styles['pipeline-detail']}>
-            <Link href="/pipelines">Pipelines</Link>
-            <div className={styles.divider}></div>
-            <div className={"nowrap"}>{pipelineName}</div>
+            <Link href="/pipelines" className={styles['pipelines-link']}>Pipelines</Link>
+            <div className={`${styles.divider} ${styles['pipelines-divider']}`}></div>
+            <div className={styles['pipeline-name']} title={pipelineName}>{pipelineName}</div>
             <div className={`${styles.divider} ${styles.last}`}></div>
             <div className={styles['nodes-edges']}>
               <span className="nowrap">{nodes.length} stages</span>
@@ -39,6 +40,7 @@ export default function PipelineEditorHeader({ pipelineName, environments, defau
         </div>
         <div className={styles['center-slot']}>
           <EnvironmentSelect environments={environments} defaultEnvironmentId={defaultEnvironmentId} />
+          <DefaultDirectoryPopover />
         </div>
         <div className={styles['right-slot']}>
           <HeaderButtons />
