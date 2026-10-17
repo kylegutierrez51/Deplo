@@ -124,16 +124,15 @@ model Pipeline {
 model PipelineDefinition {
   id         String @id @default(cuid())
   pipelineId String
-  // The nth edit made to a pipeline. Monotonic and never reused: a save inserts
-  // a new version rather than editing this row, then deletes superseded
-  // versions no run references — so versions run sparse (0, 1, 4, 9...).
-  // Rows are immutable once written; runs depend on that (see below).
+  // a save inserts a new version rather than editing this row
   version    Int
 
   // React Flow serialization: { nodes: [...], edges: [...] }
   graphJson  Json
   // Per-stage config: commands, timeouts, retries, env bindings
   configJson Json
+  // Prepended at run time to any stage command that sets no directory of its own
+  defaultDirectory String?
 
   pipeline Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
 
@@ -143,8 +142,8 @@ model PipelineDefinition {
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   // Runs reference the exact definition version they executed. Prisma defaults
-  // to ON DELETE RESTRICT, which is what stops deleteStaleDefinitions() in 
-  // savePipelineDefinition() from deleting a definition a run still needs.
+  // to ON DELETE RESTRICT, which is what stops 
+  // lib/actions/pipelines savePipelineDefinition() from deleting a stale definition a run still needs.
   runs PipelineRun[]
 
   @@unique([pipelineId, version])
