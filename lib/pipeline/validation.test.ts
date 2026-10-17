@@ -238,6 +238,17 @@ describe('validatePipelineGraph', () => {
     expect(errors[0]).toMatch(/missing a command/);
   });
 
+  // The stage form writes its directory as a `cd "x" && ` prefix, which survives even after
+  // the command after it is deleted — and on its own it is a shell syntax error.
+  it('a directory with no command after it counts as missing', () => {
+    const { nodes, edges } = graph('a b', 'a>b');
+    const config = configFor(nodes, { a: { command: 'cd "app" && ' } });
+    const errors = validatePipelineGraph({ nodes, edges }, config, { requireApproval: false });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/missing a command/);
+  });
+
   it('a stage missing from configJson counts as missing a command', () => {
     const { nodes, edges } = graph('a b', 'a>b');
     const config = configFor(nodes);
