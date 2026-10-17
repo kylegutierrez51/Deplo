@@ -9,6 +9,7 @@ import type { CustomNode, StageType } from "@/lib/types";
 import { usePipelineGraph } from "@/components/pipeline-editor/PipelineGraphProvider";
 import { matchReservedLabel } from '@/lib/utils/string';
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
+import { joinDirectory, splitDirectory } from "@/lib/pipeline/directory";
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [name, setName] = useState<string>(node?.data?.name as string | undefined ?? '');
@@ -18,9 +19,28 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   const [timeOptions, setTimeOptions] = useState<{ timeout: string, retries: string }>({ timeout: node.data?.timeout ? String(node.data?.timeout) : String(DEFAULT_STAGE_TIMEOUT_S), retries: node.data?.retries ? String(node.data?.retries) : '0' });
   const [envVars, setEnvVars] = useState<Record<string, string>[]>(node.data?.env_vars || []);
   const [secretSearch, setSecretSearch] = useState("");
-  const { updateNodeData, selectedEnvironmentId, secrets } = usePipelineGraph();
+  const { updateNodeData, selectedEnvironmentId, secrets, defaultDirectory } = usePipelineGraph();
 
   const reservedLabelMatch = matchReservedLabel(label);
+
+  /*
+   * Both fields are views onto `command`: the directory is its `cd` prefix, not a config field.
+   *
+   * While the command textarea has focus the split is frozen as it stood on focus, so a
+   * `cd foo &&` typed there stays where it was typed instead of jumping into the directory
+   * field mid-keystroke. The stored command is still updated on every change; only the
+   * re-split waits for blur.
+   */
+  // when a user types `cd foo &&` and the command input loses focus, automatically
+  // removes it from the command input and adds it to the directory input
+  const [editingSplit, setEditingSplit] = useState<{ directory: string, body: string } | null>(null);
+  const { directory, body: commandBody } = editingSplit ?? splitDirectory(command);
+
+  const handleCommandChange = (nextDirectory: string, nextBody: string) => {
+    const next = joinDirectory(nextDirectory, nextBody);
+    setCommand(next);
+    updateNodeData(node.id, { command: next });
+  };
 
   const checkedIds = selectedEnvironmentId ? (node.data?.secrets?.[selectedEnvironmentId] ?? []) : [];
   const environmentSecrets = selectedEnvironmentId
@@ -98,6 +118,7 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
           <input
             id="stage-name"
             name="stage-name"
+            spellCheck={false}
             placeholder="e.g. build"
             value={name}
             onChange={e => {
@@ -117,6 +138,7 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
                 <input
                   id="stage-label"
                   name="stage-label"
+                  spellCheck={false}
                   placeholder="e.g. build, script"
                   value={label}
                   onChange={e => {
@@ -139,12 +161,26 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
                 id="command"
                 name="command"
                 placeholder="e.g. npm run build"
-                value={command}
+                spellCheck={false}
+                value={commandBody}
+                onFocus={() => setEditingSplit({ directory, body: commandBody })}
+                onBlur={() => setEditingSplit(null)}
                 onChange={e => {
-                  setCommand(e.target.value)
-                  updateNodeData(node.id, { command: e.target.value });
+                  setEditingSplit({ directory, body: e.target.value });
+                  handleCommandChange(directory, e.target.value);
                 }}>
               </textarea>
+            </div>
+            <div className={styles.directory}>
+              <label htmlFor="directory">DIRECTORY</label>
+              <input
+                id="directory"
+                name="directory"
+                placeholder={defaultDirectory.trim() ? `Default: ${defaultDirectory.trim()}` : 'Optional, e.g. /app/api'}
+                autoComplete="off"
+                spellCheck={false}
+                value={directory}
+                onChange={e => handleCommandChange(e.target.value.replaceAll('"', ''), commandBody)} />
             </div>
             <div className={styles["timeout-and-retries"]}>
               <div className={styles.timeout}>
