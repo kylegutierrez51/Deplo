@@ -29,6 +29,7 @@ Header
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
+  gap: var(--space-sm);
   padding: 0 var(--space-md);
 }
 

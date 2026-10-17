@@ -7,7 +7,7 @@ import { savePipelineDefinition, addPipelineRun, validatePipeline } from '@/lib/
 import { useToast } from '@/components/ui/toast/ToastContext'
 
 export default function HeaderButtons() {
-  const { pipelineId, selectedEnvironmentId, nodes, edges } = usePipelineGraph();
+  const { pipelineId, selectedEnvironmentId, defaultDirectory, nodes, edges } = usePipelineGraph();
   const [isSaving, startSaveTransition] = useTransition();
   const [isRunning, startRunTransition] = useTransition();
   const [isValidating, startValidateTransition] = useTransition();
@@ -30,7 +30,7 @@ export default function HeaderButtons() {
   }
 
   const handleSave = () => startSaveTransition(async () => {
-    const result = await savePipelineDefinition(pipelineId, nodes, edges);
+    const result = await savePipelineDefinition(pipelineId, nodes, edges, defaultDirectory);
     showToast({
       text: result.message, 
       icon: result.status === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline'
@@ -42,7 +42,7 @@ export default function HeaderButtons() {
     dismissStickyToasts();
 
     startRunTransition(async () => {
-      const result = await addPipelineRun(pipelineId, selectedEnvironmentId, nodes, edges);
+      const result = await addPipelineRun(pipelineId, selectedEnvironmentId, nodes, edges, defaultDirectory);
       const failed = result.status !== 'success';
 
       showToast({
