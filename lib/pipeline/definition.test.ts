@@ -277,4 +277,37 @@ describe('definitionsEqual', () => {
       { graphJson: { nodes: [{ id: 'a', position: { x: 5, y: 0 } }], edges: [] }, configJson },
     )).toBe(false);
   });
+
+  // Missing this is silent: a save that only changed the default directory would
+  // report "Pipeline saved" and write nothing.
+  it('is false when only the default directory differs', () => {
+    const content = { graphJson: { nodes: [], edges: [] }, configJson: {} };
+
+    expect(definitionsEqual(
+      { ...content, defaultDirectory: '/srv/a' },
+      { ...content, defaultDirectory: '/srv/b' },
+    )).toBe(false);
+    expect(definitionsEqual(
+      { ...content, defaultDirectory: '/srv/a' },
+      { ...content, defaultDirectory: null },
+    )).toBe(false);
+  });
+
+  // The column is nullable and the editor's empty input is '', so "no default" has
+  // several spellings that must all compare equal or every save of an untouched
+  // pipeline would mint a version.
+  it('treats null, undefined and an empty string as the same absent default', () => {
+    const content = { graphJson: { nodes: [], edges: [] }, configJson: {} };
+
+    expect(definitionsEqual({ ...content, defaultDirectory: null }, content)).toBe(true);
+    expect(definitionsEqual({ ...content, defaultDirectory: '' }, { ...content, defaultDirectory: null })).toBe(true);
+  });
+
+  // '   ' is truthy, so a check on the raw value rather than the trimmed one would let it
+  // through as '' — unequal to null, and a version minted for typing a space.
+  it('treats a whitespace-only default as absent', () => {
+    const content = { graphJson: { nodes: [], edges: [] }, configJson: {} };
+
+    expect(definitionsEqual({ ...content, defaultDirectory: '   ' }, { ...content, defaultDirectory: null })).toBe(true);
+  });
 });
