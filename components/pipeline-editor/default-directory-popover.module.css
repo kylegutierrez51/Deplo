@@ -1,0 +1,84 @@
+/* A flex column so the trigger stretches to EnvironmentSelect's height beside it in the center slot. */
+.group {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Bordered like EnvironmentSelect's input, so the two read as one group of controls. */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--gray-clr);
+  border-radius: var(--radius-sm);
+  color: var(--subtitle-clr);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* inherit, because globals.css colours every element (*), so the icon would
+   otherwise ignore the trigger's colour, including the blue that marks a set default. */
+.trigger ion-icon {
+  font-size: 18px;
+  color: inherit;
+}
+
+.trigger:hover {
+  background-color: var(--gray-clr);
+}
+
+/* Border rather than outline, matching EnvironmentSelect's focus and FilterListbox's open state. */
+.trigger:focus-visible,
+.trigger[aria-expanded='true'] {
+  outline: none;
+  border-color: var(--subtitle-clr);
+}
+
+/* A filled, coloured folder says a default is set without opening the popover. */
+.trigger.set {
+  color: var(--blue-clr);
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 0;
+  z-index: var(--z-dropdown);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--light-gray-clr);
+  border-radius: var(--radius-md);
+  background-color: var(--dark-clr-2);
+}
+
+.popover label {
+  font-family: var(--font-jetbrains-mono);
+  font-size: var(--font-size-sm);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--gray-clr);
+  border-radius: var(--radius-sm);
+  color: var(--white-clr);
+  font-family: var(--font-jetbrains-mono);
+  font-size: var(--font-size-sm);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--subtitle-clr);
+}
+
+.hint {
+  margin: 0;
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}

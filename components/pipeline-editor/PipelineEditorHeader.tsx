@@ -4,7 +4,7 @@ import Link from 'next/link';
 import styles from './pipeline-editor-header.module.css'
 import HeaderButtons from './HeaderButtons';
 import EnvironmentSelect from './EnvironmentSelect';
-import DefaultDirectoryInput from './DefaultDirectoryInput';
+import DefaultDirectoryPopover from './DefaultDirectoryPopover';
 import { MainSidebarToggle } from '../layout/sidebar/SidebarContext';
 import { usePipelineGraph } from './PipelineGraphProvider';
 import type { Environment } from '@/lib/data/environments';
@@ -40,7 +40,7 @@ export default function PipelineEditorHeader({ pipelineName, environments, defau
         </div>
         <div className={styles['center-slot']}>
           <EnvironmentSelect environments={environments} defaultEnvironmentId={defaultEnvironmentId} />
-          <DefaultDirectoryInput />
+          <DefaultDirectoryPopover />
         </div>
         <div className={styles['right-slot']}>
           <HeaderButtons />
