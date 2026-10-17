@@ -84,3 +84,17 @@
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);
 }
+
+/*
+=====================================================================================
+Environment Select Media Queries
+=====================================================================================
+*/
+
+/* The editor header is position: fixed, so overflow there is unreachable. At tablet
+   width the picker gives up some of its width rather than push Run off-screen. */
+@media (max-width: 768px) {
+  .autocompleteWrapper {
+    width: 160px;
+  }
+}

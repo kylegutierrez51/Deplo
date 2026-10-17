@@ -58,11 +58,11 @@ export default function HeaderButtons() {
 
   return (
     <>
-      <button className={styles['validate-btn']} type="button" onClick={handleValidate} disabled={isValidating}>
+      <button className={styles['validate-btn']} type="button" title="Validate Pipeline" onClick={handleValidate} disabled={isValidating}>
         <ion-icon name="shield-checkmark-outline"></ion-icon>
         {isValidating ? 'Validating...' : 'Validate Pipeline'}
       </button>
-      <button className={styles['save-btn']} type="button" onClick={handleSave} disabled={isBusy}>
+      <button className={styles['save-btn']} type="button" title="Save" onClick={handleSave} disabled={isBusy}>
         <ion-icon name="save-outline"></ion-icon>
         {isSaving ? 'Saving...' : 'Save'}
       </button>
