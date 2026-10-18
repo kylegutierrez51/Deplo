@@ -35,6 +35,16 @@ const WITHHELD_FROM_COMMANDS = [
 ];
 
 /*
+ * In a manual run, prevent these 3 reserved keys from being used, since they 
+ * are used specifically with GitHub Webhooks
+ */
+const COMMIT_VARS = {
+  repoUrl: 'DEPLO_REPO_URL',
+  commitSha: 'DEPLO_COMMIT_SHA',
+  branch: 'DEPLO_BRANCH',
+} as const;
+
+/*
 ==============================================================================================
  * Runs one attempt of one stage and records what happened.
  *
@@ -57,7 +67,8 @@ export async function processStage(job: Payload): Promise<void> {
   if (!context) return;
 
   const node = context.graph.nodes.find(node => node.id === job.stageId);
-  const { outcome, retryable } = await attemptStage(node, context.environmentId, context.defaultDirectory, job);
+  const commit = { repoUrl: context.repoUrl, commitSha: context.commitSha, branch: context.branch };
+  const { outcome, retryable } = await attemptStage(node, context.environmentId, context.defaultDirectory, job, commit);
 
   if (outcome.status === 'FAILED' && retryable) {
     await openRetry(job.runId, job.stageId, job.attempt);
@@ -103,6 +114,13 @@ interface StageAttempt {
   retryable: boolean;
 }
 
+/* For a manual run: commitSha and branch are null; repoUrl belongs to the pipeline and is null when none is configured */
+interface CommitInfo {
+  repoUrl: string | null;
+  commitSha: string | null;
+  branch: string | null;
+}
+
 /*
 ==============================================================================================
  * Everything between owning the row and knowing the result. Never throws.
@@ -119,6 +137,7 @@ async function attemptStage(
   environmentId: string | null,
   defaultDirectory: string | null,
   job: Payload,
+  commit: CommitInfo,
 ): Promise<StageAttempt> {
   const stageCommand = node?.data.command;
 
@@ -149,10 +168,18 @@ async function attemptStage(
     scrubber = buildScrubber(Object.values(secrets));
 
     const inherited = { ...process.env };
-    for (const key of WITHHELD_FROM_COMMANDS) delete inherited[key];
+    for (const key of [ ...WITHHELD_FROM_COMMANDS, ...Object.values(COMMIT_VARS)]) delete inherited[key];
+
+    // Truthy, not just `value != null`: the pipeline model stores '' for a blank Repo URL
+    const commitVars: Record<string, string> = {};
+    for (const [field, name] of Object.entries(COMMIT_VARS)) {
+      const value = commit[field as keyof CommitInfo];
+      if (value) commitVars[name] = value;
+    }
 
     const env = {
       ...inherited,
+      ...commitVars,
       ...Object.fromEntries((node.data.env_vars ?? []).map(({ key, value }) => [key, value])),
 
       // Last, so a selected secret wins a name collision with a plain env var.

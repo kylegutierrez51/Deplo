@@ -63,7 +63,13 @@ const stageNode = (data: Record<string, unknown> = {}) => ({
   data: { type: 'custom', name: 'build', command: 'npm ci', ...data },
 }) as CustomNode;
 
-const context = (node = stageNode(), environmentId: string | null = 'env-1', defaultDirectory: string | null = null) =>
+const context = (
+  node = stageNode(),
+  environmentId: string | null = 'env-1',
+  defaultDirectory: string | null = null,
+  commit: { repoUrl: string | null, commitSha: string | null, branch: string | null } =
+    { repoUrl: null, commitSha: null, branch: null },
+) =>
   loadContext.mockResolvedValue({
     runId: 'run-1',
     runStatus: 'RUNNING',
@@ -73,6 +79,7 @@ const context = (node = stageNode(), environmentId: string | null = 'env-1', def
     graph: { nodes: [node], edges: [] },
     outcomes: new Map(),
     attempts: new Map([['build', 1]]),
+    ...commit,
   } as never);
 
 const exited = (exitCode: number | null, over: Record<string, unknown> = {}) =>
@@ -254,6 +261,90 @@ describe('the command environment', () => {
     await processStage(job);
 
     expect(spawned().env.API_KEY).toBe('sk-live-123');
+  });
+});
+
+/*
+ * The runner never clones anything itself — these three variables are what let a webhook
+ * run's first stage check out the commit that triggered it, with plain `git` commands.
+ */
+describe('the commit environment', () => {
+  const commit = { repoUrl: 'https://github.com/org/repo.git', commitSha: 'abc123', branch: 'main' };
+
+  it('exposes the repo url, commit sha and branch to the stage', async () => {
+    context(stageNode(), 'env-1', null, commit);
+
+    await processStage(job);
+
+    expect(spawned().env).toEqual(expect.objectContaining({
+      DEPLO_REPO_URL: commit.repoUrl,
+      DEPLO_COMMIT_SHA: commit.commitSha,
+      DEPLO_BRANCH: commit.branch,
+    }));
+  });
+
+  // A manual run resolves none of these, and a stage must not see empty strings standing
+  // in for "no commit" — that would make a checkout command fail in a confusing way.
+  it('omits all three for a run with no commit', async () => {
+    context(stageNode(), 'env-1', null, { repoUrl: null, commitSha: null, branch: null });
+
+    await processStage(job);
+
+    const env = spawned().env;
+    expect(env).not.toHaveProperty('DEPLO_REPO_URL');
+    expect(env).not.toHaveProperty('DEPLO_COMMIT_SHA');
+    expect(env).not.toHaveProperty('DEPLO_BRANCH');
+  });
+
+  // The runner's own process can carry one of these from a line in .env or the shell that
+  // started it; a manual run (or any run missing that one value) must not pass it off as its own.
+  it.each(['DEPLO_REPO_URL', 'DEPLO_COMMIT_SHA', 'DEPLO_BRANCH'])('does not leak %s from the runner\'s own environment', async (name) => {
+    process.env[name] = 'stale-from-the-runner-environment';
+    context(stageNode(), 'env-1', null, { repoUrl: null, commitSha: null, branch: null });
+
+    try {
+      await processStage(job);
+
+      expect(spawned().env).not.toHaveProperty(name);
+    } finally {
+      delete process.env[name];
+    }
+  });
+
+  // Only the variables the runner sets are stripped, not the whole prefix, so an unrelated
+  // DEPLO_* value someone put in the runner's environment on purpose still reaches the stage.
+  it('passes through a DEPLO_* variable the runner does not set', async () => {
+    process.env.DEPLO_DEBUG = '1';
+    context(stageNode(), 'env-1', null, commit);
+
+    try {
+      await processStage(job);
+
+      expect(spawned().env.DEPLO_DEBUG).toBe('1');
+    } finally {
+      delete process.env.DEPLO_DEBUG;
+    }
+  });
+
+  // Consistent with the existing "secret wins a name collision" rule: a stage's own
+  // configuration always wins over whatever the run carries.
+  it('lets a stage env var override the run\'s commit values', async () => {
+    context(stageNode({ env_vars: [{ key: 'DEPLO_BRANCH', value: 'override-branch' }] }), 'env-1', null, commit);
+
+    await processStage(job);
+
+    expect(spawned().env.DEPLO_BRANCH).toBe('override-branch');
+  });
+
+  // The pipeline form stores '' when the Repo URL field is left blank — not null — so the
+  // check has to be on truthiness, not just != null, or a webhook run on such a pipeline
+  // would hand the stage an empty DEPLO_REPO_URL instead of omitting it.
+  it('omits DEPLO_REPO_URL for an empty repo url', async () => {
+    context(stageNode(), 'env-1', null, { repoUrl: '', commitSha: commit.commitSha, branch: commit.branch });
+
+    await processStage(job);
+
+    expect(spawned().env).not.toHaveProperty('DEPLO_REPO_URL');
   });
 });
 

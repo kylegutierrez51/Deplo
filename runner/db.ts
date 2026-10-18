@@ -32,6 +32,9 @@ interface RunContext {
   outcomes: Outcomes,
   /** stageId → the attempt number of that stage's latest row. Absent = never materialized. */
   attempts: ReadonlyMap<string, number>,
+  repoUrl: string | null,
+  commitSha: string | null,
+  branch: string | null,
 }
 
 
@@ -51,6 +54,7 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     where: { id: runId },
     include: {
       definition: { select: { graphJson: true, configJson: true, defaultDirectory: true } },
+      pipeline: { select: { repoUrl: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
         // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
@@ -82,6 +86,9 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     graph: fromDefinition(run.definition.graphJson, run.definition.configJson),
     outcomes,
     attempts,
+    repoUrl: run.pipeline.repoUrl,
+    commitSha: run.commitSha,
+    branch: run.branch,
   };
 }
 

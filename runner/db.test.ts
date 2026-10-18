@@ -44,6 +44,9 @@ describe('loadRunContext', () => {
     status: 'RUNNING',
     definitionId: 'def-1',
     environmentId: 'env-1',
+    commitSha: null,
+    branch: null,
+    pipeline: { repoUrl: null },
     definition: { graphJson: graph('a b', 'a>b'), configJson: { a: { command: 'npm ci' } } },
     stages: [],
     ...over,
@@ -142,6 +145,39 @@ describe('loadRunContext', () => {
 
     expect(ctx?.graph.nodes.find(node => node.id === 'a')?.data.command).toBe('npm ci');
     expect(ctx).not.toHaveProperty('config');
+  });
+
+  // commitSha/branch come off the run row itself; repoUrl comes off its pipeline, which is
+  // why the include has to reach across that relation rather than stopping at the run.
+  it('returns the commit fields a webhook run was created with', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
+      commitSha: 'abc123', branch: 'main', pipeline: { repoUrl: 'https://github.com/org/repo.git' },
+    }) as never);
+
+    const ctx = await loadRunContext('run-1');
+
+    expect(ctx).toEqual(expect.objectContaining({
+      repoUrl: 'https://github.com/org/repo.git', commitSha: 'abc123', branch: 'main',
+    }));
+    expect(prismaMock.pipelineRun.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      include: expect.objectContaining({
+        pipeline: { select: { repoUrl: true } },
+      }),
+    }));
+  });
+
+  // A manual run writes null for all three at creation, and that has to come through as
+  // null rather than, say, an empty string a stage's command might treat as set.
+  it('returns null commit fields for a manual run', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
+      commitSha: null, branch: null, pipeline: { repoUrl: null },
+    }) as never);
+
+    const ctx = await loadRunContext('run-1');
+
+    expect(ctx).toEqual(expect.objectContaining({
+      repoUrl: null, commitSha: null, branch: null,
+    }));
   });
 });
 
