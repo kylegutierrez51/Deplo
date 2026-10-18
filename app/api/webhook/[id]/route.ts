@@ -4,6 +4,7 @@ import { decryptSecret, verifyWebhookSignature } from "@/lib/utils/crypto";
 import { addWebhookEvent, updateWebhookEvent } from "@/lib/webhooks/webhook-events";
 import { EventType, WebhookEventData } from "@/lib/types";
 import { checkBranches } from "@/lib/webhooks/branches";
+import { commitFromPayload, isForkPullRequest } from "@/lib/webhooks/commit";
 import { getLatestDefinition } from "@/lib/data/pipelines";
 import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from "@/lib/actions/run-trigger";
 
@@ -83,6 +84,11 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
       return NextResponse.json({ message: `Pull request action "${payload.action}" does not trigger a run.` }, { status: 200 });
     }
 
+    if (githubEvent === 'pull_request' && isForkPullRequest(payload)) {
+      await updateWebhookEvent(webhookEventId, 'ignored');
+      return NextResponse.json({ message: "Pull requests from forks are not built: they would run untrusted code with this environment's secrets." }, { status: 200 });
+    }
+
     // check for branch filters
     const target = githubEvent == 'push' ? payload.ref.replace('refs/heads/', '') : payload.pull_request.base.ref.replace('refs/heads/', '');
     console.log('targeted branch: ' + target);
@@ -118,6 +124,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
       definitionId: definition.id,
       user: { id: null, name: 'GitHub' },
       trigger: 'webhook',
+      ...commitFromPayload(githubEvent, payload),
     });
 
     // If enqueue fails, deletes the run rather than leaving it stranded at QUEUED

@@ -271,6 +271,19 @@ describe('the new run', () => {
     }));
   });
 
+  // So re-running a webhook-triggered run builds the same commit it was triggered for,
+  // not whatever happens to be at the head of the branch by the time someone clicks retry.
+  it('carries over the commit and branch the original run was triggered for', async () => {
+    existingRun('FAILED', { commitSha: 'abc123', branch: 'main' });
+
+    await retry();
+
+    expect(inserted().data).toEqual(expect.objectContaining({
+      commitSha: 'abc123',
+      branch: 'main',
+    }));
+  });
+
   // A retry is a person pressing a button, whatever started the run being retried.
   it('records the retry as manually triggered', async () => {
     await retry();

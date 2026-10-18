@@ -158,3 +158,39 @@ describe('the environment snapshot', () => {
     }));
   });
 });
+
+/*
+ * The webhook route is the only caller that knows a commit: it reads payload.after (push) or
+ * payload.pull_request.head.sha (pull_request) and the branch that was actually built. Manual
+ * and retried runs have neither, so omitting them has to write null rather than leaving the
+ * columns unset.
+ */
+describe('the commit snapshot', () => {
+  beforeEach(() => {
+    runTransactionsInline();
+    prismaMock.pipelineRun.findFirst.mockResolvedValue(null);
+    prismaMock.pipelineRun.create.mockResolvedValue({ id: 'run-1', runNumber: 1, pipeline: { name: 'CI' } } as never);
+  });
+
+  it('records the commit and branch when given', async () => {
+    await createPipelineRun({
+      pipelineId: 'p1', definitionId: 'd1', environmentId: null, trigger: 'webhook',
+      user: { id: null, name: 'GitHub' }, commitSha: 'abc123', branch: 'main',
+    });
+
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ commitSha: 'abc123', branch: 'main' }),
+    }));
+  });
+
+  it('records null for both when they are omitted', async () => {
+    await createPipelineRun({
+      pipelineId: 'p1', definitionId: 'd1', environmentId: null, trigger: 'manual',
+      user: { id: 'u1', name: 'kyle' },
+    });
+
+    expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ commitSha: null, branch: null }),
+    }));
+  });
+});

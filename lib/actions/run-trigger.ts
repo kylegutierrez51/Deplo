@@ -82,8 +82,10 @@ export async function createPipelineRun(data: {
   environmentId: string | null,
   trigger: RunTrigger,
   user: { id: string | null, name: string | null },
+  commitSha?: string | null,
+  branch?: string | null,
 }): Promise<{ id: string, name: string, runNumber: number }> {
-  const { user, trigger, ...runData } = data;
+  const { user, trigger, commitSha = null, branch = null, ...runData } = data;
 
   for (let attempt = 1; attempt <= RUN_NUMBER_ATTEMPTS; attempt++) {
     try {
@@ -111,6 +113,8 @@ export async function createPipelineRun(data: {
           select: { id: true, runNumber: true, pipeline: { select: { name: true } } },
           data: {
             ...runData,
+            commitSha,
+            branch,
             environmentName: environment?.name ?? null,
             environmentType: environment?.type ?? null,
             triggeredById: user.id,
