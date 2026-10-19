@@ -284,6 +284,15 @@ describe('the new run', () => {
     }));
   });
 
+  // The repo url is a snapshot too: clearing it on the pipeline later must not change what a retry builds.
+  it('a retry rebuilds against the original run repo url', async () => {
+    existingRun('FAILED', { repoUrl: 'https://github.com/o/old' });
+
+    await retry();
+
+    expect(inserted().data).toEqual(expect.objectContaining({ repoUrl: 'https://github.com/o/old' }));
+  });
+
   // A retry is a person pressing a button, whatever started the run being retried.
   it('records the retry as manually triggered', async () => {
     await retry();

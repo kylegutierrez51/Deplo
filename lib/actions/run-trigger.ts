@@ -84,8 +84,9 @@ export async function createPipelineRun(data: {
   user: { id: string | null, name: string | null },
   commitSha?: string | null,
   branch?: string | null,
+  repoUrl?: string | null,
 }): Promise<{ id: string, name: string, runNumber: number }> {
-  const { user, trigger, commitSha = null, branch = null, ...runData } = data;
+  const { user, trigger, commitSha = null, branch = null, repoUrl: givenRepoUrl, ...runData } = data;
 
   for (let attempt = 1; attempt <= RUN_NUMBER_ATTEMPTS; attempt++) {
     try {
@@ -98,7 +99,9 @@ export async function createPipelineRun(data: {
       return await prisma.$transaction(async (tx) => {
         /* Prevents another transaction from modifying the pipeline's lastRun by placing an exclusive lock on it. 
         The lock is released when the transaction ends. */
-        await tx.$queryRaw`SELECT 1 FROM "pipelines" WHERE "id" = ${data.pipelineId} FOR UPDATE`;
+        const pipelineRows = await tx.$queryRaw<{ repoUrl: string | null }[]>`SELECT "repoUrl" FROM "pipelines" WHERE "id" = ${data.pipelineId} FOR UPDATE`;
+        // Copied onto the run so clearing it on the pipeline mid-run cannot change the run's graph.
+        const repoUrl = 'repoUrl' in data ? givenRepoUrl ?? null : pipelineRows?.[0]?.repoUrl ?? null;
 
         /* 
          * gets the name of the environment in case this new PipelineRun has an environmentId attached. 
@@ -115,6 +118,7 @@ export async function createPipelineRun(data: {
             ...runData,
             commitSha,
             branch,
+            repoUrl,
             environmentName: environment?.name ?? null,
             environmentType: environment?.type ?? null,
             triggeredById: user.id,
