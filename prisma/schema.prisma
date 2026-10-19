@@ -178,6 +178,7 @@ model PipelineRun {
   runNumber Int
 
   commitSha String?
+  repoUrl   String?
   branch    String?
 
   triggeredById String?
