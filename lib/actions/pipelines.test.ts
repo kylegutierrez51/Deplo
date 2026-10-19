@@ -7,6 +7,7 @@ import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import { isQueueReachable } from '@/lib/queue/health';
 import type { CustomNode } from '@/lib/types';
+import { REPO_URL_ERROR } from '@/lib/pipeline/repo-url';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -396,7 +397,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1, commitSha: null, branch: null },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1, commitSha: null, branch: null, repoUrl: null },
     }));
   });
 
@@ -1136,5 +1137,48 @@ describe('audit trail', () => {
       expect(revalidate).not.toHaveBeenCalled();
       expect(result).toEqual({ status: 'error', message: 'Error triggering pipeline. Please try again.' });
     });
+  });
+});
+
+describe.each([
+  ['addPipeline', addPipeline, () => prismaMock.pipeline.create],
+  ['updatePipeline', updatePipeline, () => prismaMock.pipeline.update],
+] as const)('%s repo url', (_name, action, write) => {
+  const idle = { status: 'idle' as const, message: '' };
+  const form = (repoUrl: string) => {
+    const fd = new FormData();
+    fd.set('id', 'p1');
+    fd.set('name', 'CI');
+    fd.set('repo_url', repoUrl);
+    fd.set('description', 'desc');
+    return fd;
+  };
+
+  beforeEach(() => {
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+  });
+
+  it('rejects a url carrying credentials and writes nothing', async () => {
+    const result = await action(idle, form('https://user:tok@github.com/o/r'));
+
+    expect(result).toEqual({ status: 'error', message: REPO_URL_ERROR });
+    expect(write()).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('stores a blank url as null rather than an empty string', async () => {
+    await action(idle, form('   '));
+
+    expect(write()).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ repoUrl: null }),
+    }));
+  });
+
+  it('stores a valid url trimmed', async () => {
+    await action(idle, form('  https://github.com/o/r  '));
+
+    expect(write()).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ repoUrl: 'https://github.com/o/r' }),
+    }));
   });
 });
