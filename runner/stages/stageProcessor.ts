@@ -5,6 +5,7 @@ import {
 } from "../db";
 import type { Payload } from "./stageQueue";
 import path from "node:path";
+import { rm } from "node:fs/promises";
 import { RUNNER_WORKSPACE_ROOT } from '../setup/connection';
 import { advanceRun } from "../runs/runProcessor";
 import { execute } from "./execute";
@@ -13,6 +14,7 @@ import { buildScrubber, type Scrubber } from "./scrubber";
 import type { CustomNode } from "@/lib/types";
 import { CANCELLED_NOTE, UNSAVED_RESULT_NOTE } from "@/lib/stage-notes";
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
+import { CHECKOUT_STAGE_ID } from "@/lib/pipeline/checkout";
 import { splitDirectory, withDefaultDirectory } from "@/lib/pipeline/directory";
 
 
@@ -114,7 +116,7 @@ interface StageAttempt {
   retryable: boolean;
 }
 
-/* For a manual run: commitSha and branch are null; repoUrl belongs to the pipeline and is null when none is configured */
+/* For a manual run: commitSha and branch are null; repoUrl is the run's snapshot (PipelineRun.repoUrl, copied from the pipeline at creation) and is null when none was set */
 interface CommitInfo {
   repoUrl: string | null;
   commitSha: string | null;
@@ -141,7 +143,6 @@ async function attemptStage(
 ): Promise<StageAttempt> {
   const stageCommand = node?.data.command;
 
-  // The body, not the whole string: a directory prefix on its own is a shell syntax error.
   if (!stageCommand || !splitDirectory(stageCommand).body.trim()) {
     return {
       outcome: { status: 'FAILED', exitCode: null, logSnippet: `Stage "${job.stageId}" has no command to run.` },
@@ -149,9 +150,9 @@ async function attemptStage(
     };
   }
 
-  // Applied here rather than written into each command by the editor, so changing the default
-  // moves every stage that inherits it. A stage's own directory always wins.
-  const command = withDefaultDirectory(stageCommand, defaultDirectory);
+  const command = node.id === CHECKOUT_STAGE_ID
+    ? stageCommand
+    : withDefaultDirectory(stageCommand, defaultDirectory);
 
   const timeoutMs = node.data.timeout && node.data.timeout > 0
     ? node.data.timeout * 1000
@@ -161,8 +162,15 @@ async function attemptStage(
   let scrubber: Scrubber | undefined;
 
   try {
-    // Resolved here rather than carried on the job: Redis persists to disk, so a decrypted
-    // value in job.data is a credential in an AOF file.
+    const cwd = path.join(RUNNER_WORKSPACE_ROOT, job.runId);
+
+    // A killed git leaves
+    // .git/shallow.lock or .git/index.lock in this workspace, and every retry would die on it.
+    // Since the checkout stage runs before any other stage, this is safe to remove.
+    if (node.id === CHECKOUT_STAGE_ID && job.attempt > 1) {
+      await rm(path.join(cwd, ".git"), { recursive: true, force: true });
+    }
+
     const secrets = await resolveSecrets(node.data.secrets ?? {}, environmentId);
 
     scrubber = buildScrubber(Object.values(secrets));
@@ -170,7 +178,6 @@ async function attemptStage(
     const inherited = { ...process.env };
     for (const key of [ ...WITHHELD_FROM_COMMANDS, ...Object.values(COMMIT_VARS)]) delete inherited[key];
 
-    // Truthy, not just `value != null`: the pipeline model stores '' for a blank Repo URL
     const commitVars: Record<string, string> = {};
     for (const [field, name] of Object.entries(COMMIT_VARS)) {
       const value = commit[field as keyof CommitInfo];
@@ -206,7 +213,7 @@ async function attemptStage(
     try {
       result = await execute({
         command,
-        cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
+        cwd,
         env,
         timeoutMs,
         scrub: scrubber,

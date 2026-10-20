@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
+import { withCheckoutStage } from '@/lib/pipeline/checkout';
 import { addAudit } from '@/lib/actions/audits';
 import { RUNNER_WORKSPACE_ROOT } from './setup/connection';
 import type { GraphJson, StageType } from '@/lib/types';
@@ -54,7 +55,6 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     where: { id: runId },
     include: {
       definition: { select: { graphJson: true, configJson: true, defaultDirectory: true } },
-      pipeline: { select: { repoUrl: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
         // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
@@ -83,10 +83,13 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     definitionId: run.definitionId,
     environmentId: run.environmentId,
     defaultDirectory: run.definition.defaultDirectory ?? null,
-    graph: fromDefinition(run.definition.graphJson, run.definition.configJson),
+    graph: withCheckoutStage(
+      fromDefinition(run.definition.graphJson, run.definition.configJson),
+      { repoUrl: run.repoUrl, commitSha: run.commitSha },
+    ),
     outcomes,
     attempts,
-    repoUrl: run.pipeline.repoUrl,
+    repoUrl: run.repoUrl,
     commitSha: run.commitSha,
     branch: run.branch,
   };

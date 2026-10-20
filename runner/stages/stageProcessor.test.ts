@@ -6,6 +6,7 @@
  * Under jsdom every case here would fail on a detail of the test environment rather than of
  * the code.
  */
+import { rm } from 'node:fs/promises';
 import { processStage } from './stageProcessor';
 import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from '../db';
 import { execute } from './execute';
@@ -13,6 +14,7 @@ import { resolveSecrets } from './secrets';
 import { advanceRun } from '../runs/runProcessor';
 import type { CustomNode } from '@/lib/types';
 import { UNSAVED_RESULT_NOTE } from '@/lib/stage-notes';
+import path from 'node:path';
 
 /*
  * Explicit factories throughout, never a bare jest.mock: an automock loads the real module
@@ -29,6 +31,7 @@ jest.mock('../db', () => ({
   recordStageProgress: jest.fn(),
   isRunCancelled: jest.fn(),
 }));
+jest.mock('node:fs/promises', () => ({ rm: jest.fn() }));
 jest.mock('./execute', () => ({ execute: jest.fn() }));
 jest.mock('./secrets', () => ({ resolveSecrets: jest.fn() }));
 jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn() }));
@@ -54,6 +57,7 @@ const secrets = resolveSecrets as jest.MockedFunction<typeof resolveSecrets>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
 const progress = recordStageProgress as jest.MockedFunction<typeof recordStageProgress>;
 const cancelled = isRunCancelled as jest.MockedFunction<typeof isRunCancelled>;
+const removeDir = rm as jest.MockedFunction<typeof rm>;
 
 const job = { runId: 'run-1', stageId: 'build', attempt: 1 };
 
@@ -98,6 +102,7 @@ beforeEach(() => {
   secrets.mockResolvedValue({});
   progress.mockResolvedValue(true);
   cancelled.mockResolvedValue(false);
+  removeDir.mockResolvedValue(undefined);
   context();
   exited(0);
   jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -362,6 +367,24 @@ describe('the default directory', () => {
     expect(spawned().command).toBe('cd "/srv/app" && npm ci');
   });
 
+  // The default directory lives inside the repo, which does not exist until checkout has run.
+  it('does not apply it to the synthetic Checkout stage', async () => {
+    const checkoutNode = { ...stageNode({ command: 'git init .' }), id: 'deplo-checkout' } as CustomNode;
+    context(checkoutNode, 'env-1', 'app');
+
+    await processStage({ ...job, stageId: 'deplo-checkout' });
+
+    expect(spawned().command).toBe('git init .');
+  });
+
+  it('still applies it to an ordinary stage in the same run', async () => {
+    context(stageNode({ command: 'npm ci' }), 'env-1', 'app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "app" && npm ci');
+  });
+
   it('never overrides a directory the stage set', async () => {
     context(stageNode({ command: 'cd "own" && npm ci' }), 'env-1', '/srv/app');
 
@@ -489,6 +512,51 @@ describe('opening a retry', () => {
     await processStage({ ...job, attempt: 2 });
 
     expect(retry).toHaveBeenCalledWith('run-1', 'build', 2);
+  });
+});
+
+describe('retrying the synthetic Checkout stage', () => {
+  const checkoutNode = () => ({ ...stageNode({ command: 'git init --quiet .' }), id: 'deplo-checkout' }) as CustomNode;
+  const checkoutJob = { runId: 'run-1', stageId: 'deplo-checkout', attempt: 2 };
+
+  // A killed git leaves .git/shallow.lock or .git/index.lock behind, and every later attempt
+  // runs in the same workspace and dies on it.
+  it('removes the half-written .git before spawning on a later attempt', async () => {
+    context(checkoutNode());
+    const order: string[] = [];
+    removeDir.mockImplementation(async () => { order.push('rm'); });
+    run.mockImplementation((async () => { order.push('execute'); return { exitCode: 0, signal: null, timedOut: false, cancelled: false, logSnippet: '' }; }) as never);
+
+    await processStage(checkoutJob);
+
+    expect(removeDir).toHaveBeenCalledWith(path.join(spawned().cwd, '.git'), { recursive: true, force: true });
+    expect(order).toEqual(['rm', 'execute']);
+  });
+
+  it('leaves the workspace alone on the first attempt', async () => {
+    context(checkoutNode());
+
+    await processStage({ ...checkoutJob, attempt: 1 });
+
+    expect(removeDir).not.toHaveBeenCalled();
+  });
+
+  it('leaves the workspace alone when an ordinary stage retries', async () => {
+    await processStage({ ...job, attempt: 2 });
+
+    expect(removeDir).not.toHaveBeenCalled();
+  });
+
+  it('fails without retrying, and without spawning, when the workspace cannot be cleaned', async () => {
+    context(checkoutNode());
+    removeDir.mockRejectedValue(new Error('EBUSY: resource busy'));
+
+    await processStage(checkoutJob);
+
+    expect(run).not.toHaveBeenCalled();
+    expect(retry).not.toHaveBeenCalled();
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED', exitCode: null }));
+    expect(recorded().logSnippet).toContain('EBUSY');
   });
 });
 

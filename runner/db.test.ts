@@ -6,6 +6,7 @@ import {
   findStalledRuns,
 } from './db';
 import { graph } from '@/test/helpers/graph';
+import { fromDefinition } from '@/lib/pipeline/definition';
 import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { prismaError } from '@/test/helpers/prisma-errors';
 import { mkdir } from 'node:fs/promises';
@@ -46,7 +47,7 @@ describe('loadRunContext', () => {
     environmentId: 'env-1',
     commitSha: null,
     branch: null,
-    pipeline: { repoUrl: null },
+    repoUrl: null,
     definition: { graphJson: graph('a b', 'a>b'), configJson: { a: { command: 'npm ci' } } },
     stages: [],
     ...over,
@@ -147,11 +148,10 @@ describe('loadRunContext', () => {
     expect(ctx).not.toHaveProperty('config');
   });
 
-  // commitSha/branch come off the run row itself; repoUrl comes off its pipeline, which is
-  // why the include has to reach across that relation rather than stopping at the run.
+  // All three come off the run row itself: repoUrl is a snapshot, so the pipeline is not read.
   it('returns the commit fields a webhook run was created with', async () => {
     prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
-      commitSha: 'abc123', branch: 'main', pipeline: { repoUrl: 'https://github.com/org/repo.git' },
+      commitSha: 'abc123', branch: 'main', repoUrl: 'https://github.com/org/repo.git',
     }) as never);
 
     const ctx = await loadRunContext('run-1');
@@ -159,18 +159,38 @@ describe('loadRunContext', () => {
     expect(ctx).toEqual(expect.objectContaining({
       repoUrl: 'https://github.com/org/repo.git', commitSha: 'abc123', branch: 'main',
     }));
-    expect(prismaMock.pipelineRun.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      include: expect.objectContaining({
-        pipeline: { select: { repoUrl: true } },
-      }),
-    }));
+    const query = prismaMock.pipelineRun.findUnique.mock.calls[0][0] as { include: Record<string, unknown> };
+    expect(query.include).not.toHaveProperty('pipeline');
+  });
+
+  // The checkout is added to the graph here, so materializeStages, the scheduler and retries
+  // see it as an ordinary root without knowing it is synthetic.
+  it('prepends the Checkout stage for a run with a commit and a repo', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
+      commitSha: 'a'.repeat(40), repoUrl: 'https://github.com/o/r',
+    }) as never);
+
+    const ctx = await loadRunContext('run-1');
+
+    expect(ctx?.graph.nodes[0].id).toBe('deplo-checkout');
+    expect(ctx?.graph.edges).toContainEqual(expect.objectContaining({ source: 'deplo-checkout', target: 'a' }));
+  });
+
+  it('leaves the graph unchanged for a run with no commit', async () => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
+      commitSha: null, repoUrl: 'https://github.com/o/r',
+    }) as never);
+
+    const ctx = await loadRunContext('run-1');
+
+    expect(ctx?.graph).toEqual(fromDefinition(graph('a b', 'a>b'), { a: { command: 'npm ci' } }));
   });
 
   // A manual run writes null for all three at creation, and that has to come through as
   // null rather than, say, an empty string a stage's command might treat as set.
   it('returns null commit fields for a manual run', async () => {
     prismaMock.pipelineRun.findUnique.mockResolvedValue(run({
-      commitSha: null, branch: null, pipeline: { repoUrl: null },
+      commitSha: null, branch: null, repoUrl: null,
     }) as never);
 
     const ctx = await loadRunContext('run-1');
