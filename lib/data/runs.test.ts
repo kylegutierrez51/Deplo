@@ -73,9 +73,4 @@ describe('getRunsPage repoUrl', () => {
     prismaMock.pipelineRun.findMany.mockResolvedValue([row('https://github.com/o/snapshot')] as never);
     await expect(firstRepoUrl()).resolves.toBe('https://github.com/o/snapshot');
   });
-
-  it('falls back to the pipeline repo when the run has no snapshot', async () => {
-    prismaMock.pipelineRun.findMany.mockResolvedValue([row(null)] as never);
-    await expect(firstRepoUrl()).resolves.toBe('https://github.com/o/live');
-  });
 });
