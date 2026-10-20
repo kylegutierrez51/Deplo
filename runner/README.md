@@ -74,45 +74,48 @@ Those steps give you an overview on how the loop works. Once you feel comfortabl
 
 ## GitHub Webhooks
 
-The runner has no clone logic of its own: the checkout is a synthetic "Checkout" stage it adds to webhook runs, executed through the normal stage executor. `stageProcessor.ts` sets up to three environment variables for every stage's command, each whenever the run has a value for it:
+When a run is triggered through a GitHub webhook, the runner (in ` db.ts -- loadRunContext()`) automatically appends a "Checkout" stage that runs before ANY other stage.
 
-| Variable | Set from | When it is set |
-|---|---|---|
-| `DEPLO_REPO_URL` | the run's `repoUrl` (snapshotted from the pipeline when the run was created; a retry keeps it) | whenever the run has one |
-| `DEPLO_COMMIT_SHA` | the run's `commitSha` | webhook runs only — `null` for a manual run |
-| `DEPLO_BRANCH` | the run's `branch` | webhook runs only — `null` for a manual run |
+The "Checkout" stage runs this command: 
 
-Each is added to the environment only when its value is truthy. A stage's
-own `env_vars` entry or secret of the same name overrides it, consistent with the existing
-"a stage's own config wins" rule used for secrets.
+```bash
+git init --quiet . 
+  && git config remote.origin.url "${repoUrl}" 
+  && git fetch --depth 1 origin ${commitSha} 
+  && git checkout --force --quiet FETCH_HEAD`;
+```
 
-A webhook run checks out its commit automatically. `loadRunContext` adds a synthetic
-"Checkout" stage (`deplo-checkout`, see `lib/pipeline/checkout.ts`) ahead of every root
-stage when the run has both a `commitSha` and a `repoUrl`; manual runs are unchanged. It
-fetches by SHA, which is also what works for a pull request from a fork, and runs at the
-workspace root, so the pipeline's default directory is not applied to it. It retries twice
-and its command is idempotent, so a retry in the same workspace succeeds.
-A retry also deletes the workspace's `.git` first, since a killed git leaves lock files behind. Git runs non-interactively
-(`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `ssh -o BatchMode=yes`), so a missing credential or an unknown SSH host key
-fails fast with an auth error instead of hanging until the timeout.
+This initializes a repository in the deplo workspace, only fetching the code from the specified commit -- It does NOT copy an entire repo's history.
 
-- `git` must be on the runner's PATH.
+The "Checkout" stage retries twice, deleting the workspace's `.git` first before retrying.
+
+Git runs non-interactively (`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `ssh -o BatchMode=yes`), so a missing credential or an unknown SSH host key fails fast with an auth error instead of hanging until its 300 second timeout.
+
+- `git` must be on the machine's PATH (in System Environment Variables).
 - A private repository relies on the runner host's own git credentials (a credential
   manager or an SSH key). Do not put a token in the Repo URL; URLs with credentials are
   rejected when the pipeline is saved.
-- **Delete any hand-written checkout stage** from existing pipelines. Its
-  `git remote add origin …` now fails with `remote origin already exists`.
-- The command embeds literal values rather than `$VAR`/`%VAR%`, so it works under both
+- The "Checkout" stage's command embeds literal values rather than `$VAR`/`%VAR%`, so it works under both
   `sh` and `cmd.exe`.
 
-The webhook route never starts a run for a pull_request whose head repo differs from the
-base repo (including one whose fork has since been deleted, where GitHub reports
-`head.repo` as null) — a fork's head commit is attacker-controlled code, and a run would
-execute it with this environment's secrets.
+The webhook route never starts a run for a pull_request whose head repo differs from the base repo (for forked repos that send a PR to the main repo), including one whose fork has since been deleted (where GitHub reports `head.repo` as null).
+
+### Included Environment Variables
+`stageProcessor.ts` sets up to three environment variables for every stage's command, each whenever the run has a value for it:
+
+| Variable | Set from | When it is set |
+|---|---|---|
+| `DEPLO_REPO_URL` | the run's `repoUrl` (snapshotted from the pipeline when the run was created; a retry keeps it) | whenever the Pipeline sets one |
+| `DEPLO_COMMIT_SHA` | the run's `commitSha` | webhook runs only — `null` for a manual run |
+| `DEPLO_BRANCH` | the run's `branch` | webhook runs only — `null` for a manual run |
+
+This allows you to use these 3 environment variables in a stage's command automatically without having to type `git rev-parse HEAD` or `git remote get-url origin` whenever a GitHub webhook is triggered.
+
+Each is added to the environment only when its value is truthy. A stage's
+own `environment variable` entry or a `secret` of the same name overrides them.
 
 On a pull_request run, `$DEPLO_BRANCH` is the PR's own head branch (`head.ref`), not the
-base branch it would merge into — so a command must not treat `$DEPLO_BRANCH` as a signal
-that the main branch is being built.
+base branch it would merge into.
 
 ## Rules that fail silently if broken
 
