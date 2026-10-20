@@ -218,6 +218,18 @@ Webhook Secret Input
   font-size: 16px;
 }
 
+.copyField {
+  margin-top: var(--space-md);
+}
+
+.secretInput.copyFieldInput {
+  padding-left: 10px;
+  padding-right: 46px;
+  letter-spacing: normal;
+  font-family: var(--font-jetbrains-mono);
+  text-overflow: ellipsis;
+}
+
 /* For bottom items (Created By, Last Delivery, Created At) */
 .item-flex {
   display: flex;
