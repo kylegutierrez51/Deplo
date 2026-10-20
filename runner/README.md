@@ -111,6 +111,12 @@ The webhook route never starts a run for a pull_request whose head repo differs 
 
 This allows you to use these 3 environment variables in a stage's command automatically without having to type `git rev-parse HEAD` or `git remote get-url origin` whenever a GitHub webhook is triggered.
 
+### Connecting GitHub to a local Deplo
+
+The webhook modal shows the Deplo endpoint. When Deplo is not publicly reachable, save a smee.io channel as the webhook's Relay URL and run the `npx smee-client ...` command the modal shows. If Deplo has a public address, set `DEPLO_PUBLIC_URL` instead and the relay is not needed.
+
+smee.io re-serializes the JSON body, so signature checks rely on GitHub's bytes surviving that round trip. If deliveries fail with 401 through smee but not directly, that is the cause.
+
 Each is added to the environment only when its value is truthy. A stage's
 own `environment variable` entry or a `secret` of the same name overrides them.
 
