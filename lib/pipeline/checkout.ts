@@ -46,12 +46,13 @@ function checkoutPosition(nodes: CustomNode[], roots: CustomNode[]): { x: number
  * `--force` overwrites any files already in the way
  */
 export function checkoutCommand(repoUrl: string, commitSha: string): string {
-  return `git init --quiet . 
-            && git config remote.origin.url "${repoUrl}" 
-            && git fetch --depth 1 origin ${commitSha} 
-            && git checkout --force --quiet FETCH_HEAD`;
+  return [
+    'git init --quiet .',
+    `git config remote.origin.url "${repoUrl}"`,
+    `git fetch --depth 1 origin ${commitSha}`,
+    'git checkout --force --quiet FETCH_HEAD',
+  ].join(' && ');
 }
-
 
 
 // Prepends a Checkout stage as the initial stage, connected to every root of the graph.
