@@ -4,6 +4,7 @@ import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } fro
 import { decryptSecret } from '@/lib/utils/crypto';
 import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession } from '@/test/mocks/auth';
+import { RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -202,7 +203,7 @@ describe('updateWebhook', () => {
 
     expect(prismaMock.webhook.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'wh-1' },
-      data: { pipelineId: 'p2', environmentId: null, isActive: true, branchFilters: ['main'], events: ['PUSH'] },
+      data: { pipelineId: 'p2', environmentId: null, isActive: true, branchFilters: ['main'], events: ['PUSH'], relayUrl: null },
     }));
   });
 
@@ -456,5 +457,34 @@ describe('audit trail', () => {
     await updateWebhook(idle, form({ id: 'wh-1' }));
 
     expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: null });
+  });
+});
+
+describe('the relay URL', () => {
+  it('stores a trimmed smee channel on create', async () => {
+    await addWebhook(idle, form({ relay_url: '  https://smee.io/abc123  ' }));
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ relayUrl: 'https://smee.io/abc123' });
+  });
+
+  it('stores null when left blank on create', async () => {
+    await addWebhook(idle, form({ relay_url: '   ' }));
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ relayUrl: null });
+  });
+
+  it('refuses a non-smee url on create and writes nothing', async () => {
+    const result = await addWebhook(idle, form({ relay_url: 'https://evil.example/x' }));
+    expect(result).toEqual({ status: 'error', message: RELAY_URL_ERROR });
+    expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
+  it('clears the relay URL on update when emptied', async () => {
+    await updateWebhook(idle, form({ id: 'wh-1', relay_url: '' }));
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({ relayUrl: null });
+  });
+
+  it('refuses a non-smee url on update and writes nothing', async () => {
+    const result = await updateWebhook(idle, form({ id: 'wh-1', relay_url: 'http://smee.io/abc' }));
+    expect(result).toEqual({ status: 'error', message: RELAY_URL_ERROR });
+    expect(prismaMock.webhook.update).not.toHaveBeenCalled();
   });
 });

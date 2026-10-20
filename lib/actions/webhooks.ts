@@ -8,6 +8,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { EventType as PrismaEventType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { addAudit } from './audits';
+import { isSmeeChannelUrl, RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
 
 const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
   push: 'PUSH',
@@ -35,6 +36,13 @@ function readEnvironmentId(formData: FormData): { environmentId: string | null }
   const typed = (formData.get('environment_name') as string | null)?.trim();
   if (!environmentId && typed) return null;
   return { environmentId };
+}
+
+// Optional: blank means "no relay". Anything else must be a smee channel.
+function readRelayUrl(formData: FormData): { relayUrl: string | null } | null {
+  const relayUrl = (formData.get('relay_url') as string | null)?.trim() || null;
+  if (relayUrl && !isSmeeChannelUrl(relayUrl)) return null;
+  return { relayUrl };
 }
 
 // The modal always sends 'true' or 'false'; a missing field falls back to active, matching
@@ -78,6 +86,9 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
 
   const { environmentId } = environment;
 
+  const relay = readRelayUrl(formData);
+  if (!relay) return { status: 'error', message: RELAY_URL_ERROR };
+
   if (!events) {
     return {
       status: 'error',
@@ -90,7 +101,7 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
   try {
     await prisma.$transaction(async (tx) => {
       const webhook = await tx.webhook.create({
-        data: { pipelineId, environmentId, isActive, branchFilters, events, encryptedValue, iv, authTag, createdById },
+        data: { pipelineId, environmentId, isActive, branchFilters, events, encryptedValue, iv, authTag, createdById, relayUrl: relay.relayUrl },
         select: { id: true, pipeline: { select: { name: true } } }
       });
 
@@ -164,6 +175,9 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
   const { environmentId } = environment;
 
+  const relay = readRelayUrl(formData);
+  if (!relay) return { status: 'error', message: RELAY_URL_ERROR };
+
   try {
     await prisma.$transaction(async (tx) => {
       const { pipeline: prevPipeline } = await tx.webhook.findUniqueOrThrow({
@@ -175,7 +189,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
       const webhook = await tx.webhook.update({
         where: { id },
-        data: { pipelineId, environmentId, isActive, branchFilters, events },
+        data: { pipelineId, environmentId, isActive, branchFilters, events, relayUrl: relay.relayUrl },
         select: { pipeline: { select: { name: true } } }
       });
       

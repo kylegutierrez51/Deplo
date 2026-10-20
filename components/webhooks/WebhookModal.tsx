@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useActionState } from 'react';
+import { useState, useRef, useActionState, useSyncExternalStore } from 'react';
 import { formatDate } from '@/lib/utils/date';
 import type { FormState, EventType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
@@ -13,6 +13,8 @@ import Autocomplete from '@/components/ui/Autocomplete';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
 import Pill from '../ui/Pill';
 import { capitalize } from '@/lib/utils/string';
+import { webhookEndpoint, smeeCommand, connectHint, isLocalOrigin } from '@/lib/webhooks/endpoint';
+import CopyField from './CopyField';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
@@ -29,6 +31,8 @@ interface WebhookModalProps {
   createdBy?: string | null;
   lastDelivery?: Date | null;
   createdAt: Date;
+  relayUrl?: string | null;
+  publicUrl?: string | null;
   pipelines: Pipeline[] | null;
   environments: Environment[] | null;
   onClose: () => void;
@@ -40,6 +44,10 @@ interface WebhookModalProps {
   onRegenerate: (message: string) => void;
   onError: (message: string) => void;
 }
+
+const subscribeToNothing = () => () => {};
+const getOrigin = () => window.location.origin;
+const getServerOrigin = () => null;
 
 const initialState: FormState = {
   status: 'idle',
@@ -64,6 +72,8 @@ export default function WebhookModal({
   createdBy,
   lastDelivery,
   createdAt,
+  relayUrl,
+  publicUrl,
   pipelines,
   environments,
   onClose,
@@ -101,6 +111,11 @@ export default function WebhookModal({
     return result;
   }, initialState);
   const pending = createPending || editPending;
+
+  // No window during SSR: the endpoint appears once the client has hydrated.
+  const origin = useSyncExternalStore(subscribeToNothing, getOrigin, getServerOrigin);
+  const endpoint = origin ? webhookEndpoint(origin, id) : null;
+  const localHost = origin === null || isLocalOrigin(origin);
 
 
   const handleDeleteClose = () => {
@@ -233,6 +248,34 @@ export default function WebhookModal({
               </span>
             </div>
 
+            <div className={styles.fieldGroup}>
+              {endpoint && <CopyField label="Deplo endpoint" value={endpoint} />}
+              {publicUrl ? (
+                <CopyField label="Payload URL" value={webhookEndpoint(publicUrl, id)} />
+              ) : relayUrl ? (
+                <>
+                  <CopyField label="Payload URL" value={relayUrl} />
+                  {endpoint && (
+                    <>
+                      <CopyField label="Relay command" value={smeeCommand(relayUrl, endpoint)} />
+                      <p className={styles.fieldHint}>Keep this running while you work.</p>
+                    </>
+                  )}
+                </>
+              ) : (
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  {connectHint(origin)}
+                </p>
+              )}
+              {(publicUrl || relayUrl) && (
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  In GitHub → Settings → Webhooks, set Content type to application/json and Secret to the one shown when this webhook was created (regenerate it in Edit if lost).
+                </p>
+              )}
+            </div>
+
             {filters.length > 0 && (
               <div className={styles.fieldGroup}>
                 <label>Branch filters</label>
@@ -340,6 +383,28 @@ export default function WebhookModal({
                 ))}
               </div>
             </div>
+
+            {publicUrl ? (
+              <input type="hidden" name="relay_url" value={relayUrl ?? ''} />
+            ) : (
+              <div className={styles.fieldGroup}>
+                <label htmlFor="relay-url">
+                  Relay URL
+                  <span className={styles.optionalBadge}>optional</span>
+                </label>
+                <input
+                  type="url"
+                  id="relay-url"
+                  name="relay_url"
+                  defaultValue={relayUrl ?? ''}
+                  placeholder="https://smee.io/…"
+                />
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  {localHost ? "GitHub can't reach localhost, so deliveries go through a smee.io relay." : "If GitHub can't reach this host, deliveries can go through a smee.io relay."} <a href="https://smee.io/new" target="_blank" rel="noopener noreferrer">Create a channel</a> and paste its URL here.
+                </p>
+              </div>
+            )}
 
             <div className={styles.fieldGroup}>
               <label>Trigger events</label>

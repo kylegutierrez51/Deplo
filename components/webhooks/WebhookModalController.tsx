@@ -7,11 +7,12 @@ import type { Pipeline } from "@/lib/data/pipelines";
 import type { Environment } from "@/lib/data/environments";
 import { useToast } from '@/components/ui/toast/ToastContext';
 
-export default function WebhookModalController({ mode, webhook, pipelines, environments }: {
+export default function WebhookModalController({ mode, webhook, pipelines, environments, publicUrl }: {
   mode: "view" | "create" | "edit";
   webhook?: Webhook;
   pipelines: Pipeline[] | null;
   environments: Environment[] | null;
+  publicUrl: string | null;
 }) {
   const { showToast } = useToast();
 
@@ -28,7 +29,7 @@ export default function WebhookModalController({ mode, webhook, pipelines, envir
       record={webhook}
       basePath={"/webhooks"}
       ModalComponent={WebhookModal}
-      extraProps={{ pipelines, environments, onRegenerate }}
+      extraProps={{ pipelines, environments, publicUrl, onRegenerate }}
     />
   );
 }
