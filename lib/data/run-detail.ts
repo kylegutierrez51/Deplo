@@ -221,7 +221,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
   const run = await prisma.pipelineRun.findUnique({
     where: { id },
     include: {
-      pipeline: { select: { name: true, repoUrl: true } },
+      pipeline: { select: { name: true } },
       environment: { select: { name: true, type: true } },
       triggeredBy: { select: { name: true } },
       definition: { select: { graphJson: true, configJson: true } },
