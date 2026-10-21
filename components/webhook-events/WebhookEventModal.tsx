@@ -13,6 +13,7 @@ const styles = { ...modalStyles, ...webhookEventStyles };
 interface WebhookEventModalProps {
   mode?: 'view' | 'create' | 'edit';
   status?: PillVariant;
+  statusReason?: string | null;
   eventType?: PillVariant;
   branch?: string | null;
   commitSha?: string | null;
@@ -25,6 +26,7 @@ interface WebhookEventModalProps {
 export default function WebhookEventModal({
   mode = 'view',
   status,
+  statusReason,
   eventType,
   branch,
   commitSha,
@@ -54,6 +56,11 @@ export default function WebhookEventModal({
               <span><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></span>
             </div>
           )}
+        </div>
+
+        <div className={styles.item}>
+          <label>Reason</label>
+          <span className={styles['status-reason']} data-testid="status-reason">{statusReason ?? '—'}</span>
         </div>
 
         <div className={styles['item-flex']}>

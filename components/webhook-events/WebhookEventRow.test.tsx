@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { getDefaultNormalizer, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WebhookEventRow from '@/components/webhook-events/WebhookEventRow';
 import type { WebhookEvent } from '@/lib/data/webhook-events';
@@ -42,6 +42,7 @@ const event = (over: Partial<WebhookEvent> = {}): WebhookEvent => ({
   payload: {},
   headers: {},
   status: 'processed',
+  statusReason: 'Started CI #4.',
   runId: 'run-1',
   receivedAt: new Date('2026-01-01T00:00:00Z'),
   commitSha: 'abc1234',
@@ -153,5 +154,32 @@ describe('opening the event', () => {
     await userEvent.click(screen.getAllByRole('cell')[0]);
 
     expect(mockPush).toHaveBeenCalledWith('/webhooks/events?status=failed&event-type=push&id=evt-1');
+  });
+});
+
+describe('the status reason', () => {
+  const status = () => cell(0);
+
+  it('shows under the status pill', () => {
+    setup({ status: 'ignored', statusReason: 'Branch "dev" does not match the branch filters (main).' });
+
+    expect(status()).toHaveTextContent('Ignored');
+    expect(status()).toHaveTextContent('Branch "dev" does not match the branch filters (main).');
+  });
+
+  // A long reason (a pipeline's validation errors) is cut to one line in the table, so the
+  // full text has to stay reachable on hover; the modal shows it in full.
+  it('keeps the full reason in the title for when it is cut short', () => {
+    const reason = 'Cannot run pipeline:\n• Stage "build" has no command.';
+    setup({ statusReason: reason });
+
+    // Compared exactly: the default normalizer would collapse the line break being checked.
+    expect(screen.getByTitle(reason, { normalizer: getDefaultNormalizer({ collapseWhitespace: false, trim: false }) })).toBeInTheDocument();
+  });
+
+  it('shows the pill alone for an event with no reason yet', () => {
+    setup({ status: 'pending', statusReason: null });
+
+    expect(status()).toHaveTextContent(/^Pending$/);
   });
 });
