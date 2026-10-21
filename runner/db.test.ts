@@ -876,9 +876,9 @@ describe('failStalledWebhookEvents', () => {
 
   // Shown on the Webhook Events page for an event the route never settled; it has to say
   // what happened and what to do about it.
-  it('explains the failure and points at redelivery', () => {
+  it('explains the failure and points at replay and redelivery', () => {
     expect(STALLED_WEBHOOK_EVENT_REASON).toBe(
-      'Interrupted before an outcome was recorded (the database may have been unavailable). Redeliver it from GitHub to process it again.'
+      'Interrupted before an outcome was recorded (the database may have been unavailable). Replay it from Deplo or redeliver it from GitHub to process it again.'
     );
   });
 });

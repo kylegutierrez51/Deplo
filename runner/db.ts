@@ -350,13 +350,13 @@ export async function findStalledRuns(cutoff: Date): Promise<{ id: string, statu
 ==============================================================================================
  * Fails webhook events still PENDING from before the cutoff, for the periodic sweep.
  *
- * The webhook route writes an event PENDING and settles it before responding, so a lasting
+ * The webhook route and a replay both write an event PENDING and settle it before responding, so a lasting
  * PENDING means the outcome was lost. Typically, the database was down when the 
  * route went to record a failure.
 ==============================================================================================
 */
 export const STALLED_WEBHOOK_EVENT_REASON =
-  'Interrupted before an outcome was recorded (the database may have been unavailable). Redeliver it from GitHub to process it again.';
+  'Interrupted before an outcome was recorded (the database may have been unavailable). Replay it from Deplo or redeliver it from GitHub to process it again.';
 
 export async function failStalledWebhookEvents(cutoff: Date): Promise<number> {
   const { count } = await prisma.webhookEvent.updateMany({

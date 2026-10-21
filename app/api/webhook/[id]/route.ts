@@ -3,10 +3,7 @@ import { getWebhookById } from "@/lib/data/webhooks";
 import { decryptSecret, verifyWebhookSignature } from "@/lib/utils/crypto";
 import { addWebhookEvent, updateWebhookEvent } from "@/lib/webhooks/webhook-events";
 import { EventType, WebhookEventData, WebhookEventStatus } from "@/lib/types";
-import { checkBranches } from "@/lib/webhooks/branches";
-import { commitFromPayload, isForkPullRequest } from "@/lib/webhooks/commit";
-import { getLatestDefinition } from "@/lib/data/pipelines";
-import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from "@/lib/actions/run-trigger";
+import { processDelivery } from "@/lib/webhooks/process-delivery";
 
 // X-GitHub-Event header → the EventType a WebhookEvent row is stored under
 const GITHUB_EVENT_MAP: Record<string, EventType> = {
@@ -14,9 +11,6 @@ const GITHUB_EVENT_MAP: Record<string, EventType> = {
   pull_request: 'pull-request',
   ping: 'ping',
 };
-
-// pull_request actions that change what would be built
-const PR_ACTIONS = ['opened', 'synchronize', 'reopened'];
 
 
 export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id]'>) {
@@ -68,73 +62,8 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
   };
 
   try {
-    if (githubEvent === 'ping') {
-      console.log('GitHub sent the ping event');
-      return await settle('processed', 'Ping received: GitHub can reach this webhook.');
-    }
-    else if (githubEvent === 'push' || githubEvent === 'pull_request') {
-
-      if (!webhook.events.includes(eventType)) {
-        return await settle('ignored', `This webhook is not subscribed to ${githubEvent} events.`);
-      }
-
-      // reject tag pushes (refs/tags/...) or a branch deletion
-      if (githubEvent === 'push' && (!payload.ref.startsWith('refs/heads/') || payload.deleted)) {
-        return await settle('ignored', `Nothing to build for ${payload.ref}${payload.deleted ? ' (deleted)' : ''}.`);
-      }
-
-      if (githubEvent === 'pull_request' && !PR_ACTIONS.includes(payload.action)) {
-        return await settle('ignored', `Pull request action "${payload.action}" does not trigger a run.`);
-      }
-
-      if (githubEvent === 'pull_request' && isForkPullRequest(payload)) {
-        return await settle('ignored', "Pull requests from forks are not built: they would run untrusted code with this environment's secrets.");
-      }
-
-      // check for branch filters
-      const target = githubEvent == 'push' ? payload.ref.replace('refs/heads/', '') : payload.pull_request.base.ref.replace('refs/heads/', '');
-      console.log('targeted branch: ' + target);
-
-      if (!checkBranches(target, webhook.branchFilters)) {
-        return await settle('ignored', `Branch "${target}" does not match the branch filters (${webhook.branchFilters.join(', ')}).`);
-      }
-
-      // the pipeline was deleted (SET NULL) or never chosen
-      if (!webhook.pipelineId) {
-        return await settle('ignored', 'This webhook has no pipeline to run.', 422);
-      }
-
-      // From here on the delivery should have started a run, so anything that stops it is a failure
-      const definition = await getLatestDefinition(webhook.pipelineId);
-      if (!definition) {
-        return await settle('failed', 'The pipeline has no saved definition.', 422);
-      }
-
-      const isReadyState = await verifyPipelineRunReady(definition, webhook.environmentId);
-      if (isReadyState.status === 'error') {
-        return await settle('failed', isReadyState.message, 422);
-      }
-
-      const run = await createPipelineRun({
-        pipelineId: webhook.pipelineId,
-        environmentId: webhook.environmentId,
-        definitionId: definition.id,
-        user: { id: null, name: 'GitHub' },
-        trigger: 'webhook',
-        ...commitFromPayload(githubEvent, payload),
-      });
-
-      // If enqueue fails, deletes the run rather than leaving it stranded at QUEUED
-      if (!await enqueueOrDiscardRun(run.id)) {
-        return await settle('failed', 'Could not reach the job queue, so the run was not started.', 503);
-      }
-
-      return await settle('processed', `Started ${run.name} #${run.runNumber}.`, 200, run.id);
-    }
-    else {
-      console.log(`Unhandled event: ${githubEvent}`)
-      return await settle('ignored', `Deplo does not handle "${githubEvent ?? 'unknown'}" events.`);
-    }
+    const outcome = await processDelivery(webhook, githubEvent, payload, { id: null, name: 'GitHub' });
+    return await settle(outcome.status, outcome.reason, outcome.httpStatus, outcome.runId);
 
   } catch (error) {
     // The error itself goes to the server log, not the page: it can carry query or

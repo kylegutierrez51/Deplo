@@ -37,12 +37,14 @@ beforeEach(() => {
 const event = (over: Partial<WebhookEvent> = {}): WebhookEvent => ({
   id: 'evt-1',
   pipelineId: 'p1',
+  webhookId: 'wh-1',
   eventType: 'push',
   source: 'github',
   payload: {},
   headers: {},
   status: 'processed',
   statusReason: 'Started CI #4.',
+  replayBlockedReason: null,
   runId: 'run-1',
   receivedAt: new Date('2026-01-01T00:00:00Z'),
   commitSha: 'abc1234',
@@ -181,5 +183,24 @@ describe('the status reason', () => {
     setup({ status: 'pending', statusReason: null });
 
     expect(status()).toHaveTextContent(/^Pending$/);
+  });
+});
+
+describe('the replay marker', () => {
+  const eventCell = () => cell(1);
+
+  // A replay copies the original's payload, so its commit, branch and repository match the
+  // original's; without a marker the two rows are indistinguishable in the list.
+  it('marks a replayed event in the event column', () => {
+    setup({ source: 'replay' });
+
+    expect(eventCell()).toHaveTextContent('Push');
+    expect(eventCell()).toHaveTextContent('Replay');
+  });
+
+  it('leaves a GitHub delivery unmarked', () => {
+    setup({ source: 'github' });
+
+    expect(eventCell()).toHaveTextContent(/^Push$/);
   });
 });

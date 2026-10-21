@@ -3,10 +3,12 @@ import type { WebhookEvent as PrismaWebhookEvent, WebhookEventStatus as PrismaWe
 import type { WebhookEventStatus, EventType } from '@/lib/types';
 import { ALL, WEBHOOK_EVENT_FILTERS, type WebhookEventFilters } from '@/lib/filters/options';
 import { invert, parseFilters } from '@/lib/filters/parse';
+import { replayBlocker } from '@/lib/webhooks/replay';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
 
 export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   status: WebhookEventStatus;
+  replayBlockedReason: string | null;
   eventType: EventType;
   commitSha: string | null;
   commitMessage: string | null;
@@ -72,6 +74,7 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
     orderBy: [{ receivedAt: direction }, { id: direction }],
     include: {
       pipeline: { select: { name: true, repoUrl: true }},
+      webhook: { select: { isActive: true }},
     },
   });
 
@@ -88,8 +91,9 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
   return {
     total,
     ...meta,
-    rows: webhookEvents.map((webhookEvent) => ({
+    rows: webhookEvents.map(({ webhook, ...webhookEvent }) => ({
       ...webhookEvent,
+      replayBlockedReason: replayBlocker({ ...webhookEvent, webhook }),
       pipeline: webhookEvent.pipeline ? {
         ...webhookEvent.pipeline,
       } : null,
@@ -104,17 +108,20 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
 }
 
 export async function getWebhookEventById(id: string): Promise<WebhookEvent | null> {
-  const webhookEvent = await prisma.webhookEvent.findUnique({
+  const found = await prisma.webhookEvent.findUnique({
     where: { id },
     include: {
-      pipeline: { select: { name: true, repoUrl: true }},      
+      pipeline: { select: { name: true, repoUrl: true }},
+      webhook: { select: { isActive: true }},
     }
   });
 
-  if (!webhookEvent) return null;
+  if (!found) return null;
+  const { webhook, ...webhookEvent } = found;
 
   return {
     ...webhookEvent,
+    replayBlockedReason: replayBlocker({ ...webhookEvent, webhook }),
     pipeline: webhookEvent.pipeline ? {
       ...webhookEvent.pipeline,
     } : null,

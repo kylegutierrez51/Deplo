@@ -346,6 +346,8 @@ model Webhook {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  deliveries WebhookEvent[]
+
   @@map("webhooks")
 }
 
@@ -359,6 +361,7 @@ enum WebhookEventStatus {
 model WebhookEvent {
   id         String  @id @default(cuid())
   pipelineId String?
+  webhookId  String?
   eventType  EventType // "push", "pull_request"
   source     String  @default("github")
 
@@ -374,10 +377,12 @@ model WebhookEvent {
   runId  String? // if this webhook triggered a run
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  webhook  Webhook?  @relation(fields: [webhookId], references: [id], onDelete: SetNull)
 
   receivedAt DateTime @default(now())
 
   @@index([pipelineId])
+  @@index([webhookId])
   @@index([receivedAt(sort: Desc)])
   @@map("webhook_events")
 }
@@ -401,6 +406,7 @@ enum AuditAction {
   ENVIRONMENT_DELETED
 
   WEBHOOK_RECEIVED
+  WEBHOOK_REPLAYED
   WEBHOOK_CREATED
   WEBHOOK_UPDATED
   WEBHOOK_DELETED

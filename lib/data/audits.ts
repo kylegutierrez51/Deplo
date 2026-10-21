@@ -24,6 +24,7 @@ const ACTION_MAP: Record<PrismaAuditAction, AuditAction> = {
   ENVIRONMENT_UPDATED: "Environment Updated",
   ENVIRONMENT_DELETED: "Environment Deleted",
   WEBHOOK_RECEIVED: "Webhook Received",
+  WEBHOOK_REPLAYED: "Webhook Replayed",
   WEBHOOK_CREATED: "Webhook Created",
   WEBHOOK_UPDATED: "Webhook Updated",
   WEBHOOK_DELETED: "Webhook Deleted",
