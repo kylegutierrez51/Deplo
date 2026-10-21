@@ -150,7 +150,7 @@ Sign in with GitHub, open **Pipelines**, and either build a pipeline or open the
 
 Pushes and pull requests on GitHub can trigger a pipeline run. GitHub cannot reach `localhost`, so a [smee.io](https://smee.io) channel relays its deliveries to your machine.
 
-1. **Create a pipeline with a Repo URL** (an `https://…` or `git@…` address) and save its definition. Webhook runs check out the pushed commit from this URL before the first stage.
+1. **Create a pipeline with a Repo URL** (an `https://…` or `git@…` address), open its editor, and save a valid pipeline graph. Webhook runs check out the pushed commit from this URL before the first stage.
 2. **Create a webhook** on the **Webhooks** page with that pipeline as **Pipeline to trigger**. Copy the **Webhook secret** before saving; it is not shown again.
 3. **Add a Relay URL:** use **Create a channel** to open a new smee.io channel, and paste its URL into the webhook's **Relay URL**.
 4. **Run the relay command** shown in the webhook's **Connect GitHub** section, and keep it running while you work:
