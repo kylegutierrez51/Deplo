@@ -19,25 +19,38 @@ const STATUS_MAP: Record<WebhookEventStatus, PrismaWebhookEventStatus> = {
 };
 
 
-export async function addWebhookEvent(data: WebhookEventData): Promise<FormState & { webhookEventId?: string }> {
+export async function addWebhookEvent(
+  data: WebhookEventData,
+  options: { replayedBy?: { id: string, name: string | null } } = {},
+): Promise<FormState & { webhookEventId?: string }> {
+  const { replayedBy } = options;
   try {
     const webhookEventId = await prisma.$transaction(async (tx) => {
-      const { eventType, status, webhookId,  ...rest} = data;
+      const { eventType, status, ...rest } = data;
+      const { webhookId } = data;
 
       const event = await tx.webhookEvent.create({
-        data: { ...rest, eventType: EVENT_TYPE_MAP[eventType], status: status ? STATUS_MAP[status] : 'PENDING' },
+        data: {
+          ...rest,
+          eventType: EVENT_TYPE_MAP[eventType],
+          status: status ? STATUS_MAP[status] : 'PENDING',
+          ...(replayedBy && { source: 'replay' }),
+        },
         select: { id: true, pipeline: { select: { name: true } } }
       });
 
-      await tx.webhook.update({
-        where: { id: webhookId },
-        data: { lastDelivery: new Date() }
-      })
+      // lastDelivery records GitHub's deliveries only; a replay is not one.
+      if (!replayedBy) {
+        await tx.webhook.update({
+          where: { id: webhookId },
+          data: { lastDelivery: new Date() }
+        });
+      }
 
       await addAudit({
-        userId: null,
-        actor: 'GitHub',
-        action: AuditAction.WEBHOOK_RECEIVED,
+        userId: replayedBy?.id ?? null,
+        actor: replayedBy ? (replayedBy.name ?? null) : 'GitHub',
+        action: replayedBy ? AuditAction.WEBHOOK_REPLAYED : AuditAction.WEBHOOK_RECEIVED,
         resourceType: ResourceType.WEBHOOK,
         resourceId: webhookId,
         resourceLabel: event.pipeline?.name ?? null
@@ -56,9 +69,13 @@ export async function addWebhookEvent(data: WebhookEventData): Promise<FormState
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2003') {
         console.log(`${error.code}: ${error.message}`);
+        // the create writes both foreign keys, so the violated field says which parent is gone
+        const field = error.meta?.field_name;
         return {
           status: 'error',
-          message: 'Pipeline associated with webhook no longer exists.'
+          message: typeof field === 'string' && field.includes('webhookId')
+            ? 'Webhook no longer exists.'
+            : 'Pipeline associated with webhook no longer exists.'
         }
       }
 
