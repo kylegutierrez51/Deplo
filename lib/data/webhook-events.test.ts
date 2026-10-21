@@ -33,6 +33,7 @@ const row = (over: Record<string, unknown> = {}) => ({
   runId: null,
   receivedAt: new Date('2026-01-01T00:00:00Z'),
   pipeline: { name: 'CI', repoUrl: 'https://github.com/o/r' },
+  webhook: { isActive: true },
   ...over,
 });
 
@@ -257,5 +258,39 @@ describe('ignored events and their reason', () => {
 
     expect((await getWebhookEventsPage()).rows[0].statusReason).toBe(reason);
     expect((await getWebhookEventById('evt-1'))?.statusReason).toBe(reason);
+  });
+});
+
+describe('replayBlockedReason', () => {
+  const INACTIVE = 'This webhook is inactive. Activate it to replay its events.';
+  const GONE = 'The webhook this event arrived on no longer exists.';
+  const both = async (over: Record<string, unknown>) => {
+    const r = row({ status: 'PROCESSED', payload: pushPayload, ...over });
+    prismaMock.webhookEvent.findMany.mockResolvedValue([r] as never);
+    prismaMock.webhookEvent.findUnique.mockResolvedValue(r as never);
+    groupByMock().mockResolvedValue([] as never);
+    return [(await getWebhookEventsPage()).rows[0], await getWebhookEventById('evt-1')];
+  };
+
+  it('is null for a processed push with a payload and an active webhook', async () => {
+    for (const e of await both({})) expect(e?.replayBlockedReason).toBeNull();
+  });
+
+  it('names an inactive webhook', async () => {
+    for (const e of await both({ webhook: { isActive: false } })) expect(e?.replayBlockedReason).toBe(INACTIVE);
+  });
+
+  it('names a webhook that is gone', async () => {
+    for (const e of await both({ webhook: null })) expect(e?.replayBlockedReason).toBe(GONE);
+  });
+
+  it('does not leak the nested webhook', async () => {
+    for (const e of await both({})) expect(e).not.toHaveProperty('webhook');
+  });
+
+  it('includes the webhook in both queries', async () => {
+    await both({});
+    expect(prismaMock.webhookEvent.findMany.mock.calls[0][0]?.include).toMatchObject({ webhook: { select: { isActive: true } } });
+    expect(prismaMock.webhookEvent.findUnique.mock.calls[0][0]?.include).toMatchObject({ webhook: { select: { isActive: true } } });
   });
 });
