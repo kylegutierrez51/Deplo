@@ -1,4 +1,4 @@
-import { findStalledRuns } from '../db';
+import { findStalledRuns, failStalledWebhookEvents } from '../db';
 import { advanceRun, processRun } from '../runs/runProcessor';
 
 /*
@@ -12,18 +12,25 @@ import { advanceRun, processRun } from '../runs/runProcessor';
  * Re-entering a run that is fine is harmless: every write is a compare-and-swap, so a
  * healthy run just reads its rows and does nothing. This is not the reaper on a timer; the
  * reaper deletes locks and fails RUNNING rows, which is only safe at boot.
+ *
+ * The same tick also fails webhook events stuck at PENDING (sweepStalledWebhookEvents).
 ==============================================================================================
 */
 
-/*
- * How still a run must be before it is re-entered. Long enough that the ordinary path — a
- * job waiting its turn, a stage between two writes — is never raced for no reason, short
- * enough that a run killed by a blip is not stranded for the rest of the day.
- */
+
+// How still a run must be before it is re-enqueued.
 const STALL_GRACE_MS = 60_000;
+
+/*
+ * How long a webhook event may stay PENDING. The route settles it in milliseconds and GitHub
+ * gives up on a delivery after ten seconds, so anything older than this was abandoned.
+ */
+const WEBHOOK_EVENT_GRACE_MS = 5 * 60_000;
 
 /** How often to look. Cheap when nothing is stalled: one indexed read that returns nothing. */
 const SWEEP_INTERVAL_MS = 60_000;
+
+
 
 /*
  * Re-enters every run that has been still for longer than the grace period. Returns how many
@@ -62,6 +69,32 @@ export async function sweepStalledRuns(): Promise<number> {
 }
 
 
+/*
+ * Fails webhook events still PENDING after the grace period. Returns how many.
+ *
+ * The webhook route cannot do this itself: the failure it would record is usually the
+ * database being down, so its own update fails too and the event is left PENDING. Once the
+ * database is back, this settles it. GitHub already saw a non-2xx for that delivery, so it
+ * can be redelivered from there.
+ */
+export async function sweepStalledWebhookEvents(): Promise<number> {
+  const cutoff = new Date(Date.now() - WEBHOOK_EVENT_GRACE_MS);
+
+  let failed = 0;
+
+  try {
+    failed = await failStalledWebhookEvents(cutoff);
+  } catch (error) {
+    console.error('sweeper: could not fail the stalled webhook events:', error);
+    return 0;
+  }
+
+  if (failed > 0) console.log(`sweeper: failed ${failed} webhook event(s) left PENDING`);
+
+  return failed;
+}
+
+
 let timer: NodeJS.Timeout | null = null;
 let sweeping = false;
 
@@ -83,7 +116,10 @@ export function startStalledRunSweep(intervalMs: number = SWEEP_INTERVAL_MS): vo
     // sweepStalledRuns handles its own failures; this catch is for the ones it cannot, and
     // it must exist — an unhandled rejection from a timer has no owner and would take the
     // runner down over a database hiccup.
+    // Both sweeps handle their own failures, so one that cannot reach its table never
+    // stops the other from running.
     void sweepStalledRuns()
+      .then(() => sweepStalledWebhookEvents())
       .catch(error => console.error('sweeper:', error))
       .finally(() => { sweeping = false; });
   }, intervalMs);

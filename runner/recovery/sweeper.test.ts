@@ -1,14 +1,15 @@
-import { sweepStalledRuns, startStalledRunSweep, stopStalledRunSweep } from './sweeper';
-import { findStalledRuns } from '../db';
+import { sweepStalledRuns, sweepStalledWebhookEvents, startStalledRunSweep, stopStalledRunSweep } from './sweeper';
+import { findStalledRuns, failStalledWebhookEvents } from '../db';
 import { advanceRun, processRun } from '../runs/runProcessor';
 
 // Explicit factories, not automocks, for the reason reaper.test.ts gives: db reaches
 // lib/prisma and runProcessor reaches stageQueue, which constructs a bullmq Queue at module
 // scope. Loading either for real opens a socket.
-jest.mock('../db', () => ({ findStalledRuns: jest.fn() }));
+jest.mock('../db', () => ({ findStalledRuns: jest.fn(), failStalledWebhookEvents: jest.fn() }));
 jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn(), processRun: jest.fn() }));
 
 const stalled = findStalledRuns as jest.MockedFunction<typeof findStalledRuns>;
+const failEvents = failStalledWebhookEvents as jest.MockedFunction<typeof failStalledWebhookEvents>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
 const start = processRun as jest.MockedFunction<typeof processRun>;
 
@@ -24,6 +25,7 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => { });
 
   runs();
+  failEvents.mockResolvedValue(0);
   advance.mockResolvedValue(undefined);
   start.mockResolvedValue(undefined);
 });
@@ -90,6 +92,38 @@ describe('sweepStalledRuns', () => {
   });
 });
 
+/*
+ * The webhook route writes its event PENDING first and settles it before responding, which
+ * takes milliseconds. One still PENDING minutes later lost its outcome — usually because the
+ * database was down when the route tried to record a failure — and would otherwise read as
+ * "still processing" forever.
+ */
+describe('sweepStalledWebhookEvents', () => {
+  it('fails events still PENDING after five minutes and reports how many', async () => {
+    failEvents.mockResolvedValue(3);
+
+    const before = Date.now();
+    expect(await sweepStalledWebhookEvents()).toBe(3);
+    const after = Date.now();
+
+    const cutoff = failEvents.mock.calls[0][0];
+    expect(cutoff.getTime()).toBeLessThanOrEqual(before - 5 * 60_000);
+    expect(cutoff.getTime()).toBeGreaterThanOrEqual(after - 5 * 60_000 - 1_000);
+  });
+
+  it('logs when it fails any', async () => {
+    failEvents.mockResolvedValue(2);
+    await sweepStalledWebhookEvents();
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('2 webhook event(s)'));
+  });
+
+  // Same reason as the run sweep: it runs from a timer, where a rejection has no owner.
+  it('reports zero rather than throwing when the write fails', async () => {
+    failEvents.mockRejectedValue(new Error('ECONNREFUSED'));
+    expect(await sweepStalledWebhookEvents()).toBe(0);
+  });
+});
+
 describe('the sweep timer', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -106,6 +140,18 @@ describe('the sweep timer', () => {
     await jest.advanceTimersByTimeAsync(3_500);
 
     expect(stalled).toHaveBeenCalledTimes(3);
+    expect(failEvents).toHaveBeenCalledTimes(3);
+  });
+
+  // The two sweeps share a tick but not a fate: an unreadable run table must not stop
+  // stuck webhook events from being settled, and vice versa.
+  it('still fails stalled webhook events when the run sweep cannot read', async () => {
+    stalled.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    startStalledRunSweep(1_000);
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(failEvents).toHaveBeenCalledTimes(1);
   });
 
   /*

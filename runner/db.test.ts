@@ -3,7 +3,7 @@ import {
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAwaitingQueuedStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
   failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
-  findStalledRuns,
+  findStalledRuns, failStalledWebhookEvents,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { fromDefinition } from '@/lib/pipeline/definition';
@@ -857,5 +857,20 @@ describe('cancelOrphanedStages', () => {
     prismaMock.stageResult.updateMany.mockResolvedValue(updated(4));
 
     expect(await cancelOrphanedStages()).toBe(4);
+  });
+});
+
+describe('failStalledWebhookEvents', () => {
+  // Guarded on PENDING like every other write here: an event the route finished in the
+  // meantime has moved on, and the sweep must never overwrite its real outcome.
+  it('fails only PENDING events received before the cutoff, in one statement, and reports how many', async () => {
+    const cutoff = new Date('2026-10-20T12:00:00.000Z');
+    prismaMock.webhookEvent.updateMany.mockResolvedValue({ count: 2 });
+
+    await expect(failStalledWebhookEvents(cutoff)).resolves.toBe(2);
+    expect(prismaMock.webhookEvent.updateMany).toHaveBeenCalledWith({
+      where: { status: 'PENDING', receivedAt: { lt: cutoff } },
+      data: { status: 'FAILED' },
+    });
   });
 });
