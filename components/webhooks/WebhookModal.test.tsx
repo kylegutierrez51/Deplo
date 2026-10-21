@@ -552,7 +552,7 @@ describe('the repo URL warning', () => {
 
   it('shows in view mode when the pipeline has no Repo URL', () => {
     setup({ mode: 'view', pipelineId: 'p1', pipelineName: 'deploy-api', pipelineRepoUrl: null });
-    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
   });
 
   it('is absent in view mode when the Repo URL is usable', () => {
@@ -562,7 +562,7 @@ describe('the repo URL warning', () => {
 
   it('shows in edit mode for the pipeline already selected', () => {
     setup({ mode: 'edit', pipelineId: 'p1', pipelineName: 'deploy-api', pipelines });
-    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
   });
 
   it('follows the pipeline picked in create mode', async () => {
@@ -573,7 +573,7 @@ describe('the repo URL warning', () => {
     expect(warning()).not.toBeInTheDocument();
 
     await user.type(input, 'deploy-api');
-    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
 
     await user.clear(input);
     await user.type(input, 'build-web');

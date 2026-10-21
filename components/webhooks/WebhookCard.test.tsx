@@ -25,12 +25,12 @@ describe('the repo URL warning', () => {
 
   it('shows when the pipeline has no Repo URL', () => {
     render(<WebhookCard webhook={webhook({ pipelineRepoUrl: null })} />);
-    expect(warning()).toHaveTextContent("deploy-api has no Repo URL, so webhook runs won't check out the pushed code.");
+    expect(warning()).toHaveTextContent("deploy-api has no usable Repo URL, so webhook runs won't check out the pushed code.");
   });
 
   it('shows when the pipeline has a Repo URL Deplo cannot use', () => {
     render(<WebhookCard webhook={webhook({ pipelineRepoUrl: 'https://user:tok@github.com/org/repo' })} />);
-    expect(warning()).toHaveTextContent("deploy-api's Repo URL can't be used");
+    expect(warning()).toHaveTextContent("deploy-api has no usable Repo URL");
   });
 
   // The card already says "Pipeline Not Found"; a repo warning on top would be noise.
