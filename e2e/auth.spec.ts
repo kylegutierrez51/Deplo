@@ -87,6 +87,7 @@ test.describe('authenticated access', () => {
     await page.goto('/pipelines');
 
     await expect(page).toHaveURL('/pipelines');
-    await expect(page.getByRole('heading', { name: 'Pipelines' })).toBeVisible();
+    // exact: an empty list also renders "No pipelines yet", which a substring match would hit too
+    await expect(page.getByRole('heading', { name: 'Pipelines', exact: true })).toBeVisible();
   });
 });
