@@ -53,7 +53,7 @@ That is why a runner that crashes or restarts can pick up where it left off.
 | `stages/secrets.ts` | Decrypts a stage's secrets just before it runs. |
 | `stages/scrubber.ts` | Masks secret values in log output. |
 | `recovery/reaper.ts` | Runs once at boot. Cleans up after a runner that died mid-work. |
-| `recovery/sweeper.ts` | Runs on a 60 second interval. Re-enters runs that stalled while the runner was alive. |
+| `recovery/sweeper.ts` | Runs on a 60 second interval. Re-enters runs that stalled while the runner was alive, and fails webhook events left `PENDING` for over five minutes. |
 | `setup/` | `.env` loading and the Redis connection. |
 
 ## Where to start reading
