@@ -7,7 +7,6 @@ import type { AuditMeta, EnvType } from "@/lib/types";
 import {
   UserRole,
   EnvironmentType,
-  WebhookEventStatus,
   EventType,
   AuditAction,
   ResourceType,
@@ -31,16 +30,7 @@ async function main() {
 ===============================================================
 */
   const userSeeds = [
-    { name: "coco", email: "coco@acme.dev", role: UserRole.MEMBER },
-    { name: "sarah.chen", email: "sarah.chen@acme.dev", role: UserRole.MEMBER },
-    { name: "marcus.coco", email: "marcus.coco@acme.dev", role: UserRole.MEMBER },
-    { name: "diego.ramirez", email: "diego.ramirez@acme.dev", role: UserRole.MEMBER },
-    { name: "priya.nair", email: "priya.nair@acme.dev", role: UserRole.MEMBER },
-    { name: "jordan.lee", email: "jordan.lee@acme.dev", role: UserRole.MEMBER },
-    { name: "amara.okafor", email: "amara.okafor@acme.dev", role: UserRole.MEMBER },
-    { name: "felix.mueller", email: "felix.mueller@acme.dev", role: UserRole.MEMBER },
-    { name: "yuki.tanaka", email: "yuki.tanaka@acme.dev", role: UserRole.MEMBER },
-    { name: "olivia.brooks", email: "olivia.brooks@acme.dev", role: UserRole.MEMBER },
+    { name: "kyle.g", email: "coco@acme.dev", role: UserRole.MEMBER },
   ];
   const users = await Promise.all(
     userSeeds.map((u) => prisma.user.create({ data: u }))
@@ -53,16 +43,16 @@ async function main() {
 ===============================================================
 */
   const environmentSeeds = [
-    { name: "dev", type: EnvironmentType.DEVELOPMENT, requireApproval: true, createdBy: "coco" },
-    { name: "staging", type: EnvironmentType.STAGING, requireApproval: false, createdBy: "coco" },
-    { name: "prod", type: EnvironmentType.PRODUCTION, requireApproval: false, createdBy: "coco" },
-    { name: "prev", type: EnvironmentType.PREVIEW, requireApproval: false, createdBy: "coco" },
-    { name: "custom", type: EnvironmentType.CUSTOM, requireApproval: false, createdBy: "coco" },
-    { name: "dev-2", type: EnvironmentType.DEVELOPMENT, requireApproval: false, createdBy: "marcus.coco" },
-    { name: "staging-2", type: EnvironmentType.STAGING, requireApproval: true, createdBy: "sarah.chen" },
-    { name: "prod-eu", type: EnvironmentType.PRODUCTION, requireApproval: true, createdBy: "sarah.chen" },
-    { name: "preview-pr", type: EnvironmentType.PREVIEW, requireApproval: false, createdBy: "diego.ramirez" },
-    { name: "sandbox", type: EnvironmentType.CUSTOM, requireApproval: false, createdBy: "priya.nair" },
+    { name: "dev", type: EnvironmentType.DEVELOPMENT, requireApproval: true, createdBy: "kyle.g" },
+    { name: "staging", type: EnvironmentType.STAGING, requireApproval: false, createdBy: "kyle.g" },
+    { name: "prod", type: EnvironmentType.PRODUCTION, requireApproval: false, createdBy: "kyle.g" },
+    { name: "prev", type: EnvironmentType.PREVIEW, requireApproval: false, createdBy: "kyle.g" },
+    { name: "custom", type: EnvironmentType.CUSTOM, requireApproval: false, createdBy: "kyle.g" },
+    { name: "dev-2", type: EnvironmentType.DEVELOPMENT, requireApproval: false, createdBy: "kyle.g" },
+    { name: "staging-2", type: EnvironmentType.STAGING, requireApproval: true, createdBy: "kyle.g" },
+    { name: "prod-eu", type: EnvironmentType.PRODUCTION, requireApproval: true, createdBy: "kyle.g" },
+    { name: "preview-pr", type: EnvironmentType.PREVIEW, requireApproval: false, createdBy: "kyle.g" },
+    { name: "sandbox", type: EnvironmentType.CUSTOM, requireApproval: false, createdBy: "kyle.g" },
   ];
   const environments = await Promise.all(
     environmentSeeds.map((e) =>
@@ -84,16 +74,16 @@ async function main() {
 ===============================================================
 */
   const secretSeeds = [
-    { key: "DATABASE_URL", env: "prod", createdBy: "sarah.chen" },
-    { key: "DATABASE_URL", env: "staging", createdBy: "sarah.chen" },
-    { key: "GITHUB_TOKEN", env: "dev", createdBy: "marcus.coco" },
-    { key: "GITHUB_TOKEN", env: "prev", createdBy: "marcus.coco" },
-    { key: "GITHUB_TOKEN", env: "custom", createdBy: null },
-    { key: "API_KEY", env: "dev-2", createdBy: "marcus.coco" },
-    { key: "STRIPE_KEY", env: "prod-eu", createdBy: "sarah.chen", notes: "stripe key production", },
-    { key: "JWT_SECRET", env: "staging-2", createdBy: "sarah.chen", notes: "staging notes" },
-    { key: "SLACK_WEBHOOK", env: "preview-pr", createdBy: "diego.ramirez", notes: "preview slack webhook notes" },
-    { key: "NPM_TOKEN", env: "sandbox", createdBy: "priya.nair", notes: "sandbox key -- do whatever" },
+    { key: "DATABASE_URL", env: "prod", createdBy: "kyle.g",},
+    { key: "DATABASE_URL", env: "staging", createdBy: null, },
+    { key: "GITHUB_TOKEN", env: "dev", createdBy: "kyle.g", },
+    { key: "GITHUB_TOKEN", env: "prev", createdBy: "kyle.g", },
+    { key: "GITHUB_TOKEN", env: "custom", createdBy: null, },
+    { key: "API_KEY", env: "dev-2", createdBy: "kyle.g", },
+    { key: "STRIPE_KEY", env: "prod-eu", createdBy: null, notes: "stripe key production", },
+    { key: "JWT_SECRET", env: "staging-2", createdBy: "kyle.g", notes: "staging notes" },
+    { key: "SLACK_WEBHOOK", env: "preview-pr", createdBy: null, notes: "preview slack webhook notes" },
+    { key: "NPM_TOKEN", env: "sandbox", createdBy: "kyle.g", notes: "sandbox key -- do whatever" },
   ];
   const secrets = await Promise.all(
     secretSeeds.map((s) => {
@@ -121,7 +111,7 @@ async function main() {
       name: "verify-and-build",
       repoUrl: "https://github.com/abcd/deplo",
       description: "Type-checks and tests the app, then builds it behind an approval gate",
-      createdById: userByName.get("coco")?.id ?? null,
+      createdById: userByName.get("kyle.g")?.id ?? null,
     },
   });
 
@@ -190,7 +180,7 @@ async function main() {
       version: 1,
       graphJson,
       configJson,
-      createdById: userByName.get("coco")?.id ?? null,
+      createdById: userByName.get("kyle.g")?.id ?? null,
     },
   });
 
@@ -200,7 +190,7 @@ async function main() {
 ===============================================================
 */
   const webhookSeeds = [
-    { isActive: true, events: [EventType.PUSH, EventType.PULL_REQUEST], branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "coco" },
+    { isActive: true, events: [EventType.PUSH, EventType.PULL_REQUEST], branchFilters: ["main", "release/*", "hotfix/*"], createdBy: "kyle.g" },
   ];
   await Promise.all(
     webhookSeeds.map((w) => {
@@ -223,48 +213,22 @@ async function main() {
 
 /*
 ===============================================================
-  Webhook Events
-===============================================================
-*/
-  const webhookEventSeeds = [
-    { eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.PENDING, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { eventType: EventType.PUSH, status: WebhookEventStatus.PROCESSED, branch: "main", commitSha: "a1b2c3d", commitMessage: "feat: add retry logic to webhook delivery handler" },
-    { eventType: EventType.PUSH, status: WebhookEventStatus.IGNORED, branch: "release/v2.4.0", commitSha: "f4e5d6c", commitMessage: "chore: bump dependencies to latest stable versions" },
-    { eventType: EventType.PULL_REQUEST, status: WebhookEventStatus.FAILED, branch: "feature/auth-flow", commitSha: "7890abc", commitMessage: "feat: add user role migration for RBAC system" },
-  ];
-  await Promise.all(
-    webhookEventSeeds.map((e) => {
-      return prisma.webhookEvent.create({
-        data: {
-          pipelineId: pipeline.id,
-          eventType: e.eventType,
-          source: "github",
-          payload: { ref: `refs/heads/${e.branch}`, after: e.commitSha, head_commit: { message: e.commitMessage } },
-          headers: { "X-GitHub-Event": e.eventType, "X-GitHub-Delivery": randomBytes(8).toString("hex") },
-          status: e.status,
-        },
-      });
-    })
-  );
-
-/*
-===============================================================
   Audit Log
 ===============================================================
 */
   const auditSeeds: { action: AuditAction; resourceType: ResourceType; resourceId: string; resourceLabel: string; resourceMeta?: AuditMeta; user: string | null; actor?: string }[] = [
-    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "coco" },
+    { action: AuditAction.PIPELINE_CREATED, resourceType: ResourceType.PIPELINE, resourceId: pipeline.id, resourceLabel: "verify-and-build", user: "kyle.g" },
     { action: AuditAction.WEBHOOK_RECEIVED, resourceType: ResourceType.WEBHOOK, resourceId: pipeline.id, resourceLabel: "push → abcd/deplo", user: null, actor: "github" },
     {
-      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (production)", user: "sarah.chen",
+      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[0].id, resourceLabel: "DATABASE_URL (production)", user: "kyle.g",
       resourceMeta: { kind: 'secret', key: 'DATABASE_URL', type: envByName.get("prod")!.type.toLowerCase() as EnvType },
     },
     {
-      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (development)", user: "marcus.coco",
+      action: AuditAction.SECRET_CREATED, resourceType: ResourceType.SECRET, resourceId: secrets[2].id, resourceLabel: "GITHUB_TOKEN (development)", user: "kyle.g",
       resourceMeta: { kind: 'secret', key: 'GITHUB_TOKEN', type: envByName.get("dev")!.type.toLowerCase() as EnvType },
     },
     {
-      action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "priya.nair",
+      action: AuditAction.ENVIRONMENT_CREATED, resourceType: ResourceType.ENVIRONMENT, resourceId: envByName.get("sandbox")!.id, resourceLabel: "sandbox", user: "kyle.g",
       resourceMeta: { kind: 'environment', name: 'sandbox', type: envByName.get("sandbox")!.type.toLowerCase() as EnvType },
     },
   ];
@@ -284,7 +248,7 @@ async function main() {
     )
   );
 
-  console.log(`Seeded ${users.length} users, ${environments.length} environments, ${secrets.length} secrets, 1 pipeline (${stageSeeds.length} stages), 1 pipeline definition, 1 queued run, ${webhookSeeds.length} webhooks, ${webhookEventSeeds.length} webhook events, ${auditSeeds.length} audit logs.`);
+  console.log(`Seeded ${users.length} users, ${environments.length} environments, ${secrets.length} secrets, 1 pipeline (${stageSeeds.length} stages), 1 pipeline definition, 1 queued run, ${webhookSeeds.length} webhooks, ${auditSeeds.length} audit logs.`);
 }
 
 main()
