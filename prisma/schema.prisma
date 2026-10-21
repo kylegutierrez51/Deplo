@@ -362,12 +362,15 @@ model WebhookEvent {
   eventType  EventType // "push", "pull_request"
   source     String  @default("github")
 
-  // Raw payload for auditability and replay
-  payload Json
+  // Raw payload for auditability and replay. 
+  // If the event is ignored, clear it since it does not trigger a run.
+  payload Json?
   headers Json // includes X-GitHub-Event, delivery ID, etc.
 
   // Processing outcome
   status WebhookEventStatus @default(PENDING)
+  // Why the event has its status, in a sentence (e.g. which branch filter it missed)
+  statusReason String?
   runId  String? // if this webhook triggered a run
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
