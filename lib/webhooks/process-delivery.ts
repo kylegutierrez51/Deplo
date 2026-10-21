@@ -23,7 +23,6 @@ export async function processDelivery(
   triggeredBy: { id: string | null, name: string | null },
 ): Promise<DeliveryOutcome> {
   if (githubEvent === 'ping') {
-    console.log('GitHub sent the ping event');
     return outcome('processed', 'Ping received: GitHub can reach this webhook.');
   }
   else if (githubEvent === 'push' || githubEvent === 'pull_request') {
@@ -48,7 +47,6 @@ export async function processDelivery(
 
     // check for branch filters
     const target = githubEvent == 'push' ? payload.ref.replace('refs/heads/', '') : payload.pull_request.base.ref.replace('refs/heads/', '');
-    console.log('targeted branch: ' + target);
 
     if (!checkBranches(target, webhook.branchFilters)) {
       return outcome('ignored', `Branch "${target}" does not match the branch filters (${webhook.branchFilters.join(', ')}).`);
@@ -87,7 +85,6 @@ export async function processDelivery(
     return outcome('processed', `Started ${run.name} #${run.runNumber}.`, 200, run.id);
   }
   else {
-    console.log(`Unhandled event: ${githubEvent}`)
     return outcome('ignored', `Deplo does not handle "${githubEvent ?? 'unknown'}" events.`);
   }
 }

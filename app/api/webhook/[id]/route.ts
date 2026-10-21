@@ -18,8 +18,6 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
 
   const webhook = await getWebhookById(id);
   if (!webhook || !webhook.isActive) {
-    console.log("webhook available: " + webhook?.createdAt);
-    console.log("webhook active: " + webhook?.isActive);
     return NextResponse.json({ error: "Webhook not found" }, { status: 404 });
   }
 
