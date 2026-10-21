@@ -41,7 +41,7 @@ npx jest -t "reports a cycle"
 npx playwright test e2e/auth.spec.ts --project=anonymous
 ```
 
-Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `RUNNER_WORKSPACE_ROOT`.
+Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `RUNNER_WORKSPACE_ROOT`. Optional: `DEPLO_PUBLIC_URL`, the public base URL GitHub can reach; when set, the webhook modal shows it as the payload URL instead of the smee.io relay flow.
 
 ## Testing
 

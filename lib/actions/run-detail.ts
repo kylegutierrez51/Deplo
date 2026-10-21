@@ -31,6 +31,7 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       where: { id },
       select: {
         status: true, pipelineId: true, definitionId: true, environmentId: true, environmentName: true,
+        commitSha: true, branch: true, repoUrl: true,
         definition: { select: { graphJson: true, configJson: true } }
       }
     });
@@ -72,7 +73,10 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
       environmentId: run.environmentId,
       definitionId: run.definitionId,
       trigger: 'manual',
-      user: { id: userId, name: user.name ?? null }
+      user: { id: userId, name: user.name ?? null },
+      commitSha: run.commitSha,
+      branch: run.branch,
+      repoUrl: run.repoUrl
     });
 
 

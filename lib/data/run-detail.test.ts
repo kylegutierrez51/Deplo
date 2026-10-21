@@ -1,5 +1,6 @@
-import { countJobs, buildLogFilters, buildLogs, formatLines, addNodeDetails, type StageLite, hasReadableLogs
+import { countJobs, buildLogFilters, buildLogs, formatLines, addNodeDetails, getRunDetailById, type StageLite, hasReadableLogs
 } from '@/lib/data/run-detail';
+import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
 import type { CustomNode } from '@/lib/types';
 import type { StageStatus as PrismaStageStatus, StageResult } from '@/generated/prisma';
 
@@ -612,5 +613,77 @@ describe('hasReadableLogs', () => {
   // that arrived after it is still output.
   it('keeps output that follows the note', () => {
     expect(hasReadableLogs('[run cancelled]\ntrailing line')).toBe(true);
+  });
+});
+
+describe('getRunDetailById', () => {
+  const SHA = 'a'.repeat(40);
+  const REPO = 'https://github.com/o/r';
+
+  const definition = {
+    graphJson: {
+      nodes: [{ id: 'a', type: 'standardStage', position: { x: 0, y: 200 }, data: { type: 'custom', name: 'build' } }],
+      edges: [],
+    },
+    configJson: { a: { command: 'npm run build', timeout: null, retries: null, env_vars: [], secrets: {} } },
+  };
+
+  const runRow = (over: Record<string, unknown> = {}, stages: StageResult[] = []) => ({
+    id: 'run1',
+    runNumber: 7,
+    status: 'FAILED',
+    trigger: 'WEBHOOK',
+    environmentId: null,
+    environmentName: null,
+    environmentType: null,
+    environment: null,
+    triggeredBy: null,
+    branch: 'main',
+    commitSha: SHA,
+    repoUrl: REPO,
+    startedAt: new Date('2026-01-01T00:00:00Z'),
+    finishedAt: new Date('2026-01-01T00:01:00Z'),
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    pipeline: { name: 'ci', repoUrl: 'https://github.com/live/pipeline' },
+    definition,
+    stages,
+    ...over,
+  });
+
+  const stubRun = (over: Record<string, unknown> = {}, stages: StageResult[] = []) => {
+    prismaMock.pipelineRun.findUnique.mockResolvedValue(runRow(over, stages) as never);
+    prismaMock.webhookEvent.findFirst.mockResolvedValue(null);
+  };
+
+  beforeEach(resetPrismaMock);
+
+  it('shows the checkout stage, its status, count, log and edge to each root', async () => {
+    stubRun({}, [row({
+      stageId: 'deplo-checkout', stageName: 'Checkout', status: 'FAILED', exitCode: 128,
+      command: 'git init .', logSnippet: 'fatal: could not read from remote',
+    })]);
+
+    const detail = await getRunDetailById('run1');
+
+    expect(detail?.nodes[0].id).toBe('deplo-checkout');
+    expect(detail?.nodes[0].data.status).toBe('failed');
+    expect(detail?.jobCounts.failed).toBe(1);
+    expect(detail?.logs.map(l => l.stageId)).toContain('deplo-checkout');
+    expect(detail?.logs[0].lines.map(l => l.content).join('\n')).toContain('fatal: could not read from remote');
+    expect(detail?.edges.map(e => `${e.source}>${e.target}`)).toContain('deplo-checkout>a');
+  });
+
+  it('returns exactly the definition nodes when the run has no commit', async () => {
+    stubRun({ commitSha: null });
+
+    const detail = await getRunDetailById('run1');
+
+    expect(detail?.nodes.map(n => n.id)).toEqual(['a']);
+    expect(detail?.edges).toEqual([]);
+  });
+
+  it('reports the repo the run snapshotted, not the live pipeline repo', async () => {
+    stubRun();
+    expect((await getRunDetailById('run1'))?.repo).toBe(REPO);
   });
 });

@@ -60,3 +60,17 @@ describe('countActiveRuns', () => {
     expect(prismaMock.pipelineRun.count).toHaveBeenCalledWith({ where: { status: 'RUNNING' } });
   });
 });
+
+describe('getRunsPage repoUrl', () => {
+  const row = (runRepoUrl: string | null) => ({
+    id: 'r1', status: 'QUEUED', trigger: 'MANUAL', repoUrl: runRepoUrl,
+    environment: null, environmentName: null, environmentType: null,
+    triggeredBy: null, pipeline: { name: 'p', repoUrl: 'https://github.com/o/live' },
+  });
+  const firstRepoUrl = async () => (await getRunsPage()).rows[0].repoUrl;
+
+  it('shows the repo the run snapshotted, not the live pipeline value', async () => {
+    prismaMock.pipelineRun.findMany.mockResolvedValue([row('https://github.com/o/snapshot')] as never);
+    await expect(firstRepoUrl()).resolves.toBe('https://github.com/o/snapshot');
+  });
+});

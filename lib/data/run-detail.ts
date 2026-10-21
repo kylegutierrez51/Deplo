@@ -9,6 +9,7 @@ import type { RunStatus, RunTrigger, RunEnvironment, CustomNode } from "@/lib/ty
 import { toRunEnvironment } from "./run-environment";
 import { getDuration } from "@/lib/utils/date";
 import { fromDefinition } from "@/lib/pipeline/definition";
+import { withCheckoutStage } from "@/lib/pipeline/checkout";
 import { CANCELLED_NOTE } from "@/lib/stage-notes";
 import { Edge } from "@xyflow/react";
 
@@ -220,7 +221,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
   const run = await prisma.pipelineRun.findUnique({
     where: { id },
     include: {
-      pipeline: { select: { name: true, repoUrl: true } },
+      pipeline: { select: { name: true } },
       environment: { select: { name: true, type: true } },
       triggeredBy: { select: { name: true } },
       definition: { select: { graphJson: true, configJson: true } },
@@ -230,7 +231,10 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
 
   if (!run) return undefined;
 
-  const { nodes, edges } = fromDefinition(run.definition.graphJson, run.definition.configJson);
+  const { nodes, edges } = withCheckoutStage(
+    fromDefinition(run.definition.graphJson, run.definition.configJson),
+    { repoUrl: run.repoUrl, commitSha: run.commitSha },
+  );
 
   const stagesLite: StageLite[] = run.stages.map((s) => ({
     stageId: s.stageId,
@@ -263,7 +267,7 @@ export async function getRunDetailById(id: string): Promise<RunDetail | undefine
     commitHash: run.commitSha,
     commitMessage: commitMessage,
     branch: run.branch,
-    repo: run.pipeline.repoUrl,
+    repo: run.repoUrl,
     trigger: RUN_TRIGGER_MAP[run.trigger],
     triggeredBy: run.triggeredBy?.name ?? null,
     duration: run.startedAt && run.finishedAt ? 

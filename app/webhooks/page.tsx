@@ -18,9 +18,23 @@ import { redirect } from 'next/navigation';
 import { WEBHOOK_FILTERS } from '@/lib/filters/options';
 import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 import { parsePage } from '@/lib/utils/pagination';
+import { readPublicUrl } from '@/lib/webhooks/endpoint';
 
 const REFRESH_INTERVAL_MS = 15_000;
 const PAGE_SIZE = 4;
+
+let warnedPublicUrl = false;
+
+// returns null if DEPLO_PUBLIC_URL is not set
+function publicUrlFromEnv(): string | null {
+  const raw = process.env.DEPLO_PUBLIC_URL;
+  const url = readPublicUrl(raw);
+  if (raw?.trim() && !url && !warnedPublicUrl) {
+    warnedPublicUrl = true;
+    console.warn('DEPLO_PUBLIC_URL is not an http(s) URL; ignoring it');
+  }
+  return url;
+}
 
 type SearchParams = Promise<{ mode?: string; id?: string; active?: string; recency?: string; page?: string; }>;
 
@@ -110,6 +124,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
           webhook={modal.record}
           pipelines={pipelines}
           environments={environments}
+          publicUrl={publicUrlFromEnv()}
         />
       )}
     </>

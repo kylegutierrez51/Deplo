@@ -178,6 +178,7 @@ model PipelineRun {
   runNumber Int
 
   commitSha String?
+  repoUrl   String?
   branch    String?
 
   triggeredById String?
@@ -332,6 +333,7 @@ model Webhook {
   events        EventType[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  DateTime?
+  relayUrl      String?
   createdAt     DateTime  @default(now())
 
   encryptedValue String @db.Text

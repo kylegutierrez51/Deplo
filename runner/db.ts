@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
+import { withCheckoutStage } from '@/lib/pipeline/checkout';
 import { addAudit } from '@/lib/actions/audits';
 import { RUNNER_WORKSPACE_ROOT } from './setup/connection';
 import type { GraphJson, StageType } from '@/lib/types';
@@ -32,6 +33,9 @@ interface RunContext {
   outcomes: Outcomes,
   /** stageId → the attempt number of that stage's latest row. Absent = never materialized. */
   attempts: ReadonlyMap<string, number>,
+  repoUrl: string | null,
+  commitSha: string | null,
+  branch: string | null,
 }
 
 
@@ -79,9 +83,15 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     definitionId: run.definitionId,
     environmentId: run.environmentId,
     defaultDirectory: run.definition.defaultDirectory ?? null,
-    graph: fromDefinition(run.definition.graphJson, run.definition.configJson),
+    graph: withCheckoutStage(
+      fromDefinition(run.definition.graphJson, run.definition.configJson),
+      { repoUrl: run.repoUrl, commitSha: run.commitSha },
+    ),
     outcomes,
     attempts,
+    repoUrl: run.repoUrl,
+    commitSha: run.commitSha,
+    branch: run.branch,
   };
 }
 

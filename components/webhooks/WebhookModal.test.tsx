@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderToString } from 'react-dom/server';
 import WebhookModal from '@/components/webhooks/WebhookModal';
 import { addWebhook, deleteWebhook, regenerateWebhookSecret, updateWebhook } from '@/lib/actions/webhooks';
 
@@ -467,5 +468,79 @@ describe('the active toggle', () => {
 
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
     expect(screen.getByText(/Inactive/)).toBeInTheDocument();
+  });
+});
+
+describe('connecting GitHub', () => {
+  const ENDPOINT = 'http://localhost/api/webhook/wh-1';
+  const field = (label: string) => (screen.getByLabelText(label) as HTMLInputElement).value;
+
+  it('shows the Deplo endpoint in view mode', () => {
+    setup({ mode: 'view' });
+    expect(field('Deplo endpoint')).toBe(ENDPOINT);
+  });
+
+  it('shows the relay as the payload URL and the smee command when a relay is saved', () => {
+    setup({ mode: 'view', relayUrl: 'https://smee.io/abc123' });
+    expect(field('Payload URL')).toBe('https://smee.io/abc123');
+    expect(field('Relay command')).toBe(`npx smee-client --url https://smee.io/abc123 --target ${ENDPOINT}`);
+    expect(screen.getByText(/application\/json/)).toBeInTheDocument();
+  });
+
+  it('asks for a relay when none is saved', () => {
+    setup({ mode: 'view', relayUrl: null });
+    expect(screen.queryByLabelText('Payload URL')).not.toBeInTheDocument();
+    expect(screen.getByText(/add a smee\.io relay URL/)).toBeInTheDocument();
+  });
+
+  /* renderToString reads the server snapshot, so there is no origin and the endpoint cannot be built. */
+  it('renders without an origin during SSR', () => {
+    const noop = () => {};
+    const html = renderToString(
+      <WebhookModal
+        mode="view" id="wh-1" pipelineName="deploy-api" branchFilters={[]} events={['push']}
+        createdAt={new Date('2026-01-01T00:00:00Z')} relayUrl="https://smee.io/abc123"
+        pipelines={[]} environments={[]}
+        onClose={noop} onCreate={noop} onDelete={noop} onEdit={noop} onEditOrDeleteClose={noop}
+        onSave={noop} onRegenerate={noop} onError={noop}
+      />,
+    );
+    expect(html).toContain('https://smee.io/abc123');
+    expect(html).not.toContain('/api/webhook/wh-1');
+    expect(html).not.toContain('Relay command');
+  });
+
+  it('uses DEPLO_PUBLIC_URL for the payload URL and hides the relay', () => {
+    setup({ mode: 'view', relayUrl: 'https://smee.io/abc123', publicUrl: 'https://deplo.example.com/' });
+    expect(field('Payload URL')).toBe('https://deplo.example.com/api/webhook/wh-1');
+    expect(screen.queryByLabelText('Relay command')).not.toBeInTheDocument();
+  });
+
+  it('explains the relay in terms of localhost when running locally', () => {
+    setup({ mode: 'edit' });
+    expect(screen.getByText(/GitHub can't reach localhost, so deliveries go through a smee.io relay./)).toBeInTheDocument();
+  });
+
+  it('pre-fills and submits the relay URL in edit mode', () => {
+    setup({ mode: 'edit', relayUrl: 'https://smee.io/abc123' });
+    const form = document.getElementById('modal-form') as HTMLFormElement;
+    expect(new FormData(form).get('relay_url')).toBe('https://smee.io/abc123');
+    const link = screen.getByRole('link', { name: 'Create a channel' });
+    expect(link).toHaveAttribute('href', 'https://smee.io/new');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('hides the relay input when DEPLO_PUBLIC_URL is set', () => {
+    setup({ mode: 'edit', publicUrl: 'https://deplo.example.com' });
+    expect(screen.queryByLabelText(/Relay URL/)).not.toBeInTheDocument();
+  });
+
+  /* updateWebhook always writes relay_url, so hiding the input must not drop the stored value. */
+  it('still submits the stored relay URL when the input is hidden', () => {
+    setup({ mode: 'edit', publicUrl: 'https://deplo.example.com', relayUrl: 'https://smee.io/abc123' });
+    const form = document.getElementById('modal-form') as HTMLFormElement;
+    expect(screen.queryByLabelText(/Relay URL/)).not.toBeInTheDocument();
+    expect(new FormData(form).get('relay_url')).toBe('https://smee.io/abc123');
   });
 });
