@@ -4,6 +4,8 @@ import Pill from '../ui/Pill';
 import { formatDate } from '@/lib/utils/date';
 import { capitalize } from '@/lib/utils/string';
 import { EventType } from '@/lib/types';
+import { repoUrlWarning } from '@/lib/pipeline/repo-url';
+import RepoUrlWarning from './RepoUrlWarning';
 
 const EVENT_TYPE_MAP: Record<EventType, string> = {
   push: 'Push',
@@ -13,6 +15,9 @@ const EVENT_TYPE_MAP: Record<EventType, string> = {
 };
 
 export default function WebhookCard({ webhook }: { webhook: Webhook}) {
+  // A deleted pipeline already reads "Pipeline Not Found"; warn only about one that exists.
+  const warning = webhook.pipelineName ? repoUrlWarning(webhook.pipelineName, webhook.pipelineRepoUrl) : null;
+
   return (
     <div className={styles['webhook-card']}>
       <div className={styles['webhook-row']}>
@@ -44,6 +49,7 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                   </div>
                 </>
               }
+            {warning && <RepoUrlWarning message={warning} />}
             {webhook.branchFilters.length > 0  &&
               <div className={styles.branchFilters}>
                 <span>Branch Filters:</span>

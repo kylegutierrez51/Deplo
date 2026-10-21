@@ -19,6 +19,8 @@ interface AutocompleteProps {
   initialId?: string | null;
   initialName?: string | null;
   required?: boolean;
+  /** Called with the id that would now be submitted (null when none), whenever it changes by the user's hand. */
+  onSelect?: (id: string | null) => void;
 }
 
 /*
@@ -37,6 +39,7 @@ export default function Autocomplete({
   initialId,
   initialName,
   required = false,
+  onSelect,
 }: AutocompleteProps) {
   const [query, setQuery] = useState(initialName ?? '');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
@@ -50,8 +53,8 @@ export default function Autocomplete({
   }
 
 
-  const exactMatch = () => {
-    const q = query.trim().toLowerCase();
+  const exactMatch = (text = query) => {
+    const q = text.trim().toLowerCase();
     const found = options.filter(o => o.name.toLowerCase() === q);
     return found.length === 1 ? found[0] : undefined;
   }
@@ -62,6 +65,7 @@ export default function Autocomplete({
     if (!selectedId && match) {
       setQuery(match.name);
       setSelectedId(match.id);
+      onSelect?.(match.id);
     }
     setTimeout(() => setOpenMatches(false), 100);
   }
@@ -82,6 +86,8 @@ export default function Autocomplete({
             setQuery(e.target.value);
             setSelectedId(null);
             setOpenMatches(true);
+            // A name typed in full is what the hidden input submits, so it counts as a pick.
+            onSelect?.(exactMatch(e.target.value)?.id ?? null);
           }}
           onFocus={() => setOpenMatches(true)}
           onBlur={handleBlur}
@@ -100,6 +106,7 @@ export default function Autocomplete({
                       setQuery(o.name);
                       setSelectedId(o.id);
                       setOpenMatches(false);
+                      onSelect?.(o.id);
                     }}
                   >
                     <span>{o.name}</span>

@@ -13,6 +13,8 @@ import Autocomplete from '@/components/ui/Autocomplete';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
 import Pill from '../ui/Pill';
 import { capitalize } from '@/lib/utils/string';
+import { repoUrlWarning } from '@/lib/pipeline/repo-url';
+import RepoUrlWarning from './RepoUrlWarning';
 import { webhookEndpoint, smeeCommand, connectHint, isLocalOrigin } from '@/lib/webhooks/endpoint';
 import CopyField from './CopyField';
 
@@ -23,6 +25,7 @@ interface WebhookModalProps {
   id: string;
   pipelineId?: string | null;
   pipelineName?: string | null;
+  pipelineRepoUrl?: string | null;
   environmentId?: string | null;
   environmentName?: string | null;
   isActive?: boolean;
@@ -64,6 +67,7 @@ export default function WebhookModal({
   id,
   pipelineId,
   pipelineName,
+  pipelineRepoUrl,
   environmentId,
   environmentName,
   isActive = true,
@@ -86,6 +90,7 @@ export default function WebhookModal({
   onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(pipelineId ?? null);
   const [enteredBranchFilter, setEnteredBranchFilter] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
   const [active, setActive] = useState(isActive);
@@ -194,6 +199,12 @@ export default function WebhookModal({
 
   if (mode === 'view' && revealedSecret !== null) setRevealedSecret(null);
 
+  // View mode reads the saved pipeline; edit and create follow whichever pipeline is picked.
+  const selectedPipeline = pipelines?.find(p => p.id === selectedPipelineId);
+  const pipelineWarning = mode === 'view'
+    ? (pipelineName ? repoUrlWarning(pipelineName, pipelineRepoUrl) : null)
+    : (selectedPipeline ? repoUrlWarning(selectedPipeline.name, selectedPipeline.repoUrl) : null);
+
   const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
   const subtitle = mode === 'edit' || mode === 'create' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
   const icon = mode === 'edit' || mode === 'create' ? 'git-network-outline' : undefined;
@@ -226,6 +237,7 @@ export default function WebhookModal({
                 <ion-icon name="link-outline"></ion-icon>
                 <span>{pipelineName}</span>
               </div>
+              {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
             </div>
 
             <div className={styles.fieldGroup}>
@@ -328,7 +340,9 @@ export default function WebhookModal({
                 initialId={pipelineId}
                 initialName={pipelineName}
                 required
+                onSelect={setSelectedPipelineId}
               />
+              {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
             </div>
 
             <div className={styles.fieldGroup}>

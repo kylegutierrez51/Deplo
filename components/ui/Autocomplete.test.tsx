@@ -78,3 +78,37 @@ it('submits the raw text only when given a textName', async () => {
 
   expect(submitted('pick_name')).toBe('typo');
 });
+
+describe('onSelect', () => {
+  it('reports the option the user clicks', async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+    const { input } = setup({ onSelect });
+
+    await user.type(input, 'deploy');
+    await user.click(screen.getByRole('button', { name: /deploy-api/ }));
+
+    expect(onSelect).toHaveBeenLastCalledWith('a-1');
+  });
+
+  // Typing a name in full already submits that option, so it counts as picking it.
+  it('reports a uniquely matching name typed in full', async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+    const { input } = setup({ onSelect });
+
+    await user.type(input, 'deploy-api');
+
+    expect(onSelect).toHaveBeenLastCalledWith('a-1');
+  });
+
+  it('reports null once the text no longer names one option', async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+    const { input } = setup({ onSelect, initialId: 'a-1', initialName: 'deploy-api' });
+
+    await user.type(input, 'x');
+
+    expect(onSelect).toHaveBeenLastCalledWith(null);
+  });
+});

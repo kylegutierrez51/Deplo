@@ -8,8 +8,16 @@ const PATH = '[A-Za-z0-9._~/-]+';
 const HTTPS_URL = new RegExp(`^https://${HOST}(:[0-9]+)?/${PATH}$`);
 const SCP_URL = new RegExp(`^git@${HOST}:${PATH}$`);
 
+
 export const REPO_URL_ERROR = 'Repo URL must be an https:// or git@ address with no username, password or special characters.';
+
 
 export function isCloneableRepoUrl(url: string): boolean {
   return HTTPS_URL.test(url) || SCP_URL.test(url);
+}
+
+
+export function repoUrlWarning(pipelineName: string, repoUrl: string | null | undefined): string | null {
+  if (repoUrl && isCloneableRepoUrl(repoUrl)) return null;
+  return `${pipelineName} has no usable Repo URL, so webhook runs won't check out the pushed code. Add one in the pipeline's settings.`;
 }
