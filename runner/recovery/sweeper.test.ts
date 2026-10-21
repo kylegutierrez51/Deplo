@@ -154,6 +154,28 @@ describe('the sweep timer', () => {
     expect(failEvents).toHaveBeenCalledTimes(1);
   });
 
+  it('still re-enters stalled runs when the webhook sweep cannot write', async () => {
+    failEvents.mockRejectedValue(new Error('ECONNREFUSED'));
+    runs({ id: 'run-1', status: 'RUNNING' });
+
+    startStalledRunSweep(1_000);
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(advance).toHaveBeenCalledWith('run-1');
+  });
+
+  // webhook events sweep first since they only use Postgres.
+  // Then runs sweep next since they depend on both Redis and Postgres.
+  it('fails stalled webhook events even while the run sweep hangs', async () => {
+    runs({ id: 'run-1', status: 'RUNNING' });
+    advance.mockReturnValue(new Promise(() => { }));
+
+    startStalledRunSweep(1_000);
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(failEvents).toHaveBeenCalledTimes(1);
+  });
+
   /*
    * Overlapping sweeps would not corrupt anything — every write underneath is a
    * compare-and-swap — but a database slow enough to overrun the interval is the last one

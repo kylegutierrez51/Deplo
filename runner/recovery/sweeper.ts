@@ -34,8 +34,9 @@ const SWEEP_INTERVAL_MS = 60_000;
 
 /*
  * Re-enters every run that has been still for longer than the grace period. Returns how many
- * were handed back to the scheduler, which counts the no-ops too — this cannot tell a run it
- * rescued from one that never needed it.
+ * were handed back to the scheduler.
+ * 
+ * This function cannot tell apart a run that did not need to be sweeped vs a run that did
  */
 export async function sweepStalledRuns(): Promise<number> {
   const cutoff = new Date(Date.now() - STALL_GRACE_MS);
@@ -70,12 +71,11 @@ export async function sweepStalledRuns(): Promise<number> {
 
 
 /*
- * Fails webhook events still PENDING after the grace period. Returns how many.
+ * Fails webhook events still PENDING after the grace period. Returns how many it failed.
  *
- * The webhook route cannot do this itself: the failure it would record is usually the
- * database being down, so its own update fails too and the event is left PENDING. Once the
- * database is back, this settles it. GitHub already saw a non-2xx for that delivery, so it
- * can be redelivered from there.
+ * Needed incase the database fails in the webhook route and leaves a webhook event 'PENDING' forever.
+ * 
+ * Just because a webhook event gets left on 'PENDING' does not mean it doesn't trigger a pipeline run -- it absolutely can
  */
 export async function sweepStalledWebhookEvents(): Promise<number> {
   const cutoff = new Date(Date.now() - WEBHOOK_EVENT_GRACE_MS);
@@ -98,14 +98,7 @@ export async function sweepStalledWebhookEvents(): Promise<number> {
 let timer: NodeJS.Timeout | null = null;
 let sweeping = false;
 
-/*
- * Starts the timer. Safe to call twice; the second call is ignored rather than leaving an
- * interval nobody holds a handle to.
- *
- * Two sweeps overlapping would not corrupt anything — every write underneath is a
- * compare-and-swap — but assuming the database does take the entire 'SWEEP_INTERVAL_MS' time 
- * to sweep stalled runs, then it should definitely not have another reader.
- */
+
 export function startStalledRunSweep(intervalMs: number = SWEEP_INTERVAL_MS): void {
   if (timer) return;
 
@@ -113,13 +106,10 @@ export function startStalledRunSweep(intervalMs: number = SWEEP_INTERVAL_MS): vo
     if (sweeping) return;
     sweeping = true;
 
-    // sweepStalledRuns handles its own failures; this catch is for the ones it cannot, and
-    // it must exist — an unhandled rejection from a timer has no owner and would take the
-    // runner down over a database hiccup.
-    // Both sweeps handle their own failures, so one that cannot reach its table never
-    // stops the other from running.
-    void sweepStalledRuns()
-      .then(() => sweepStalledWebhookEvents())
+    // sweep webhook events first since they depend on Postgres. 
+    // Then sweep runs next since they depend on both Redis and Postgres.
+    void sweepStalledWebhookEvents()
+      .then(() => sweepStalledRuns())
       .catch(error => console.error('sweeper:', error))
       .finally(() => { sweeping = false; });
   }, intervalMs);
