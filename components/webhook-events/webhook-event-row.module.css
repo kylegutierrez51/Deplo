@@ -1,0 +1,21 @@
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+/*
+ * Two lines in the table, enough for every route reason except a list of validation errors;
+ * the full text is in the title and in the event modal.
+ */
+.reason {
+  max-width: 260px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--subtitle-clr);
+  font-size: var(--font-size-sm);
+}

@@ -1,5 +1,4 @@
 import { EventType, WebhookEventStatus, WebhookEventData, FormState } from '@/lib/types';
-import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma } from '@/generated/prisma/client';
 import { EventType as PrismaEventType, AuditAction, ResourceType, WebhookEventStatus as PrismaWebhookEventStatus } from '@/generated/prisma';
@@ -82,11 +81,25 @@ export async function addWebhookEvent(data: WebhookEventData): Promise<FormState
 
 
 
-export async function updateWebhookEvent(id: string, status: WebhookEventStatus, runId?: string): Promise<FormState> {
+/*
+ * Settles an event: its status, a sentence saying why, and
+ * the run it started, if any. 
+ * An ignored event also loses its payload since it does nothing.
+ */
+export async function updateWebhookEvent(
+  id: string,
+  status: WebhookEventStatus,
+  { reason, runId }: { reason: string, runId?: string },
+): Promise<FormState> {
   try {
       await prisma.webhookEvent.update({
         where: { id },
-        data: { status: STATUS_MAP[status], ...(runId && { runId }) },
+        data: {
+          status: STATUS_MAP[status],
+          statusReason: reason,
+          ...(runId && { runId }),
+          ...(status === 'ignored' && { payload: Prisma.DbNull }),
+        },
       });
 
       return {

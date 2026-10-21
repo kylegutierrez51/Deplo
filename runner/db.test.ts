@@ -3,7 +3,7 @@ import {
   claimStageForApproval, markStageRunning, finishStage, finalizeRun, cancelPendingAwaitingQueuedStages,
   openRetry, reapStaleStages, findUnfinishedRuns, findQueuedStages, updateQueuedToPending,
   failQueuedStage, findRunningStages, recordStageProgress, isRunCancelled, cancelOrphanedStages,
-  findStalledRuns, failStalledWebhookEvents,
+  findStalledRuns, failStalledWebhookEvents, STALLED_WEBHOOK_EVENT_REASON,
 } from './db';
 import { graph } from '@/test/helpers/graph';
 import { fromDefinition } from '@/lib/pipeline/definition';
@@ -870,7 +870,15 @@ describe('failStalledWebhookEvents', () => {
     await expect(failStalledWebhookEvents(cutoff)).resolves.toBe(2);
     expect(prismaMock.webhookEvent.updateMany).toHaveBeenCalledWith({
       where: { status: 'PENDING', receivedAt: { lt: cutoff } },
-      data: { status: 'FAILED' },
+      data: { status: 'FAILED', statusReason: STALLED_WEBHOOK_EVENT_REASON },
     });
+  });
+
+  // Shown on the Webhook Events page for an event the route never settled; it has to say
+  // what happened and what to do about it.
+  it('explains the failure and points at redelivery', () => {
+    expect(STALLED_WEBHOOK_EVENT_REASON).toBe(
+      'Interrupted before an outcome was recorded (the database may have been unavailable). Redeliver it from GitHub to process it again.'
+    );
   });
 });
