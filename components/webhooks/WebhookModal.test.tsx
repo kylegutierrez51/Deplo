@@ -544,3 +544,39 @@ describe('connecting GitHub', () => {
     expect(new FormData(form).get('relay_url')).toBe('https://smee.io/abc123');
   });
 });
+
+describe('the repo URL warning', () => {
+  const pipeline = (id: string, name: string, repoUrl: string | null) => ({ id, name, repoUrl }) as never;
+  const pipelines = [pipeline('p1', 'deploy-api', null), pipeline('p2', 'build-web', 'https://github.com/org/web')];
+  const warning = () => screen.queryByText(/won't check out the pushed code/);
+
+  it('shows in view mode when the pipeline has no Repo URL', () => {
+    setup({ mode: 'view', pipelineId: 'p1', pipelineName: 'deploy-api', pipelineRepoUrl: null });
+    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+  });
+
+  it('is absent in view mode when the Repo URL is usable', () => {
+    setup({ mode: 'view', pipelineId: 'p2', pipelineName: 'build-web', pipelineRepoUrl: 'https://github.com/org/web' });
+    expect(warning()).not.toBeInTheDocument();
+  });
+
+  it('shows in edit mode for the pipeline already selected', () => {
+    setup({ mode: 'edit', pipelineId: 'p1', pipelineName: 'deploy-api', pipelines });
+    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+  });
+
+  it('follows the pipeline picked in create mode', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', pipelineId: null, pipelineName: null, pipelines });
+    const input = screen.getByLabelText('Pipeline to trigger');
+
+    expect(warning()).not.toBeInTheDocument();
+
+    await user.type(input, 'deploy-api');
+    expect(warning()).toHaveTextContent('deploy-api has no Repo URL');
+
+    await user.clear(input);
+    await user.type(input, 'build-web');
+    expect(warning()).not.toBeInTheDocument();
+  });
+});
