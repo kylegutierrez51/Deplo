@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getWebhookById } from "@/lib/data/webhooks";
 import { decryptSecret, verifyWebhookSignature } from "@/lib/utils/crypto";
 import { addWebhookEvent, updateWebhookEvent } from "@/lib/webhooks/webhook-events";
-import { EventType, WebhookEventData } from "@/lib/types";
+import { EventType, WebhookEventData, WebhookEventStatus } from "@/lib/types";
 import { checkBranches } from "@/lib/webhooks/branches";
 import { commitFromPayload, isForkPullRequest } from "@/lib/webhooks/commit";
 import { getLatestDefinition } from "@/lib/data/pipelines";
@@ -60,33 +60,35 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
   // A non-2xx marks the delivery failed in GitHub, where it can be redelivered
   if (!webhookEventId) return NextResponse.json({ error: _rest.message }, { status: 500 });
 
+  // Records the outcome on the event and answers GitHub with the same sentence, so the
+  // Webhook Events page and GitHub's Recent Deliveries always give the same reason.
+  const settle = async (status: WebhookEventStatus, reason: string, httpStatus = 200, runId?: string) => {
+    await updateWebhookEvent(webhookEventId, status, { reason, runId });
+    return NextResponse.json({ message: reason }, { status: httpStatus });
+  };
+
   try {
     if (githubEvent === 'ping') {
       console.log('GitHub sent the ping event');
-      await updateWebhookEvent(webhookEventId, 'processed');
-      return NextResponse.json({}, { status: 200 });
+      return await settle('processed', 'Ping received: GitHub can reach this webhook.');
     }
     else if (githubEvent === 'push' || githubEvent === 'pull_request') {
 
       if (!webhook.events.includes(eventType)) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-        return NextResponse.json({ message: `This webhook is not subscribed to ${githubEvent} events.` }, { status: 200 });
+        return await settle('ignored', `This webhook is not subscribed to ${githubEvent} events.`);
       }
 
       // reject tag pushes (refs/tags/...) or a branch deletion
       if (githubEvent === 'push' && (!payload.ref.startsWith('refs/heads/') || payload.deleted)) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-        return NextResponse.json({ message: `Nothing to build for ${payload.ref}${payload.deleted ? ' (deleted)' : ''}.` }, { status: 200 });
+        return await settle('ignored', `Nothing to build for ${payload.ref}${payload.deleted ? ' (deleted)' : ''}.`);
       }
 
       if (githubEvent === 'pull_request' && !PR_ACTIONS.includes(payload.action)) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-        return NextResponse.json({ message: `Pull request action "${payload.action}" does not trigger a run.` }, { status: 200 });
+        return await settle('ignored', `Pull request action "${payload.action}" does not trigger a run.`);
       }
 
       if (githubEvent === 'pull_request' && isForkPullRequest(payload)) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-        return NextResponse.json({ message: "Pull requests from forks are not built: they would run untrusted code with this environment's secrets." }, { status: 200 });
+        return await settle('ignored', "Pull requests from forks are not built: they would run untrusted code with this environment's secrets.");
       }
 
       // check for branch filters
@@ -94,28 +96,23 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
       console.log('targeted branch: ' + target);
 
       if (!checkBranches(target, webhook.branchFilters)) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-
-        return NextResponse.json({ message: `The target: (${target}) did not match the branch filters: (${webhook.branchFilters})` }, { status: 200 });
+        return await settle('ignored', `Branch "${target}" does not match the branch filters (${webhook.branchFilters.join(', ')}).`);
       }
 
       // the pipeline was deleted (SET NULL) or never chosen
       if (!webhook.pipelineId) {
-        await updateWebhookEvent(webhookEventId, 'ignored');
-        return NextResponse.json({ message: 'This webhook has no pipeline to run.' }, { status: 422 });
+        return await settle('ignored', 'This webhook has no pipeline to run.', 422);
       }
 
       // From here on the delivery should have started a run, so anything that stops it is a failure
       const definition = await getLatestDefinition(webhook.pipelineId);
       if (!definition) {
-        await updateWebhookEvent(webhookEventId, 'failed');
-        return NextResponse.json({ message: 'The pipeline has no saved definition.' }, { status: 422 });
+        return await settle('failed', 'The pipeline has no saved definition.', 422);
       }
 
       const isReadyState = await verifyPipelineRunReady(definition, webhook.environmentId);
       if (isReadyState.status === 'error') {
-        await updateWebhookEvent(webhookEventId, 'failed');
-        return NextResponse.json({ message: isReadyState.message }, { status: 422 });
+        return await settle('failed', isReadyState.message, 422);
       }
 
       const run = await createPipelineRun({
@@ -129,24 +126,21 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/webhook/[id
 
       // If enqueue fails, deletes the run rather than leaving it stranded at QUEUED
       if (!await enqueueOrDiscardRun(run.id)) {
-        await updateWebhookEvent(webhookEventId, 'failed');
-        return NextResponse.json({ error: 'Could not reach the job queue, so the run was not started.' }, { status: 503 });
+        return await settle('failed', 'Could not reach the job queue, so the run was not started.', 503);
       }
 
-      await updateWebhookEvent(webhookEventId, 'processed', run.id);
-      return NextResponse.json({ message: `Started ${run.name} #${run.runNumber}.` }, { status: 200 });
+      return await settle('processed', `Started ${run.name} #${run.runNumber}.`, 200, run.id);
     }
     else {
       console.log(`Unhandled event: ${githubEvent}`)
-      await updateWebhookEvent(webhookEventId, 'ignored');
+      return await settle('ignored', `Deplo does not handle "${githubEvent ?? 'unknown'}" events.`);
     }
-    
-    return NextResponse.json({ ok: true });
 
   } catch (error) {
+    // The error itself goes to the server log, not the page: it can carry query or
+    // connection details that have no business in the UI.
     console.error(`webhook event ${webhookEventId}:`, error);
-    await updateWebhookEvent(webhookEventId, 'failed');
-    return NextResponse.json({ error: 'Could not process this delivery.' }, { status: 500 });
+    return await settle('failed', 'Could not process this delivery because of an unexpected error. Check the server logs.', 500);
   }
 
 }

@@ -237,3 +237,25 @@ describe('getWebhookEventsPage filtering', () => {
     expect(prismaMock.webhookEvent.count).toHaveBeenCalledWith({ where: {} });
   });
 });
+
+describe('ignored events and their reason', () => {
+  // An ignored event's payload is cleared, so its commit details are simply unknown.
+  it('reports no commit details for an event whose payload was dropped', async () => {
+    prismaMock.webhookEvent.findMany.mockResolvedValue([row({ status: 'IGNORED', payload: null })] as never);
+    groupByMock().mockResolvedValue([] as never);
+
+    const { rows } = await getWebhookEventsPage();
+
+    expect(rows[0]).toMatchObject({ status: 'ignored', commitSha: null, commitMessage: null, branch: null });
+  });
+
+  it('passes the status reason through, on the list and by id', async () => {
+    const reason = 'Branch "dev" does not match the branch filters (main).';
+    prismaMock.webhookEvent.findMany.mockResolvedValue([row({ status: 'IGNORED', payload: null, statusReason: reason })] as never);
+    prismaMock.webhookEvent.findUnique.mockResolvedValue(row({ status: 'IGNORED', payload: null, statusReason: reason }) as never);
+    groupByMock().mockResolvedValue([] as never);
+
+    expect((await getWebhookEventsPage()).rows[0].statusReason).toBe(reason);
+    expect((await getWebhookEventById('evt-1'))?.statusReason).toBe(reason);
+  });
+});

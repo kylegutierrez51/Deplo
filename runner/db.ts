@@ -355,10 +355,13 @@ export async function findStalledRuns(cutoff: Date): Promise<{ id: string, statu
  * route went to record a failure.
 ==============================================================================================
 */
+export const STALLED_WEBHOOK_EVENT_REASON =
+  'Interrupted before an outcome was recorded (the database may have been unavailable). Redeliver it from GitHub to process it again.';
+
 export async function failStalledWebhookEvents(cutoff: Date): Promise<number> {
   const { count } = await prisma.webhookEvent.updateMany({
     where: { status: 'PENDING', receivedAt: { lt: cutoff } },
-    data: { status: 'FAILED' },
+    data: { status: 'FAILED', statusReason: STALLED_WEBHOOK_EVENT_REASON },
   });
 
   return count;
