@@ -48,7 +48,7 @@ interface WebhookModalProps {
   onError: (message: string) => void;
 }
 
-const subscribeToNothing = () => () => {};
+const subscribeToNothing = () => () => { };
 const getOrigin = () => window.location.origin;
 const getServerOrigin = () => null;
 
@@ -140,8 +140,8 @@ export default function WebhookModal({
     setDeleteModal(false);
   }
 
-  
-  const afterRegenerate=(newSecret: string) => {
+
+  const afterRegenerate = (newSecret: string) => {
     setRevealedSecret(newSecret);
     setRevealedSecretVisible(false);
   }
@@ -379,7 +379,7 @@ export default function WebhookModal({
                 <ion-icon name="information-circle-outline"></ion-icon>
                 Glob pattern. Case sensitive. Leave empty to trigger on all branches.
               </p>
-              
+
               <div className={styles.branchPills}>
                 {filters.map((p, i) => (
                   <span key={i} className={styles.branchPill}>
@@ -455,31 +455,45 @@ export default function WebhookModal({
             </label>
 
             {mode === 'create' ? (
-              <div className={styles.fieldGroup}>
-                <div className={styles.fieldLabelRow}>
-                  <label htmlFor="webhook-secret">Webhook secret</label>
-                  <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
-                    <ion-icon name="refresh-outline"></ion-icon>
-                  </button>
+              <>
+                <div className={styles.fieldGroup}>
+                  <div className={styles.fieldLabelRow}>
+                    <label htmlFor="webhook-secret">Webhook secret</label>
+                    <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
+                      <ion-icon name="refresh-outline"></ion-icon>
+                    </button>
+                  </div>
+
+                  <div className={styles.secretInputWrapper}>
+                    <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                    <input
+                      type={revealedSecretVisible ? 'text' : 'password'}
+                      id="webhook-secret"
+                      name="webhook_secret"
+                      value={secret}
+                      readOnly
+                      className={`${styles.secretInput} ${styles.padded}`}
+                      required
+                    />
+                    <div className={styles.secretActions}>
+                      <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>
+                        <ion-icon name={revealedSecretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
+                      </button>
+                      <span className={styles.secretDivider}></span>
+                      <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
+                        <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
+                      </button>
+                    </div>
+                  </div>
+                  <p className={styles.fieldHint}>
+                    <ion-icon name="information-circle-outline"></ion-icon>
+                    Used for HMAC-SHA256 signature validation. Copy this now — it won&apos;t be shown again.
+                  </p>
                 </div>
-                <div className={styles.secretInputWrapper}>
-                  <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
-                  <input
-                    type="text"
-                    id="webhook-secret"
-                    name="webhook_secret"
-                    value={secret}
-                    onChange={e => setSecret(e.target.value)}
-                    className={styles.secretInput}
-                    required
-                  />
-                </div>
-                <p className={styles.fieldHint}>
-                  <ion-icon name="information-circle-outline"></ion-icon>
-                  Used for HMAC-SHA256 signature validation. Store securely — it won&apos;t be shown again.
-                </p>
-              </div>
+              </>
+
             ) : (
+              
               <div className={styles.fieldGroup}>
                 <label>Webhook secret</label>
                 <p className={styles.fieldHint}>
@@ -525,11 +539,11 @@ export default function WebhookModal({
       }
 
       {regenerateModal && !deleteModal &&
-        <ConfirmationModal 
-          message={"Regenerate this webhook's secret? The current secret will stop validating deliveries immediately"} 
-          action={"Regenerate"} 
-          handleConfirmation={handleRegenerate} 
-          onClose={() => setRegenerateModal(false)} 
+        <ConfirmationModal
+          message={"Regenerate this webhook's secret? The current secret will stop validating deliveries immediately"}
+          action={"Regenerate"}
+          handleConfirmation={handleRegenerate}
+          onClose={() => setRegenerateModal(false)}
           timeoutMs={2000} />
       }
     </>
