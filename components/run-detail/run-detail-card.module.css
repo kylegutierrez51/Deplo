@@ -15,17 +15,28 @@
   margin-bottom: var(--space-2xl);
 }
 
+/*
+ * The actions must never be pushed out of the card. The row wraps on content, not on a
+ * breakpoint: when the info and the buttons don't both fit, the buttons drop below.
+ * The 360px basis keeps them beside the info for as long as its rows can wrap to make
+ * room; min-width: 0 lets it shrink to the card's width, and every row inside it wraps
+ * or ellipsizes, so nothing in it is wider than the card either. The breakpoints below
+ * that switch to a column reset the basis, since in a column it would size the height.
+ */
 .rdc-inner {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-md) 24px;
 }
 
 .rdc-info {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  flex: 1 1 360px;
+  min-width: 0;
 }
 
 /* Row 1: title */
@@ -47,6 +58,9 @@
   font-weight: 700;
   color: var(--white-clr);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rdc-num {
@@ -89,8 +103,9 @@
 /* Row 2: commit */
 .rdc-commit-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-xs) 14px;
   font-size: 16px;
 }
 
@@ -120,30 +135,32 @@
 /* Row 3: trigger */
 .rdc-trigger-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-xs) var(--space-lg);
 }
 
-/* Shared meta item */
+/* Shared meta item. min-width: 0 so a long branch ellipsizes instead of overflowing. */
 .rdc-meta-item {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  min-width: 0;
+  max-width: 100%;
   font-size: 16px;
   color: var(--subtitle-clr);
 }
 
 .rdc-meta-item ion-icon {
+  flex-shrink: 0;
   font-size: 19px;
   color: var(--icon-clr);
 }
 
 .rdc-meta-item span {
   white-space: nowrap;
-}
-
-.rdc-link span {
-  color: var(--blue-clr);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rdc-user {
@@ -153,6 +170,7 @@
 /* Action buttons (RunDetailActions, rendered inside this card) */
 .rdc-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-gap-md);
   flex-shrink: 0;
 }
@@ -242,6 +260,11 @@ Run Detail Media Queries
     gap: var(--space-md);
   }
 
+  /* needed since .rdc-inner sets flex-direction to column, making flex-basis control height of card. */
+  .rdc-info {
+    flex-basis: auto;
+  }
+
   /* Allow the commit row (hash, message, branch, repo) to wrap
      rather than overflow at this width. */
   .rdc-commit-row {
@@ -297,15 +320,6 @@ Run Detail Media Queries
 ============================================================ 
 */
 @media (max-width: 768px) {
-
-  /* --- Run detail card --- */
-
-  /* Stack run info above action buttons. */
-  .rdc-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-  }
 
   /* Allow the commit row (hash, message, branch, repo) to wrap
      rather than overflow at this width. */

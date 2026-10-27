@@ -67,6 +67,24 @@ describe('git metadata present', () => {
   });
 });
 
+// Full values stay reachable through the title; what is on screen is sized for the card.
+describe('long git values', () => {
+  const sha = '9e2a06f0970deb2b6b8aa7d91ec797e0ece667dd';
+  const message = "feat: in 'create' mode, users can mask and copy a webhook secret";
+
+  it('shows a seven-character sha with the full sha as its title', () => {
+    setup({ commitSha: sha });
+
+    expect(screen.getByText('9e2a06f')).toHaveAttribute('title', sha);
+  });
+
+  it('shows a truncated commit message with the full message as its title', () => {
+    setup({ commitMessage: message });
+
+    expect(screen.getByText("feat: in 'create' mode, users ...")).toHaveAttribute('title', message);
+  });
+});
+
 describe('absent git metadata', () => {
   it('omits the commit sha rather than printing a placeholder', () => {
     const { container } = setup({ commitSha: null });

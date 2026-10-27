@@ -2,7 +2,9 @@ import styles from './run-detail-card.module.css'
 import RunDetailActions from './RunDetailActions';
 import Pill from '@/components/ui/Pill';
 import EnvironmentLabel from '@/components/runs/EnvironmentLabel';
+import RepoLink from '@/components/ui/RepoLink';
 import { capitalize } from '@/lib/utils/string';
+import { shortSha, commitSummary } from '@/lib/utils/git';
 import type { RunStatus, RunEnvironment } from '@/lib/types';
 
 interface RunDetailData {
@@ -58,19 +60,19 @@ export default function RunDetailCard({ run }: { run: RunDetailData }) {
               {commitHash &&
                 <div className={styles['rdc-commit-ref']}>
                   <ion-icon name="git-commit-outline"></ion-icon>
-                  <span className={styles['rdc-commit-hash']}>{commitHash}</span>
+                  <span className={styles['rdc-commit-hash']} title={commitHash}>{shortSha(commitHash)}</span>
                 </div>
               }
-              {commitMessage && <span className={styles['rdc-commit-msg']}>{commitMessage}</span>}
+              {commitMessage && <span className={styles['rdc-commit-msg']} title={commitMessage}>{commitSummary(commitMessage)}</span>}
               {branch &&
                 <div className={styles['rdc-meta-item']}>
                   <ion-icon name="git-branch-outline"></ion-icon>
-                  <span>{branch}</span>
-                </div>      
-              }  
-              <div className={`${styles['rdc-meta-item']} ${styles['rdc-link']}`}>
+                  <span title={branch}>{branch}</span>
+                </div>
+              }
+              <div className={styles['rdc-meta-item']}>
                 <ion-icon name="open-outline"></ion-icon>
-                <span>{repo}</span>
+                <RepoLink repoUrl={repo} />
               </div>
             </div>
           }
