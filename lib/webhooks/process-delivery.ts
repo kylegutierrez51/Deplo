@@ -2,6 +2,7 @@ import type { Webhook } from "@/lib/data/webhooks";
 import type { WebhookEventStatus } from "@/lib/types";
 import { checkBranches } from "@/lib/webhooks/branches";
 import { commitFromPayload, isForkPullRequest } from "@/lib/webhooks/commit";
+import { getBranch } from "@/lib/utils/git";
 import { getLatestDefinition } from "@/lib/data/pipelines";
 import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from "@/lib/actions/run-trigger";
 
@@ -46,7 +47,7 @@ export async function processDelivery(
     }
 
     // check for branch filters
-    const target = githubEvent == 'push' ? payload.ref.replace('refs/heads/', '') : payload.pull_request.base.ref.replace('refs/heads/', '');
+    const target = githubEvent == 'push' ? getBranch(payload.ref) : getBranch(payload.pull_request.base.ref);
 
     if (!checkBranches(target, webhook.branchFilters)) {
       return outcome('ignored', `Branch "${target}" does not match the branch filters (${webhook.branchFilters.join(', ')}).`);

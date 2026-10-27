@@ -1,3 +1,6 @@
+import { getBranch } from "@/lib/utils/git";
+
+
 interface PushPayload {
   ref: string;
   after: string;
@@ -24,7 +27,7 @@ export function commitFromPayload(
 ): { commitSha: string; branch: string } {
   if (githubEvent === 'push') {
     const push = payload as PushPayload;
-    return { commitSha: push.after, branch: push.ref.replace('refs/heads/', '') };
+    return { commitSha: push.after, branch: getBranch(push.ref) };
   }
 
   const head = (payload as PullRequestPayload).pull_request.head;
