@@ -64,6 +64,23 @@ describe('the status reason', () => {
   });
 });
 
+describe('git metadata', () => {
+  it('links the repository as owner/repo', () => {
+    setup();
+
+    expect(screen.getByRole('link', { name: 'o/web-client' })).toHaveAttribute('href', 'https://github.com/o/web-client');
+  });
+
+  it('shows a seven-character sha and a truncated message, full values as titles', () => {
+    const sha = '9e2a06f0970deb2b6b8aa7d91ec797e0ece667dd';
+    const message = "feat: in 'create' mode, users can mask and copy a webhook secret";
+    setup({ commitSha: sha, commitMessage: message });
+
+    expect(screen.getByText('9e2a06f')).toHaveAttribute('title', sha);
+    expect(screen.getByText("feat: in 'create' mode, users ...")).toHaveAttribute('title', message);
+  });
+});
+
 describe('the source', () => {
   it('reads GitHub for a delivery from GitHub', () => {
     setup({ source: 'github' });

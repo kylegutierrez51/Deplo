@@ -7,7 +7,9 @@ import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookEventStyles from './webhook-event-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import type { PillVariant } from '@/components/ui/Pill';
-import { capitalize, getRepoName, getBranch } from '@/lib/utils/string';
+import { capitalize } from '@/lib/utils/string';
+import { shortSha, commitSummary, getBranch } from '@/lib/utils/git';
+import RepoLink from '@/components/ui/RepoLink';
 import { formatDate } from '@/lib/utils/date';
 import { withParams } from '@/lib/utils/url';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
@@ -98,80 +100,85 @@ export default function WebhookEventModal({
 
   return (
     <>
-    <Modal title={"Webhook Event"} onClose={onClose} footer={footer} mode={mode}>
-      <>
-        <div className={styles['item-flex']}>
-          {status && (
+      <Modal title={"Webhook Event"} onClose={onClose} footer={footer} mode={mode}>
+        <>
+          <div className={styles['item-flex']}>
+            {status && (
+              <div className={styles.item}>
+                <label>Status</label>
+                <span><Pill variant={status} label={capitalize(status)} /></span>
+              </div>
+            )}
+            {eventType && (
+              <div className={styles.item}>
+                <label>Event</label>
+                <span><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></span>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.item}>
+            <label>Reason</label>
+            <span className={styles['status-reason']} data-testid="status-reason">{statusReason ?? '—'}</span>
+          </div>
+
+          <div className={styles['item-flex']}>
             <div className={styles.item}>
-              <label>Status</label>
-              <span><Pill variant={status} label={capitalize(status)} /></span>
+              <label>Repository</label>
+              <span>{pipeline?.repoUrl ? <RepoLink repoUrl={pipeline.repoUrl} /> : '—'}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Branch</label>
+              <span>{branch ? getBranch(branch) : '—'}</span>
+            </div>
+          </div>
+
+          <div className={styles.item}>
+            <label>Commit</label>
+            <div className={styles['commit-detail']}>
+                {commitSha ?
+                  <>
+                    <span className={styles['commit-hash']} title={commitSha}>
+                      <ion-icon name="git-commit-outline"></ion-icon>
+                      {shortSha(commitSha)}
+                    </span>
+                  </>
+                  : '—'
+                }
+              {commitMessage && <span className={styles['commit-message']} title={commitMessage}>{commitSummary(commitMessage)}</span>}
+            </div>
+          </div>
+
+          <div className={styles['item-flex']}>
+            <div className={styles.item}>
+              <label>Pipeline</label>
+              <span>{pipeline?.name ?? 'Not Found'}</span>
+            </div>
+            <div className={styles.item}>
+              <label>Received</label>
+              <span>{formatDate(receivedAt)}</span>
+            </div>
+          </div>
+
+          {source && (
+            <div className={styles.item}>
+              <label>Source</label>
+              <span>{source === 'replay' ? 'Replayed from Deplo' : 'GitHub'}</span>
             </div>
           )}
-          {eventType && (
-            <div className={styles.item}>
-              <label>Event</label>
-              <span><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></span>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.item}>
-          <label>Reason</label>
-          <span className={styles['status-reason']} data-testid="status-reason">{statusReason ?? '—'}</span>
-        </div>
-
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Repository</label>
-            <span>{pipeline?.repoUrl ? getRepoName(pipeline.repoUrl) : '—'}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Branch</label>
-            <span>{branch ? getBranch(branch) : '—'}</span>
-          </div>
-        </div>
-
-        <div className={styles.item}>
-          <label>Commit</label>
-          <div className={styles['commit-detail']}>
-            <span className={styles['commit-hash']}>
-              <ion-icon name="git-commit-outline"></ion-icon>
-              {commitSha ?? '—'}
-            </span>
-            {commitMessage && <span className={styles['commit-message']}>{commitMessage}</span>}
-          </div>
-        </div>
-
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
-            <label>Pipeline</label>
-            <span>{pipeline?.name ?? 'Not Found'}</span>
-          </div>
-          <div className={styles.item}>
-            <label>Received</label>
-            <span>{formatDate(receivedAt)}</span>
-          </div>
-        </div>
-
-        {source && (
-          <div className={styles.item}>
-            <label>Source</label>
-            <span>{source === 'replay' ? 'Replayed from Deplo' : 'GitHub'}</span>
-          </div>
-        )}
-      </>
-    </Modal>
-    {confirming && (
-      <ConfirmationModal
-        message="Replay this delivery?"
-        subMessage="It runs through this webhook's current settings and may start a new run for the same commit."
-        action="Replay"
-        variant="success"
-        handleConfirmation={handleReplay}
-        onClose={() => setConfirming(false)}
-        timeoutMs={1500}
-      />
-    )}
+        </>
+      </Modal>
+      {confirming && (
+        <ConfirmationModal
+          message="Replay this delivery?"
+          subMessage="It runs through this webhook's current settings and may start a new run for the same commit."
+          action="Replay"
+          variant="success"
+          handleConfirmation={handleReplay}
+          onClose={() => setConfirming(false)}
+          timeoutMs={1500}
+        />
+      )}
     </>
   );
 }

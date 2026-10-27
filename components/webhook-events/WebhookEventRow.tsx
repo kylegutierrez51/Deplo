@@ -4,7 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { WebhookEvent } from "@/lib/data/webhook-events";
-import { capitalize, getRepoName, getBranch } from "@/lib/utils/string";
+import { capitalize } from "@/lib/utils/string";
+import { shortSha, commitSummary, getBranch } from "@/lib/utils/git";
+import RepoLink from '@/components/ui/RepoLink';
 import { formatDate } from "@/lib/utils/date";
 import styles from "./webhook-event-row.module.css";
 
@@ -36,9 +38,13 @@ export default function WebhookEventRow({ event }: { event: WebhookEvent }) {
           )}
         </div>
       </td>
-      <td>{pipeline?.repoUrl ? getRepoName(pipeline.repoUrl) : '—'}</td>
+      <td>{pipeline?.repoUrl ? <RepoLink repoUrl={pipeline.repoUrl} short /> : '—'}</td>
       <td>{branch ? getBranch(branch) : '—' }</td>
-      <td>{commitSha || '—'}<br />{<span>{commitSha && commitMessage && commitMessage}</span>}</td>
+      <td>
+        {commitSha ? <span className={styles.sha} title={commitSha}>{shortSha(commitSha)}</span> : '—'}
+        <br />
+        {commitSha && commitMessage && <span className="nowrap" title={commitMessage}>{commitSummary(commitMessage)}</span>}
+      </td>
       <td>{pipeline?.name ?? 'None'}</td>
       <td>{formatDate(receivedAt)}</td>
     </tr>

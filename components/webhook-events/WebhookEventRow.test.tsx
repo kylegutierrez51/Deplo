@@ -75,6 +75,29 @@ describe('git metadata present', () => {
     expect(commit()).toHaveTextContent('abc1234');
     expect(commit()).toHaveTextContent('Fix the thing');
   });
+
+  it('links the repository by name', () => {
+    setup();
+
+    expect(screen.getByRole('link', { name: 'web-client' })).toHaveAttribute('href', 'https://github.com/o/web-client');
+  });
+  
+  it('follows the repo link without opening the modal', async () => {
+    setup();
+
+    await userEvent.click(screen.getByRole('link', { name: 'web-client' }));
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows a seven-character sha and a truncated message, full values as titles', () => {
+    const sha = '9e2a06f0970deb2b6b8aa7d91ec797e0ece667dd';
+    const message = "feat: in 'create' mode, users can mask and copy a webhook secret";
+    setup({ commitSha: sha, commitMessage: message });
+
+    expect(screen.getByText('9e2a06f')).toHaveAttribute('title', sha);
+    expect(screen.getByText("feat: in 'create' mode, users ...")).toHaveAttribute('title', message);
+  });
 });
 
 describe('absent git metadata', () => {

@@ -20,6 +20,12 @@
   font-size: var(--font-size-sm);
 }
 
+/* `table td span` greys every span; the sha keeps the cell's own colour. */
+.sha {
+  color: inherit;
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
 /* Marks a row recorded by Replay rather than delivered by GitHub. */
 .replay {
   display: inline-flex;
