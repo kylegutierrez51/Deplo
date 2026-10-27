@@ -1,0 +1,18 @@
+/*
+ * min-width: 0 + ellipsis so a long owner/repo can shrink inside a flex row instead of
+ * pushing its siblings (the run detail card's buttons, a table column) out of view.
+ */
+.repo-link {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  color: var(--blue-clr);
+}
+
+a.repo-link:hover {
+  text-decoration: underline;
+}

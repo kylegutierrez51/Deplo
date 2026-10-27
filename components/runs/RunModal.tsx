@@ -10,6 +10,7 @@ import type { Run } from '@/lib/data/runs';
 import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
 import EnvironmentLabel from './EnvironmentLabel';
+import RepoLink from '@/components/ui/RepoLink';
 
 const styles = { ...modalStyles, ...runHistoryStyles };
 
@@ -59,7 +60,7 @@ export default function RunModal({
             <label>Pipeline</label>
             <div className={styles['pipeline-detail']}>
               <span className={styles['pipeline']}>{pipelineName} <span className={styles['run-number']}>#{runNumber}</span></span>
-              {repoUrl && <span className={styles.repo}>{repoUrl}</span>}
+              {repoUrl && <span className={styles.repo}><RepoLink repoUrl={repoUrl} /></span>}
             </div>
           </div>
           {status && (
