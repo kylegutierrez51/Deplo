@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils/date";
 import { useState, useActionState } from 'react';
 import Link from 'next/link';
 import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipelines";
-import type { PipelineStatus, FormState } from "@/lib/types";
+import type { PipelineStatus, FormState, EnvType } from "@/lib/types";
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import modalStyles from '@/components/ui/modals/modal.module.css';
@@ -23,10 +23,12 @@ interface PipelineModalProps {
   status: PipelineStatus;
   lastRun: string | null;
   repoUrl: string | null;
-  commitMessage?: string | null;
   description: string | null;
   defaultEnvironmentId: string | null;
-  defaultEnvironment?: string | null;
+  defaultEnvironment?: {
+    name: string;
+    type: EnvType;
+  } | null;
   environments: Environment[];
   createdBy?: string | null;
   createdAt: Date;
@@ -52,7 +54,6 @@ export default function PipelineModal({
   status,
   lastRun,
   repoUrl,
-  commitMessage,
   description,
   defaultEnvironmentId,
   defaultEnvironment,
@@ -160,10 +161,8 @@ export default function PipelineModal({
               <div className={styles.item}>
                 <label>Repo URL</label>
                 <span>{repoUrl}</span>
-                <span className={styles['commit-message']}>{commitMessage}</span>
               </div>
             }
-
 
             {description && (
               <div className={styles.item}>
@@ -175,7 +174,11 @@ export default function PipelineModal({
             {defaultEnvironment && (
               <div className={styles.item}>
                 <label>Default Environment</label>
-                <span>{defaultEnvironment}</span>
+                <div className={styles.envGroup}>
+                  {defaultEnvironment.name}
+                  <Pill variant={defaultEnvironment.type} label={capitalize(defaultEnvironment.type)}></Pill>
+                </div>
+                
               </div>
             )}
 
@@ -223,7 +226,7 @@ export default function PipelineModal({
                 emptyText="No matching environments"
                 options={environments.map(env => ({ id: env.id, name: env.name, detail: capitalize(env.type) }))}
                 initialId={defaultEnvironmentId}
-                initialName={defaultEnvironment}
+                initialName={defaultEnvironment?.name}
               />
             </div>
 
