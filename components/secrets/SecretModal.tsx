@@ -11,6 +11,7 @@ import secretStyles from './secret-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
 import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
+import { capitalize } from '@/lib/utils/string';
 
 const styles = { ...modalStyles, ...secretStyles };
 
@@ -182,7 +183,7 @@ export default function SecretModal({
               <div className={styles.buttonGroup}>
                 {environmentName ?
                   <>
-                    {environmentName} <Pill variant={environmentType} label={environmentType} />
+                    {environmentName} <Pill variant={environmentType} label={capitalize(environmentType)} />
                   </>
                   : "None"
                 }
