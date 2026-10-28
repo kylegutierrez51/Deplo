@@ -1,6 +1,6 @@
 import type { Webhook } from "@/lib/data/webhooks";
 import type { WebhookEventStatus } from "@/lib/types";
-import { checkBranches } from "@/lib/webhooks/branches";
+import { checkBranches } from "@/lib/webhooks/branch-filters";
 import { commitFromPayload, isForkPullRequest } from "@/lib/webhooks/commit";
 import { getBranch } from "@/lib/utils/git";
 import { getLatestDefinition } from "@/lib/data/pipelines";

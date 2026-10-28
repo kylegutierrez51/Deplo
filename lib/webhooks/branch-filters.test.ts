@@ -1,4 +1,4 @@
-import { checkBranches } from '@/lib/webhooks/branches';
+import { checkBranches } from '@/lib/webhooks/branch-filters';
 
 /*
  * A filter matches the branch itself or anything beneath it, so "docs", "docs/"
