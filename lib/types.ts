@@ -129,3 +129,26 @@ export type WebhookEventData = {
   pipelineId: string | null,
   webhookId: string
 }
+
+/*
+===================================================
+Push and PR Payload
+===================================================
+*/
+
+export type PushPayload = {
+  ref: string;
+  after: string;
+}
+
+export type PullRequestPayload = {
+  pull_request: {
+    head: {
+      sha: string;
+      ref: string;
+      // null when the fork the PR was opened from has since been deleted.
+      repo: { full_name: string } | null;
+    };
+  };
+  repository: { full_name: string };
+}

@@ -38,9 +38,10 @@ const row = (over: Record<string, unknown> = {}) => ({
 });
 
 /** The seeded shape of a GitHub push payload. */
-const pushPayload = {
+const pushAndPRPayload = {
   after: 'abc123',
   ref: 'refs/heads/main',
+  pull_request: { head: { ref: 'refs/heads/main' } },
   head_commit: { message: 'fix the thing' },
 };
 
@@ -91,7 +92,7 @@ describe('getWebhookEventsPage payload extraction', () => {
   };
 
   it('digs the commit, message and ref out of a GitHub push payload', async () => {
-    const event = await eventsFrom(pushPayload);
+    const event = await eventsFrom(pushAndPRPayload);
 
     expect(event).toMatchObject({
       commitSha: 'abc123',
@@ -175,7 +176,7 @@ describe('getWebhookEventById', () => {
   // is asserted independently rather than assumed to match the list.
   it('performs the same translation as the list query', async () => {
     prismaMock.webhookEvent.findUnique.mockResolvedValue(
-      row({ payload: pushPayload, status: 'FAILED', eventType: 'PULL_REQUEST' }) as never,
+      row({ payload: pushAndPRPayload, status: 'FAILED', eventType: 'PULL_REQUEST' }) as never,
     );
 
     const event = await getWebhookEventById('evt-1');
@@ -265,7 +266,7 @@ describe('replayBlockedReason', () => {
   const INACTIVE = 'This webhook is inactive. Activate it to replay its events.';
   const GONE = 'The webhook this event arrived on no longer exists.';
   const both = async (over: Record<string, unknown>) => {
-    const r = row({ status: 'PROCESSED', payload: pushPayload, ...over });
+    const r = row({ status: 'PROCESSED', payload: pushAndPRPayload, ...over });
     prismaMock.webhookEvent.findMany.mockResolvedValue([r] as never);
     prismaMock.webhookEvent.findUnique.mockResolvedValue(r as never);
     groupByMock().mockResolvedValue([] as never);

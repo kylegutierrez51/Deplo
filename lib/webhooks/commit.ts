@@ -1,23 +1,5 @@
 import { getBranch } from "@/lib/utils/git";
-
-
-interface PushPayload {
-  ref: string;
-  after: string;
-}
-
-interface PullRequestPayload {
-  pull_request: {
-    head: {
-      sha: string;
-      ref: string;
-      // null when the fork the PR was opened from has since been deleted.
-      repo: { full_name: string } | null;
-    };
-  };
-  repository: { full_name: string };
-}
-
+import { PushPayload, PullRequestPayload } from "@/lib/types";
 
 
 // The commit a run should execute CI/CD pipeline. For a pull_request, that is the PR's own head

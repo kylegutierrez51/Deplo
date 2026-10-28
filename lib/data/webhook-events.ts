@@ -5,6 +5,7 @@ import { ALL, WEBHOOK_EVENT_FILTERS, type WebhookEventFilters } from '@/lib/filt
 import { invert, parseFilters } from '@/lib/filters/parse';
 import { replayBlocker } from '@/lib/webhooks/replay';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
+import { PushPayload, PullRequestPayload } from "@/lib/types";
 
 export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   status: WebhookEventStatus;
@@ -33,11 +34,9 @@ const WEBHOOK_EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
   UNRECOGNIZED: 'unrecognized'
 };
 
-type GithubWebhookPayload = {
-  after?: string;
-  head_commit?: { message?: string };
-  ref?: string;
-};
+type GithubWebhookPayload = PushPayload & Omit<PullRequestPayload, 'repository'> & {
+  head_commit?: { message?: string }; // `push` commit message
+} | null;
 
 export type WebhookEventCounts = Record<WebhookEventStatus, number>;
 
@@ -101,11 +100,13 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
       eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
       commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
       commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
-      branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
+      branch: returnBranch(webhookEvent.payload as GithubWebhookPayload, webhookEvent.eventType)
     })),
     counts,
   };
 }
+
+
 
 export async function getWebhookEventById(id: string): Promise<WebhookEvent | null> {
   const found = await prisma.webhookEvent.findUnique({
@@ -129,6 +130,14 @@ export async function getWebhookEventById(id: string): Promise<WebhookEvent | nu
     eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
     commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
     commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
-    branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
+    branch: returnBranch(webhookEvent.payload as GithubWebhookPayload, webhookEvent.eventType)
   }
+}
+
+
+
+function returnBranch(payload: GithubWebhookPayload, eventType: PrismaEventType): string | null{
+  if (eventType === 'PUSH') return payload?.ref ?? null;
+  if (eventType === 'PULL_REQUEST') return payload?.pull_request?.head?.ref ?? null;
+  return null;
 }
