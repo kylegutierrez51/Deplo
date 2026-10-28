@@ -35,11 +35,11 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                 <Pill key={index} variant={event} label={EVENT_TYPE_MAP[event]}/>
               ))}
             </div>
-            {webhook.environmentName && webhook.environmentType &&
+            {webhook.environment &&
               <div className={styles.environment}>
                 <span>Environment:</span>
-                <span>{webhook.environmentName}</span>
-                <Pill variant={webhook.environmentType} label={capitalize(webhook.environmentType)} />
+                <span>{webhook.environment.name}</span>
+                <Pill variant={webhook.environment.type} label={capitalize(webhook.environment.type)} />
               </div>
             }
               {webhook.lastDelivery &&

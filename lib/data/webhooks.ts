@@ -23,8 +23,10 @@ export type Webhook = Omit<PrismaWebhook, "createdById" | "events"> & {
   pipelineName?: string | null;
   // The pipeline's own Repo URL, so the UI can warn when webhook runs won't check out code from GitHub
   pipelineRepoUrl?: string | null;
-  environmentName?: string | null;
-  environmentType?: EnvType | null;
+  environment?: {
+    name: string;
+    type: EnvType;
+  } | null;
 }
 
 
@@ -68,8 +70,10 @@ export async function getWebhooksPage(filters: WebhookFilters = parseFilters({},
     events: w.events.map((event) => EVENT_TYPE_MAP[event]),
     pipelineName: w.pipeline?.name,
     pipelineRepoUrl: w.pipeline?.repoUrl ?? null,
-    environmentName: w.environment?.name,
-    environmentType: w.environment ? w.environment.type.toLowerCase() as EnvType : null,
+    environment: w.environment ? {
+      name: w.environment.name,
+      type: w.environment.type.toLowerCase() as EnvType
+    } : null,
   }));
   return { rows, total, ...meta };
 }
@@ -97,8 +101,10 @@ export async function getWebhookById(id: string): Promise<Webhook | null> {
     events: webhook.events.map((event) => EVENT_TYPE_MAP[event]),
     pipelineName: webhook.pipeline?.name,
     pipelineRepoUrl: webhook.pipeline?.repoUrl ?? null,
-    environmentName: webhook.environment?.name,
-    environmentType: webhook.environment ? webhook.environment.type.toLowerCase() as EnvType : null,
+    environment: webhook.environment ? {
+      name: webhook.environment.name,
+      type: webhook.environment.type.toLowerCase() as EnvType
+    } : null,
     createdBy: webhook.createdBy?.name ?? null,
   }
 }

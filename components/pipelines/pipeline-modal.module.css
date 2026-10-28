@@ -34,15 +34,17 @@
   gap: 50px;
 }
 
+.envGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
 .created-updated-flex {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.commit-message {
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-sm);
 }
 
 .latest-run-link {

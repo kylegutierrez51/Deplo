@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@/generated/prisma/client";
 import { fromDefinition, toDefinition } from '@/lib/pipeline/definition';
-import type { ConfigJson, GraphJson, PipelineStatus } from '@/lib/types';
+import type { ConfigJson, EnvType, GraphJson, PipelineStatus } from '@/lib/types';
 import { ALL, PIPELINE_FILTERS, type PipelineFilters } from '@/lib/filters/options';
 import { dateRangeCutoff, invert, parseFilters } from '@/lib/filters/parse';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
@@ -11,8 +11,10 @@ export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
   status: PipelineStatus;
   runNumber?: number;
   createdBy?: string | null;
-  commitMessage?: string | null;
-  defaultEnvironment?: string | null;
+  defaultEnvironment?: {
+    name: string;
+    type: EnvType;
+  } | null;
 }
 
 const RUN_STATUS_MAP: Record<PrismaRunStatus, PipelineStatus> = {
@@ -42,6 +44,8 @@ function statusWhere(status: PipelineFilters['status']) {
   return { lastRun: { status: STATUS_TO_PRISMA[status] } };
 }
 
+
+
 function pipelinesWhere({ status, updated }: PipelineFilters) {
   const updatedSince = dateRangeCutoff(updated);
   return {
@@ -49,6 +53,8 @@ function pipelinesWhere({ status, updated }: PipelineFilters) {
     ...(updatedSince && { updatedAt: { gte: updatedSince } }),
   };
 }
+
+
 
 async function findPipelines(args: { where: ReturnType<typeof pipelinesWhere>; skip?: number; take?: number }): Promise<Pipeline[]> {
   const pipelines = await prisma.pipeline.findMany({
@@ -65,10 +71,14 @@ async function findPipelines(args: { where: ReturnType<typeof pipelinesWhere>; s
   }));
 }
 
+
+
 // Unpaginated: Used by WebhookModal so users can select pipelines
 export async function getPipelines(filters: PipelineFilters = parseFilters({}, PIPELINE_FILTERS)): Promise<Pipeline[]> {
   return findPipelines({ where: pipelinesWhere(filters) });
 }
+
+
 
 export async function getPipelinesPage(filters: PipelineFilters, page: number, pageSize = DEFAULT_PAGE_SIZE): Promise<Page<Pipeline>> {
   const where = pipelinesWhere(filters);
@@ -78,10 +88,14 @@ export async function getPipelinesPage(filters: PipelineFilters, page: number, p
   return { rows: await findPipelines({ where, skip, take }), total, ...meta };
 }
 
+
+
 // the subtitle counts every pipeline regardless of filtering
 export async function countPipelines(): Promise<number> {
   return prisma.pipeline.count();
 }
+
+
 
 export async function getPipelineById(id: string): Promise<Pipeline | null> {
   const pipeline = await prisma.pipeline.findUnique({
@@ -89,7 +103,7 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
     include: {
       lastRun: true,
       createdBy: { select: { name: true } },
-      defaultEnvironment: { select: { name: true } }
+      defaultEnvironment: { select: { name: true, type: true } }
      }
   })
 
@@ -102,9 +116,14 @@ export async function getPipelineById(id: string): Promise<Pipeline | null> {
     status: lastRun ? RUN_STATUS_MAP[lastRun.status] : 'idle',
     lastRun: lastRun?.id ?? null,
     createdBy: pipeline.createdBy?.name ?? null,
-    defaultEnvironment: defaultEnvironment?.name ?? null
+    defaultEnvironment: defaultEnvironment ? {
+      name: defaultEnvironment.name,
+      type: defaultEnvironment.type.toLowerCase() as EnvType
+    } : null,
   }
 }
+
+
 
 export async function getPipelineDefinition(pipelineId: string): Promise<GraphJson & { defaultDirectory: string | null }> {
   const definition = await prisma.pipelineDefinition.findFirst({
@@ -119,6 +138,8 @@ export async function getPipelineDefinition(pipelineId: string): Promise<GraphJs
     defaultDirectory: definition.defaultDirectory ?? null,
   }
 }
+
+
 
 // The newest saved definition with its id, which a run pins itself to. Null when the pipeline was never saved.
 export async function getLatestDefinition(pipelineId: string): Promise<{ id: string, graphJson: GraphJson, configJson: ConfigJson } | null> {
