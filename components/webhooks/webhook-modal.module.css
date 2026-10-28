@@ -120,6 +120,25 @@ Trigger Event Cards
 
 /*
 ==========================
+Environment
+==========================
+*/
+.envGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.env {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/*
+==========================
 Webhook Secret Input
 ==========================
 */

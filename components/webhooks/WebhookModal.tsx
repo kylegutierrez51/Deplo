@@ -2,7 +2,7 @@
 
 import { useState, useRef, useActionState, useSyncExternalStore } from 'react';
 import { formatDate } from '@/lib/utils/date';
-import type { FormState, EventType } from '@/lib/types';
+import type { FormState, EventType, EnvType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
 import type { Environment } from '@/lib/data/environments';
 import Modal from '@/components/ui/modals/Modal';
@@ -27,7 +27,10 @@ interface WebhookModalProps {
   pipelineName?: string | null;
   pipelineRepoUrl?: string | null;
   environmentId?: string | null;
-  environmentName?: string | null;
+  environment?: {
+    name: string;
+    type: EnvType;
+  } | null;
   isActive?: boolean;
   branchFilters: string[];
   events: EventType[];
@@ -69,7 +72,7 @@ export default function WebhookModal({
   pipelineName,
   pipelineRepoUrl,
   environmentId,
-  environmentName,
+  environment,
   isActive = true,
   branchFilters = [],
   events = [],
@@ -242,11 +245,16 @@ export default function WebhookModal({
 
             <div className={styles.fieldGroup}>
               <label>Environment</label>
-              {environmentName ? (
-                <div className={styles.iconValue}>
+              {environment ? (
+                <>
+                <div className={styles.envGroup}>
                   <ion-icon name="layers-outline"></ion-icon>
-                  <span>{environmentName}</span>
+                  <div className={styles.env}>
+                    <span>{environment.name}</span>
+                    <Pill variant={environment.type} label={capitalize(environment.type)}></Pill>
+                  </div>
                 </div>
+                </>
               ) : (
                 <span className={styles.emptyValue}>None — runs do not use secrets</span>
               )}
@@ -358,7 +366,7 @@ export default function WebhookModal({
                 emptyText="No matching environments"
                 options={environments?.map(e => ({ id: e.id, name: e.name, detail: capitalize(e.type) })) ?? []}
                 initialId={environmentId}
-                initialName={environmentName}
+                initialName={environment?.name}
               />
             </div>
 
