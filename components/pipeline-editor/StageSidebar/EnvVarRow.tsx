@@ -15,6 +15,7 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
       <input
         name="env-key"
         placeholder="e.g., NODE_ENV"
+        spellCheck={false}
         value={envKey}
         onChange={e => onChange('key', e.target.value)}
       />
@@ -22,6 +23,7 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
       <input
         name="env-value"
         placeholder="e.g. production"
+        spellCheck={false}
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />

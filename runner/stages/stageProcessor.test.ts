@@ -6,6 +6,7 @@
  * Under jsdom every case here would fail on a detail of the test environment rather than of
  * the code.
  */
+import { rm } from 'node:fs/promises';
 import { processStage } from './stageProcessor';
 import { loadRunContext, markStageRunning, finishStage, openRetry, recordStageProgress, isRunCancelled } from '../db';
 import { execute } from './execute';
@@ -13,6 +14,7 @@ import { resolveSecrets } from './secrets';
 import { advanceRun } from '../runs/runProcessor';
 import type { CustomNode } from '@/lib/types';
 import { UNSAVED_RESULT_NOTE } from '@/lib/stage-notes';
+import path from 'node:path';
 
 /*
  * Explicit factories throughout, never a bare jest.mock: an automock loads the real module
@@ -29,6 +31,7 @@ jest.mock('../db', () => ({
   recordStageProgress: jest.fn(),
   isRunCancelled: jest.fn(),
 }));
+jest.mock('node:fs/promises', () => ({ rm: jest.fn() }));
 jest.mock('./execute', () => ({ execute: jest.fn() }));
 jest.mock('./secrets', () => ({ resolveSecrets: jest.fn() }));
 jest.mock('../runs/runProcessor', () => ({ advanceRun: jest.fn() }));
@@ -54,6 +57,7 @@ const secrets = resolveSecrets as jest.MockedFunction<typeof resolveSecrets>;
 const advance = advanceRun as jest.MockedFunction<typeof advanceRun>;
 const progress = recordStageProgress as jest.MockedFunction<typeof recordStageProgress>;
 const cancelled = isRunCancelled as jest.MockedFunction<typeof isRunCancelled>;
+const removeDir = rm as jest.MockedFunction<typeof rm>;
 
 const job = { runId: 'run-1', stageId: 'build', attempt: 1 };
 
@@ -63,15 +67,23 @@ const stageNode = (data: Record<string, unknown> = {}) => ({
   data: { type: 'custom', name: 'build', command: 'npm ci', ...data },
 }) as CustomNode;
 
-const context = (node = stageNode(), environmentId: string | null = 'env-1') =>
+const context = (
+  node = stageNode(),
+  environmentId: string | null = 'env-1',
+  defaultDirectory: string | null = null,
+  commit: { repoUrl: string | null, commitSha: string | null, branch: string | null } =
+    { repoUrl: null, commitSha: null, branch: null },
+) =>
   loadContext.mockResolvedValue({
     runId: 'run-1',
     runStatus: 'RUNNING',
     definitionId: 'def-1',
     environmentId,
+    defaultDirectory,
     graph: { nodes: [node], edges: [] },
     outcomes: new Map(),
     attempts: new Map([['build', 1]]),
+    ...commit,
   } as never);
 
 const exited = (exitCode: number | null, over: Record<string, unknown> = {}) =>
@@ -90,6 +102,7 @@ beforeEach(() => {
   secrets.mockResolvedValue({});
   progress.mockResolvedValue(true);
   cancelled.mockResolvedValue(false);
+  removeDir.mockResolvedValue(undefined);
   context();
   exited(0);
   jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -256,6 +269,147 @@ describe('the command environment', () => {
   });
 });
 
+/*
+ * The runner never clones anything itself — these three variables are what let a webhook
+ * run's first stage check out the commit that triggered it, with plain `git` commands.
+ */
+describe('the commit environment', () => {
+  const commit = { repoUrl: 'https://github.com/org/repo.git', commitSha: 'abc123', branch: 'main' };
+
+  it('exposes the repo url, commit sha and branch to the stage', async () => {
+    context(stageNode(), 'env-1', null, commit);
+
+    await processStage(job);
+
+    expect(spawned().env).toEqual(expect.objectContaining({
+      DEPLO_REPO_URL: commit.repoUrl,
+      DEPLO_COMMIT_SHA: commit.commitSha,
+      DEPLO_BRANCH: commit.branch,
+    }));
+  });
+
+  // A manual run resolves none of these, and a stage must not see empty strings standing
+  // in for "no commit" — that would make a checkout command fail in a confusing way.
+  it('omits all three for a run with no commit', async () => {
+    context(stageNode(), 'env-1', null, { repoUrl: null, commitSha: null, branch: null });
+
+    await processStage(job);
+
+    const env = spawned().env;
+    expect(env).not.toHaveProperty('DEPLO_REPO_URL');
+    expect(env).not.toHaveProperty('DEPLO_COMMIT_SHA');
+    expect(env).not.toHaveProperty('DEPLO_BRANCH');
+  });
+
+  // The runner's own process can carry one of these from a line in .env or the shell that
+  // started it; a manual run (or any run missing that one value) must not pass it off as its own.
+  it.each(['DEPLO_REPO_URL', 'DEPLO_COMMIT_SHA', 'DEPLO_BRANCH'])('does not leak %s from the runner\'s own environment', async (name) => {
+    process.env[name] = 'stale-from-the-runner-environment';
+    context(stageNode(), 'env-1', null, { repoUrl: null, commitSha: null, branch: null });
+
+    try {
+      await processStage(job);
+
+      expect(spawned().env).not.toHaveProperty(name);
+    } finally {
+      delete process.env[name];
+    }
+  });
+
+  // Only the variables the runner sets are stripped, not the whole prefix, so an unrelated
+  // DEPLO_* value someone put in the runner's environment on purpose still reaches the stage.
+  it('passes through a DEPLO_* variable the runner does not set', async () => {
+    process.env.DEPLO_DEBUG = '1';
+    context(stageNode(), 'env-1', null, commit);
+
+    try {
+      await processStage(job);
+
+      expect(spawned().env.DEPLO_DEBUG).toBe('1');
+    } finally {
+      delete process.env.DEPLO_DEBUG;
+    }
+  });
+
+  // Consistent with the existing "secret wins a name collision" rule: a stage's own
+  // configuration always wins over whatever the run carries.
+  it('lets a stage env var override the run\'s commit values', async () => {
+    context(stageNode({ env_vars: [{ key: 'DEPLO_BRANCH', value: 'override-branch' }] }), 'env-1', null, commit);
+
+    await processStage(job);
+
+    expect(spawned().env.DEPLO_BRANCH).toBe('override-branch');
+  });
+
+  // The pipeline form stores '' when the Repo URL field is left blank — not null — so the
+  // check has to be on truthiness, not just != null, or a webhook run on such a pipeline
+  // would hand the stage an empty DEPLO_REPO_URL instead of omitting it.
+  it('omits DEPLO_REPO_URL for an empty repo url', async () => {
+    context(stageNode(), 'env-1', null, { repoUrl: '', commitSha: commit.commitSha, branch: commit.branch });
+
+    await processStage(job);
+
+    expect(spawned().env).not.toHaveProperty('DEPLO_REPO_URL');
+  });
+});
+
+/*
+ * The pipeline's default directory is applied here, at run time, rather than written into
+ * each command by the editor — so changing the default moves every stage that inherits it.
+ * The rule that makes that safe is that it never displaces a directory a stage chose itself.
+ */
+describe('the default directory', () => {
+  it('prefixes a command that sets no directory of its own', async () => {
+    context(stageNode({ command: 'npm ci' }), 'env-1', '/srv/app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "/srv/app" && npm ci');
+  });
+
+  // The default directory lives inside the repo, which does not exist until checkout has run.
+  it('does not apply it to the synthetic Checkout stage', async () => {
+    const checkoutNode = { ...stageNode({ command: 'git init .' }), id: 'deplo-checkout' } as CustomNode;
+    context(checkoutNode, 'env-1', 'app');
+
+    await processStage({ ...job, stageId: 'deplo-checkout' });
+
+    expect(spawned().command).toBe('git init .');
+  });
+
+  it('still applies it to an ordinary stage in the same run', async () => {
+    context(stageNode({ command: 'npm ci' }), 'env-1', 'app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "app" && npm ci');
+  });
+
+  it('never overrides a directory the stage set', async () => {
+    context(stageNode({ command: 'cd "own" && npm ci' }), 'env-1', '/srv/app');
+
+    await processStage(job);
+
+    expect(spawned().command).toBe('cd "own" && npm ci');
+  });
+
+  it('leaves the command untouched when the pipeline has no default', async () => {
+    await processStage(job);
+
+    expect(spawned().command).toBe('npm ci');
+  });
+
+  // A directory prefix with nothing after it is a shell syntax error, not a command.
+  it('fails a stage that holds only a directory, without spawning it', async () => {
+    context(stageNode({ command: 'cd "app" && ' }));
+
+    await processStage(job);
+
+    expect(run).not.toHaveBeenCalled();
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED' }));
+  });
+});
+
 describe('timeouts', () => {
   it('converts the configured seconds into milliseconds', async () => {
     context(stageNode({ timeout: 90 }));
@@ -358,6 +512,51 @@ describe('opening a retry', () => {
     await processStage({ ...job, attempt: 2 });
 
     expect(retry).toHaveBeenCalledWith('run-1', 'build', 2);
+  });
+});
+
+describe('retrying the synthetic Checkout stage', () => {
+  const checkoutNode = () => ({ ...stageNode({ command: 'git init --quiet .' }), id: 'deplo-checkout' }) as CustomNode;
+  const checkoutJob = { runId: 'run-1', stageId: 'deplo-checkout', attempt: 2 };
+
+  // A killed git leaves .git/shallow.lock or .git/index.lock behind, and every later attempt
+  // runs in the same workspace and dies on it.
+  it('removes the half-written .git before spawning on a later attempt', async () => {
+    context(checkoutNode());
+    const order: string[] = [];
+    removeDir.mockImplementation(async () => { order.push('rm'); });
+    run.mockImplementation((async () => { order.push('execute'); return { exitCode: 0, signal: null, timedOut: false, cancelled: false, logSnippet: '' }; }) as never);
+
+    await processStage(checkoutJob);
+
+    expect(removeDir).toHaveBeenCalledWith(path.join(spawned().cwd, '.git'), { recursive: true, force: true });
+    expect(order).toEqual(['rm', 'execute']);
+  });
+
+  it('leaves the workspace alone on the first attempt', async () => {
+    context(checkoutNode());
+
+    await processStage({ ...checkoutJob, attempt: 1 });
+
+    expect(removeDir).not.toHaveBeenCalled();
+  });
+
+  it('leaves the workspace alone when an ordinary stage retries', async () => {
+    await processStage({ ...job, attempt: 2 });
+
+    expect(removeDir).not.toHaveBeenCalled();
+  });
+
+  it('fails without retrying, and without spawning, when the workspace cannot be cleaned', async () => {
+    context(checkoutNode());
+    removeDir.mockRejectedValue(new Error('EBUSY: resource busy'));
+
+    await processStage(checkoutJob);
+
+    expect(run).not.toHaveBeenCalled();
+    expect(retry).not.toHaveBeenCalled();
+    expect(recorded()).toEqual(expect.objectContaining({ status: 'FAILED', exitCode: null }));
+    expect(recorded().logSnippet).toContain('EBUSY');
   });
 });
 

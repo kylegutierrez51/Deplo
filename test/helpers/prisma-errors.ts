@@ -20,5 +20,5 @@ import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/librar
  * making rather than production — which is how those branches were dead for as
  * long as they were.
  */
-export const prismaError = (code: string, message = 'boom') =>
-  new PrismaClientKnownRequestError(message, { code, clientVersion: '6.19.3' });
+export const prismaError = (code: string, message = 'boom', meta?: Record<string, unknown>) =>
+  new PrismaClientKnownRequestError(message, { code, clientVersion: '6.19.3', meta });

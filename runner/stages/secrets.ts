@@ -5,11 +5,13 @@ import { decryptSecret } from '@/lib/utils/crypto';
 ==============================================================================================
  * Turns the secret ids a stage selected into the environment variables its command runs with.
  *
- * Called immediately before the command is run. The stage job payload carries
- * three ids and nothing else because Redis persists to disk and BullMQ keeps completed
- * jobs by default, so a decrypted value in job.data is a credential sitting in an AOF file
- * and readable with HGETALL. Resolved here, the plaintext exists only in this process's
- * memory and in the child's environment, for the length of one command.
+ * When a stage is enqueued and the worker holds onto it, it is stored in Redis.
+ * This stores three things in Redis: (stage id, run id, attempt)
+ * 
+ * Once BullMQ is ready to execute the stage, a worker takes the job **OUT** of Redis
+ * and calls `processStage`, which goes to `attemptStage`. 
+ * So we call resolveSecrets() within `attemptStage`, leaving the secrets only within the 
+ * worker's memory and in the stage's environment, NOT in Redis.
  *
  * A secret id that no longer exists in the prisma query throws.
 ==============================================================================================

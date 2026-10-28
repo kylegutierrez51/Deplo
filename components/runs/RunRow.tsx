@@ -9,6 +9,7 @@ import { capitalize } from "@/lib/utils/string";
 import { formatDate, getDuration } from "@/lib/utils/date";
 import RunLabel from './RunLabel';
 import EnvironmentLabel from './EnvironmentLabel';
+import RepoLink from '@/components/ui/RepoLink';
 
 export default function RunRow({ run }: { run: Run }) {
   const { status, pipelineName, runNumber, repoUrl, environment, trigger, startedAt, finishedAt, createdAt } = run;
@@ -24,7 +25,7 @@ export default function RunRow({ run }: { run: Run }) {
     <tr style={{ cursor: 'pointer' }} onClick={open}>
       <td>
         <RunLabel pipelineName={pipelineName} runNumber={runNumber} status={status} />
-        {repoUrl && <span>{repoUrl}</span>}
+        {repoUrl && <div><RepoLink repoUrl={repoUrl} /></div>}
       </td>
       <td>
         {environment ? <EnvironmentLabel environment={environment} /> : "None"}

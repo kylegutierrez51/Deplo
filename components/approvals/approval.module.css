@@ -15,7 +15,6 @@ Approval Card
 
 .approval-card {
   width: 100%;
-  min-width: 536px;
   max-width: var(--width-xl);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-md);
@@ -24,25 +23,38 @@ Approval Card
   background: var(--dark-clr-2);
 }
 
+/*
+ * The buttons must never be pushed out of the card, and .approval-card-wrapper's
+ * overflow: hidden would clip them silently rather than scroll. So the row wraps on
+ * content, not on a breakpoint: when the detail and the buttons don't both fit, the
+ * buttons drop below. The 320px basis keeps them beside the detail for as long as the
+ * detail's own rows can wrap to make room; min-width: 0 lets it shrink to the card's
+ * width, and every row inside it wraps, so nothing in it is wider than the card either.
+ * The breakpoints below that switch the row to a column reset the basis, since in a
+ * column it would size the height.
+ */
 .approvals-detail {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .approval-card-row {
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  row-gap: var(--space-sm);
+  gap: var(--space-md) var(--space-lg);
 }
 
 /* Row 1: pipeline name + environment */
 .top-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-xs) var(--space-md);
 }
 
 .top-row span {
@@ -78,8 +90,9 @@ Approval Card
 /* Row 2: commit info */
 .feature-info {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-xs) var(--space-lg);
 }
 
 .feature-info .stage-name {
@@ -108,8 +121,9 @@ Approval Card
 /* Row 3: meta (ApprovalMeta) */
 .extra-info {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-xs) var(--space-lg);
 }
 
 .meta-row {
@@ -127,8 +141,9 @@ Approval Card
 /* Action buttons (ApprovalActions) */
 .btn-group {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--space-lg);
+  gap: var(--space-sm) var(--space-lg);
   font-size: var(--font-size-sm);
   flex-shrink: 0;
 }
@@ -208,7 +223,6 @@ Approval Card Media Queries
     1530px — wrap the meta row
     1360px (sidebar open -- needs more room since the sidebar eats into the available width)
      960px (sidebar closed)
-     874px
      768px
      480px
 */
@@ -226,6 +240,10 @@ Approval Card Media Queries
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-md);
+  }
+
+  :global(.sidebar-open) ~ :global(.page-content) .approvals-detail {
+    flex-basis: auto;
   }
 
   :global(.sidebar-open) ~ :global(.page-content) .btn-group {
@@ -252,6 +270,10 @@ Approval Card Media Queries
     gap: var(--space-md);
   }
 
+  :global(.sidebar-closed) ~ :global(.page-content) .approvals-detail {
+    flex-basis: auto;
+  }
+
   :global(.sidebar-closed) ~ :global(.page-content) .btn-group {
     flex-direction: row;
     align-items: center;
@@ -268,18 +290,16 @@ Approval Card Media Queries
   }
 }
 
-@media (max-width: 874px) {
-  .approval-card {
-    min-width: 0;
-  }
-}
-
 @media (max-width: 768px) {
   .approval-card-row {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-md);
+  }
+
+  .approvals-detail {
+    flex-basis: auto;
   }
 
   .btn-group {

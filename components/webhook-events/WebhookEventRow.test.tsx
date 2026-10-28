@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { getDefaultNormalizer, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WebhookEventRow from '@/components/webhook-events/WebhookEventRow';
 import type { WebhookEvent } from '@/lib/data/webhook-events';
@@ -37,11 +37,14 @@ beforeEach(() => {
 const event = (over: Partial<WebhookEvent> = {}): WebhookEvent => ({
   id: 'evt-1',
   pipelineId: 'p1',
+  webhookId: 'wh-1',
   eventType: 'push',
   source: 'github',
   payload: {},
   headers: {},
   status: 'processed',
+  statusReason: 'Started CI #4.',
+  replayBlockedReason: null,
   runId: 'run-1',
   receivedAt: new Date('2026-01-01T00:00:00Z'),
   commitSha: 'abc1234',
@@ -71,6 +74,29 @@ describe('git metadata present', () => {
     expect(branch()).toHaveTextContent('main');
     expect(commit()).toHaveTextContent('abc1234');
     expect(commit()).toHaveTextContent('Fix the thing');
+  });
+
+  it('links the repository by name', () => {
+    setup();
+
+    expect(screen.getByRole('link', { name: 'web-client' })).toHaveAttribute('href', 'https://github.com/o/web-client');
+  });
+  
+  it('follows the repo link without opening the modal', async () => {
+    setup();
+
+    await userEvent.click(screen.getByRole('link', { name: 'web-client' }));
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows a seven-character sha and a truncated message, full values as titles', () => {
+    const sha = '9e2a06f0970deb2b6b8aa7d91ec797e0ece667dd';
+    const message = "feat: in 'create' mode, users can mask and copy a webhook secret";
+    setup({ commitSha: sha, commitMessage: message });
+
+    expect(screen.getByText('9e2a06f')).toHaveAttribute('title', sha);
+    expect(screen.getByText("feat: in 'create' mode, users ...")).toHaveAttribute('title', message);
   });
 });
 
@@ -153,5 +179,51 @@ describe('opening the event', () => {
     await userEvent.click(screen.getAllByRole('cell')[0]);
 
     expect(mockPush).toHaveBeenCalledWith('/webhooks/events?status=failed&event-type=push&id=evt-1');
+  });
+});
+
+describe('the status reason', () => {
+  const status = () => cell(0);
+
+  it('shows under the status pill', () => {
+    setup({ status: 'ignored', statusReason: 'Branch "dev" does not match the branch filters (main).' });
+
+    expect(status()).toHaveTextContent('Ignored');
+    expect(status()).toHaveTextContent('Branch "dev" does not match the branch filters (main).');
+  });
+
+  // A long reason (a pipeline's validation errors) is cut to one line in the table, so the
+  // full text has to stay reachable on hover; the modal shows it in full.
+  it('keeps the full reason in the title for when it is cut short', () => {
+    const reason = 'Cannot run pipeline:\n• Stage "build" has no command.';
+    setup({ statusReason: reason });
+
+    // Compared exactly: the default normalizer would collapse the line break being checked.
+    expect(screen.getByTitle(reason, { normalizer: getDefaultNormalizer({ collapseWhitespace: false, trim: false }) })).toBeInTheDocument();
+  });
+
+  it('shows the pill alone for an event with no reason yet', () => {
+    setup({ status: 'pending', statusReason: null });
+
+    expect(status()).toHaveTextContent(/^Pending$/);
+  });
+});
+
+describe('the replay marker', () => {
+  const eventCell = () => cell(1);
+
+  // A replay copies the original's payload, so its commit, branch and repository match the
+  // original's; without a marker the two rows are indistinguishable in the list.
+  it('marks a replayed event in the event column', () => {
+    setup({ source: 'replay' });
+
+    expect(eventCell()).toHaveTextContent('Push');
+    expect(eventCell()).toHaveTextContent('Replay');
+  });
+
+  it('leaves a GitHub delivery unmarked', () => {
+    setup({ source: 'github' });
+
+    expect(eventCell()).toHaveTextContent(/^Push$/);
   });
 });

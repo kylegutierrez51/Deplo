@@ -4,11 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { withParams } from '@/lib/utils/url';
 import Pill from '@/components/ui/Pill';
 import type { WebhookEvent } from "@/lib/data/webhook-events";
-import { capitalize, getRepoName, getBranch } from "@/lib/utils/string";
+import { capitalize } from "@/lib/utils/string";
+import { shortSha, commitSummary, getBranch } from "@/lib/utils/git";
+import RepoLink from '@/components/ui/RepoLink';
 import { formatDate } from "@/lib/utils/date";
+import styles from "./webhook-event-row.module.css";
 
 export default function WebhookEventRow({ event }: { event: WebhookEvent }) {
-  const { status, eventType, pipeline, branch, commitSha, commitMessage, receivedAt } = event;
+  const { status, statusReason, eventType, source, pipeline, branch, commitSha, commitMessage, receivedAt } = event;
   
   const router = useRouter();
   
@@ -17,11 +20,31 @@ export default function WebhookEventRow({ event }: { event: WebhookEvent }) {
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
-      <td><Pill variant={status} label={capitalize(status)} /></td>
-      <td><Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} /></td>
-      <td>{pipeline?.repoUrl ? getRepoName(pipeline.repoUrl) : '—'}</td>
+      <td>
+        <div className={styles.status}>
+          <Pill variant={status} label={capitalize(status)} />
+          {statusReason && <span className={styles.reason} title={statusReason}>{statusReason}</span>}
+        </div>
+      </td>
+      <td>
+        <div className={styles.status}>
+          <Pill variant={eventType} label={eventType === 'pull-request' ? 'Pull Request' : capitalize(eventType)} />
+          {/* A replay copies the original's payload, so this is what tells the two rows apart */}
+          {source === 'replay' && (
+            <span className={styles.replay} title="Replayed from Deplo">
+              <ion-icon name="refresh-outline"></ion-icon>
+              Replay
+            </span>
+          )}
+        </div>
+      </td>
+      <td>{pipeline?.repoUrl ? <RepoLink repoUrl={pipeline.repoUrl} short /> : '—'}</td>
       <td>{branch ? getBranch(branch) : '—' }</td>
-      <td>{commitSha || '—'}<br />{<span>{commitSha && commitMessage && commitMessage}</span>}</td>
+      <td>
+        {commitSha ? <span className={styles.sha} title={commitSha}>{shortSha(commitSha)}</span> : '—'}
+        <br />
+        {commitSha && commitMessage && <span className="nowrap" title={commitMessage}>{commitSummary(commitMessage)}</span>}
+      </td>
       <td>{pipeline?.name ?? 'None'}</td>
       <td>{formatDate(receivedAt)}</td>
     </tr>

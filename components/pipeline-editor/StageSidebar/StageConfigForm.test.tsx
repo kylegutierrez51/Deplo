@@ -25,6 +25,7 @@ function setup(nodeOver: Partial<CustomNode['data']> = {}, graphOver: Record<str
   useGraph.mockReturnValue({
     updateNodeData,
     selectedEnvironmentId: 'env-1',
+    defaultDirectory: '',
     secrets: [
       { id: 's1', key: 'API_KEY', environmentId: 'env-1' },
       { id: 's2', key: 'DB_URL', environmentId: 'env-1' },
@@ -451,5 +452,75 @@ describe('settling an empty field on blur', () => {
 
     expect(field).toHaveValue('0');
     expect(lastPatch()).toEqual({ retries: 0 });
+  });
+});
+
+/*
+ * The directory has no config field of its own: it is a `cd` prefix on `command`, and both
+ * inputs are views onto that one string. So every assertion here is about the command patch.
+ */
+describe('directory', () => {
+  it('prefixes the command with the directory typed into it', async () => {
+    const { user } = setup({ command: 'npm ci' });
+
+    await user.type(screen.getByLabelText('DIRECTORY'), '/srv/app');
+
+    expect(lastPatch()).toEqual({ command: 'cd "/srv/app" && npm ci' });
+  });
+
+  it('splits a stored prefix back into the two fields', () => {
+    setup({ command: 'cd "/srv/app" && npm ci' });
+
+    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('/srv/app');
+    expect(screen.getByLabelText('COMMAND')).toHaveValue('npm ci');
+  });
+
+  it('keeps the directory in the command after it is edited', async () => {
+    const { user } = setup({ command: 'cd "/srv/app" && npm ci' });
+
+    await user.type(screen.getByLabelText('COMMAND'), ' --silent');
+
+    expect(lastPatch()).toEqual({ command: 'cd "/srv/app" && npm ci --silent' });
+  });
+
+  it('drops the prefix entirely once the directory is cleared', async () => {
+    const { user } = setup({ command: 'cd "/srv/app" && npm ci' });
+
+    await user.clear(screen.getByLabelText('DIRECTORY'));
+
+    expect(lastPatch()).toEqual({ command: 'npm ci' });
+  });
+
+  // Hoisting on every keystroke would yank the text out from under the cursor the moment
+  // "&&" is typed, so a prefix typed into the command only moves once the reader leaves it.
+  it('leaves a typed cd prefix in the command until the command loses focus', async () => {
+    const { user } = setup();
+    const commandField = screen.getByLabelText('COMMAND');
+
+    await user.type(commandField, 'cd foo && npm ci');
+
+    expect(commandField).toHaveValue('cd foo && npm ci');
+    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('');
+    expect(lastPatch()).toEqual({ command: 'cd foo && npm ci' });
+
+    await user.tab();
+
+    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('foo');
+    expect(commandField).toHaveValue('npm ci');
+  });
+
+  // A quote would close the quoted path early and leave the rest as shell syntax.
+  it('drops double quotes as they are typed', async () => {
+    const { user } = setup({ command: 'npm ci' });
+
+    await user.type(screen.getByLabelText('DIRECTORY'), 'a"b');
+
+    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('ab');
+  });
+
+  it('shows the pipeline default as the placeholder', () => {
+    setup({}, { defaultDirectory: '/srv/default' });
+
+    expect(screen.getByLabelText('DIRECTORY')).toHaveAttribute('placeholder', 'Default: /srv/default');
   });
 });

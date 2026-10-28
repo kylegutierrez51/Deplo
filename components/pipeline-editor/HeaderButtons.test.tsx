@@ -42,9 +42,9 @@ const dismissStickyToasts = jest.fn();
  */
 const linkArg = () => showToast.mock.calls.at(-1)?.[0]?.link;
 
-function setup() {
+function setup(defaultDirectory = '') {
   useGraph.mockReturnValue({
-    pipelineId: 'p1', selectedEnvironmentId: 'env-1', nodes: [], edges: [],
+    pipelineId: 'p1', selectedEnvironmentId: 'env-1', defaultDirectory, nodes: [], edges: [],
   } as never);
   toast.mockReturnValue({ showToast, dismissStickyToasts } as never);
 
@@ -66,6 +66,28 @@ const clickValidate = async (user: ReturnType<typeof userEvent.setup>) => {
 const lastToast = () => showToast.mock.calls.at(-1)?.[0];
 
 beforeEach(() => { showToast.mockClear(); dismissStickyToasts.mockClear(); validate.mockReset(); });
+
+// The default directory lives in editor state like the graph does, so a save or run that
+// left it behind would store, or compare against, a definition without it.
+describe('the default directory', () => {
+  it('is saved with the graph', async () => {
+    (savePipelineDefinition as jest.Mock).mockResolvedValue({ status: 'success', message: 'Pipeline saved' });
+    const { user } = setup('/srv/app');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(savePipelineDefinition).toHaveBeenCalledWith('p1', [], [], '/srv/app'));
+  });
+
+  it('is sent with a run', async () => {
+    runPipeline.mockResolvedValue({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
+    const { user } = setup('/srv/app');
+
+    await clickRun(user);
+
+    expect(runPipeline).toHaveBeenCalledWith('p1', 'env-1', [], [], '/srv/app');
+  });
+});
 
 describe('the run report', () => {
   it('links to the run it created', async () => {

@@ -118,3 +118,9 @@
 .toast-icon ion-icon[name="close-circle-outline"] {
   color: var(--red-dark-text);
 }
+
+/* An outcome that is neither success nor failure, e.g. a replay the webhook ignored;
+   coloured like the Ignored status pill it corresponds to. */
+.toast-icon ion-icon[name="information-circle-outline"] {
+  color: var(--pill-ignored-text);
+}

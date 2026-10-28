@@ -5,6 +5,7 @@ import {
 } from "../db";
 import type { Payload } from "./stageQueue";
 import path from "node:path";
+import { rm } from "node:fs/promises";
 import { RUNNER_WORKSPACE_ROOT } from '../setup/connection';
 import { advanceRun } from "../runs/runProcessor";
 import { execute } from "./execute";
@@ -13,6 +14,8 @@ import { buildScrubber, type Scrubber } from "./scrubber";
 import type { CustomNode } from "@/lib/types";
 import { CANCELLED_NOTE, UNSAVED_RESULT_NOTE } from "@/lib/stage-notes";
 import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
+import { CHECKOUT_STAGE_ID } from "@/lib/pipeline/checkout";
+import { splitDirectory, withDefaultDirectory } from "@/lib/pipeline/directory";
 
 
 const DEFAULT_TIMEOUT_MS = DEFAULT_STAGE_TIMEOUT_S * 1000; // 1800s
@@ -32,6 +35,16 @@ const WITHHELD_FROM_COMMANDS = [
   'NEXTAUTH_SECRET', 'NEXTAUTH_URL',
   'REDIS_HOST', 'REDIS_PORT', "NODE_ENV"
 ];
+
+/*
+ * In a manual run, prevent these 3 reserved keys from being used, since they 
+ * are used specifically with GitHub Webhooks
+ */
+const COMMIT_VARS = {
+  repoUrl: 'DEPLO_REPO_URL',
+  commitSha: 'DEPLO_COMMIT_SHA',
+  branch: 'DEPLO_BRANCH',
+} as const;
 
 /*
 ==============================================================================================
@@ -56,7 +69,8 @@ export async function processStage(job: Payload): Promise<void> {
   if (!context) return;
 
   const node = context.graph.nodes.find(node => node.id === job.stageId);
-  const { outcome, retryable } = await attemptStage(node, context.environmentId, job);
+  const commit = { repoUrl: context.repoUrl, commitSha: context.commitSha, branch: context.branch };
+  const { outcome, retryable } = await attemptStage(node, context.environmentId, context.defaultDirectory, job, commit);
 
   if (outcome.status === 'FAILED' && retryable) {
     await openRetry(job.runId, job.stageId, job.attempt);
@@ -102,6 +116,13 @@ interface StageAttempt {
   retryable: boolean;
 }
 
+/* For a manual run: commitSha and branch are null; repoUrl is the run's snapshot (PipelineRun.repoUrl, copied from the pipeline at creation) and is null when none was set */
+interface CommitInfo {
+  repoUrl: string | null;
+  commitSha: string | null;
+  branch: string | null;
+}
+
 /*
 ==============================================================================================
  * Everything between owning the row and knowing the result. Never throws.
@@ -116,16 +137,22 @@ interface StageAttempt {
 async function attemptStage(
   node: CustomNode | undefined,
   environmentId: string | null,
+  defaultDirectory: string | null,
   job: Payload,
+  commit: CommitInfo,
 ): Promise<StageAttempt> {
-  const command = node?.data.command;
+  const stageCommand = node?.data.command;
 
-  if (!command) {
+  if (!stageCommand || !splitDirectory(stageCommand).body.trim()) {
     return {
       outcome: { status: 'FAILED', exitCode: null, logSnippet: `Stage "${job.stageId}" has no command to run.` },
       retryable: false,
     };
   }
+
+  const command = node.id === CHECKOUT_STAGE_ID
+    ? stageCommand
+    : withDefaultDirectory(stageCommand, defaultDirectory);
 
   const timeoutMs = node.data.timeout && node.data.timeout > 0
     ? node.data.timeout * 1000
@@ -135,17 +162,31 @@ async function attemptStage(
   let scrubber: Scrubber | undefined;
 
   try {
-    // Resolved here rather than carried on the job: Redis persists to disk, so a decrypted
-    // value in job.data is a credential in an AOF file.
+    const cwd = path.join(RUNNER_WORKSPACE_ROOT, job.runId);
+
+    // A killed git leaves
+    // .git/shallow.lock or .git/index.lock in this workspace, and every retry would die on it.
+    // Since the checkout stage runs before any other stage, this is safe to remove.
+    if (node.id === CHECKOUT_STAGE_ID && job.attempt > 1) {
+      await rm(path.join(cwd, ".git"), { recursive: true, force: true });
+    }
+
     const secrets = await resolveSecrets(node.data.secrets ?? {}, environmentId);
 
     scrubber = buildScrubber(Object.values(secrets));
 
     const inherited = { ...process.env };
-    for (const key of WITHHELD_FROM_COMMANDS) delete inherited[key];
+    for (const key of [ ...WITHHELD_FROM_COMMANDS, ...Object.values(COMMIT_VARS)]) delete inherited[key];
+
+    const commitVars: Record<string, string> = {};
+    for (const [field, name] of Object.entries(COMMIT_VARS)) {
+      const value = commit[field as keyof CommitInfo];
+      if (value) commitVars[name] = value;
+    }
 
     const env = {
       ...inherited,
+      ...commitVars,
       ...Object.fromEntries((node.data.env_vars ?? []).map(({ key, value }) => [key, value])),
 
       // Last, so a selected secret wins a name collision with a plain env var.
@@ -172,7 +213,7 @@ async function attemptStage(
     try {
       result = await execute({
         command,
-        cwd: path.join(RUNNER_WORKSPACE_ROOT, job.runId),
+        cwd,
         env,
         timeoutMs,
         scrub: scrubber,

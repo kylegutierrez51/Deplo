@@ -124,16 +124,15 @@ model Pipeline {
 model PipelineDefinition {
   id         String @id @default(cuid())
   pipelineId String
-  // The nth edit made to a pipeline. Monotonic and never reused: a save inserts
-  // a new version rather than editing this row, then deletes superseded
-  // versions no run references — so versions run sparse (0, 1, 4, 9...).
-  // Rows are immutable once written; runs depend on that (see below).
+  // a save inserts a new version rather than editing this row
   version    Int
 
   // React Flow serialization: { nodes: [...], edges: [...] }
   graphJson  Json
   // Per-stage config: commands, timeouts, retries, env bindings
   configJson Json
+  // Prepended at run time to any stage command that sets no directory of its own
+  defaultDirectory String?
 
   pipeline Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
 
@@ -143,8 +142,8 @@ model PipelineDefinition {
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   // Runs reference the exact definition version they executed. Prisma defaults
-  // to ON DELETE RESTRICT, which is what stops deleteStaleDefinitions() in 
-  // savePipelineDefinition() from deleting a definition a run still needs.
+  // to ON DELETE RESTRICT, which is what stops 
+  // lib/actions/pipelines savePipelineDefinition() from deleting a stale definition a run still needs.
   runs PipelineRun[]
 
   @@unique([pipelineId, version])
@@ -179,6 +178,7 @@ model PipelineRun {
   runNumber Int
 
   commitSha String?
+  repoUrl   String?
   branch    String?
 
   triggeredById String?
@@ -282,6 +282,7 @@ model Environment {
   secrets             Secret[]
   runs                PipelineRun[]
   defaultForPipelines Pipeline[]
+  webhooks            Webhook[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -318,17 +319,21 @@ model Secret {
 // ─────────────────────────────────────────────
 
 enum EventType {
+  PING
   PUSH
   PULL_REQUEST
+  UNRECOGNIZED
 }
 
 model Webhook {
   id            String    @id @default(cuid())
   pipelineId    String?
-  isActive      Boolean   @default(false)
+  environmentId String?
+  isActive      Boolean   @default(true)
   events        EventType[]
   branchFilters String[] // glob pattern, e.g. "main", "release/*"
   lastDelivery  DateTime?
+  relayUrl      String?
   createdAt     DateTime  @default(now())
 
   encryptedValue String @db.Text
@@ -336,9 +341,12 @@ model Webhook {
   authTag        String 
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: SetNull)
 
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  deliveries WebhookEvent[]
 
   @@map("webhooks")
 }
@@ -353,22 +361,28 @@ enum WebhookEventStatus {
 model WebhookEvent {
   id         String  @id @default(cuid())
   pipelineId String?
+  webhookId  String?
   eventType  EventType // "push", "pull_request"
   source     String  @default("github")
 
-  // Raw payload for auditability and replay
-  payload Json
+  // Raw payload for auditability and replay. 
+  // If the event is ignored, clear it since it does not trigger a run.
+  payload Json?
   headers Json // includes X-GitHub-Event, delivery ID, etc.
 
   // Processing outcome
   status WebhookEventStatus @default(PENDING)
+  // Why the event has its status, in a sentence (e.g. which branch filter it missed)
+  statusReason String?
   runId  String? // if this webhook triggered a run
 
   pipeline Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  webhook  Webhook?  @relation(fields: [webhookId], references: [id], onDelete: SetNull)
 
   receivedAt DateTime @default(now())
 
   @@index([pipelineId])
+  @@index([webhookId])
   @@index([receivedAt(sort: Desc)])
   @@map("webhook_events")
 }
@@ -392,6 +406,7 @@ enum AuditAction {
   ENVIRONMENT_DELETED
 
   WEBHOOK_RECEIVED
+  WEBHOOK_REPLAYED
   WEBHOOK_CREATED
   WEBHOOK_UPDATED
   WEBHOOK_DELETED

@@ -1,27 +1,43 @@
 "use client"
 
-import { useState, useRef, useActionState } from 'react';
+import { useState, useRef, useActionState, useSyncExternalStore } from 'react';
 import { formatDate } from '@/lib/utils/date';
 import type { FormState, EventType } from '@/lib/types';
 import type { Pipeline } from '@/lib/data/pipelines';
+import type { Environment } from '@/lib/data/environments';
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
 import modalStyles from '@/components/ui/modals/modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
+import Autocomplete from '@/components/ui/Autocomplete';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
+import Pill from '../ui/Pill';
+import { capitalize } from '@/lib/utils/string';
+import { repoUrlWarning } from '@/lib/pipeline/repo-url';
+import RepoUrlWarning from './RepoUrlWarning';
+import { webhookEndpoint, smeeCommand, connectHint, isLocalOrigin } from '@/lib/webhooks/endpoint';
+import CopyField from './CopyField';
 
 const styles = { ...modalStyles, ...webhookStyles };
 
 interface WebhookModalProps {
   mode?: 'view' | 'edit' | 'create';
   id: string;
+  pipelineId?: string | null;
   pipelineName?: string | null;
+  pipelineRepoUrl?: string | null;
+  environmentId?: string | null;
+  environmentName?: string | null;
+  isActive?: boolean;
   branchFilters: string[];
   events: EventType[];
   createdBy?: string | null;
   lastDelivery?: Date | null;
   createdAt: Date;
+  relayUrl?: string | null;
+  publicUrl?: string | null;
   pipelines: Pipeline[] | null;
+  environments: Environment[] | null;
   onClose: () => void;
   onCreate: (message: string) => void;
   onDelete: (message: string) => void;
@@ -31,6 +47,10 @@ interface WebhookModalProps {
   onRegenerate: (message: string) => void;
   onError: (message: string) => void;
 }
+
+const subscribeToNothing = () => () => { };
+const getOrigin = () => window.location.origin;
+const getServerOrigin = () => null;
 
 const initialState: FormState = {
   status: 'idle',
@@ -45,13 +65,21 @@ const EVENT_DEFS: { key: EventType, label: string, desc: string }[] = [
 export default function WebhookModal({
   mode = 'view',
   id,
+  pipelineId,
   pipelineName,
+  pipelineRepoUrl,
+  environmentId,
+  environmentName,
+  isActive = true,
   branchFilters = [],
   events = [],
   createdBy,
   lastDelivery,
   createdAt,
+  relayUrl,
+  publicUrl,
   pipelines,
+  environments,
   onClose,
   onCreate,
   onDelete,
@@ -62,16 +90,12 @@ export default function WebhookModal({
   onError,
 }: WebhookModalProps) {
   const [filters, setBranchFilters] = useState<string[]>(branchFilters);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(pipelineId ?? null);
   const [enteredBranchFilter, setEnteredBranchFilter] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
+  const [active, setActive] = useState(isActive);
   const [secret, setSecret] = useState('');
   const branchInputRef = useRef<HTMLInputElement>(null);
-
-  const [query, setQuery] = useState(pipelineName ?? '');
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
-    pipelines?.find(p => p.name === pipelineName)?.id ?? null
-  );
-  const [openMatches, setOpenMatches] = useState(false);
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [regenerateModal, setRegenerateModal] = useState(false);
@@ -93,6 +117,11 @@ export default function WebhookModal({
   }, initialState);
   const pending = createPending || editPending;
 
+  // No window during SSR: the endpoint appears once the client has hydrated.
+  const origin = useSyncExternalStore(subscribeToNothing, getOrigin, getServerOrigin);
+  const endpoint = origin ? webhookEndpoint(origin, id) : null;
+  const localHost = origin === null || isLocalOrigin(origin);
+
 
   const handleDeleteClose = () => {
     setDeleteModal(false);
@@ -111,8 +140,8 @@ export default function WebhookModal({
     setDeleteModal(false);
   }
 
-  
-  const afterRegenerate=(newSecret: string) => {
+
+  const afterRegenerate = (newSecret: string) => {
     setRevealedSecret(newSecret);
     setRevealedSecretVisible(false);
   }
@@ -152,31 +181,6 @@ export default function WebhookModal({
   };
 
 
-  const matches = () => {
-    if (!query) return [];
-    const q = query.toLowerCase();
-    return pipelines?.filter(p => p.name.toLowerCase().includes(q)) ?? [];
-  }
-
-
-  // Typing a name in full counts as picking it, unless there's 2 pipelines with the same name
-  const exactMatch = () => {
-    const q = query.trim().toLowerCase();
-    const found = pipelines?.filter(p => p.name.toLowerCase() === q) ?? [];
-    return found.length === 1 ? found[0] : undefined;
-  }
-
-
-  const handlePipelineBlur = () => {
-    const match = exactMatch();
-    if (!selectedPipelineId && match) {
-      setQuery(match.name);
-      setSelectedPipelineId(match.id);
-    }
-    setTimeout(() => setOpenMatches(false), 100);
-  }
-
-
   const handleGenerateSecret = () => {
     const bytes = new Uint8Array(32);
     crypto.getRandomValues(bytes);
@@ -194,6 +198,12 @@ export default function WebhookModal({
 
 
   if (mode === 'view' && revealedSecret !== null) setRevealedSecret(null);
+
+  // View mode reads the saved pipeline; edit and create follow whichever pipeline is picked.
+  const selectedPipeline = pipelines?.find(p => p.id === selectedPipelineId);
+  const pipelineWarning = mode === 'view'
+    ? (pipelineName ? repoUrlWarning(pipelineName, pipelineRepoUrl) : null)
+    : (selectedPipeline ? repoUrlWarning(selectedPipeline.name, selectedPipeline.repoUrl) : null);
 
   const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
   const subtitle = mode === 'edit' || mode === 'create' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
@@ -223,10 +233,59 @@ export default function WebhookModal({
           <>
             <div className={styles.fieldGroup}>
               <label>Pipeline to trigger</label>
-              <div className={styles.selectWrapper}>
-                <ion-icon name="link-outline" className={styles.selectIconLeft}></ion-icon>
+              <div className={styles.iconValue}>
+                <ion-icon name="link-outline"></ion-icon>
                 <span>{pipelineName}</span>
               </div>
+              {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>Environment</label>
+              {environmentName ? (
+                <div className={styles.iconValue}>
+                  <ion-icon name="layers-outline"></ion-icon>
+                  <span>{environmentName}</span>
+                </div>
+              ) : (
+                <span className={styles.emptyValue}>None — runs do not use secrets</span>
+              )}
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>Status</label>
+              <span className={styles.iconValue}>
+                <ion-icon name={isActive ? 'radio-button-on-outline' : 'pause-circle-outline'}></ion-icon>
+                {isActive ? 'Active' : 'Inactive — deliveries are ignored'}
+              </span>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              {endpoint && <CopyField label="Deplo endpoint" value={endpoint} />}
+              {publicUrl ? (
+                <CopyField label="Payload URL" value={webhookEndpoint(publicUrl, id)} />
+              ) : relayUrl ? (
+                <>
+                  <CopyField label="Payload URL" value={relayUrl} />
+                  {endpoint && (
+                    <>
+                      <CopyField label="Relay command" value={smeeCommand(relayUrl, endpoint)} />
+                      <p className={styles.fieldHint}>Keep this running while you work.</p>
+                    </>
+                  )}
+                </>
+              ) : (
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  {connectHint(origin)}
+                </p>
+              )}
+              {(publicUrl || relayUrl) && (
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  In GitHub → Settings → Webhooks, set Content type to application/json and Secret to the one shown when this webhook was created (regenerate it in Edit if lost).
+                </p>
+              )}
             </div>
 
             {filters.length > 0 && (
@@ -243,7 +302,7 @@ export default function WebhookModal({
               {selectedEvents.length > 0 ? (
                 <div className={styles.branchPills}>
                   {EVENT_DEFS.filter(e => selectedEvents.includes(e.key))
-                    .map(e => <span key={e.key} className={styles.branchPill}>{e.label}</span>)}
+                    .map(e => <Pill key={e.key} variant={e.key} label={e.label} />)}
                 </div>
               ) : (
                 <span className={styles.emptyValue}>None — this webhook won&apos;t trigger</span>
@@ -271,50 +330,36 @@ export default function WebhookModal({
 
             <div className={styles.fieldGroup}>
               <label htmlFor="pipeline-name">Pipeline to trigger</label>
-              <input type="hidden" name="pipeline_id" value={selectedPipelineId ?? exactMatch()?.id ?? ''} />
-              <div className={styles.autocompleteWrapper}>
-                <input
-                  type="text"
-                  id="pipeline-name"
-                  name="pipeline_name"
-                  placeholder="e.g. deploy-api"
-                  autoComplete="off"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setSelectedPipelineId(null);
-                    setOpenMatches(true);
-                  }}
-                  onFocus={() => setOpenMatches(true)}
-                  onBlur={handlePipelineBlur}
-                  required
-                />
-                {openMatches && query && (
-                  <ul className={styles.autocompleteList}>
-                    {matches().length > 0 ? (
-                      matches().map(p => (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            className={styles.autocompleteOption}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              setQuery(p.name);
-                              setSelectedPipelineId(p.id);
-                              setOpenMatches(false);
-                            }}
-                          >
-                            <span>{p.name}</span>
-                            <span className={styles.autocompleteMuted}>{p.repoUrl}</span>
-                          </button>
-                        </li>
-                      ))
-                    ) : (
-                      <li className={styles.autocompleteEmpty}>No matching pipelines</li>
-                    )}
-                  </ul>
-                )}
-              </div>
+              <Autocomplete
+                id="pipeline-name"
+                idName="pipeline_id"
+                textName="pipeline_name"
+                placeholder="e.g. deploy-api"
+                emptyText="No matching pipelines"
+                options={pipelines?.map(p => ({ id: p.id, name: p.name, detail: p.repoUrl })) ?? []}
+                initialId={pipelineId}
+                initialName={pipelineName}
+                required
+                onSelect={setSelectedPipelineId}
+              />
+              {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label htmlFor="environment-name">
+                Environment
+                <span className={styles.optionalBadge}>optional</span>
+              </label>
+              <Autocomplete
+                id="environment-name"
+                idName="environment_id"
+                textName="environment_name"
+                placeholder="e.g. production"
+                emptyText="No matching environments"
+                options={environments?.map(e => ({ id: e.id, name: e.name, detail: capitalize(e.type) })) ?? []}
+                initialId={environmentId}
+                initialName={environmentName}
+              />
             </div>
 
             <div className={styles.fieldGroup}>
@@ -332,9 +377,9 @@ export default function WebhookModal({
               />
               <p className={styles.fieldHint}>
                 <ion-icon name="information-circle-outline"></ion-icon>
-                Glob pattern. Leave empty to trigger on all branches.
+                Glob pattern. Case sensitive. Leave empty to trigger on all branches.
               </p>
-              
+
               <div className={styles.branchPills}>
                 {filters.map((p, i) => (
                   <span key={i} className={styles.branchPill}>
@@ -352,6 +397,28 @@ export default function WebhookModal({
                 ))}
               </div>
             </div>
+
+            {publicUrl ? (
+              <input type="hidden" name="relay_url" value={relayUrl ?? ''} />
+            ) : (
+              <div className={styles.fieldGroup}>
+                <label htmlFor="relay-url">
+                  Relay URL
+                  <span className={styles.optionalBadge}>optional</span>
+                </label>
+                <input
+                  type="url"
+                  id="relay-url"
+                  name="relay_url"
+                  defaultValue={relayUrl ?? ''}
+                  placeholder="https://smee.io/…"
+                />
+                <p className={styles.fieldHint}>
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  {localHost ? "GitHub can't reach localhost, so deliveries go through a smee.io relay." : "If GitHub can't reach this host, deliveries can go through a smee.io relay."} <a href="https://smee.io/new" target="_blank" rel="noopener noreferrer">Create a channel</a> and paste its URL here.
+                </p>
+              </div>
+            )}
 
             <div className={styles.fieldGroup}>
               <label>Trigger events</label>
@@ -375,32 +442,58 @@ export default function WebhookModal({
               </div>
             </div>
 
+            <label className={styles.activeToggleBox}>
+              <input type="hidden" name="is_active" value={active ? 'true' : 'false'} />
+              <input type="checkbox" role="switch" checked={active} onChange={() => setActive(v => !v)} className={styles.toggleInput} />
+              <span className={`${styles.toggleSwitch} ${active ? styles.toggleSwitchOn : ''}`}></span>
+              <span className={styles.toggleContent}>
+                <span className={styles.toggleTitle}>Active</span>
+                <span className={styles.toggleDescription}>
+                  Inactive webhooks ignore incoming deliveries and never trigger a run.
+                </span>
+              </span>
+            </label>
+
             {mode === 'create' ? (
-              <div className={styles.fieldGroup}>
-                <div className={styles.fieldLabelRow}>
-                  <label htmlFor="webhook-secret">Webhook secret</label>
-                  <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
-                    <ion-icon name="refresh-outline"></ion-icon>
-                  </button>
+              <>
+                <div className={styles.fieldGroup}>
+                  <div className={styles.fieldLabelRow}>
+                    <label htmlFor="webhook-secret">Webhook secret</label>
+                    <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
+                      <ion-icon name="refresh-outline"></ion-icon>
+                    </button>
+                  </div>
+
+                  <div className={styles.secretInputWrapper}>
+                    <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                    <input
+                      type={revealedSecretVisible ? 'text' : 'password'}
+                      id="webhook-secret"
+                      name="webhook_secret"
+                      value={secret}
+                      readOnly
+                      className={`${styles.secretInput} ${styles.padded}`}
+                      required
+                    />
+                    <div className={styles.secretActions}>
+                      <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>
+                        <ion-icon name={revealedSecretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
+                      </button>
+                      <span className={styles.secretDivider}></span>
+                      <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
+                        <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
+                      </button>
+                    </div>
+                  </div>
+                  <p className={styles.fieldHint}>
+                    <ion-icon name="information-circle-outline"></ion-icon>
+                    Used for HMAC-SHA256 signature validation. Copy this now — it won&apos;t be shown again.
+                  </p>
                 </div>
-                <div className={styles.secretInputWrapper}>
-                  <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
-                  <input
-                    type="text"
-                    id="webhook-secret"
-                    name="webhook_secret"
-                    value={secret}
-                    onChange={e => setSecret(e.target.value)}
-                    className={styles.secretInput}
-                    required
-                  />
-                </div>
-                <p className={styles.fieldHint}>
-                  <ion-icon name="information-circle-outline"></ion-icon>
-                  Used for HMAC-SHA256 signature validation. Store securely — it won&apos;t be shown again.
-                </p>
-              </div>
+              </>
+
             ) : (
+              
               <div className={styles.fieldGroup}>
                 <label>Webhook secret</label>
                 <p className={styles.fieldHint}>
@@ -446,11 +539,11 @@ export default function WebhookModal({
       }
 
       {regenerateModal && !deleteModal &&
-        <ConfirmationModal 
-          message={"Regenerate this webhook's secret? The current secret will stop validating deliveries immediately"} 
-          action={"Regenerate"} 
-          handleConfirmation={handleRegenerate} 
-          onClose={() => setRegenerateModal(false)} 
+        <ConfirmationModal
+          message={"Regenerate this webhook's secret? The current secret will stop validating deliveries immediately"}
+          action={"Regenerate"}
+          handleConfirmation={handleRegenerate}
+          onClose={() => setRegenerateModal(false)}
           timeoutMs={2000} />
       }
     </>

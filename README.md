@@ -146,6 +146,26 @@ npm run runner   # worker that executes pipeline stages
 
 Sign in with GitHub, open **Pipelines**, and either build a pipeline or open the seeded `verify-and-build` pipeline, which runs Deplo's own test suite (If you use the seed, you must have PROJECT_DIR set to the absolute path of Deplo for it to run Deplo's test suite!)
 
+## GitHub Webhooks
+
+Pushes and pull requests on GitHub can trigger a pipeline run. GitHub cannot reach `localhost`, so a [smee.io](https://smee.io) channel relays its deliveries to your machine.
+
+1. **Create a pipeline with a Repo URL** (an `https://…` or `git@…` address), open its editor, and save a valid pipeline graph. Webhook runs check out the pushed commit from this URL before the first stage.
+2. **Create a webhook** on the **Webhooks** page with that pipeline as **Pipeline to trigger**. Copy the **Webhook secret** before saving; it is not shown again.
+3. **Add a Relay URL:** use **Create a channel** to open a new smee.io channel, and paste its URL into the webhook's **Relay URL**.
+4. **Run the relay command** shown in the webhook's **Connect GitHub** section, and keep it running while you work:
+   ```bash
+   npx smee-client --url https://smee.io/<channel> --target http://localhost:3000/api/webhook/<webhook-id>
+   ```
+5. **Add the webhook on GitHub** under your repository's **Settings → Webhooks → Add webhook**:
+   - **Payload URL:** the smee.io channel URL
+   - **Content type:** `application/json`
+   - **Secret:** the webhook secret from step 2
+   - **Which events:** *Let me select individual events* → **Pull requests** and **Pushes**
+   - **Active:** checked
+
+GitHub sends a ping when you save; it appears on **Webhooks → View Events** as *Processed*. Keep `npm run runner` running so the runs it triggers execute.
+
 ## Testing
 
 Tests are split into three tiers, and CI runs all of them on every push and pull request, along with lint and type checks.

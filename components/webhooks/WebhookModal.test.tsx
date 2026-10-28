@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderToString } from 'react-dom/server';
 import WebhookModal from '@/components/webhooks/WebhookModal';
 import { addWebhook, deleteWebhook, regenerateWebhookSecret, updateWebhook } from '@/lib/actions/webhooks';
 
@@ -28,6 +29,7 @@ const setup = (over: Partial<Props> = {}) => {
     lastDelivery: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
     pipelines: [],
+    environments: [],
     onClose: jest.fn(),
     onCreate: jest.fn(),
     onDelete: jest.fn(),
@@ -373,5 +375,208 @@ describe('resolving a typed pipeline name', () => {
     await user.tab();
 
     expect(submittedPipelineId()).toBe('');
+  });
+});
+
+
+/*
+ * The environment picker behaves like the pipeline one, but is optional: leaving it empty
+ * submits no id. Environment names are unique, so a full name always resolves.
+ */
+describe('picking an environment', () => {
+  const environments = [
+    { id: 'env-1', name: 'production', type: 'production' },
+    { id: 'env-2', name: 'prod-eu', type: 'production' },
+  ] as unknown as Props['environments'];
+
+  const submittedEnvironmentId = () =>
+    new FormData(document.getElementById('modal-form') as HTMLFormElement).get('environment_id');
+
+  it('submits no environment when left empty', () => {
+    setup({ mode: 'create', environments });
+
+    expect(screen.getByLabelText(/^Environment/)).not.toBeRequired();
+    expect(submittedEnvironmentId()).toBe('');
+  });
+
+  it('selects an environment from the suggestions', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', environments });
+
+    await user.type(screen.getByLabelText(/^Environment/), 'prod');
+    await user.click(screen.getByRole('button', { name: /prod-eu/ }));
+
+    expect(screen.getByLabelText(/^Environment/)).toHaveValue('prod-eu');
+    expect(submittedEnvironmentId()).toBe('env-2');
+  });
+
+  it('selects the environment whose name was typed in full, ignoring case', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', environments });
+
+    const input = screen.getByLabelText(/^Environment/);
+    await user.type(input, 'PRODUCTION');
+    await user.tab();
+
+    expect(input).toHaveValue('production');
+    expect(submittedEnvironmentId()).toBe('env-1');
+  });
+
+  it('seeds the saved environment in edit mode', () => {
+    setup({ mode: 'edit', environmentId: 'env-2', environmentName: 'prod-eu', environments });
+
+    expect(screen.getByLabelText(/^Environment/)).toHaveValue('prod-eu');
+    expect(submittedEnvironmentId()).toBe('env-2');
+  });
+
+  it('shows the environment in view mode', () => {
+    setup({ mode: 'view', environmentName: 'production', environments });
+    expect(screen.getByText('production')).toBeInTheDocument();
+  });
+});
+
+describe('the active toggle', () => {
+  const submittedActive = () =>
+    new FormData(document.getElementById('modal-form') as HTMLFormElement).get('is_active');
+
+  it('starts on for a new webhook', () => {
+    setup({ mode: 'create' });
+
+    expect(screen.getByRole('switch')).toBeChecked();
+    expect(submittedActive()).toBe('true');
+  });
+
+  it("starts from the webhook's stored state when editing", () => {
+    setup({ isActive: false });
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(submittedActive()).toBe('false');
+  });
+
+  it('submits the flipped value after a click', async () => {
+    const user = userEvent.setup();
+    setup({ isActive: true });
+
+    await user.click(screen.getByRole('switch'));
+
+    expect(screen.getByRole('switch')).not.toBeChecked();
+    expect(submittedActive()).toBe('false');
+  });
+
+  it('is shown as a status in view mode', () => {
+    setup({ mode: 'view', isActive: false });
+
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    expect(screen.getByText(/Inactive/)).toBeInTheDocument();
+  });
+});
+
+describe('connecting GitHub', () => {
+  const ENDPOINT = 'http://localhost/api/webhook/wh-1';
+  const field = (label: string) => (screen.getByLabelText(label) as HTMLInputElement).value;
+
+  it('shows the Deplo endpoint in view mode', () => {
+    setup({ mode: 'view' });
+    expect(field('Deplo endpoint')).toBe(ENDPOINT);
+  });
+
+  it('shows the relay as the payload URL and the smee command when a relay is saved', () => {
+    setup({ mode: 'view', relayUrl: 'https://smee.io/abc123' });
+    expect(field('Payload URL')).toBe('https://smee.io/abc123');
+    expect(field('Relay command')).toBe(`npx smee-client --url https://smee.io/abc123 --target ${ENDPOINT}`);
+    expect(screen.getByText(/application\/json/)).toBeInTheDocument();
+  });
+
+  it('asks for a relay when none is saved', () => {
+    setup({ mode: 'view', relayUrl: null });
+    expect(screen.queryByLabelText('Payload URL')).not.toBeInTheDocument();
+    expect(screen.getByText(/add a smee\.io relay URL/)).toBeInTheDocument();
+  });
+
+  /* renderToString reads the server snapshot, so there is no origin and the endpoint cannot be built. */
+  it('renders without an origin during SSR', () => {
+    const noop = () => {};
+    const html = renderToString(
+      <WebhookModal
+        mode="view" id="wh-1" pipelineName="deploy-api" branchFilters={[]} events={['push']}
+        createdAt={new Date('2026-01-01T00:00:00Z')} relayUrl="https://smee.io/abc123"
+        pipelines={[]} environments={[]}
+        onClose={noop} onCreate={noop} onDelete={noop} onEdit={noop} onEditOrDeleteClose={noop}
+        onSave={noop} onRegenerate={noop} onError={noop}
+      />,
+    );
+    expect(html).toContain('https://smee.io/abc123');
+    expect(html).not.toContain('/api/webhook/wh-1');
+    expect(html).not.toContain('Relay command');
+  });
+
+  it('uses DEPLO_PUBLIC_URL for the payload URL and hides the relay', () => {
+    setup({ mode: 'view', relayUrl: 'https://smee.io/abc123', publicUrl: 'https://deplo.example.com/' });
+    expect(field('Payload URL')).toBe('https://deplo.example.com/api/webhook/wh-1');
+    expect(screen.queryByLabelText('Relay command')).not.toBeInTheDocument();
+  });
+
+  it('explains the relay in terms of localhost when running locally', () => {
+    setup({ mode: 'edit' });
+    expect(screen.getByText(/GitHub can't reach localhost, so deliveries go through a smee.io relay./)).toBeInTheDocument();
+  });
+
+  it('pre-fills and submits the relay URL in edit mode', () => {
+    setup({ mode: 'edit', relayUrl: 'https://smee.io/abc123' });
+    const form = document.getElementById('modal-form') as HTMLFormElement;
+    expect(new FormData(form).get('relay_url')).toBe('https://smee.io/abc123');
+    const link = screen.getByRole('link', { name: 'Create a channel' });
+    expect(link).toHaveAttribute('href', 'https://smee.io/new');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('hides the relay input when DEPLO_PUBLIC_URL is set', () => {
+    setup({ mode: 'edit', publicUrl: 'https://deplo.example.com' });
+    expect(screen.queryByLabelText(/Relay URL/)).not.toBeInTheDocument();
+  });
+
+  /* updateWebhook always writes relay_url, so hiding the input must not drop the stored value. */
+  it('still submits the stored relay URL when the input is hidden', () => {
+    setup({ mode: 'edit', publicUrl: 'https://deplo.example.com', relayUrl: 'https://smee.io/abc123' });
+    const form = document.getElementById('modal-form') as HTMLFormElement;
+    expect(screen.queryByLabelText(/Relay URL/)).not.toBeInTheDocument();
+    expect(new FormData(form).get('relay_url')).toBe('https://smee.io/abc123');
+  });
+});
+
+describe('the repo URL warning', () => {
+  const pipeline = (id: string, name: string, repoUrl: string | null) => ({ id, name, repoUrl }) as never;
+  const pipelines = [pipeline('p1', 'deploy-api', null), pipeline('p2', 'build-web', 'https://github.com/org/web')];
+  const warning = () => screen.queryByText(/won't check out the pushed code/);
+
+  it('shows in view mode when the pipeline has no Repo URL', () => {
+    setup({ mode: 'view', pipelineId: 'p1', pipelineName: 'deploy-api', pipelineRepoUrl: null });
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
+  });
+
+  it('is absent in view mode when the Repo URL is usable', () => {
+    setup({ mode: 'view', pipelineId: 'p2', pipelineName: 'build-web', pipelineRepoUrl: 'https://github.com/org/web' });
+    expect(warning()).not.toBeInTheDocument();
+  });
+
+  it('shows in edit mode for the pipeline already selected', () => {
+    setup({ mode: 'edit', pipelineId: 'p1', pipelineName: 'deploy-api', pipelines });
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
+  });
+
+  it('follows the pipeline picked in create mode', async () => {
+    const user = userEvent.setup();
+    setup({ mode: 'create', pipelineId: null, pipelineName: null, pipelines });
+    const input = screen.getByLabelText('Pipeline to trigger');
+
+    expect(warning()).not.toBeInTheDocument();
+
+    await user.type(input, 'deploy-api');
+    expect(warning()).toHaveTextContent('deploy-api has no usable Repo URL');
+
+    await user.clear(input);
+    await user.type(input, 'build-web');
+    expect(warning()).not.toBeInTheDocument();
   });
 });

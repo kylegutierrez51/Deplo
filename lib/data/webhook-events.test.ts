@@ -33,13 +33,15 @@ const row = (over: Record<string, unknown> = {}) => ({
   runId: null,
   receivedAt: new Date('2026-01-01T00:00:00Z'),
   pipeline: { name: 'CI', repoUrl: 'https://github.com/o/r' },
+  webhook: { isActive: true },
   ...over,
 });
 
 /** The seeded shape of a GitHub push payload. */
-const pushPayload = {
+const pushAndPRPayload = {
   after: 'abc123',
   ref: 'refs/heads/main',
+  pull_request: { head: { ref: 'refs/heads/main' } },
   head_commit: { message: 'fix the thing' },
 };
 
@@ -90,7 +92,7 @@ describe('getWebhookEventsPage payload extraction', () => {
   };
 
   it('digs the commit, message and ref out of a GitHub push payload', async () => {
-    const event = await eventsFrom(pushPayload);
+    const event = await eventsFrom(pushAndPRPayload);
 
     expect(event).toMatchObject({
       commitSha: 'abc123',
@@ -174,7 +176,7 @@ describe('getWebhookEventById', () => {
   // is asserted independently rather than assumed to match the list.
   it('performs the same translation as the list query', async () => {
     prismaMock.webhookEvent.findUnique.mockResolvedValue(
-      row({ payload: pushPayload, status: 'FAILED', eventType: 'PULL_REQUEST' }) as never,
+      row({ payload: pushAndPRPayload, status: 'FAILED', eventType: 'PULL_REQUEST' }) as never,
     );
 
     const event = await getWebhookEventById('evt-1');
@@ -235,5 +237,61 @@ describe('getWebhookEventsPage filtering', () => {
 
     expect(prismaMock.webhookEvent.findMany.mock.calls[0][0]?.where).toEqual({});
     expect(prismaMock.webhookEvent.count).toHaveBeenCalledWith({ where: {} });
+  });
+});
+
+describe('ignored events and their reason', () => {
+  // An ignored event's payload is cleared, so its commit details are simply unknown.
+  it('reports no commit details for an event whose payload was dropped', async () => {
+    prismaMock.webhookEvent.findMany.mockResolvedValue([row({ status: 'IGNORED', payload: null })] as never);
+    groupByMock().mockResolvedValue([] as never);
+
+    const { rows } = await getWebhookEventsPage();
+
+    expect(rows[0]).toMatchObject({ status: 'ignored', commitSha: null, commitMessage: null, branch: null });
+  });
+
+  it('passes the status reason through, on the list and by id', async () => {
+    const reason = 'Branch "dev" does not match the branch filters (main).';
+    prismaMock.webhookEvent.findMany.mockResolvedValue([row({ status: 'IGNORED', payload: null, statusReason: reason })] as never);
+    prismaMock.webhookEvent.findUnique.mockResolvedValue(row({ status: 'IGNORED', payload: null, statusReason: reason }) as never);
+    groupByMock().mockResolvedValue([] as never);
+
+    expect((await getWebhookEventsPage()).rows[0].statusReason).toBe(reason);
+    expect((await getWebhookEventById('evt-1'))?.statusReason).toBe(reason);
+  });
+});
+
+describe('replayBlockedReason', () => {
+  const INACTIVE = 'This webhook is inactive. Activate it to replay its events.';
+  const GONE = 'The webhook this event arrived on no longer exists.';
+  const both = async (over: Record<string, unknown>) => {
+    const r = row({ status: 'PROCESSED', payload: pushAndPRPayload, ...over });
+    prismaMock.webhookEvent.findMany.mockResolvedValue([r] as never);
+    prismaMock.webhookEvent.findUnique.mockResolvedValue(r as never);
+    groupByMock().mockResolvedValue([] as never);
+    return [(await getWebhookEventsPage()).rows[0], await getWebhookEventById('evt-1')];
+  };
+
+  it('is null for a processed push with a payload and an active webhook', async () => {
+    for (const e of await both({})) expect(e?.replayBlockedReason).toBeNull();
+  });
+
+  it('names an inactive webhook', async () => {
+    for (const e of await both({ webhook: { isActive: false } })) expect(e?.replayBlockedReason).toBe(INACTIVE);
+  });
+
+  it('names a webhook that is gone', async () => {
+    for (const e of await both({ webhook: null })) expect(e?.replayBlockedReason).toBe(GONE);
+  });
+
+  it('does not leak the nested webhook', async () => {
+    for (const e of await both({})) expect(e).not.toHaveProperty('webhook');
+  });
+
+  it('includes the webhook in both queries', async () => {
+    await both({});
+    expect(prismaMock.webhookEvent.findMany.mock.calls[0][0]?.include).toMatchObject({ webhook: { select: { isActive: true } } });
+    expect(prismaMock.webhookEvent.findUnique.mock.calls[0][0]?.include).toMatchObject({ webhook: { select: { isActive: true } } });
   });
 });

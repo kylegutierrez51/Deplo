@@ -1,4 +1,4 @@
-import { getWebhooksPage } from '@/lib/data/webhooks';
+import { getWebhookById, getWebhooksPage } from '@/lib/data/webhooks';
 import { parseFilters } from '@/lib/filters/parse';
 import { WEBHOOK_FILTERS } from '@/lib/filters/options';
 import { prismaMock, resetPrismaMock } from '@/test/mocks/prisma';
@@ -49,5 +49,30 @@ describe('getWebhooksPage filtering', () => {
 
   it('falls back to newest registered for an unrecognised sort', async () => {
     expect((await queryFor({ recency: 'nope' }))?.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
+  });
+});
+
+describe('the pipeline repo URL', () => {
+  const row = (repoUrl: string | null) => ({
+    id: 'wh-1', events: ['PUSH'], pipeline: { name: 'deploy-api', repoUrl }, environment: null, createdBy: null,
+  });
+
+  it('selects it with the pipeline name and returns it as pipelineRepoUrl on the page', async () => {
+    prismaMock.webhook.findMany.mockResolvedValue([row('https://github.com/org/repo')] as never);
+    prismaMock.webhook.count.mockResolvedValue(1);
+
+    const { rows } = await getWebhooksPage();
+
+    expect(prismaMock.webhook.findMany.mock.calls[0][0]?.include?.pipeline).toEqual({ select: { name: true, repoUrl: true } });
+    expect(rows[0].pipelineRepoUrl).toBe('https://github.com/org/repo');
+  });
+
+  it('returns it as pipelineRepoUrl from getWebhookById, null when the pipeline has none', async () => {
+    prismaMock.webhook.findUnique.mockResolvedValue(row(null) as never);
+
+    const webhook = await getWebhookById('wh-1');
+
+    expect(prismaMock.webhook.findUnique.mock.calls[0][0]?.include?.pipeline).toEqual({ select: { name: true, repoUrl: true } });
+    expect(webhook?.pipelineRepoUrl).toBeNull();
   });
 });

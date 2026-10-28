@@ -4,6 +4,7 @@ import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } fro
 import { decryptSecret } from '@/lib/utils/crypto';
 import { prismaMock, resetPrismaMock, runTransactionsInline, transactionMock } from '@/test/mocks/prisma';
 import { setSession } from '@/test/mocks/auth';
+import { RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -68,6 +69,18 @@ describe('addWebhook', () => {
     });
   });
 
+  it('creates the webhook active when the form does not say otherwise', async () => {
+    await addWebhook(idle, form());
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ isActive: true });
+  });
+
+  it('creates the webhook inactive when switched off', async () => {
+    await addWebhook(idle, form({ is_active: 'false' }));
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ isActive: false });
+  });
+
   it('revalidates on success', async () => {
     const result = await addWebhook(idle, form());
 
@@ -91,6 +104,37 @@ describe('addWebhook', () => {
 
     expect(result).toEqual({ status: 'error', message: 'Select a pipeline from the list.' });
     expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
+  // The environment is optional: no id and no typed text saves the webhook without one.
+  it('writes a null environment when none was picked', async () => {
+    await addWebhook(idle, form());
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ environmentId: null });
+  });
+
+  it('writes the selected environment', async () => {
+    await addWebhook(idle, form({ environment_id: 'env-1', environment_name: 'production' }));
+
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ environmentId: 'env-1' });
+  });
+
+  // Text that matched no environment leaves environment_id empty. Saving null there would
+  // silently drop the environment the user meant to pick.
+  it('refuses environment text that resolved to no environment without writing', async () => {
+    const result = await addWebhook(idle, form({ environment_id: '', environment_name: 'prod' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Select an environment from the list, or leave it empty.' });
+    expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
+  // With an environment set, either foreign key may be the one that failed.
+  it('names both candidates on a foreign key failure when an environment was picked', async () => {
+    prismaMock.webhook.create.mockRejectedValue(prismaError('P2003') as never);
+
+    const result = await addWebhook(idle, form({ environment_id: 'env-1', environment_name: 'production' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Selected pipeline or environment no longer exists.' });
   });
 
   it('falls back to a generic message for anything else', async () => {
@@ -159,8 +203,27 @@ describe('updateWebhook', () => {
 
     expect(prismaMock.webhook.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'wh-1' },
-      data: { pipelineId: 'p2', branchFilters: ['main'], events: ['PUSH'] },
+      data: { pipelineId: 'p2', environmentId: null, isActive: true, branchFilters: ['main'], events: ['PUSH'], relayUrl: null },
     }));
+  });
+
+  it.each([['true', true], ['false', false]])('writes is_active=%s as %s', async (value, expected) => {
+    await updateWebhook(idle, form({ id: 'wh-1', is_active: value }));
+
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({ isActive: expected });
+  });
+
+  it('writes the selected environment', async () => {
+    await updateWebhook(idle, form({ id: 'wh-1', environment_id: 'env-1', environment_name: 'production' }));
+
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({ environmentId: 'env-1' });
+  });
+
+  it('refuses environment text that resolved to no environment without writing', async () => {
+    const result = await updateWebhook(idle, form({ id: 'wh-1', environment_id: '', environment_name: 'prod' }));
+
+    expect(result).toEqual({ status: 'error', message: 'Select an environment from the list, or leave it empty.' });
+    expect(prismaMock.webhook.update).not.toHaveBeenCalled();
   });
 
   it('names the missing pipeline on a foreign key failure', async () => {
@@ -394,5 +457,34 @@ describe('audit trail', () => {
     await updateWebhook(idle, form({ id: 'wh-1' }));
 
     expect(tx.auditLog.create.mock.calls[0][0].data).toMatchObject({ resourceLabel: null });
+  });
+});
+
+describe('the relay URL', () => {
+  it('stores a trimmed smee channel on create', async () => {
+    await addWebhook(idle, form({ relay_url: '  https://smee.io/abc123  ' }));
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ relayUrl: 'https://smee.io/abc123' });
+  });
+
+  it('stores null when left blank on create', async () => {
+    await addWebhook(idle, form({ relay_url: '   ' }));
+    expect(writtenData(prismaMock.webhook.create)).toMatchObject({ relayUrl: null });
+  });
+
+  it('refuses a non-smee url on create and writes nothing', async () => {
+    const result = await addWebhook(idle, form({ relay_url: 'https://evil.example/x' }));
+    expect(result).toEqual({ status: 'error', message: RELAY_URL_ERROR });
+    expect(prismaMock.webhook.create).not.toHaveBeenCalled();
+  });
+
+  it('clears the relay URL on update when emptied', async () => {
+    await updateWebhook(idle, form({ id: 'wh-1', relay_url: '' }));
+    expect(writtenData(prismaMock.webhook.update)).toMatchObject({ relayUrl: null });
+  });
+
+  it('refuses a non-smee url on update and writes nothing', async () => {
+    const result = await updateWebhook(idle, form({ id: 'wh-1', relay_url: 'http://smee.io/abc' }));
+    expect(result).toEqual({ status: 'error', message: RELAY_URL_ERROR });
+    expect(prismaMock.webhook.update).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { fromDefinition } from '@/lib/pipeline/definition';
+import { withCheckoutStage } from '@/lib/pipeline/checkout';
 import { addAudit } from '@/lib/actions/audits';
 import { RUNNER_WORKSPACE_ROOT } from './setup/connection';
 import type { GraphJson, StageType } from '@/lib/types';
@@ -27,10 +28,14 @@ interface RunContext {
   runStatus: RunStatus,
   definitionId: string,
   environmentId: string | null,
+  defaultDirectory: string | null,
   graph: GraphJson,
   outcomes: Outcomes,
   /** stageId → the attempt number of that stage's latest row. Absent = never materialized. */
   attempts: ReadonlyMap<string, number>,
+  repoUrl: string | null,
+  commitSha: string | null,
+  branch: string | null,
 }
 
 
@@ -49,7 +54,7 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
   const run = await prisma.pipelineRun.findUnique({
     where: { id: runId },
     include: {
-      definition: { select: { graphJson: true, configJson: true } },
+      definition: { select: { graphJson: true, configJson: true, defaultDirectory: true } },
       stages: {
         select: { stageId: true, status: true, attempt: true },
         // Ensures that 'outcomes' and 'attempts' only include the stage with the highest attempt
@@ -77,9 +82,16 @@ export async function loadRunContext(runId: string): Promise<RunContext | null> 
     runStatus: run.status,
     definitionId: run.definitionId,
     environmentId: run.environmentId,
-    graph: fromDefinition(run.definition.graphJson, run.definition.configJson),
+    defaultDirectory: run.definition.defaultDirectory ?? null,
+    graph: withCheckoutStage(
+      fromDefinition(run.definition.graphJson, run.definition.configJson),
+      { repoUrl: run.repoUrl, commitSha: run.commitSha },
+    ),
     outcomes,
     attempts,
+    repoUrl: run.repoUrl,
+    commitSha: run.commitSha,
+    branch: run.branch,
   };
 }
 
@@ -330,6 +342,29 @@ export async function findStalledRuns(cutoff: Date): Promise<{ id: string, statu
     select: { id: true, status: true },
     orderBy: { createdAt: 'asc' },
   });
+}
+
+
+
+/*
+==============================================================================================
+ * Fails webhook events still PENDING from before the cutoff, for the periodic sweep.
+ *
+ * The webhook route and a replay both write an event PENDING and settle it before responding, so a lasting
+ * PENDING means the outcome was lost. Typically, the database was down when the 
+ * route went to record a failure.
+==============================================================================================
+*/
+export const STALLED_WEBHOOK_EVENT_REASON =
+  'Interrupted before an outcome was recorded (the database may have been unavailable). Replay it from Deplo or redeliver it from GitHub to process it again.';
+
+export async function failStalledWebhookEvents(cutoff: Date): Promise<number> {
+  const { count } = await prisma.webhookEvent.updateMany({
+    where: { status: 'PENDING', receivedAt: { lt: cutoff } },
+    data: { status: 'FAILED', statusReason: STALLED_WEBHOOK_EVENT_REASON },
+  });
+
+  return count;
 }
 
 

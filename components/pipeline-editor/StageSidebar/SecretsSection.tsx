@@ -28,6 +28,7 @@ export default function SecretsSection({ secrets, searchValue, onSearchChange, o
         <input
           id="secret"
           name="secret"
+          spellCheck={false}
           placeholder="e.g. DATABASE_URL"
           value={searchValue}
           onChange={e => onSearchChange(e.target.value)}

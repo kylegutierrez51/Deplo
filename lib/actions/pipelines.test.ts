@@ -7,6 +7,7 @@ import { setSession, signedOut, sessionWithoutUserId } from '@/test/mocks/auth';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import { isQueueReachable } from '@/lib/queue/health';
 import type { CustomNode } from '@/lib/types';
+import { REPO_URL_ERROR } from '@/lib/pipeline/repo-url';
 
 jest.mock('@/lib/prisma');
 jest.mock('@/auth');
@@ -122,6 +123,37 @@ describe('savePipelineDefinition versioning', () => {
     await savePipelineDefinition('p1', nodes, []);
 
     expect(prismaMock.pipelineDefinition.create).not.toHaveBeenCalled();
+  });
+
+  // The default directory is content, so changing only it is an edit. This fails if the
+  // findFirst select drops the column: the stored side then reads as "no default".
+  it('creates a version when only the default directory changed', async () => {
+    const nodes = [node('a')];
+    const { graphJson, configJson } = toDefinition(nodes, []);
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue({
+      id: 'def-3', version: 3, graphJson, configJson, defaultDirectory: '/srv/old',
+    } as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-4', pipeline: { name: 'pipe-1' } } as never);
+
+    await savePipelineDefinition('p1', nodes, [], '/srv/new');
+
+    expect(prismaMock.pipelineDefinition.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({ defaultDirectory: true }),
+    }));
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ version: 4, defaultDirectory: '/srv/new' }) }),
+    );
+  });
+
+  it('stores a blank default directory as null', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+    await savePipelineDefinition('p1', [node('a')], [], '   ');
+
+    expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ defaultDirectory: null }) }),
+    );
   });
 
   it('records the signed-in user as the author', async () => {
@@ -314,6 +346,16 @@ describe('addPipelineRun guards', () => {
     expect(result).toEqual({ status: 'error', message: 'Save or discard your current changes!' });
   });
 
+  // The runner reads the default off the pinned definition, so an unsaved one would run
+  // every inheriting stage in a directory other than the one the editor shows.
+  it('refuses when only the default directory has drifted', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition({ defaultDirectory: '/srv/old' }) as never);
+
+    const result = await addPipelineRun('p1', null, nodes, [], '/srv/new');
+
+    expect(result).toEqual({ status: 'error', message: 'Save or discard your current changes!' });
+  });
+
   it('refuses when the environment has been deleted', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(storedDefinition() as never);
     prismaMock.environment.findUnique.mockResolvedValue(null as never);
@@ -355,7 +397,7 @@ describe('addPipelineRun graph validation', () => {
 
     expect(result).toEqual({ status: 'success', message: 'Pipeline Run Triggered!', runId: 'run-1' });
     expect(prismaMock.pipelineRun.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1 },
+      data: { pipelineId: 'p1', definitionId: 'def-1', trigger: 'MANUAL', triggeredById: 'user-1', environmentId: 'env-1', environmentName: 'prod', environmentType: 'PRODUCTION', runNumber: 1, commitSha: null, branch: null, repoUrl: null },
     }));
   });
 
@@ -1095,5 +1137,48 @@ describe('audit trail', () => {
       expect(revalidate).not.toHaveBeenCalled();
       expect(result).toEqual({ status: 'error', message: 'Error triggering pipeline. Please try again.' });
     });
+  });
+});
+
+describe.each([
+  ['addPipeline', addPipeline, () => prismaMock.pipeline.create],
+  ['updatePipeline', updatePipeline, () => prismaMock.pipeline.update],
+] as const)('%s repo url', (_name, action, write) => {
+  const idle = { status: 'idle' as const, message: '' };
+  const form = (repoUrl: string) => {
+    const fd = new FormData();
+    fd.set('id', 'p1');
+    fd.set('name', 'CI');
+    fd.set('repo_url', repoUrl);
+    fd.set('description', 'desc');
+    return fd;
+  };
+
+  beforeEach(() => {
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+  });
+
+  it('rejects a url carrying credentials and writes nothing', async () => {
+    const result = await action(idle, form('https://user:tok@github.com/o/r'));
+
+    expect(result).toEqual({ status: 'error', message: REPO_URL_ERROR });
+    expect(write()).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('stores a blank url as null rather than an empty string', async () => {
+    await action(idle, form('   '));
+
+    expect(write()).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ repoUrl: null }),
+    }));
+  });
+
+  it('stores a valid url trimmed', async () => {
+    await action(idle, form('  https://github.com/o/r  '));
+
+    expect(write()).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ repoUrl: 'https://github.com/o/r' }),
+    }));
   });
 });

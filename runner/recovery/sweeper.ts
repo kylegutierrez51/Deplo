@@ -1,4 +1,4 @@
-import { findStalledRuns } from '../db';
+import { findStalledRuns, failStalledWebhookEvents } from '../db';
 import { advanceRun, processRun } from '../runs/runProcessor';
 
 /*
@@ -12,23 +12,31 @@ import { advanceRun, processRun } from '../runs/runProcessor';
  * Re-entering a run that is fine is harmless: every write is a compare-and-swap, so a
  * healthy run just reads its rows and does nothing. This is not the reaper on a timer; the
  * reaper deletes locks and fails RUNNING rows, which is only safe at boot.
+ *
+ * The same tick also fails webhook events stuck at PENDING (sweepStalledWebhookEvents).
 ==============================================================================================
 */
 
-/*
- * How still a run must be before it is re-entered. Long enough that the ordinary path — a
- * job waiting its turn, a stage between two writes — is never raced for no reason, short
- * enough that a run killed by a blip is not stranded for the rest of the day.
- */
+
+// How still a run must be before it is re-enqueued.
 const STALL_GRACE_MS = 60_000;
+
+/*
+ * How long a webhook event may stay PENDING. The route settles it in milliseconds and GitHub
+ * gives up on a delivery after ten seconds, so anything older than this was abandoned.
+ */
+const WEBHOOK_EVENT_GRACE_MS = 5 * 60_000;
 
 /** How often to look. Cheap when nothing is stalled: one indexed read that returns nothing. */
 const SWEEP_INTERVAL_MS = 60_000;
 
+
+
 /*
  * Re-enters every run that has been still for longer than the grace period. Returns how many
- * were handed back to the scheduler, which counts the no-ops too — this cannot tell a run it
- * rescued from one that never needed it.
+ * were handed back to the scheduler.
+ * 
+ * This function cannot tell apart a run that did not need to be sweeped vs a run that did
  */
 export async function sweepStalledRuns(): Promise<number> {
   const cutoff = new Date(Date.now() - STALL_GRACE_MS);
@@ -62,17 +70,35 @@ export async function sweepStalledRuns(): Promise<number> {
 }
 
 
+/*
+ * Fails webhook events still PENDING after the grace period. Returns how many it failed.
+ *
+ * Needed incase the database fails in the webhook route and leaves a webhook event 'PENDING' forever.
+ * 
+ * Just because a webhook event gets left on 'PENDING' does not mean it doesn't trigger a pipeline run -- it absolutely can
+ */
+export async function sweepStalledWebhookEvents(): Promise<number> {
+  const cutoff = new Date(Date.now() - WEBHOOK_EVENT_GRACE_MS);
+
+  let failed = 0;
+
+  try {
+    failed = await failStalledWebhookEvents(cutoff);
+  } catch (error) {
+    console.error('sweeper: could not fail the stalled webhook events:', error);
+    return 0;
+  }
+
+  if (failed > 0) console.log(`sweeper: failed ${failed} webhook event(s) left PENDING`);
+
+  return failed;
+}
+
+
 let timer: NodeJS.Timeout | null = null;
 let sweeping = false;
 
-/*
- * Starts the timer. Safe to call twice; the second call is ignored rather than leaving an
- * interval nobody holds a handle to.
- *
- * Two sweeps overlapping would not corrupt anything — every write underneath is a
- * compare-and-swap — but assuming the database does take the entire 'SWEEP_INTERVAL_MS' time 
- * to sweep stalled runs, then it should definitely not have another reader.
- */
+
 export function startStalledRunSweep(intervalMs: number = SWEEP_INTERVAL_MS): void {
   if (timer) return;
 
@@ -80,10 +106,10 @@ export function startStalledRunSweep(intervalMs: number = SWEEP_INTERVAL_MS): vo
     if (sweeping) return;
     sweeping = true;
 
-    // sweepStalledRuns handles its own failures; this catch is for the ones it cannot, and
-    // it must exist — an unhandled rejection from a timer has no owner and would take the
-    // runner down over a database hiccup.
-    void sweepStalledRuns()
+    // sweep webhook events first since they depend on Postgres. 
+    // Then sweep runs next since they depend on both Redis and Postgres.
+    void sweepStalledWebhookEvents()
+      .then(() => sweepStalledRuns())
       .catch(error => console.error('sweeper:', error))
       .finally(() => { sweeping = false; });
   }, intervalMs);

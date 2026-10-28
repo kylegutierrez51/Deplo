@@ -230,6 +230,10 @@ Common Form Utilities
   flex-shrink: 0;
 }
 
+.fieldHint a {
+  color: var(--blue-clr);
+}
+
 .branchPills {
   display: flex;
   flex-wrap: wrap;

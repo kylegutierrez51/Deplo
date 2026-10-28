@@ -59,7 +59,6 @@ export async function getRunsPage(filters: RunFilters = parseFilters({}, RUN_FIL
     ...run,
     environment: toRunEnvironment({ environment: run.environment, environmentName: envName, environmentType: envType }),
     pipelineName: run.pipeline?.name,
-    repoUrl: run.pipeline?.repoUrl,
     triggeredBy: run.triggeredBy?.name,
     status: RUN_STATUS_MAP[run.status],
     trigger: RUN_TRIGGER_MAP[run.trigger]
@@ -90,7 +89,6 @@ export async function getRunById(id: string): Promise<Run | null> {
     ...rest,
     environment: toRunEnvironment({ environment: run.environment, environmentName, environmentType }),
     pipelineName: run.pipeline?.name,
-    repoUrl: run.pipeline?.repoUrl,
     triggeredBy: run.triggeredBy?.name,
     status: RUN_STATUS_MAP[run.status],
     trigger: RUN_TRIGGER_MAP[run.trigger]

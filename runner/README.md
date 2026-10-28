@@ -53,12 +53,12 @@ That is why a runner that crashes or restarts can pick up where it left off.
 | `stages/secrets.ts` | Decrypts a stage's secrets just before it runs. |
 | `stages/scrubber.ts` | Masks secret values in log output. |
 | `recovery/reaper.ts` | Runs once at boot. Cleans up after a runner that died mid-work. |
-| `recovery/sweeper.ts` | Runs on a 60 second interval. Re-enters runs that stalled while the runner was alive. |
+| `recovery/sweeper.ts` | Runs on a 60 second interval. Re-enters runs that stalled while the runner was alive, and fails webhook events left `PENDING` for over five minutes. |
 | `setup/` | `.env` loading and the Redis connection. |
 
 ## Where to start reading
 
-1. Start by tracing when a pipeline run is triggered (`@/lib/actions/pipelines.ts`, lines 369-380). This takes you to enqueueOrDiscardRun() in `lib/actions/run-trigger.ts`, enqueuePipelineRun() at `@/lib/queue/runs.ts`, and then `@/runner/index.ts` (lines 43-47).
+1. Start by tracing when a pipeline run is triggered (`@/lib/actions/pipelines.ts`, lines 384-395). This takes you to enqueueOrDiscardRun() in `lib/actions/run-trigger.ts`, enqueuePipelineRun() at `@/lib/queue/runs.ts`, and then `@/runner/index.ts` (lines 43-47).
 
 2. From there, in `runProcessor.ts`, look at how a run is processed, creates its stages, and enqueues its initial stages.
 
@@ -71,6 +71,57 @@ That is why a runner that crashes or restarts can pick up where it left off.
 <br>
 
 Those steps give you an overview on how the loop works. Once you feel comfortable, you can go over how the `recovery/` files work, the `stages/scrubber.ts` that masks secrets in the logs using Aho-Corasick automation, the `db.ts` queries, and how the runner starts and shuts down in `index.ts`
+
+## GitHub Webhooks
+
+When a run is triggered through a GitHub webhook, the runner (in ` db.ts -- loadRunContext()`) automatically appends a "Checkout" stage that runs before ANY other stage.
+
+The "Checkout" stage runs this command: 
+
+```bash
+git init --quiet . 
+  && git config remote.origin.url "${repoUrl}" 
+  && git fetch --depth 1 origin ${commitSha} 
+  && git checkout --force --quiet FETCH_HEAD`;
+```
+
+This initializes a repository in the deplo workspace, only fetching the code from the specified commit -- It does NOT copy an entire repo's history.
+
+The "Checkout" stage retries twice, deleting the workspace's `.git` first before retrying.
+
+Git runs non-interactively (`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `ssh -o BatchMode=yes`), so a missing credential or an unknown SSH host key fails fast with an auth error instead of hanging until its 300 second timeout.
+
+- `git` must be on the machine's PATH (in System Environment Variables).
+- A private repository relies on the runner host's own git credentials (a credential
+  manager or an SSH key). Do not put a token in the Repo URL; URLs with credentials are
+  rejected when the pipeline is saved.
+- The "Checkout" stage's command embeds literal values rather than `$VAR`/`%VAR%`, so it works under both
+  `sh` and `cmd.exe`.
+
+The webhook route never starts a run for a pull_request whose head repo differs from the base repo (for forked repos that send a PR to the main repo), including one whose fork has since been deleted (where GitHub reports `head.repo` as null).
+
+### Included Environment Variables
+`stageProcessor.ts` sets up to three environment variables for every stage's command, each whenever the run has a value for it:
+
+| Variable | Set from | When it is set |
+|---|---|---|
+| `DEPLO_REPO_URL` | the run's `repoUrl` (snapshotted from the pipeline when the run was created; a retry keeps it) | whenever the Pipeline sets one |
+| `DEPLO_COMMIT_SHA` | the run's `commitSha` | webhook runs only — `null` for a manual run |
+| `DEPLO_BRANCH` | the run's `branch` | webhook runs only — `null` for a manual run |
+
+This allows you to use these 3 environment variables in a stage's command automatically without having to type `git rev-parse HEAD` or `git remote get-url origin` whenever a GitHub webhook is triggered.
+
+### Connecting GitHub to a local Deplo
+
+The webhook modal shows the Deplo endpoint. When Deplo is not publicly reachable, save a smee.io channel as the webhook's Relay URL and run the `npx smee-client ...` command the modal shows. If Deplo has a public address, set `DEPLO_PUBLIC_URL` instead and the relay is not needed.
+
+smee.io re-serializes the JSON body, so signature checks rely on GitHub's bytes surviving that round trip. If deliveries fail with 401 through smee but not directly, that is the cause.
+
+Each is added to the environment only when its value is truthy. A stage's
+own `environment variable` entry or a `secret` of the same name overrides them.
+
+On a pull_request run, `$DEPLO_BRANCH` is the PR's own head branch (`head.ref`), not the
+base branch it would merge into.
 
 ## Rules that fail silently if broken
 

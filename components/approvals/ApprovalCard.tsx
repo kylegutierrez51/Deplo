@@ -4,6 +4,7 @@ import ApprovalActions from './ApprovalActions';
 import Pill from '@/components/ui/Pill';
 import type { EnvType } from '@/lib/types';
 import { capitalize, truncateText } from '@/lib/utils/string';
+import { shortSha, commitSummary } from '@/lib/utils/git';
 
 interface ApprovalCardProps {
   id: string;
@@ -46,14 +47,14 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumb
 
           <div className={styles['feature-info']}>
             <p className={styles['stage-name']}>{stageName}</p>
-            {commitSha && 
+            {commitSha &&
               <div className={styles['feature-id']}>
                 <ion-icon name="git-commit-outline"></ion-icon>
-                <span>{commitSha}</span>
-              </div>        
+                <span title={commitSha}>{shortSha(commitSha)}</span>
+              </div>
             }
-            {commitMessage && <span className={styles.feature}>{truncateText(commitMessage)}</span>}
-            
+            {commitMessage && <span className={styles.feature} title={commitMessage}>{commitSummary(commitMessage)}</span>}
+
           </div>
 
           <ApprovalMeta

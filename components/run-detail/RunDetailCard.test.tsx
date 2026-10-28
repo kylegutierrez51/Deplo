@@ -62,9 +62,27 @@ describe('git metadata present', () => {
     expect(screen.getByText('abc1234')).toBeInTheDocument();
     expect(screen.getByText('Fix the thing')).toBeInTheDocument();
     expect(screen.getByText('main')).toBeInTheDocument();
-    expect(screen.getByText('https://github.com/o/r')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'o/r' })).toHaveAttribute('href', 'https://github.com/o/r');
     expect(icon(container, 'git-commit-outline')).toBeInTheDocument();
     expect(icon(container, 'git-branch-outline')).toBeInTheDocument();
+  });
+});
+
+// Full values stay reachable through the title; what is on screen is sized for the card.
+describe('long git values', () => {
+  const sha = '9e2a06f0970deb2b6b8aa7d91ec797e0ece667dd';
+  const message = "feat: in 'create' mode, users can mask and copy a webhook secret";
+
+  it('shows a seven-character sha with the full sha as its title', () => {
+    setup({ commitHash: sha });
+
+    expect(screen.getByText('9e2a06f')).toHaveAttribute('title', sha);
+  });
+
+  it('shows a truncated commit message with the full message as its title', () => {
+    setup({ commitMessage: message });
+
+    expect(screen.getByText("feat: in 'create' mode, users ...")).toHaveAttribute('title', message);
   });
 });
 
@@ -82,7 +100,7 @@ describe('individually absent git attributes', () => {
     expect(screen.getByText('Fix the thing')).toBeInTheDocument();
     expect(screen.getByText('main')).toBeInTheDocument();
     expect(icon(container, 'git-branch-outline')).toBeInTheDocument();
-    expect(screen.getByText('https://github.com/o/r')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'o/r' })).toHaveAttribute('href', 'https://github.com/o/r');
   });
 
   /*
@@ -115,7 +133,7 @@ describe('individually absent git attributes', () => {
   it('still renders the repo link for a run with no commit data at all', () => {
     const { container } = setup({ commitHash: null, commitMessage: null, branch: null });
 
-    expect(screen.getByText('https://github.com/o/r')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'o/r' })).toHaveAttribute('href', 'https://github.com/o/r');
     expect(icon(container, 'open-outline')).toBeInTheDocument();
   });
 });

@@ -9,7 +9,7 @@ export type FormState = {
   };
 }
 
-export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline' | 'close-circle-outline';
+export type ToastIcon = 'checkmark-circle-outline' | 'create-outline' | 'trash-outline' | 'close-circle-outline' | 'information-circle-outline';
 
 export type EnvType = 'production' | 'staging' | 'development' | 'preview' | 'custom';
 
@@ -23,13 +23,13 @@ export type RunTrigger = "webhook" | "manual" | "api";
 
 export type WebhookEventStatus = 'processed' | 'pending' | 'ignored' | 'failed';
 
-export type EventType = 'push' | 'pull-request';
+export type EventType = 'push' | 'pull-request' | 'ping' | 'unrecognized';
 
 export type ResourceType = 'pipeline' | 'pipeline-run' | 'environment' | 'secret' | 'webhook';
 
 
 /* AuditAction can be capitalized since it's not used by a separate component (Pill, Toast) */
-export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Definition Updated" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Environment Created" | "Environment Updated" | "Environment Deleted" | "Webhook Received" | "Webhook Created" | "Webhook Updated" | "Webhook Deleted" | "Run Triggered" | "Run Completed" | "Run Cancelled" | "Approval Granted" | "Approval Rejected" | "User Role Changed";
+export type AuditAction = "Pipeline Created" | "Pipeline Updated" | "Pipeline Deleted" | "Pipeline Definition Updated" | "Secret Created" | "Secret Updated" | "Secret Deleted" | "Environment Created" | "Environment Updated" | "Environment Deleted" | "Webhook Received" | "Webhook Replayed" | "Webhook Created" | "Webhook Updated" | "Webhook Deleted" | "Run Triggered" | "Run Completed" | "Run Cancelled" | "Approval Granted" | "Approval Rejected" | "User Role Changed";
 
 
 export type StageType = 'custom' | 'deploy' | 'approval';
@@ -103,3 +103,52 @@ Runner availability
 export type RunnerAvailability =
   | { available: true }
   | { available: false; reason: 'no-workers' | 'unreachable' };
+
+
+/*
+===================================================
+Webhook Event
+===================================================
+*/
+
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONObject
+
+export type JSONObject = { [key: string]: JSONValue };
+
+export type WebhookEventData = {
+  eventType: EventType,
+  payload: JSONObject,
+  headers: JSONObject,
+  status?: WebhookEventStatus,
+  runId?: string,
+  pipelineId: string | null,
+  webhookId: string
+}
+
+/*
+===================================================
+Push and PR Payload
+===================================================
+*/
+
+export type PushPayload = {
+  ref: string;
+  after: string;
+}
+
+export type PullRequestPayload = {
+  pull_request: {
+    head: {
+      sha: string;
+      ref: string;
+      // null when the fork the PR was opened from has since been deleted.
+      repo: { full_name: string } | null;
+    };
+  };
+  repository: { full_name: string };
+}

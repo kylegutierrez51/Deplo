@@ -29,6 +29,7 @@ Header
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
+  gap: var(--space-sm);
   padding: 0 var(--space-md);
 }
 
@@ -77,6 +78,15 @@ Header
   display: flex;
   align-items: center;
   gap: var(--space-md);
+}
+
+/* Capped so a long name cannot push Save and Run out of the fixed header; the
+   element's title attribute carries the full name. */
+.editor-header .left-slot .pipeline-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .editor-header .left-slot .nodes-edges {
@@ -147,27 +157,51 @@ Pipeline Editor Header Media Queries
 
 /*
   Breakpoints:
-     1024px
+     1366px
+     960px
      874px
      768px
      480px
+
+  The header is position: fixed, so anything that overflows it is unreachable
+  rather than scrollable. Each breakpoint drops the least useful thing left;
+  the buttons going icon-only (1180px) lives in header-buttons.module.css.
 */
 
-/* 
+/*
 ============================================================
-1024px — Small laptops / landscape tablets
-  The .nodes-edges counter ("7 stages • 6 connections") is 
-  pure decoration and is the first element to sacrifice when 
+1366px — Laptops
+  The .nodes-edges counter ("7 stages • 6 connections") is
+  pure decoration and is the first element to sacrifice when
   the header gets tight.
-============================================================ 
+============================================================
 */
-@media (max-width: 1024px) {
+@media (max-width: 1366px) {
 
   .nodes-edges {
     display: none !important;
   }
   .divider.last {
     display: none !important;
+  }
+}
+
+/*
+============================================================
+960px — Small laptops / landscape tablets
+  The "Pipelines" breadcrumb goes next (the sidebar toggle
+  still reaches every page), and the name cap tightens.
+============================================================
+*/
+@media (max-width: 960px) {
+
+  .pipelines-link,
+  .pipelines-divider {
+    display: none !important;
+  }
+
+  .editor-header .left-slot .pipeline-name {
+    max-width: 140px;
   }
 }
 

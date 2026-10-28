@@ -29,44 +29,15 @@ Field Group
 
 /*
 ==========================
-Select Wrapper
+Icon Value
 ==========================
 */
 
-.selectWrapper {
-  position: relative;
+.iconValue {
   display: flex;
   align-items: center;
+  gap: 6px;
 }
-
-.selectWrapper select {
-  width: 100%;
-  padding-left: 34px;
-  padding-right: 34px;
-  background-color: rgb(48, 48, 48);
-  border: 1px solid gray;
-}
-
-.selectWrapper select option {
-  background-color: rgb(48, 48, 48);
-  color: var(--white-clr);
-}
-
-.selectWrapper span {
-  padding-left: 34px;
-  color: rgb(204, 204, 204);
-}
-
-.selectIconLeft,
-.selectIconRight {
-  position: absolute;
-  font-size: 16px;
-  color: var(--input-clr);
-  pointer-events: none;
-}
-
-.selectIconLeft { left: 10px; }
-.selectIconRight { right: 10px; }
 
 /*
 ==========================
@@ -247,75 +218,23 @@ Webhook Secret Input
   font-size: 16px;
 }
 
+.copyField {
+  margin-top: var(--space-md);
+}
+
+.secretInput.copyFieldInput {
+  padding-left: 10px;
+  padding-right: 46px;
+  letter-spacing: normal;
+  font-family: var(--font-jetbrains-mono);
+  text-overflow: ellipsis;
+}
+
 /* For bottom items (Created By, Last Delivery, Created At) */
 .item-flex {
   display: flex;
   align-items: center;
   gap: 50px;
-}
-
-/*
-==========================
-Pipeline Name Autocomplete
-==========================
-*/
-
-.autocompleteWrapper {
-  position: relative;
-}
-
-.autocompleteWrapper > input {
-  width: 100%;
-  padding-left: 10px;
-  border-radius: var(--radius-lg);
-  background-color: rgb(48, 48, 48);
-  border: 1px solid gray;
-}
-
-.autocompleteList {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: var(--z-dropdown);
-  max-height: 150px;
-  overflow-y: auto;
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  background-color: rgb(48, 48, 48);
-  border: 1px solid gray;
-  border-radius: var(--radius-lg);
-}
-
-.autocompleteOption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 8px 10px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--white-clr);
-  font-size: var(--font-size-sm);
-  text-align: left;
-  cursor: pointer;
-}
-
-.autocompleteOption:hover {
-  background-color: var(--gray-clr);
-}
-
-.autocompleteMuted {
-  color: rgb(160, 160, 160);
-  font-size: 12px;
-}
-
-.autocompleteEmpty {
-  padding: 8px 10px;
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-sm);
 }
 
 /*
@@ -356,4 +275,82 @@ Regenerate Secret (edit mode)
 .revealedSecretHint {
   font-size: 12px;
   color: rgb(160, 160, 160);
+}
+
+/*
+==========================
+Active Toggle
+==========================
+*/
+
+.activeToggleBox {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid gray;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+}
+
+.toggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSwitch {
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  background-color: var(--light-gray-clr);
+  border-radius: var(--radius-pill);
+  position: relative;
+  margin-top: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.toggleSwitch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--white-clr);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggleInput:focus-visible + .toggleSwitch {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: 2px;
+}
+
+.toggleSwitchOn {
+  background-color: var(--blue-clr);
+}
+
+.toggleSwitchOn::after {
+  transform: translateX(18px);
+}
+
+.toggleContent {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.toggleTitle {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--white-clr);
+}
+
+.toggleDescription {
+  font-size: var(--font-size-sm);
+  color: rgb(204, 204, 204);
+  line-height: 1.5;
 }

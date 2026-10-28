@@ -3,10 +3,13 @@ import type { WebhookEvent as PrismaWebhookEvent, WebhookEventStatus as PrismaWe
 import type { WebhookEventStatus, EventType } from '@/lib/types';
 import { ALL, WEBHOOK_EVENT_FILTERS, type WebhookEventFilters } from '@/lib/filters/options';
 import { invert, parseFilters } from '@/lib/filters/parse';
+import { replayBlocker } from '@/lib/webhooks/replay';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
+import { PushPayload, PullRequestPayload } from "@/lib/types";
 
 export type WebhookEvent = Omit<PrismaWebhookEvent, 'status' | 'eventType'> & {
   status: WebhookEventStatus;
+  replayBlockedReason: string | null;
   eventType: EventType;
   commitSha: string | null;
   commitMessage: string | null;
@@ -26,14 +29,14 @@ const WEBHOOK_EVENT_STATUS_MAP: Record<PrismaWebhookEventStatus, WebhookEventSta
 
 const WEBHOOK_EVENT_TYPE_MAP: Record<PrismaEventType, EventType> = {
   PUSH: "push",
-  PULL_REQUEST: "pull-request"
+  PULL_REQUEST: "pull-request",
+  PING: 'ping',
+  UNRECOGNIZED: 'unrecognized'
 };
 
-type GithubWebhookPayload = {
-  after?: string;
-  head_commit?: { message?: string };
-  ref?: string;
-};
+type GithubWebhookPayload = PushPayload & Omit<PullRequestPayload, 'repository'> & {
+  head_commit?: { message?: string }; // `push` commit message
+} | null;
 
 export type WebhookEventCounts = Record<WebhookEventStatus, number>;
 
@@ -70,6 +73,7 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
     orderBy: [{ receivedAt: direction }, { id: direction }],
     include: {
       pipeline: { select: { name: true, repoUrl: true }},
+      webhook: { select: { isActive: true }},
     },
   });
 
@@ -86,8 +90,9 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
   return {
     total,
     ...meta,
-    rows: webhookEvents.map((webhookEvent) => ({
+    rows: webhookEvents.map(({ webhook, ...webhookEvent }) => ({
       ...webhookEvent,
+      replayBlockedReason: replayBlocker({ ...webhookEvent, webhook }),
       pipeline: webhookEvent.pipeline ? {
         ...webhookEvent.pipeline,
       } : null,
@@ -95,24 +100,29 @@ export async function getWebhookEventsPage(filters: WebhookEventFilters = parseF
       eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
       commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
       commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
-      branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
+      branch: returnBranch(webhookEvent.payload as GithubWebhookPayload, webhookEvent.eventType)
     })),
     counts,
   };
 }
 
+
+
 export async function getWebhookEventById(id: string): Promise<WebhookEvent | null> {
-  const webhookEvent = await prisma.webhookEvent.findUnique({
+  const found = await prisma.webhookEvent.findUnique({
     where: { id },
     include: {
-      pipeline: { select: { name: true, repoUrl: true }},      
+      pipeline: { select: { name: true, repoUrl: true }},
+      webhook: { select: { isActive: true }},
     }
   });
 
-  if (!webhookEvent) return null;
+  if (!found) return null;
+  const { webhook, ...webhookEvent } = found;
 
   return {
     ...webhookEvent,
+    replayBlockedReason: replayBlocker({ ...webhookEvent, webhook }),
     pipeline: webhookEvent.pipeline ? {
       ...webhookEvent.pipeline,
     } : null,
@@ -120,6 +130,14 @@ export async function getWebhookEventById(id: string): Promise<WebhookEvent | nu
     eventType: WEBHOOK_EVENT_TYPE_MAP[webhookEvent.eventType],
     commitSha: (webhookEvent.payload as GithubWebhookPayload)?.after ?? null,
     commitMessage: (webhookEvent.payload as GithubWebhookPayload)?.head_commit?.message ?? null,
-    branch: (webhookEvent.payload as GithubWebhookPayload)?.ref ?? null
+    branch: returnBranch(webhookEvent.payload as GithubWebhookPayload, webhookEvent.eventType)
   }
+}
+
+
+
+function returnBranch(payload: GithubWebhookPayload, eventType: PrismaEventType): string | null{
+  if (eventType === 'PUSH') return payload?.ref ?? null;
+  if (eventType === 'PULL_REQUEST') return payload?.pull_request?.head?.ref ?? null;
+  return null;
 }

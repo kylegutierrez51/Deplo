@@ -72,8 +72,41 @@ Header Button Media Queries
 
 /*
   Breakpoints:
+     1180px
      480px
 */
+
+/*
+===================================================================
+1180px
+  Validate and Save go icon-only so the header still fits once the
+  environment picker and default-directory button sit in the middle.
+  Run keeps its label as the primary action. The button's title
+  attribute keeps the label on hover, and the hidden text still
+  gives the button its accessible name.
+===================================================================
+*/
+@media (max-width: 1180px) {
+
+  /* font-size: 0 hides the text node without a wrapper element.
+     ion-icon manages its own font-size so it is unaffected.
+
+     !important throughout this block: pipeline-editor-header.module.css also styles
+     these buttons through .right-slot button and .right-slot button ion-icon, which
+     are more specific than any selector this module can write against its own
+     classes, so without it the label never hides. */
+  .validate-btn,
+  .save-btn {
+    font-size: 0 !important;
+    padding: var(--space-sm) !important;
+  }
+
+  .validate-btn ion-icon,
+  .save-btn ion-icon {
+    font-size: 20px;
+    margin-right: 0 !important;
+  }
+}
 
 /* 
 ===================================================================

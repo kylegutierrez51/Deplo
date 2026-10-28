@@ -41,11 +41,13 @@ npx jest -t "reports a cycle"
 npx playwright test e2e/auth.spec.ts --project=anonymous
 ```
 
-Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `RUNNER_WORKSPACE_ROOT`.
+Required env vars (`.env`): `DATABASE_URL`, `ENCRYPTION_KEY` (hex, 32 bytes for AES-256-GCM), `AUTH_SECRET` (also used to mint the E2E session cookie), and for the runner `REDIS_HOST`, `REDIS_PORT`, `RUNNER_WORKSPACE_ROOT`. Optional: `DEPLO_PUBLIC_URL`, the public base URL GitHub can reach; when set, the webhook modal shows it as the payload URL instead of the smee.io relay flow.
 
 ## Testing
 
 Three tiers, three configs. CI (`.github/workflows/ci.yml`) runs all of them plus lint/typecheck on every push and PR.
+
+**When adding a feature, run only the affected tests** — the files for the modules you changed, e.g. `npx jest lib/pipeline/directory.test.ts runner/stages/stageProcessor.test.ts`. Do not run the full suite (`npm test`, `npm run test:integration`, `npm run test:e2e`); CI runs everything on the PR and catches what the targeted run missed.
 
 | Tier | Config | What belongs there |
 |---|---|---|
@@ -156,7 +158,9 @@ An abandoned `RUNNING` row is on the retryable side of that split, and `retryRun
 
 Every phase is individually wrapped, since all of this happens before `worker.run()` and an unhandled rejection would stop the runner from booting rather than merely leaving work unrecovered.
 
-`runner/recovery/sweeper.ts` covers what boot-only recovery cannot. A run job that exhausts its attempts leaves no trace on the run row — `attempts: 3` with a 2s exponential backoff means six seconds of Postgres being unreachable spends the whole budget — and the job lands in the failed set with the run stuck at `QUEUED` while the runner processes everything else. Nothing in the app rescues it either: `RETRYABLE` refuses to re-run anything unfinished, so the only thing anyone can do with it is cancel it. `startStalledRunSweep` re-enters unfinished runs on a timer, and the same pass closes the window where an approval decision commits but its enqueue fails.
+`runner/recovery/sweeper.ts` covers what boot-only recovery cannot. A run job that exhausts its attempts leaves no trace on the run row — `attempts: 3` with a 2s exponential backoff means six seconds of Postgres being unreachable spends the whole budget — and the job lands in the failed set with the run stuck at `QUEUED` while the runner processes everything else. Nothing in the app rescues it either: `RETRYABLE` refuses to re-run anything unfinished, so the only thing anyone can do with it is cancel it. `startStalledRunSweep` re-enters unfinished runs on a timer, and the same pass closes the window where an approval decision commits but its enqueue fails. The same tick first runs `sweepStalledWebhookEvents` (first because it is one Postgres statement, while re-entering a run can wait on Redis indefinitely during an outage), which fails webhook events still `PENDING` after five minutes: the webhook route and a replay both write their event before processing and settle it before responding, so a lasting `PENDING` means the outcome was lost, usually because the database was down when the route tried to record a failure. The update is guarded on `PENDING`, so an event the route did settle keeps its real outcome.
+
+The webhook route and a replay share `processDelivery` (`lib/webhooks/process-delivery.ts`), which turns a delivery into an outcome: ignored, failed, or a run started. A replay (`replayWebhookEvent`, `lib/actions/webhook-events.ts`) is recorded as a **new** `WebhookEvent` with `source: 'replay'` carrying the original's payload and headers, rather than re-running the old row, so the original keeps its own outcome. It is judged against the webhook's *current* settings, triggers its run as the signed-in user, and does not touch `Webhook.lastDelivery`, which records GitHub's deliveries only. `replayBlocker` (`lib/webhooks/replay.ts`) is the single rule for what can be replayed, read by both the data reader behind the modal's disabled button and the action, so the two cannot disagree. Replays reuse the original's headers, so any future unique index on a delivery id must exempt `source: 'replay'` rows.
 
 **It is deliberately not the reaper on a timer.** `reapAbandonedWork` is only safe before `worker.run()`, and the parts that make it unsafe are exactly the ones that would help least here: `reclaimStageJob` deletes a job's BullMQ lock, and `reapStaleStages` fails every `RUNNING` row it finds. The repeatable subset is the last phase alone — read the unfinished runs and hand them back to the scheduler — because every write reachable from there is a compare-and-swap and `readyStages` is idempotent, so re-entering a healthy run reads the row and does nothing. The cutoff in `findStalledRuns` is a cost filter, not a safety one; `QUEUED` is measured from `createdAt` and `RUNNING` from `startedAt` because a queued run has no `startedAt` and a single-column filter would silently never match one.
 

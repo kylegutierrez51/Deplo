@@ -2,14 +2,22 @@ import styles from './webhook-card.module.css'
 import type { Webhook } from "@/lib/data/webhooks";
 import Pill from '../ui/Pill';
 import { formatDate } from '@/lib/utils/date';
+import { capitalize } from '@/lib/utils/string';
 import { EventType } from '@/lib/types';
+import { repoUrlWarning } from '@/lib/pipeline/repo-url';
+import RepoUrlWarning from './RepoUrlWarning';
 
 const EVENT_TYPE_MAP: Record<EventType, string> = {
   push: 'Push',
-  'pull-request': 'Pull Request'
+  'pull-request': 'Pull Request',
+  ping: 'Ping',
+  unrecognized: 'Unrecognized'
 };
 
 export default function WebhookCard({ webhook }: { webhook: Webhook}) {
+  // A deleted pipeline already reads "Pipeline Not Found"; warn only about one that exists.
+  const warning = webhook.pipelineName ? repoUrlWarning(webhook.pipelineName, webhook.pipelineRepoUrl) : null;
+
   return (
     <div className={styles['webhook-card']}>
       <div className={styles['webhook-row']}>
@@ -27,6 +35,13 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                 <Pill key={index} variant={event} label={EVENT_TYPE_MAP[event]}/>
               ))}
             </div>
+            {webhook.environmentName && webhook.environmentType &&
+              <div className={styles.environment}>
+                <span>Environment:</span>
+                <span>{webhook.environmentName}</span>
+                <Pill variant={webhook.environmentType} label={capitalize(webhook.environmentType)} />
+              </div>
+            }
               {webhook.lastDelivery &&
                 <>
                   <div className={styles['last-delivery']}>
@@ -34,6 +49,7 @@ export default function WebhookCard({ webhook }: { webhook: Webhook}) {
                   </div>
                 </>
               }
+            {warning && <RepoUrlWarning message={warning} />}
             {webhook.branchFilters.length > 0  &&
               <div className={styles.branchFilters}>
                 <span>Branch Filters:</span>

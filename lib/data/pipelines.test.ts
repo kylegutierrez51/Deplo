@@ -42,7 +42,7 @@ describe('getPipelines status', () => {
     expect(pipeline.status).toBe(expected);
   });
 
-  // 'idle' is a PipelineStatus with no Prisma counterpart — it is the fallback
+  // 'idle' is a PipelineStatus with no Prisma counterpart -- it is the fallback
   // for a pipeline that has never run, not a mapped enum member.
   it('reports a pipeline that has never run as idle', async () => {
     prismaMock.pipeline.findMany.mockResolvedValue([row()] as never);
@@ -154,7 +154,7 @@ describe('getPipelineDefinition', () => {
   it('returns an empty graph when the pipeline has no definition', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
 
-    await expect(getPipelineDefinition('p1')).resolves.toEqual({ nodes: [], edges: [] });
+    await expect(getPipelineDefinition('p1')).resolves.toEqual({ nodes: [], edges: [], defaultDirectory: null });
   });
 
   it('reads the highest version, not the newest row', async () => {
@@ -185,6 +185,14 @@ describe('getPipelineDefinition', () => {
     });
   });
 
+  it('hands the editor the stored default directory', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(
+      { graphJson: { nodes: [], edges: [] }, configJson: {}, defaultDirectory: '/srv/app' } as never,
+    );
+
+    await expect(getPipelineDefinition('p1')).resolves.toMatchObject({ defaultDirectory: '/srv/app' });
+  });
+
   // A definition written before the current shape is still readable rather than
   // crashing the editor.
   it('survives a definition holding malformed json', async () => {
@@ -192,6 +200,6 @@ describe('getPipelineDefinition', () => {
       { graphJson: 'not an object', configJson: null } as never,
     );
 
-    await expect(getPipelineDefinition('p1')).resolves.toEqual({ nodes: [], edges: [] });
+    await expect(getPipelineDefinition('p1')).resolves.toEqual({ nodes: [], edges: [], defaultDirectory: null });
   });
 });

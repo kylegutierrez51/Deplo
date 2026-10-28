@@ -49,3 +49,8 @@ Commit Detail
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);
 }
+
+/* Validation failures arrive as one line per problem, so line breaks are kept. */
+.status-reason {
+  white-space: pre-line;
+}
