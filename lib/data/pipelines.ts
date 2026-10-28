@@ -11,7 +11,6 @@ export type Pipeline = Omit<PrismaPipeline, "createdById" | "lastRunId"> & {
   status: PipelineStatus;
   runNumber?: number;
   createdBy?: string | null;
-  commitMessage?: string | null;
   defaultEnvironment?: {
     name: string;
     type: EnvType;
