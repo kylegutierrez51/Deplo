@@ -1,4 +1,4 @@
-import { shortSha, commitSummary, getBranch, repoWebUrl, repoLabel } from '@/lib/utils/git';
+import { shortSha, commitSummary, getBranch, repoWebUrl, repoLabel, repoName } from '@/lib/utils/git';
 
 describe('shortSha', () => {
   it('keeps the first seven characters, as git and GitHub abbreviate', () => {
@@ -90,5 +90,24 @@ describe('repoLabel', () => {
 
   it('falls back to the raw value when it cannot be parsed', () => {
     expect(repoLabel('deplo')).toBe('deplo');
+  });
+});
+
+describe('repoName', () => {
+  it('returns the last path segment', () => {
+    expect(repoName('https://github.com/kylegutierrez51/Deplo')).toBe('Deplo');
+  });
+
+  // Both are valid ways to write the same repo; a naive split shows `Deplo.git` or nothing.
+  it.each([
+    ['a .git suffix', 'https://github.com/kylegutierrez51/Deplo.git'],
+    ['a trailing slash', 'https://github.com/kylegutierrez51/Deplo/'],
+    ['an scp-style address', 'git@github.com:kylegutierrez51/Deplo.git'],
+  ])('ignores %s', (_label, input) => {
+    expect(repoName(input)).toBe('Deplo');
+  });
+
+  it('falls back to the raw value when it cannot be parsed', () => {
+    expect(repoName('deplo')).toBe('deplo');
   });
 });

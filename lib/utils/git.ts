@@ -48,3 +48,11 @@ export function repoLabel(repoUrl: string): string {
   if (!repo) return repoUrl;
   return repo.host === 'github.com' ? repo.path : `${repo.host}/${repo.path}`;
 }
+
+
+// The bare repo name, without its owner, a .git suffix or a trailing slash
+export function repoName(repoUrl: string): string {
+  const repo = parseRepo(repoUrl);
+  if (!repo) return repoUrl;
+  return repo.path.slice(repo.path.lastIndexOf('/') + 1);
+}

@@ -3,7 +3,10 @@
 // characters neither shell interprets, and it may never carry credentials: no `user:pass@`
 // part, and the only `@` allowed is the one in the scp-style `git@host:path` form.
 const HOST = '[A-Za-z0-9.-]+';
-const PATH = '[A-Za-z0-9._~/-]+';
+const SEGMENT = '[A-Za-z0-9._~-]+';
+// At least `owner/repo`, with no empty segments, and `.git` only as the final suffix.
+// Owner is not the only prefix: GitLab nests groups (`group/subgroup/repo`).
+const PATH = `(?!.*\\.git/.)${SEGMENT}(?:/${SEGMENT})+/?`;
 
 const HTTPS_URL = new RegExp(`^https://${HOST}(:[0-9]+)?/${PATH}$`);
 const SCP_URL = new RegExp(`^git@${HOST}:${PATH}$`);

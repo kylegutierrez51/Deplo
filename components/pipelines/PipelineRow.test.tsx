@@ -87,11 +87,19 @@ describe('latest run link', () => {
 });
 
 describe('repository present', () => {
-  it('renders the repo name and its commit message', () => {
+  it('renders the repo name', () => {
     setup();
 
-    expect(repository()).toHaveTextContent('web-client');
-    expect(repository()).toHaveTextContent('Fix the thing');
+    expect(repository()).toHaveTextContent(/^web-client$/);
+  });
+
+  it.each([
+    'https://github.com/o/web-client.git',
+    'https://github.com/o/web-client/',
+  ])('renders just the repo name for %s', repoUrl => {
+    setup({ repoUrl });
+
+    expect(repository()).toHaveTextContent(/^web-client$/);
   });
 });
 
@@ -100,18 +108,6 @@ describe('no repository', () => {
     setup({ repoUrl: null });
 
     expect(repository()).toHaveTextContent('—');
-  });
-
-  /*
-   * The commit message is the repo's news. Without a repo there is nothing it
-   * could describe, so it goes with it rather than sitting under an em dash —
-   * and a stale message on a pipeline that has since dropped its repo would be
-   * actively misleading.
-   */
-  it('suppresses a commit message with no repository above it', () => {
-    setup({ repoUrl: null });
-
-    expect(repository()).not.toHaveTextContent('Fix the thing');
   });
 
   it('keeps the name, latest run number and status', () => {
