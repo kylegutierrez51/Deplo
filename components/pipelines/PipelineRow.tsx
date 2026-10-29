@@ -10,7 +10,7 @@ import Pill from '@/components/ui/Pill';
 
 
 export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
-  const { repoUrl, name, runNumber, status, commitMessage, lastRun, id } = pipeline;
+  const { repoUrl, name, runNumber, status, lastRun, id } = pipeline;
   
   const router = useRouter();
   
@@ -27,7 +27,7 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
         : ''}
       </td>
       <td><Pill variant={status} label={capitalize(status)} /></td>
-      <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
+      <td>{repoName || '—'}<br /></td>
       <td className="nowrap">
         {lastRun ? (
           <Link

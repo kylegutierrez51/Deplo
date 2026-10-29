@@ -35,7 +35,6 @@ const setup = (over: Partial<Props> = {}) => {
     status: 'succeeded',
     lastRun: 'run-9',
     repoUrl: 'https://github.com/o/web-client',
-    commitMessage: 'Fix the thing',
     description: null,
     defaultEnvironmentId: null,
     defaultEnvironment: null,
@@ -56,12 +55,11 @@ const setup = (over: Partial<Props> = {}) => {
 };
 
 describe('view mode', () => {
-  it('shows the repo url and its commit message', () => {
+  it('shows the repo url', () => {
     setup();
 
     expect(screen.getByText('Repo URL')).toBeInTheDocument();
     expect(screen.getByText('https://github.com/o/web-client')).toBeInTheDocument();
-    expect(screen.getByText('Fix the thing')).toBeInTheDocument();
   });
 
   /*
@@ -91,18 +89,8 @@ describe('view mode', () => {
     expect(screen.queryByText('Repo URL')).not.toBeInTheDocument();
   });
 
-  /*
-   * The commit message lives inside that block, so it goes with it. Asserted with
-   * a message deliberately still set, since the block is gated on the repo alone.
-   */
-  it('takes the commit message with it', () => {
-    setup({ repoUrl: null });
-
-    expect(screen.queryByText('Fix the thing')).not.toBeInTheDocument();
-  });
-
   it('keeps the fields that are not repo-derived', () => {
-    setup({ repoUrl: null, commitMessage: null });
+    setup({ repoUrl: null });
 
     expect(screen.getByText('CI')).toBeInTheDocument();
     expect(screen.getByText('Succeeded')).toBeInTheDocument();
@@ -246,7 +234,7 @@ describe('the default environment', () => {
     (mode === 'create' ? add : update).mock.lastCall?.[1].get('default_environment_id');
 
   it('shows the default environment by name in view mode', () => {
-    setup({ defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+    setup({ defaultEnvironmentId: 'env-2', defaultEnvironment: { name: 'prod', type: 'production' } });
 
     expect(screen.getByText('Default Environment')).toBeInTheDocument();
     expect(screen.getByText('prod')).toBeInTheDocument();
@@ -267,7 +255,7 @@ describe('the default environment', () => {
   });
 
   it('opens on the saved default in edit mode and submits it unchanged', async () => {
-    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: { name: 'prod', type: 'production' } });
 
     expect(screen.getByLabelText(/default environment/i)).toHaveValue('prod');
     fireEvent.submit(document.getElementById('modal-form')!);
@@ -311,7 +299,7 @@ describe('the default environment', () => {
   });
 
   it('submits no default once the user clears the saved one', async () => {
-    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: 'prod' });
+    setup({ mode: 'edit', environments, defaultEnvironmentId: 'env-2', defaultEnvironment: { name: 'prod', type: 'production' } });
     const user = userEvent.setup();
 
     await user.clear(screen.getByLabelText(/default environment/i));

@@ -43,7 +43,6 @@ const pipeline = (over: Partial<Pipeline> = {}): Pipeline => ({
   status: 'succeeded',
   lastRun: 'run-9',
   runNumber: 12,
-  commitMessage: 'Fix the thing',
   ...over,
 });
 
