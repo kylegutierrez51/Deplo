@@ -172,8 +172,12 @@ export default function EnvironmentModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="name">Name</label>
-              <input name="name" id="name" placeholder="e.g. staging, qa-integration" required
-                value={enteredName} onChange={(e) => setEnteredName(e.target.value)} />
+              <input 
+                name="name" id="name" 
+                placeholder="e.g. staging, qa-integration" 
+                required spellCheck={false}
+                value={enteredName} 
+                onChange={(e) => setEnteredName(e.target.value)} />
               <span className={styles.nameHint}>Lowercase letters, numbers, and hyphens only. This is the key used to scope secrets and pipeline targets.</span>
             </div>
 

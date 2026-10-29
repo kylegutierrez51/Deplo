@@ -203,14 +203,21 @@ export default function PipelineModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="name">Name</label>
-              <input name="name" id="name" placeholder="e.g. build-frontend" required
+              <input 
+                name="name" id="name" 
+                placeholder="e.g. build-frontend" 
+                required spellCheck={false}
                 value={enteredName} onChange={(e) => setEnteredName(e.target.value)} />
             </div>
 
             <div className={styles.item}>
               <label htmlFor="repo_url">Repo URL <span className={styles.optionalBadge}>optional</span></label>
-              <input name="repo_url" id="repo_url" placeholder="e.g. https://github.com/abcd/web-client"
-                value={enteredRepoUrl} onChange={(e) => setEnteredRepoUrl(e.target.value)} />
+              <input 
+                name="repo_url" id="repo_url" 
+                placeholder="e.g. https://github.com/abcd/web-client"
+                value={enteredRepoUrl} 
+                spellCheck={false}
+                onChange={(e) => setEnteredRepoUrl(e.target.value)} />
               <p className={styles.fieldHint}>
                 <ion-icon name="information-circle-outline"></ion-icon>
                 Allows you to run this pipeline on GitHub push or pull requests when you create a Webhook using this pipeline, set up a relay URL, and run the webhook&#39;s relay command.

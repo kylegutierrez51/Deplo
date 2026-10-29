@@ -82,6 +82,7 @@ export default function Autocomplete({
           placeholder={placeholder}
           autoComplete="off"
           value={query}
+          spellCheck={false}
           onChange={(e) => {
             setQuery(e.target.value);
             setSelectedId(null);

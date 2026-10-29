@@ -218,7 +218,11 @@ export default function SecretModal({
             <input type="hidden" name="id" value={id ?? ''} />
             <div className={styles.item}>
               <label htmlFor="key">Key</label>
-              <input name="key" id="key" placeholder="e.g. DATABASE_URL" value={enteredKey} required
+              <input 
+                name="key" id="key" 
+                placeholder="e.g. DATABASE_URL" 
+                value={enteredKey} 
+                required spellCheck={false}
                 onChange={(e) => setEnteredKey(e.target.value)} />
             </div>
 
@@ -233,6 +237,7 @@ export default function SecretModal({
                   value={enteredValue}
                   required
                   minLength={MIN_MASKABLE_LENGTH}
+                  spellCheck={false}
                   onChange={(e) => setEnteredValue(e.target.value)}
                   onBlur={() => setEnteredValue(v => v.trim())}
                 ></input>
@@ -253,7 +258,7 @@ export default function SecretModal({
                   type="text"
                   name="env_name"
                   placeholder="e.g. Production"
-                  autoComplete="off"
+                  autoComplete="off" spellCheck={false}
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
