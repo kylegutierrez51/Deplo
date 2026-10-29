@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./approvals.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
@@ -17,6 +18,8 @@ const REFRESH_INTERVAL_MS = 10_000;
 const PAGE_SIZE = 6;
 
 type SearchParams = Promise<{ environment?: string; recency?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Approvals" };
 
 export default async function Approvals({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import styles from "./run-detail.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
@@ -19,9 +21,19 @@ const REFRESH_INTERVAL_MS = 2000;
 
 const AWAITING_RUNNER = ['queued', 'running'];
 
+// generateMetadata and the page both need the run, so cache() is used to make it called only once per request
+const getRun = cache(getRunDetailById);
+
+export async function generateMetadata({ params }: RunDetailPageProps): Promise<Metadata> {
+  const { runId } = await params;
+  const run = await getRun(runId);
+
+  return { title: run ? `Run #${run.runNumber} · ${run.pipelineName}` : "Run" };
+}
+
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { runId } = await params;
-  const run = await getRunDetailById(runId);
+  const run = await getRun(runId);
 
   if (!run) {
     notFound();

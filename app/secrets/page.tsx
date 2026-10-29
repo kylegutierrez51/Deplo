@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./secrets.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
@@ -17,6 +18,8 @@ import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 import { parsePage } from '@/lib/utils/pagination';
 
 type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Secrets" };
 
 export default async function Secrets({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

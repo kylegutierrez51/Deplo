@@ -18,7 +18,7 @@ const jetbrains_mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Deplo",
+  title: { default: "Deplo", template: "%s | Deplo" },
   description: "A self-hosted deployment automation platform where teams define multi-stage deploy pipelines visually, trigger them from GitHub events, and monitor job execution with real-time logs",
 };
 

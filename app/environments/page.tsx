@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from './env.module.css';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
@@ -16,6 +17,8 @@ import { hasActiveFilters, parseFilters } from '@/lib/filters/parse';
 import { parsePage } from '@/lib/utils/pagination';
 
 type SearchParams = Promise<{ mode?: string; id?: string; environment?: string; updated?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Environments" };
 
 export default async function Environments({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./webhooks.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
@@ -37,6 +38,8 @@ function publicUrlFromEnv(): string | null {
 }
 
 type SearchParams = Promise<{ mode?: string; id?: string; active?: string; recency?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Webhooks" };
 
 export default async function Webhooks({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
