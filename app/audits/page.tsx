@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./audit.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
@@ -18,6 +19,8 @@ import { parsePage } from '@/lib/utils/pagination';
 const REFRESH_INTERVAL_MS = 30_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; resource?: string; range?: string; recency?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Audits" };
 
 export default async function AuditLog({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

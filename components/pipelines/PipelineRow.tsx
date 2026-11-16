@@ -5,19 +5,20 @@ import { capitalize } from "@/lib/utils/string";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { withParams } from '@/lib/utils/url';
+import { repoName } from '@/lib/utils/git';
 import type { Pipeline } from "@/lib/data/pipelines";
 import Pill from '@/components/ui/Pill';
 
 
 export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
-  const { repoUrl, name, runNumber, status, commitMessage, lastRun, id } = pipeline;
+  const { repoUrl, name, runNumber, status, lastRun, id } = pipeline;
   
   const router = useRouter();
   
   const searchParams = useSearchParams();
   const open = () => router.push(withParams('/pipelines', searchParams, { id, mode: null })); 
 
-  const repoName = repoUrl ? repoUrl.slice(repoUrl.lastIndexOf('/') + 1) : null;
+  const repo = repoUrl ? repoName(repoUrl) : null;
 
   return (
     <tr style={{ cursor: 'pointer' }} onClick={open}>
@@ -27,7 +28,7 @@ export default function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
         : ''}
       </td>
       <td><Pill variant={status} label={capitalize(status)} /></td>
-      <td>{repoName || '—'}<br />{repoName && commitMessage && <span>{commitMessage}</span>}</td>
+      <td>{repo || '—'}<br /></td>
       <td className="nowrap">
         {lastRun ? (
           <Link

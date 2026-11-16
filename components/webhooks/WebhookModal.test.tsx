@@ -423,14 +423,14 @@ describe('picking an environment', () => {
   });
 
   it('seeds the saved environment in edit mode', () => {
-    setup({ mode: 'edit', environmentId: 'env-2', environmentName: 'prod-eu', environments });
+    setup({ mode: 'edit', environmentId: 'env-2', environment: { name: 'prod-eu', type: 'production' }, environments });
 
     expect(screen.getByLabelText(/^Environment/)).toHaveValue('prod-eu');
     expect(submittedEnvironmentId()).toBe('env-2');
   });
 
   it('shows the environment in view mode', () => {
-    setup({ mode: 'view', environmentName: 'production', environments });
+    setup({ mode: 'view', environment: { name: 'production', type: 'production' }, environments });
     expect(screen.getByText('production')).toBeInTheDocument();
   });
 });

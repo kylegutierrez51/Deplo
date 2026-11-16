@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./runs.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
@@ -19,6 +20,8 @@ import { redirect } from 'next/navigation';
 const REFRESH_INTERVAL_MS = 10_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; status?: string; trigger?: string; environment?: string; recency?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Runs" };
 
 export default async function RunHistory({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

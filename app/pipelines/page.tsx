@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./pipelines.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
@@ -17,6 +18,8 @@ import { parsePage } from '@/lib/utils/pagination';
 import { redirect } from 'next/navigation';
 
 type SearchParams = Promise<{ mode?: string; id?: string; status?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Pipelines" };
 
 export default async function Pipelines({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;

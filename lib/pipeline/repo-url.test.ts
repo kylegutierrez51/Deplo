@@ -6,6 +6,10 @@ describe('isCloneableRepoUrl', () => {
     'https://github.com/org/repo.git',
     'https://git.example.com:8443/team/repo.git',
     'git@github.com:org/repo.git',
+    'https://github.com/org/repo/',
+    'https://github.com/org/repo.git/',
+    'https://gitlab.com/group/subgroup/repo.git',
+    'https://github.com/org/repo.github.io',
   ])('accepts %s', (url) => {
     expect(isCloneableRepoUrl(url)).toBe(true);
   });
@@ -22,6 +26,19 @@ describe('isCloneableRepoUrl', () => {
     'https://github.com/org/repo\n',
     'git@github.com:org/repo;id',
   ])('rejects %j', (url) => {
+    expect(isCloneableRepoUrl(url)).toBe(false);
+  });
+
+  // Only the characters were checked once, so a URL no one could clone still saved,
+  // and the table then named the repo after whatever came last.
+  it.each([
+    ['a .git suffix mid-path', 'https://github.com/org/repo.git/extra'],
+    ['an owner with no repo', 'https://github.com/org'],
+    ['an owner with no repo, scp-style', 'git@github.com:repo.git'],
+    ['an empty segment', 'https://github.com/org//repo'],
+    ['a leading slash', 'https://github.com//org/repo'],
+    ['a bare host', 'https://github.com/'],
+  ])('rejects %s', (_label, url) => {
     expect(isCloneableRepoUrl(url)).toBe(false);
   });
 

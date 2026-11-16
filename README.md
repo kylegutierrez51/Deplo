@@ -198,10 +198,9 @@ e2e/         Playwright tests
 
 ## Known issues and roadmap
 
-- **GitHub webhooks don't start runs yet.** You can register a webhook in the UI, but there is no endpoint to receive GitHub's events, so a push doesn't trigger a run.
-- **Search boxes don't filter anything.** The search input on each list page accepts text but isn't connected to the query.
+- **Pipeline Graph gets lost if you refresh the page without saving.** For now, it's recommended to just consistently save a pipeline graph.
 - **Nodes can't be copied and pasted** in the pipeline editor.
+- **Search boxes don't filter anything.** The search input on each list page accepts text but isn't connected to the query.
 - **Stage commands run directly on the runner's machine**, with the runner's permissions. There is no container isolation.
 - **Only one runner process is supported.** Crash recovery assumes it's the only runner, so you can't scale out by starting more.
 - **The seeded demo pipeline only runs on Windows.** Its commands use `cmd` syntax (`cd /d "%PROJECT_DIR%"`).
-- **A repo URL ending in `.git` or `/` is displayed incorrectly.** The repository name shows up with a `.git` suffix, or blank.

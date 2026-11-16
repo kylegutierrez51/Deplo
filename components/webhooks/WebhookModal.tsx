@@ -379,6 +379,7 @@ export default function WebhookModal({
                 type="text"
                 ref={branchInputRef}
                 placeholder="e.g. main, release/*, feature/* — press Enter to add"
+                spellCheck={false}
                 onKeyDown={handleBranchKeyDown}
                 value={enteredBranchFilter}
                 onChange={(e) => setEnteredBranchFilter(e.target.value)}
@@ -420,6 +421,7 @@ export default function WebhookModal({
                   name="relay_url"
                   defaultValue={relayUrl ?? ''}
                   placeholder="https://smee.io/…"
+                  spellCheck={false}
                 />
                 <p className={styles.fieldHint}>
                   <ion-icon name="information-circle-outline"></ion-icon>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./webhook-events.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
@@ -19,6 +20,8 @@ import { parsePage } from '@/lib/utils/pagination';
 const REFRESH_INTERVAL_MS = 15_000;
 
 type SearchParams = Promise<{ mode?: string; id?: string; status?: string; 'event-type'?: string; page?: string; }>;
+
+export const metadata: Metadata = { title: "Events" };
 
 export default async function WebhookEvents({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
