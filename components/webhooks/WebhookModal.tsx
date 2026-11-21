@@ -102,7 +102,6 @@ export default function WebhookModal({
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [regenerateModal, setRegenerateModal] = useState(false);
-  const [revealedSecretVisible, setRevealedSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const [, createFormAction, createPending] = useActionState(async (prev: FormState, formData: FormData) => {
@@ -145,7 +144,6 @@ export default function WebhookModal({
 
   const afterRegenerate = (newSecret: string) => {
     setSecret(newSecret);
-    setRevealedSecretVisible(false);
   }
 
 
@@ -474,7 +472,7 @@ export default function WebhookModal({
                   <div className={styles.secretInputWrapper}>
                     <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
                     <input
-                      type={revealedSecretVisible ? 'text' : 'password'}
+                      type="text"
                       id="webhook-secret"
                       name="webhook_secret"
                       value={secret ?? ''}
@@ -483,10 +481,6 @@ export default function WebhookModal({
                       required
                     />
                     <div className={styles.secretActions}>
-                      <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>
-                        <ion-icon name={revealedSecretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
-                      </button>
-                      <span className={styles.secretDivider}></span>
                       <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
                         <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                       </button>
@@ -517,16 +511,12 @@ export default function WebhookModal({
                     <div className={styles.secretInputWrapper}>
                       <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
                       <input
-                        type={revealedSecretVisible ? 'text' : 'password'}
+                        type="text"
                         value={secret}
                         readOnly
                         className={`${styles.secretInput} ${styles.padded}`}
                       />
                       <div className={styles.secretActions}>
-                        <button type="button" className={styles.iconActionBtn} onClick={() => setRevealedSecretVisible(v => !v)}>
-                          <ion-icon name={revealedSecretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
-                        </button>
-                        <span className={styles.secretDivider}></span>
                         <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
                           <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                         </button>
