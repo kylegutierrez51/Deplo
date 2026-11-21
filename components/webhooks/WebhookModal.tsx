@@ -97,12 +97,11 @@ export default function WebhookModal({
   const [enteredBranchFilter, setEnteredBranchFilter] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<EventType[]>(events);
   const [active, setActive] = useState(isActive);
-  const [secret, setSecret] = useState('');
+  const [secret, setSecret] = useState<string | null>(null);
   const branchInputRef = useRef<HTMLInputElement>(null);
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [regenerateModal, setRegenerateModal] = useState(false);
-  const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [revealedSecretVisible, setRevealedSecretVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -145,7 +144,7 @@ export default function WebhookModal({
 
 
   const afterRegenerate = (newSecret: string) => {
-    setRevealedSecret(newSecret);
+    setSecret(newSecret);
     setRevealedSecretVisible(false);
   }
 
@@ -183,7 +182,8 @@ export default function WebhookModal({
     setSelectedEvents(prev => prev.includes(key) ? prev.filter(e => e !== key) : [...prev, key]);
   };
 
-
+  // cannot use crypto.ts `generateWebhookSecret`, since it uses node:crypto, 
+  // which relies on server-side APIs not present in web browsers
   const handleGenerateSecret = () => {
     const bytes = new Uint8Array(32);
     crypto.getRandomValues(bytes);
@@ -192,15 +192,15 @@ export default function WebhookModal({
   };
 
 
-  const handleCopyRevealed = () => {
-    if (!revealedSecret) return;
-    navigator.clipboard.writeText(revealedSecret);
+  const handleCopyRevealed = async () => {
+    if (!secret) return;
+    await navigator.clipboard.writeText(secret);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
-
-  if (mode === 'view' && revealedSecret !== null) setRevealedSecret(null);
+  if (mode === 'create' && !secret) handleGenerateSecret();
+  if (mode === 'view' && secret !== null) setSecret(null);
 
   // View mode reads the saved pipeline; edit and create follow whichever pipeline is picked.
   const selectedPipeline = pipelines?.find(p => p.id === selectedPipelineId);
@@ -469,9 +469,6 @@ export default function WebhookModal({
                 <div className={styles.fieldGroup}>
                   <div className={styles.fieldLabelRow}>
                     <label htmlFor="webhook-secret">Webhook secret</label>
-                    <button type="button" className={styles.regenerateBtn} onClick={handleGenerateSecret} title="Generate secret">
-                      <ion-icon name="refresh-outline"></ion-icon>
-                    </button>
                   </div>
 
                   <div className={styles.secretInputWrapper}>
@@ -480,7 +477,7 @@ export default function WebhookModal({
                       type={revealedSecretVisible ? 'text' : 'password'}
                       id="webhook-secret"
                       name="webhook_secret"
-                      value={secret}
+                      value={secret ?? ''}
                       readOnly
                       className={`${styles.secretInput} ${styles.padded}`}
                       required
@@ -515,13 +512,13 @@ export default function WebhookModal({
                   Regenerate secret
                 </button>
 
-                {revealedSecret && (
+                {secret && (
                   <div className={styles.revealedSecretBanner}>
                     <div className={styles.secretInputWrapper}>
                       <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
                       <input
                         type={revealedSecretVisible ? 'text' : 'password'}
-                        value={revealedSecret}
+                        value={secret}
                         readOnly
                         className={`${styles.secretInput} ${styles.padded}`}
                       />
