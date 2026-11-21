@@ -181,7 +181,7 @@ describe('regenerating the secret', () => {
     await confirmRegenerate(user);
 
     const revealed = await screen.findByDisplayValue('whsec_regenerated');
-    expect(revealed).toHaveAttribute('type', 'password');
+    expect(revealed).toHaveAttribute('type', 'text');
     expect(screen.getByText(REVEALED_HINT)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Regenerate' })).not.toBeInTheDocument();
   });
