@@ -8,7 +8,7 @@ Dashboard Grid
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
   gap: var(--space-lg);
   align-items: start;
   padding-bottom: var(--space-2xl);
@@ -23,13 +23,13 @@ Dashboard Grid
 /*
 ======================================================================================
 Panels
-  Same visual vocabulary as the stat cards row: 1px light-gray border,
-  radius-lg, JetBrains Mono labels.
 ======================================================================================
 */
 
 .panel {
-  border: 1px solid var(--light-gray-clr);
+  min-width: 0;
+  background: var(--dark-clr-2);
+  border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
@@ -39,15 +39,14 @@ Panels
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding: var(--space-gap-md) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--color-border-dark);
 }
 
 .panel-title {
-  font-family: "JetBrains Mono";
-  font-size: var(--font-size-sm);
-  letter-spacing: 1px;
-  color: var(--table-span-clr);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--white-clr);
 }
 
 .panel-link {
@@ -81,10 +80,11 @@ Recent Runs
 }
 
 .run-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 112px 142px;
   align-items: center;
   gap: var(--space-gap-md);
-  padding: var(--space-gap-md) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
 }
 
 .run-row:hover {
@@ -99,12 +99,15 @@ Recent Runs
 }
 
 .run-pipeline {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   font-size: var(--font-size-body);
 }
 
 .run-meta {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: var(--font-size-sm);
   color: var(--table-span-clr);
   overflow: hidden;
@@ -146,7 +149,7 @@ Last 7 Days — success-rate hero + meter
   display: flex;
   flex-direction: column;
   gap: var(--space-gap-md);
-  padding: var(--space-md);
+  padding: var(--space-lg);
 }
 
 .success-hero {
@@ -156,7 +159,7 @@ Last 7 Days — success-rate hero + meter
 }
 
 .success-rate {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 34px;
   font-weight: 600;
   color: var(--blue-clr);
@@ -170,14 +173,14 @@ Last 7 Days — success-rate hero + meter
 .meter {
   height: 6px;
   border-radius: var(--radius-pill);
-  background-color: var(--blue-btn-clr);
+  background-color: var(--pill-failed-bg);
   overflow: hidden;
 }
 
 .meter-fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background-color: var(--blue-clr);
+  background-color: var(--pill-succeeded-text);
 }
 
 .week-counts {
@@ -213,7 +216,7 @@ Needs Approval
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding: var(--space-gap-md) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
 }
 
 .approval-row:hover {
@@ -236,7 +239,7 @@ Needs Approval
 }
 
 .waiting-time {
-  font-family: "JetBrains Mono";
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: var(--font-size-sm);
   color: var(--pill-approval-text);
   white-space: nowrap;
@@ -316,34 +319,103 @@ Pipelines — status dot + name + status/last-run meta
   }
 }
 
-/*
-======================================================================================
-Media Queries
-
-  Breakpoints:
-    1500px — single column: the 2fr/1fr split leaves the side panels too
-             narrow once the sidebar (300px) and page padding are subtracted
-     640px — run rows drop the environment pill and stack timing under the
-             pipeline name
-======================================================================================
-*/
-
-@media (max-width: 1500px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
+/* The dashboard adapts to its available width when the sidebar opens. */
+.dashboard {
+  container-type: inline-size;
+  padding-inline: clamp(24px, 4vw, 80px);
 }
 
-@media (max-width: 640px) {
-  .run-row {
-    flex-wrap: wrap;
-  }
+.dashboard h1 {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
 
-  .run-timing {
-    flex-direction: row;
-    gap: var(--space-sm);
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-  }
+.cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: var(--space-xl);
+  border-block: 1px solid var(--light-gray-clr);
+}
+
+.stat {
+  padding: var(--space-lg) var(--space-xl);
+  border-right: 1px solid var(--color-border-dark);
+}
+
+.stat:first-child { padding-left: 0; }
+.stat:last-child { border-right: 0; }
+
+.stat dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--subtitle-clr);
+}
+
+.stat dt ion-icon { color: var(--table-span-clr); }
+
+.stat dd {
+  margin-block: var(--space-xs);
+  font-size: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+
+.running { color: var(--blue-clr); }
+.queued { color: var(--pill-queued-text); }
+.approval { color: var(--pill-awaiting-approval-text); }
+.failed { color: var(--pill-failed-text); }
+
+.stat-scope {
+  display: block;
+  margin-top: var(--space-xs);
+  font-weight: 300;
+  letter-spacing: normal;
+  font-size: 12px;
+  color: var(--table-span-clr);
+}
+
+.run-info { gap: 4px; }
+.run-status, .run-environment { min-width: 0; }
+.run-timing { font-variant-numeric: tabular-nums; }
+
+.empty-note { line-height: 1.7; }
+.empty-note a { color: var(--blue-clr); text-decoration: underline; }
+.empty-note ion-icon { color: var(--pill-succeeded-text); vertical-align: middle; font-size: 18px; margin-right: 4px; }
+
+.panel a:focus-visible {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: -2px;
+}
+
+.pipeline-row { flex-wrap: wrap; }
+.pipeline-meta { margin-left: auto; }
+
+@container (max-width: 1100px) {
+  .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+  .side-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .side-column > :last-child { grid-column: 1 / -1; }
+}
+
+@container (max-width: 700px) {
+  .cards-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: var(--space-md); }
+  .stat:nth-child(2) { border-right: 0; }
+  .stat:nth-child(n + 3) { border-top: 1px solid var(--color-border-dark); }
+  .stat:nth-child(3) { padding-left: 0; }
+  .side-column { display: flex; }
+  .run-row { grid-template-columns: 112px minmax(0, 1fr); gap: var(--space-gap-md); }
+  .run-status { grid-column: 1; grid-row: 1; }
+  .run-info { grid-column: 2; grid-row: 1; }
+  .run-environment { grid-column: 1; grid-row: 2; }
+  .run-timing { grid-column: 2; grid-row: 2; align-items: flex-start; }
+  .run-pipeline, .run-meta { font-size: 12px; }
+}
+
+@media (max-width: 874px) {
+  .dashboard { padding: 24px 20px; }
 }

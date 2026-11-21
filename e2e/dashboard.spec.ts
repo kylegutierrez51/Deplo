@@ -58,7 +58,7 @@ test('shows a stat card for each thing worth acting on', async ({ page }) => {
 
   const cards = page.locator('[class*="cards-row"]');
 
-  for (const label of ['RUNNING', 'QUEUED', 'NEEDS APPROVAL', 'FAILED']) {
+  for (const label of ['Running', 'Queued', 'Needs approval', 'Failed']) {
     await expect(cards.getByText(label, { exact: true })).toBeVisible();
   }
 });
