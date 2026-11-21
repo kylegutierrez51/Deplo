@@ -198,7 +198,7 @@ Webhook Secret Input
 }
 
 .secretInput.padded {
-  padding-right: 74px;
+  padding-right: 40px;
 }
 
 .secretActions {
@@ -208,13 +208,6 @@ Webhook Secret Input
   align-items: center;
   height: 100%;
   border-left: 1px solid gray;
-}
-
-.secretDivider {
-  display: block;
-  width: 1px;
-  height: 16px;
-  background-color: gray;
 }
 
 .iconActionBtn {
