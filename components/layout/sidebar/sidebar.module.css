@@ -5,10 +5,9 @@
   top: 0;
   width: 300px;
   background-color: var(--sidebar-clr);
-  padding: var(--space-2xl) var(--space-xl);
+  padding: var(--space-lg);
   padding-top: var(--space-xl);
-  border: 1px solid var(--gray-clr);
-  border-right: none;
+  border-right: 1px solid var(--color-border-dark);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -80,8 +79,9 @@ Sidebar Nav (scrollable area)
   z-index: 0;
 
   /* positions scrollbar at edge of sidebar */
-  margin-right: calc(-1 * var(--space-xl));
-  padding-right: var(--space-xl);
+  min-height: 0;
+  margin-right: calc(-1 * var(--space-lg));
+  padding-right: var(--space-lg);
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -106,16 +106,16 @@ Sidebar Content
 .sidebar-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-  padding-top: 50px;
-  padding-bottom: var(--space-md);
-  border-bottom: var(--border-width-md) solid var(--gray-clr);
+  gap: var(--space-sm);
+  padding: var(--space-lg) 0;
+  border-bottom: 1px solid var(--color-border-dark);
 }
 
 .sidebar .subtitle {
   margin-left: var(--space-md);
-  font-family: var(--font-jetbrains-mono);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--table-span-clr);
 }
 
 .sidebar-content li {
@@ -128,7 +128,9 @@ Sidebar Content
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-md);
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: inherit;
 }
 
 .sidebar-content li:hover {
@@ -137,15 +139,18 @@ Sidebar Content
 
 .nav-item-active {
   background-color: var(--blue-btn-clr);
-  border-left: 2px solid var(--blue-clr);
+  box-shadow: inset 2px 0 var(--blue-clr);
 }
 
 .sidebar-content li .title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
 }
 
 .sidebar-content ion-icon {
-  font-size: 25px;
+  font-size: 21px;
+  color: var(--subtitle-clr);
+  flex-shrink: 0;
 }
 
 
@@ -200,8 +205,8 @@ Profile
 }
 
 .profile .role {
-  font-family: var(--font-jetbrains-mono);
-  font-size: var(--font-size-lg);
+  font-size: 11px;
+  color: var(--table-span-clr);
 }
 
 .profile ion-icon[name="chevron-up-outline"] {
@@ -337,5 +342,54 @@ Sidebar Media Queries
   :global(.page-content) {
     margin-left: 0;
     padding: 60px var(--space-xl) 0;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md) var(--space-lg);
+  flex-shrink: 0;
+}
+
+.brand > span:last-child {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.8px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--pill-running-border);
+  border-radius: var(--radius-md);
+  background: var(--pill-running-bg);
+}
+
+.brand-mark ion-icon {
+  color: var(--blue-clr);
+  font-size: 20px;
+}
+
+.nav-item-active .title,
+.nav-item-active ion-icon {
+  color: var(--blue-clr);
+}
+
+.sidebar a:focus-visible,
+.sidebar-toggle:focus-visible,
+.back-link:focus-visible {
+  outline: 2px solid var(--blue-clr);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar-toggle,
+  .topbar {
+    transition: none;
   }
 }
