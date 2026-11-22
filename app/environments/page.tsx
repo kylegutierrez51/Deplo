@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/environments/environments.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from "@/components/layout/subheader/AddButton";
@@ -63,7 +64,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
             {environments.total > 0 ? (
               <>
                 <div className={styles['list-panel']}>
-                  <table className={`${styles.table} ${styles['environments-table']}`} aria-label="Environments">
+                  <table className={`${styles.table} ${layoutStyles['environments-table']}`} aria-label="Environments">
                     <thead>
                       <tr>
                         {['Name', 'Environment type', 'Secrets', 'Last updated'].map(column => (

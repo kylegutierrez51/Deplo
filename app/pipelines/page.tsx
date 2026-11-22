@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import styles from "./pipelines.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/pipelines/pipelines.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
@@ -68,7 +69,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
             {pipelines.total > 0 ? (
               <>
                 <div className={styles['list-panel']}>
-                  <table className={styles['pipeline-table']} aria-label="Pipelines">
+                  <table className={`${styles.table} ${layoutStyles['pipeline-table']}`} aria-label="Pipelines">
                     <thead>
                       <tr>
                         <th scope="col">Pipeline</th>

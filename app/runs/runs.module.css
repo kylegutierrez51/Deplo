@@ -1,60 +1,20 @@
-.page:global(.page-content) {
-  container-type: inline-size;
-  padding-inline: clamp(24px, 4vw, 80px);
-  padding-top: var(--space-md);
-  padding-bottom: var(--space-2xl);
-}
-
-.page h1 {
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: -1px;
-}
-
-.filters { margin-bottom: var(--space-lg); }
-.filters-bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
-
-.input-group { position: relative; width: min(360px, 100%); }
-.input-group ion-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--icon-clr); pointer-events: none; }
-.input-group input { padding-left: 36px; }
-
-.list-panel {
-  border: 1px solid var(--color-border-dark);
-  border-radius: var(--radius-lg);
-  background: var(--dark-clr-2);
-  overflow: hidden;
-}
-
-.run-table { width: 100%; table-layout: fixed; }
-.run-table thead tr { background: transparent; }
-.run-table th { color: var(--subtitle-clr); font-size: var(--font-size-sm); font-weight: 500; text-align: left; padding: var(--space-md) var(--space-lg); }
+/* Run History: column widths and responsive layout. Shared chrome lives in resource-list. */
 .run-table th:first-child { width: auto; }
 .run-table th:nth-child(2) { width: 250px; }
 .run-table th:nth-child(3) { width: 120px; }
 .run-table th:nth-child(4) { width: 130px; }
 .run-table th:last-child { width: 190px; }
-.run-table tbody tr { border-bottom: 1px solid var(--color-border-dark); }
-.run-table tbody tr:first-child { border-top: 1px solid var(--color-border-dark); }
-.run-table tbody tr:last-child { border-bottom: 0; }
-
-.pagination > div { position: static; padding: var(--space-lg) 0; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: var(--space-md); }
-.page .pagination > div > div { position: static; color: var(--subtitle-clr); font-size: var(--font-size-sm); }
-.pagination nav > div { padding-left: 0; gap: var(--space-md); }
-.pagination nav a, .pagination nav button { border-radius: var(--radius-sm); }
-.pagination a:focus-visible, .pagination button:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 2px; }
 
 @container (max-width: 1050px) {
   .run-table, .run-table tbody { display: block; }
   .run-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .input-group { width: 100%; }
-  .pagination > div { flex-direction: column; align-items: stretch; }
-  .pagination nav > div { justify-content: center; flex-wrap: wrap; }
 }
-
-@media (max-width: 874px) {
-  .page:global(.page-content) { padding: 24px 20px; }
-}
-
 /* RunLabel is also used in run dialogs and approval details. */
 .pipeline-detail { display: flex; align-items: center; gap: var(--space-sm); width: max-content; max-width: 100%; }
 .pipeline-detail .status-name { gap: var(--space-xs); flex: none; display: flex; }
+
+@container (max-width: 1050px) {
+  .run-filters > div > div:first-child { width: 100%; }
+  .run-pagination > div:first-child { flex-direction: column; align-items: stretch; }
+  .run-pagination nav > div { justify-content: center; flex-wrap: wrap; }
+}

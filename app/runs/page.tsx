@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import styles from "./runs.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "./runs.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
@@ -58,7 +59,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
         {runs.total > 0 || filtered ? (
           <>
-            <div className={styles.filters}>
+            <div className={`${styles.filters} ${layoutStyles['run-filters']}`}>
               <div className={styles['filters-bar']}>
                 <SearchInput
                   placeholder={"Search pipelines, commits..."} styles={styles} />
@@ -72,7 +73,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
             {runs.total > 0 ? (
               <>
                 <div className={styles['list-panel']}>
-                  <table className={styles['run-table']} aria-label="Run history">
+                  <table className={`${styles.table} ${layoutStyles['run-table']}`} aria-label="Run history">
                     <thead>
                       <tr>
                         {['Pipeline', 'Environment', 'Trigger', 'Duration', 'Created at'].map(column => (
@@ -88,7 +89,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
                   </table>
                 </div>
 
-                <div className={styles.pagination}>
+                <div className={`${styles.pagination} ${layoutStyles['run-pagination']}`}>
                   <Pagination page={runs.page} pageCount={runs.pageCount} total={runs.total} pageSize={runs.pageSize} />
                 </div>
               </>

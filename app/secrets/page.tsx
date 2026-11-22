@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/secrets/secrets.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
@@ -65,7 +66,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
             {secrets.total > 0 ? (
               <>
                 <div className={styles['list-panel']}>
-                  <table className={`${styles.table} ${styles['secrets-table']}`} aria-label="Secrets">
+                  <table className={`${styles.table} ${layoutStyles['secrets-table']}`} aria-label="Secrets">
                     <thead>
                       <tr>
                         {['Key', 'Environment', 'Last updated'].map(column => (

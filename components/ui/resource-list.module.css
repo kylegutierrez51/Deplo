@@ -1,3 +1,4 @@
+/* Shared page layout: Pipelines, Runs, Audits, Webhook Events, Secrets and Environments. */
 .page:global(.page-content) {
   container-type: inline-size;
   padding-inline: clamp(24px, 4vw, 80px);
@@ -11,6 +12,7 @@
   letter-spacing: -1px;
 }
 
+/* Shared search and filter layout. */
 .filters { margin-bottom: var(--space-lg); }
 .filters-bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
 
@@ -18,6 +20,7 @@
 .input-group ion-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--icon-clr); pointer-events: none; }
 .input-group input { padding-left: 36px; }
 
+/* Shared panel and table surfaces. Column widths stay page-specific. */
 .list-panel {
   border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-lg);
@@ -28,23 +31,19 @@
 .table { width: 100%; table-layout: fixed; }
 .table thead tr { background: transparent; }
 .table th { color: var(--subtitle-clr); font-size: var(--font-size-sm); font-weight: 500; text-align: left; padding: var(--space-md) var(--space-lg); }
-.secrets-table th:first-child { width: auto; }
-.secrets-table th:nth-child(2) { width: 400px; }
-.secrets-table th:last-child { width: 210px; }
-.environments-table th:first-child { width: auto; }
-.environments-table th:nth-child(2) { width: 190px; }
-.environments-table th:nth-child(3) { width: 140px; }
-.environments-table th:last-child { width: 210px; }
+
 .table tbody tr { border-bottom: 1px solid var(--color-border-dark); }
 .table tbody tr:first-child { border-top: 1px solid var(--color-border-dark); }
 .table tbody tr:last-child { border-bottom: 0; }
 
+/* Shared pagination layout. */
 .pagination > div { position: static; padding: var(--space-lg) 0; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: var(--space-md); }
 .page .pagination > div > div { position: static; color: var(--subtitle-clr); font-size: var(--font-size-sm); }
 .pagination nav > div { padding-left: 0; gap: var(--space-md); }
 .pagination nav a, .pagination nav button { border-radius: var(--radius-sm); }
 .pagination a:focus-visible, .pagination button:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 2px; }
 
+/* Shared compact layout. Denser pages may switch to stacked rows earlier. */
 @container (max-width: 750px) {
   .table, .table tbody { display: block; }
   .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -57,6 +56,7 @@
   .page:global(.page-content) { padding: 24px 20px; }
 }
 
+/* Secrets and Environments: row details. Other page rows keep their own modules. */
 .row { cursor: pointer; }
 .row td { padding: 20px; vertical-align: middle; font-size: var(--font-size-body); }
 .row:hover, .row:focus-within { background: var(--gray-clr); }
@@ -80,3 +80,6 @@
   .field-label { display: block; color: var(--table-span-clr); font-size: 12px; margin-bottom: 7px; }
   .updated time { white-space: normal; }
 }
+
+/* Shared accessible labels. (screen reader) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
