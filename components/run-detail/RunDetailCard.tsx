@@ -33,7 +33,7 @@ export default function RunDetailCard({ run }: { run: RunDetailData }) {
         <div className={styles['rdc-info']}>
           {/* Row 1: name, run number, status, environment */}
           <div className={styles['rdc-title-row']}>
-            <span className={styles['rdc-name']}>{pipelineName}</span>
+            <h1 className={styles['rdc-name']}>{pipelineName}</h1>
             <span className={styles['rdc-num']}>#{runNumber}</span>
             <span className={styles.divider} aria-hidden="true" />
             <div className={styles['rdc-status']}>

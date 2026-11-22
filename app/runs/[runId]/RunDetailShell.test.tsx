@@ -19,6 +19,7 @@ const setup = () => {
   render(
     <RunDetailShell
       header={<p>run detail card</p>}
+      summary={<p>5 total stages</p>}
       overview={<p>overview panel</p>}
       logs={<p>logs panel</p>}
     />
@@ -90,4 +91,15 @@ describe('RunDetailShell', () => {
 
     expect(screen.getByText('run detail card')).toBeInTheDocument();
   });
+});
+
+
+it('keeps stage counts visible when the header collapses and tabs change', async () => {
+  const { user, toggle, header } = setup();
+  const summary = screen.getByText('5 total stages');
+  expect(header()).not.toContainElement(summary);
+  await user.click(toggle());
+  await user.click(screen.getByRole('button', { name: 'Logs' }));
+  expect(summary).toBeVisible();
+  expect(header()).toHaveAttribute('data-collapsed', 'true');
 });
