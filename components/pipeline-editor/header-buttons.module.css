@@ -137,3 +137,7 @@ Header Button Media Queries
     margin-right: 0;
   }
 }
+@media (max-width: 600px) {
+  .run-btn { font-size: 0 !important; padding: var(--space-sm) !important; }
+  .run-btn ion-icon { font-size: 20px; margin-right: 0 !important; }
+}

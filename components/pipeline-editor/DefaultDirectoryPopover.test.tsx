@@ -34,7 +34,7 @@ describe('the trigger', () => {
     const { trigger } = setup();
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByLabelText('DEFAULT DIRECTORY')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Default directory' })).not.toBeInTheDocument();
   });
 
   // The path is the one thing worth knowing without opening it.
@@ -58,15 +58,15 @@ describe('the popover', () => {
     await user.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByLabelText('DEFAULT DIRECTORY')).toHaveFocus();
-    expect(screen.getByLabelText('DEFAULT DIRECTORY')).toHaveValue('/srv/app');
+    expect(screen.getByRole('textbox', { name: 'Default directory' })).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'Default directory' })).toHaveValue('/srv/app');
   });
 
   it('writes what is typed to the editor state', async () => {
     const { user, trigger } = setup();
     await user.click(trigger);
 
-    await user.type(screen.getByLabelText('DEFAULT DIRECTORY'), 'a');
+    await user.type(screen.getByRole('textbox', { name: 'Default directory' }), 'a');
 
     expect(setDefaultDirectory).toHaveBeenLastCalledWith('a');
   });
@@ -76,7 +76,7 @@ describe('the popover', () => {
     const { user, trigger } = setup();
     await user.click(trigger);
 
-    await user.type(screen.getByLabelText('DEFAULT DIRECTORY'), '"');
+    await user.type(screen.getByRole('textbox', { name: 'Default directory' }), '"');
 
     expect(setDefaultDirectory).toHaveBeenLastCalledWith('');
   });
@@ -87,7 +87,7 @@ describe('the popover', () => {
 
     await user.keyboard('{Escape}');
 
-    expect(screen.queryByLabelText('DEFAULT DIRECTORY')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Default directory' })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
 
@@ -97,7 +97,7 @@ describe('the popover', () => {
 
     await user.click(screen.getByRole('button', { name: 'elsewhere' }));
 
-    expect(screen.queryByLabelText('DEFAULT DIRECTORY')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Default directory' })).not.toBeInTheDocument();
   });
 
   it('toggles closed from the trigger', async () => {
