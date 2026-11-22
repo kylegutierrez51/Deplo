@@ -8,13 +8,10 @@ import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipel
 import type { PipelineStatus, FormState, EnvType } from "@/lib/types";
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
-import modalStyles from '@/components/ui/modals/modal.module.css';
-import pipelineStyles from './pipeline-modal.module.css';
+import styles from './pipeline-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import type { Environment } from '@/lib/data/environments';
 import Autocomplete from '@/components/ui/Autocomplete';
-
-const styles = { ...modalStyles, ...pipelineStyles };
 
 interface PipelineModalProps {
   mode: 'view' | 'edit' | 'create';
@@ -103,12 +100,16 @@ export default function PipelineModal({
     setDeleteModal(false);
   }
 
-  const title = mode === 'view' ? 'Pipeline' : (mode === 'create' ? 'Add Pipeline' : 'Edit Pipeline');
+  const title = mode === 'view' ? 'Pipeline details' : (mode === 'create' ? 'New pipeline' : 'Edit pipeline');
+  const subtitle = mode === 'view'
+    ? 'Configuration and recent activity.'
+    : mode === 'create'
+      ? 'Set up your pipeline, then build its stages in the editor.'
+      : 'Update the details and defaults for this pipeline.';
 
   const footer = mode === 'view' ? (
     <>
       <button className={`${styles.footerBtn} ${styles.deleteBtn}`} type="button" onClick={() => setDeleteModal(true)}>Delete</button>
-      {/* Grouped so .footer's space-between still sees two children and keeps Delete on the far edge */}
       <div className={styles.footerActions}>
         <button className={`${styles.footerBtn} ${styles.editBtn}`} type="button" onClick={onEdit}>Edit Details</button>
         <Link href={`/pipelines/${id}`} className={`${styles.footerBtn} ${styles.createBtn}`} target="_blank">Open Editor</Link>
@@ -128,11 +129,20 @@ export default function PipelineModal({
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} onClose={onClose} footer={footer} mode={mode}>
+      <Modal
+        action={mode === 'create' ? createFormAction : editFormAction}
+        pending={pending}
+        title={title}
+        subtitle={subtitle}
+        classNames={styles}
+        onClose={onClose}
+        footer={footer}
+        mode={mode}
+      >
         {mode === 'view' ? (
           <>
             <div className={styles['item-flex']}>
-              <div className={styles.item}>
+              <div className={`${styles.item} ${styles.identity}`}>
                 <label>Name</label>
                 <span>{name}</span>
               </div>
@@ -160,7 +170,7 @@ export default function PipelineModal({
             {repoUrl &&
               <div className={styles.item}>
                 <label>Repo URL</label>
-                <span>{repoUrl}</span>
+                <span className={styles.repository}>{repoUrl}</span>
               </div>
             }
 
@@ -178,7 +188,6 @@ export default function PipelineModal({
                   {defaultEnvironment.name}
                   <Pill variant={defaultEnvironment.type} label={capitalize(defaultEnvironment.type)}></Pill>
                 </div>
-                
               </div>
             )}
 
@@ -212,15 +221,15 @@ export default function PipelineModal({
 
             <div className={styles.item}>
               <label htmlFor="repo_url">Repo URL <span className={styles.optionalBadge}>optional</span></label>
-              <input 
+              <input
                 name="repo_url" id="repo_url" 
+                aria-describedby="pipeline-repo-hint"
                 placeholder="e.g. https://github.com/abcd/web-client"
                 value={enteredRepoUrl} 
                 spellCheck={false}
                 onChange={(e) => setEnteredRepoUrl(e.target.value)} />
-              <p className={styles.fieldHint}>
-                <ion-icon name="information-circle-outline"></ion-icon>
-                Allows you to run this pipeline on GitHub push or pull requests when you create a Webhook using this pipeline, set up a relay URL, and run the webhook&#39;s relay command.
+              <p id="pipeline-repo-hint" className={styles.fieldHint}>
+                To run on GitHub pushes or pull requests, connect this repository through a webhook and start its relay.
               </p>
             </div>
 
