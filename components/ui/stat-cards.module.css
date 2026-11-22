@@ -1,131 +1,61 @@
-/*
-======================================================================================
-Cards
-======================================================================================
-*/
-
 .cards-row {
-  display: flex;
-  border: 1px solid var(--light-gray-clr);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: var(--space-2xl);
+  display: grid;
+  grid-template-columns: repeat(var(--stat-columns, 4), minmax(0, 1fr));
+  margin-bottom: var(--space-xl);
+  border-block: 1px solid var(--light-gray-clr);
 }
 
-.card {
+.stat {
+  padding: var(--space-lg) var(--space-xl);
+  border-right: 1px solid var(--color-border-dark);
+}
+
+.stat:first-child { padding-left: 0; }
+.stat:last-child { border-right: 0; }
+
+.stat dt {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-gap-md) 16px;
-  flex: 1;
-  border-right: 1px solid var(--light-gray-clr);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--subtitle-clr);
 }
 
-.card:last-child {
-  border-right: none;
+.stat dt ion-icon { color: var(--table-span-clr); }
+
+.stat dd {
+  margin-block: var(--space-xs);
+  font-size: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
 }
 
-.card-detail {
-  display: flex;
-  flex-direction: column;
+.running { color: var(--blue-clr); }
+.queued { color: var(--pill-queued-text); }
+.approval { color: var(--pill-awaiting-approval-text); }
+.failed { color: var(--pill-failed-text); }
+
+.stat-scope {
+  display: block;
+  margin-top: var(--space-xs);
+  font-weight: 300;
+  letter-spacing: normal;
+  font-size: 12px;
+  color: var(--table-span-clr);
 }
 
-.card-detail .card-total {
-  font-weight: bold;
-  color: var(--blue-clr);
-}
+/* Delivery status colors extend the same overview layout. */
+.pending { color: var(--pill-pending-text); }
+.processed { color: var(--pill-processed-text); }
+.ignored { color: var(--pill-ignored-text); }
 
-.card-detail .card-name {
-  font-family: var(--font-jetbrains-mono);
-}
-
-/* Approvals */
-.card-detail .card-total.wait-time {
-  color: var(--red-text);
-}
-
-/* Dashboard */
-.card-detail .card-total.queued {
-  color: var(--pill-queued-text);
-}
-
-/* Webhook Events */
-.card-detail .card-total.processed {
-  color: var(--pill-succeeded-text);
-}
-
-.card-detail .card-total.pending {
-  color: var(--pill-pending-text);
-}
-
-.card-detail .card-total.ignored {
-  color: var(--pill-ignored-text);
-}
-
-.card-detail .card-total.failed {
-  color: var(--pill-failed-text);
-}
-
-/*
-======================================================================================
-Media Queries
-======================================================================================
-*/
-
-/*
-  Breakpoints:
-    1050px
-     400px
-*/
-
-/*
-============================================================
-1050px — Cards: 2-column grid
-  With the sidebar occupying 300px + 120px of padding, the
-  content area at 1050px is only ~630px. Four equal-flex cards
-  each land at ~157px — too narrow for "PIPELINE BINDINGS" in
-  JetBrains Mono without awkward wrapping. Reflow to 2×2 so
-  each card has ~315px of breathing room.
-============================================================ 
-*/
-@media (max-width: 1050px) {
-
-  .responsive.cards-row {
-    flex-wrap: wrap;
-  }
-
-  .responsive .card {
-    flex: 0 0 50%;
-  }
-
-  /* Top-row cards (1 and 2) need a bottom border to divide the two rows */
-  .responsive .card:nth-child(-n+2) {
-    border-bottom: 1px solid var(--light-gray-clr);
-  }
-
-  /* Right-column cards (even) sit flush against the container edge — no right border */
-  .responsive .card:nth-child(2n) {
-    border-right: none;
-  }
-}
-
-/*
-============================================================
-400px — Cards: single column
-  At very narrow viewports 50% per card (~185px) leaves almost
-  no room for the icon + text. Stack all four cards vertically
-  with a bottom divider between each instead.
-============================================================ 
-*/
-@media (max-width: 400px) {
-
-  .responsive .card {
-    flex: 0 0 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--light-gray-clr);
-  }
-
-  .responsive .card:last-child {
-    border-bottom: none;
-  }
+@container (max-width: 700px) {
+  .cards-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: var(--space-md); }
+  .stat:nth-child(2) { border-right: 0; }
+  .stat:nth-child(n + 3) { border-top: 1px solid var(--color-border-dark); }
+  .stat:nth-child(3) { padding-left: 0; }
+  .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }

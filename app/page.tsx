@@ -10,7 +10,7 @@ import { formatDate, getDuration } from "@/lib/utils/date";
 import loginStyles from "./page.module.css";
 import styles from "./dashboard.module.css";
 import AutoRefresh from "@/components/ui/AutoRefresh";
-import OverviewStats from "@/components/ui/OverviewStats";
+import StatCards from "@/components/ui/StatCards";
 
 const REFRESH_INTERVAL_MS = 20_000;
 
@@ -45,7 +45,7 @@ export default async function Home() {
           badge={data.counts.running > 0 ? { count: data.counts.running, label: 'Running' } : undefined}>
         </Subheader>
 
-        <OverviewStats
+        <StatCards
           ariaLabel="Run overview"
           cards={[
             { icon: "sync-outline", total: data.counts.running, label: "Running", scope: "Right now", tone: "running" },

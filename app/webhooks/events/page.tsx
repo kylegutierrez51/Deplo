@@ -4,7 +4,7 @@ import layoutStyles from "./webhook-events.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import OverviewStats from "@/components/ui/OverviewStats";
+import StatCards from "@/components/ui/StatCards";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
@@ -56,7 +56,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
 
         {webhookEvents.total > 0 || filtered ? (
           <>
-            <OverviewStats
+            <StatCards
               ariaLabel="Delivery overview"
               cards={[
                 { icon: "time-outline", total: counts.pending, label: "Pending", scope: "All deliveries", tone: "pending" },
