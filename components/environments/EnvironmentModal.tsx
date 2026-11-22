@@ -8,7 +8,7 @@ import type { FormState, EnvType } from '@/lib/types';
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
 import Pill from '@/components/ui/Pill';
-import modalStyles from '@/components/ui/modals/modal.module.css';
+import modalStyles from '@/components/ui/modals/resource-modal.module.css';
 import envStyles from './environment-modal.module.css';
 
 
@@ -98,7 +98,12 @@ export default function EnvironmentModal({
     setDeleteModal(false);
   }
 
-  const title = mode === 'view' ? 'Environment' : (name ? 'Edit Environment' : 'Add Environment');
+  const title = mode === 'view' ? 'Environment details' : (mode === 'create' ? 'New environment' : 'Edit environment');
+  const subtitle = mode === 'view'
+    ? 'Deployment settings and access requirements.'
+    : mode === 'create'
+      ? 'Set up a target for your pipeline deployments.'
+      : 'Update this environment and its deployment settings.';
 
   const footer = mode === 'view' ? (
     <>
@@ -119,10 +124,10 @@ export default function EnvironmentModal({
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} subtitle={subtitle} classNames={styles} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
-            <div className={styles.item}>
+            <div className={`${styles.item} ${styles.identity}`}>
               <label>Name</label>
               <span>{name}</span>
             </div>
@@ -152,7 +157,7 @@ export default function EnvironmentModal({
               </span>
             </div>
 
-            <div className={styles['item-flex']}>
+            <div className={styles['created-updated-flex']}>
               <div className={styles.item}>
                 <label>Created By</label>
                 <span>{createdBy || 'Unknown User'}</span>
@@ -173,12 +178,13 @@ export default function EnvironmentModal({
             <div className={styles.item}>
               <label htmlFor="name">Name</label>
               <input 
-                name="name" id="name" 
+                name="name" id="name"
+                aria-describedby="environment-name-hint"
                 placeholder="e.g. staging, qa-integration" 
                 required spellCheck={false}
                 value={enteredName} 
                 onChange={(e) => setEnteredName(e.target.value)} />
-              <span className={styles.nameHint}>Lowercase letters, numbers, and hyphens only. This is the key used to scope secrets and pipeline targets.</span>
+              <p id="environment-name-hint" className={styles.fieldHint}>Lowercase letters, numbers, and hyphens only. Used to scope secrets and pipeline targets.</p>
             </div>
 
             <div className={styles.item}>
@@ -190,6 +196,7 @@ export default function EnvironmentModal({
                     key={key}
                     className={`${styles.typeBtn} ${baseClass} ${envType === key ? activeClass : ''}`}
                     type="button"
+                    aria-pressed={envType === key}
                     onClick={() => setEnvType(key)}
                   >
                     {label}
@@ -200,17 +207,28 @@ export default function EnvironmentModal({
 
             <div
               className={styles.approvalToggleBox}
+              role="switch"
+              tabIndex={0}
+              aria-checked={approvalEnabled}
+              aria-labelledby="environment-approval-title"
+              aria-describedby="environment-approval-description"
+              onKeyDown={(event) => {
+                if (event.key === ' ' || event.key === 'Enter') {
+                  event.preventDefault();
+                  setApprovalEnabled(v => !v);
+                }
+              }}
               onClick={() => setApprovalEnabled(v => !v)}
             >
               <input type="hidden" name="requireApproval" value={approvalEnabled ? 'true' : 'false'} />
               <div className={styles.toggleOption}>
                 <span className={`${styles.toggleSwitch} ${approvalEnabled ? styles.toggleSwitchOn : ''}`}></span>
                 <div className={styles.toggleContent}>
-                  <div className={styles.toggleTitle}>
+                  <div id="environment-approval-title" className={styles.toggleTitle}>
                     <ion-icon name="lock-closed-outline"></ion-icon>
                     Require approval for deploys
                   </div>
-                  <p className={styles.toggleDescription}>
+                  <p id="environment-approval-description" className={styles.toggleDescription}>
                     Pipeline runs targeting this environment will be rejected unless every deploy stage has an approval stage upstream.
                   </p>
                 </div>

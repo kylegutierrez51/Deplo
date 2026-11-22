@@ -8,10 +8,13 @@ import { addPipeline, updatePipeline, deletePipeline } from "@/lib/actions/pipel
 import type { PipelineStatus, FormState, EnvType } from "@/lib/types";
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
-import styles from './pipeline-modal.module.css';
+import modalStyles from '@/components/ui/modals/resource-modal.module.css';
+import pipelineStyles from './pipeline-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import type { Environment } from '@/lib/data/environments';
 import Autocomplete from '@/components/ui/Autocomplete';
+
+const styles = { ...modalStyles, ...pipelineStyles };
 
 interface PipelineModalProps {
   mode: 'view' | 'edit' | 'create';
