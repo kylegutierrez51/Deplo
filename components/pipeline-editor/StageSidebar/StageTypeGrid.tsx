@@ -27,16 +27,18 @@ export default function StageTypeGrid({ selectedType, setType, node, label }: St
   }
 
   return (
-    <div className={styles['stage-type-grid']}>
+    <div className={styles['stage-type-grid']} role="group" aria-labelledby="stage-type-label">
       {STAGE_TYPES.map(({ type, label, icon }) => (
-        <div
+        <button
           key={type}
+          type="button"
+          aria-pressed={selectedType === type}
           className={`${styles.item}${selectedType === type ? ` ${styles['selected-type']}` : ''}`}
           onClick={() => onToggleType(type)}
         >
           <ion-icon name={icon}></ion-icon>
-          <div>{label}</div>
-        </div>
+          <span>{label}</span>
+        </button>
       ))}
     </div>
   )

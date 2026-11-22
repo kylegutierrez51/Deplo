@@ -68,7 +68,7 @@ describe('timeout and retries validation', () => {
     [' 5', '5'],
   ])('drops the non-digit characters of %s, leaving %s', async (input, expected) => {
     const { user } = setup();
-    const field = await emptied(user, 'TIMEOUT (S)');
+    const field = await emptied(user, 'Timeout (s)');
 
     await user.type(field, input);
 
@@ -77,7 +77,7 @@ describe('timeout and retries validation', () => {
 
   it('never patches the node from a wholly non-numeric entry', async () => {
     const { user } = setup();
-    const field = await emptied(user, 'TIMEOUT (S)');
+    const field = await emptied(user, 'Timeout (s)');
     updateNodeData.mockClear();
 
     await user.type(field, 'abc');
@@ -88,7 +88,7 @@ describe('timeout and retries validation', () => {
   it('accepts digits', async () => {
     const { user } = setup();
 
-    await user.type(await emptied(user, 'TIMEOUT (S)'), '90');
+    await user.type(await emptied(user, 'Timeout (s)'), '90');
 
     expect(lastPatch()).toEqual({ timeout: 90 });
   });
@@ -96,7 +96,7 @@ describe('timeout and retries validation', () => {
   it('sends a number, not the raw string', async () => {
     const { user } = setup();
 
-    await user.type(await emptied(user, 'RETRIES'), '3');
+    await user.type(await emptied(user, 'Retries'), '3');
 
     expect(lastPatch()).toEqual({ retries: 3 });
   });
@@ -106,25 +106,25 @@ describe('timeout and retries validation', () => {
   it('clamps retries to 10', async () => {
     const { user } = setup();
 
-    await user.type(await emptied(user, 'RETRIES'), '99');
+    await user.type(await emptied(user, 'Retries'), '99');
 
     expect(lastPatch()).toEqual({ retries: 10 });
-    expect(screen.getByLabelText('RETRIES')).toHaveValue('10');
+    expect(screen.getByLabelText('Retries')).toHaveValue('10');
   });
 
   it('clamps timeout to 43200', async () => {
     const { user } = setup();
 
-    await user.type(await emptied(user, 'TIMEOUT (S)'), '99999');
+    await user.type(await emptied(user, 'Timeout (s)'), '99999');
 
     expect(lastPatch()).toEqual({ timeout: 43200 });
-    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('43200');
+    expect(screen.getByLabelText('Timeout (s)')).toHaveValue('43200');
   });
 
   it('allows exactly the maximum', async () => {
     const { user } = setup();
 
-    await user.type(await emptied(user, 'RETRIES'), '10');
+    await user.type(await emptied(user, 'Retries'), '10');
 
     expect(lastPatch()).toEqual({ retries: 10 });
   });
@@ -132,8 +132,8 @@ describe('timeout and retries validation', () => {
   it('seeds the inputs from the node', () => {
     setup({ timeout: 120, retries: 2 });
 
-    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('120');
-    expect(screen.getByLabelText('RETRIES')).toHaveValue('2');
+    expect(screen.getByLabelText('Timeout (s)')).toHaveValue('120');
+    expect(screen.getByLabelText('Retries')).toHaveValue('2');
   });
 
   // A stage that carries no numbers of its own shows the runner's defaults, so
@@ -141,8 +141,8 @@ describe('timeout and retries validation', () => {
   it('seeds the runner defaults when the node carries neither', () => {
     setup();
 
-    expect(screen.getByLabelText('TIMEOUT (S)')).toHaveValue('1800');
-    expect(screen.getByLabelText('RETRIES')).toHaveValue('0');
+    expect(screen.getByLabelText('Timeout (s)')).toHaveValue('1800');
+    expect(screen.getByLabelText('Retries')).toHaveValue('0');
   });
 });
 
@@ -152,25 +152,25 @@ describe('the reserved label rule', () => {
   it.each(['deploy', 'Approval', 'DEPLOY'])('flags %s as reserved', async (word) => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('LABEL'), word);
+    await user.type(screen.getByLabelText('Label'), word);
 
-    expect(screen.getByLabelText('LABEL')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Label')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText(/is reserved for the/)).toBeInTheDocument();
   });
 
   it('accepts an ordinary label', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('LABEL'), 'script');
+    await user.type(screen.getByLabelText('Label'), 'script');
 
-    expect(screen.getByLabelText('LABEL')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('Label')).not.toHaveAttribute('aria-invalid');
     expect(screen.queryByText(/is reserved/)).not.toBeInTheDocument();
   });
 
   it('names the stage type the word belongs to', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('LABEL'), 'approval');
+    await user.type(screen.getByLabelText('Label'), 'approval');
 
     expect(screen.getByText(/reserved for the Approval stage type/)).toBeInTheDocument();
   });
@@ -180,7 +180,7 @@ describe('the reserved label rule', () => {
   it('keeps a reserved label already on the node, and flags it', () => {
     setup({ label: 'Deploy' });
 
-    expect(screen.getByLabelText('LABEL')).toHaveValue('Deploy');
+    expect(screen.getByLabelText('Label')).toHaveValue('Deploy');
     expect(screen.getByText(/is reserved/)).toBeInTheDocument();
   });
 
@@ -189,7 +189,7 @@ describe('the reserved label rule', () => {
   it('still records the reserved value on the node', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('LABEL'), 'deploy');
+    await user.type(screen.getByLabelText('Label'), 'deploy');
 
     expect(lastPatch()).toEqual({ label: 'deploy' });
   });
@@ -200,32 +200,32 @@ describe('fields shown per stage type', () => {
   it('hides everything executable for an approval stage', () => {
     setup({ type: 'approval' });
 
-    expect(screen.queryByLabelText('COMMAND')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('LABEL')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('TIMEOUT (S)')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('RETRIES')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Command')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Label')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Timeout (s)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Retries')).not.toBeInTheDocument();
   });
 
   it('still names an approval stage', () => {
     setup({ type: 'approval' });
 
-    expect(screen.getByLabelText('STAGE NAME')).toBeInTheDocument();
+    expect(screen.getByLabelText('Stage name')).toBeInTheDocument();
   });
 
   // A deploy stage is labelled "Deploy" by its type, so only the label field goes.
   it('hides only the label for a deploy stage', () => {
     setup({ type: 'deploy' });
 
-    expect(screen.queryByLabelText('LABEL')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('COMMAND')).toBeInTheDocument();
-    expect(screen.getByLabelText('TIMEOUT (S)')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Label')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Command')).toBeInTheDocument();
+    expect(screen.getByLabelText('Timeout (s)')).toBeInTheDocument();
   });
 
   it('shows every field for a custom stage', () => {
     setup({ type: 'custom' });
 
-    expect(screen.getByLabelText('LABEL')).toBeInTheDocument();
-    expect(screen.getByLabelText('COMMAND')).toBeInTheDocument();
+    expect(screen.getByLabelText('Label')).toBeInTheDocument();
+    expect(screen.getByLabelText('Command')).toBeInTheDocument();
   });
 });
 
@@ -233,7 +233,7 @@ describe('name and command', () => {
   it('patches the name as it is typed', async () => {
     const { user } = setup({ name: '' });
 
-    await user.type(screen.getByLabelText('STAGE NAME'), 'lint');
+    await user.type(screen.getByLabelText('Stage name'), 'lint');
 
     expect(lastPatch()).toEqual({ name: 'lint' });
   });
@@ -241,7 +241,7 @@ describe('name and command', () => {
   it('patches the command as it is typed', async () => {
     const { user } = setup();
 
-    await user.type(screen.getByLabelText('COMMAND'), 'npm ci');
+    await user.type(screen.getByLabelText('Command'), 'npm ci');
 
     expect(lastPatch()).toEqual({ command: 'npm ci' });
   });
@@ -312,7 +312,7 @@ describe('environment variables', () => {
 describe('clearing timeout and retries', () => {
   it('leaves the timeout field empty when it is backspaced away', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
 
@@ -321,7 +321,7 @@ describe('clearing timeout and retries', () => {
 
   it('stays empty under further backspaces', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.type(field, '{Backspace}{Backspace}');
@@ -331,7 +331,7 @@ describe('clearing timeout and retries', () => {
 
   it('leaves the retries field empty when it is backspaced away', async () => {
     const { user } = setup({ retries: 3 });
-    const field = screen.getByLabelText('RETRIES');
+    const field = screen.getByLabelText('Retries');
 
     await user.clear(field);
 
@@ -341,7 +341,7 @@ describe('clearing timeout and retries', () => {
   it('clears the value on the node rather than patching a number', async () => {
     const { user } = setup({ timeout: 1800 });
 
-    await user.clear(screen.getByLabelText('TIMEOUT (S)'));
+    await user.clear(screen.getByLabelText('Timeout (s)'));
 
     expect(lastPatch()).toStrictEqual({ timeout: undefined });
   });
@@ -349,14 +349,14 @@ describe('clearing timeout and retries', () => {
   it('clears retries on the node too', async () => {
     const { user } = setup({ retries: 3 });
 
-    await user.clear(screen.getByLabelText('RETRIES'));
+    await user.clear(screen.getByLabelText('Retries'));
 
     expect(lastPatch()).toStrictEqual({ retries: undefined });
   });
 
   it('accepts a fresh number after being cleared', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.type(field, '90');
@@ -370,7 +370,7 @@ describe('settling an empty field on blur', () => {
   // when timeout input loses focus and is either 0 or blank, default to 1800
   it('settles an emptied timeout on 1800', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.tab();
@@ -381,7 +381,7 @@ describe('settling an empty field on blur', () => {
 
   it('settles a timeout typed as 0 on 1800 as well', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.type(field, '0');
@@ -394,7 +394,7 @@ describe('settling an empty field on blur', () => {
   // catches '00' or '000' and sets them to 1800
   it.each(['00', '000'])('settles a timeout typed as %s', async (typed) => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.type(field, typed);
@@ -406,7 +406,7 @@ describe('settling an empty field on blur', () => {
 
   it('leaves a field that holds a number alone', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.type(field, '90');
@@ -420,7 +420,7 @@ describe('settling an empty field on blur', () => {
   // The reader can still empty it again after it has been settled once.
   it('can be emptied again after settling', async () => {
     const { user } = setup({ timeout: 1800 });
-    const field = screen.getByLabelText('TIMEOUT (S)');
+    const field = screen.getByLabelText('Timeout (s)');
 
     await user.clear(field);
     await user.tab();
@@ -432,7 +432,7 @@ describe('settling an empty field on blur', () => {
   // default blank retries input to 0
   it('settles emptied retries on 0, not on the timeout default', async () => {
     const { user } = setup({ retries: 3 });
-    const field = screen.getByLabelText('RETRIES');
+    const field = screen.getByLabelText('Retries');
 
     await user.clear(field);
     await user.tab();
@@ -443,7 +443,7 @@ describe('settling an empty field on blur', () => {
 
   it('leaves an untouched retries field at 0 when tabbed through', async () => {
     const { user } = setup();
-    const field = screen.getByLabelText('RETRIES');
+    const field = screen.getByLabelText('Retries');
 
     expect(field).toHaveValue('0');
 
@@ -463,7 +463,7 @@ describe('directory', () => {
   it('prefixes the command with the directory typed into it', async () => {
     const { user } = setup({ command: 'npm ci' });
 
-    await user.type(screen.getByLabelText('DIRECTORY'), '/srv/app');
+    await user.type(screen.getByLabelText('Directory'), '/srv/app');
 
     expect(lastPatch()).toEqual({ command: 'cd "/srv/app" && npm ci' });
   });
@@ -471,14 +471,14 @@ describe('directory', () => {
   it('splits a stored prefix back into the two fields', () => {
     setup({ command: 'cd "/srv/app" && npm ci' });
 
-    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('/srv/app');
-    expect(screen.getByLabelText('COMMAND')).toHaveValue('npm ci');
+    expect(screen.getByLabelText('Directory')).toHaveValue('/srv/app');
+    expect(screen.getByLabelText('Command')).toHaveValue('npm ci');
   });
 
   it('keeps the directory in the command after it is edited', async () => {
     const { user } = setup({ command: 'cd "/srv/app" && npm ci' });
 
-    await user.type(screen.getByLabelText('COMMAND'), ' --silent');
+    await user.type(screen.getByLabelText('Command'), ' --silent');
 
     expect(lastPatch()).toEqual({ command: 'cd "/srv/app" && npm ci --silent' });
   });
@@ -486,7 +486,7 @@ describe('directory', () => {
   it('drops the prefix entirely once the directory is cleared', async () => {
     const { user } = setup({ command: 'cd "/srv/app" && npm ci' });
 
-    await user.clear(screen.getByLabelText('DIRECTORY'));
+    await user.clear(screen.getByLabelText('Directory'));
 
     expect(lastPatch()).toEqual({ command: 'npm ci' });
   });
@@ -495,17 +495,17 @@ describe('directory', () => {
   // "&&" is typed, so a prefix typed into the command only moves once the reader leaves it.
   it('leaves a typed cd prefix in the command until the command loses focus', async () => {
     const { user } = setup();
-    const commandField = screen.getByLabelText('COMMAND');
+    const commandField = screen.getByLabelText('Command');
 
     await user.type(commandField, 'cd foo && npm ci');
 
     expect(commandField).toHaveValue('cd foo && npm ci');
-    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('');
+    expect(screen.getByLabelText('Directory')).toHaveValue('');
     expect(lastPatch()).toEqual({ command: 'cd foo && npm ci' });
 
     await user.tab();
 
-    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('foo');
+    expect(screen.getByLabelText('Directory')).toHaveValue('foo');
     expect(commandField).toHaveValue('npm ci');
   });
 
@@ -513,14 +513,14 @@ describe('directory', () => {
   it('drops double quotes as they are typed', async () => {
     const { user } = setup({ command: 'npm ci' });
 
-    await user.type(screen.getByLabelText('DIRECTORY'), 'a"b');
+    await user.type(screen.getByLabelText('Directory'), 'a"b');
 
-    expect(screen.getByLabelText('DIRECTORY')).toHaveValue('ab');
+    expect(screen.getByLabelText('Directory')).toHaveValue('ab');
   });
 
   it('shows the pipeline default as the placeholder', () => {
     setup({}, { defaultDirectory: '/srv/default' });
 
-    expect(screen.getByLabelText('DIRECTORY')).toHaveAttribute('placeholder', 'Default: /srv/default');
+    expect(screen.getByLabelText('Directory')).toHaveAttribute('placeholder', 'Default: /srv/default');
   });
 });

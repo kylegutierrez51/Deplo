@@ -15,7 +15,11 @@ export default function StageSidebar({ node, setStageSidebarOpen }: StageSidebar
     <>
       <div className={styles['stage-sidebar-header']}>
         <div className={styles['stage-title']}>
-          <div className={styles.title}>Configure Stage</div>
+          <span className={styles['icon-border']}><ion-icon name="options-outline"></ion-icon></span>
+          <div>
+            <h2 className={styles.title}>Configure stage</h2>
+            <p className={styles['stage-caption']}>{node.data.name || 'New stage'}</p>
+          </div>
         </div>
         <button type="button" className={styles['exit-btn']} onClick={() => setStageSidebarOpen(false)} aria-label="Close">
           <ion-icon name="close-outline"></ion-icon>

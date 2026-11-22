@@ -14,6 +14,7 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
     <div className={styles['env-container']}>
       <input
         name="env-key"
+        aria-label="Variable key"
         placeholder="e.g., NODE_ENV"
         spellCheck={false}
         value={envKey}
@@ -22,12 +23,13 @@ export default function EnvVarRow({ envKey, envValue, onChange, onDelete }: EnvV
       <span>=</span>
       <input
         name="env-value"
+        aria-label="Variable value"
         placeholder="e.g. production"
         spellCheck={false}
         value={envValue}
         onChange={e => onChange('value', e.target.value)}
       />
-      <button className={styles['delete-env-btn']} onClick={onDelete}>
+      <button type="button" aria-label="Remove variable" className={styles['delete-env-btn']} onClick={onDelete}>
         <ion-icon name="trash-outline"></ion-icon>
       </button>
     </div>
