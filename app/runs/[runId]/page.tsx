@@ -53,6 +53,19 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
         />
 
         <RunDetailShell
+          summary={
+            <div className={styles['job-statuses']} aria-label="Stage status counts">
+              <Pill variant="total" label={`${run.jobCounts.total} total`} />
+              <Pill variant="succeeded" label={`${run.jobCounts.succeeded} succeeded`} />
+              <Pill variant="running" label={`${run.jobCounts.running} running`} />
+              <Pill variant="queued" label={`${run.jobCounts.queued} queued`} />
+              {run.jobCounts.failed > 0 && <Pill variant="failed" label={`${run.jobCounts.failed} failed`} />}
+              {run.jobCounts.awaitingApproval > 0 && <Pill variant="awaiting-approval" label={`${run.jobCounts.awaitingApproval} awaiting approval`} />}
+              {run.jobCounts.approved > 0 && <Pill variant="approved" label={`${run.jobCounts.approved} approved`} />}
+              {run.jobCounts.unapproved > 0 && <Pill variant="unapproved" label={`${run.jobCounts.unapproved} unapproved`} />}
+              {run.jobCounts.cancelled > 0 && <Pill variant="cancelled" label={`${run.jobCounts.cancelled} cancelled`} />}
+            </div>
+          }
           header={
             <RunDetailCard
               run={{ id: runId, ...run,  }}
@@ -60,21 +73,7 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
           }
           overview={
             <>
-              <div className={styles['overview-overlay']}>
-                {runner && !runner.available && <RunnerStatusBanner reason={runner.reason} />}
-
-                <div className={styles['job-statuses']}>
-                  <Pill variant="total" label={`${run.jobCounts.total} Total`} />
-                  <Pill variant="succeeded" label={`${run.jobCounts.succeeded} Succeeded`} />
-                  <Pill variant="running" label={`${run.jobCounts.running} Running`} />
-                  <Pill variant="queued" label={`${run.jobCounts.queued} Queued`} />
-                  {run.jobCounts.failed > 0 && <Pill variant="failed" label={`${run.jobCounts.failed} Failed`} />}
-                  {run.jobCounts.awaitingApproval > 0 && <Pill variant="awaiting-approval" label={`${run.jobCounts.awaitingApproval} Awaiting Approval`} />}
-                  {run.jobCounts.approved > 0 && <Pill variant="approved" label={`${run.jobCounts.approved} Approved`} />}
-                  {run.jobCounts.unapproved > 0 && <Pill variant="unapproved" label={`${run.jobCounts.unapproved} Unapproved`} />}
-                  {run.jobCounts.cancelled > 0 && <Pill variant="cancelled" label={`${run.jobCounts.cancelled} Cancelled`} />}
-                </div>
-              </div>
+              {runner && !runner.available && <div className={styles['runner-notice']}><RunnerStatusBanner reason={runner.reason} /></div>}
 
               <div className={styles.graph}>
                 <PipelineGraph nodes={run.nodes} edges={run.edges} envPresent={run.environment ? true : false} />

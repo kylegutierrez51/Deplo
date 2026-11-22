@@ -1,64 +1,9 @@
-.item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+.item-flex { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 20px 28px; }
+.repository.repository { font-family: var(--font-jetbrains-mono), monospace; font-size: var(--font-size-sm); }
+.envGroup { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; font-size: var(--font-size-body); line-height: 1.6; overflow-wrap: anywhere; }
+.latest-run-link { display: inline-flex; align-items: center; gap: 6px; color: var(--blue-clr); font-size: var(--font-size-sm); }
+.latest-run-link ion-icon { color: inherit; font-size: 15px; }
+.latest-run-link:hover { text-decoration: underline; }
 
-.item label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: rgb(160, 160, 160);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.item input,
-.item textarea {
-  padding-left: 10px;
-  border-radius: var(--radius-lg);
-  background-color: rgb(48, 48, 48);
-  border: 1px solid gray;
-}
-
-.item textarea {
-  height: 90px;
-  padding-top: 10px;
-  resize: vertical;
-}
-
-.item-flex {
-  display: flex;
-  align-items: center;
-  gap: 50px;
-}
-
-.envGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
-.created-updated-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.latest-run-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--blue-clr);
-}
-
-.latest-run-link ion-icon {
-  color: var(--blue-clr);
-  font-size: 16px;
-}
-
-.latest-run-link:hover {
-  text-decoration: underline;
-}
+.latest-run-link:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 3px; }
+.item-flex > :first-child { flex: 1 1 180px; }

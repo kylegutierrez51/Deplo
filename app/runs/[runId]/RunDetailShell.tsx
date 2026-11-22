@@ -8,11 +8,12 @@ type Tab = 'overview' | 'logs'
 
 interface RunDetailShellProps {
   header: ReactNode;
+  summary?: ReactNode;
   overview: ReactNode;
   logs: ReactNode;
 }
 
-export default function RunDetailShell({ header, overview, logs }: RunDetailShellProps) {
+export default function RunDetailShell({ header, summary, overview, logs }: RunDetailShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [collapsed, setCollapsed] = useState(false);
   const toggleOverview = () => setActiveTab('overview')
@@ -33,6 +34,7 @@ export default function RunDetailShell({ header, overview, logs }: RunDetailShel
       </div>
 
       <TabsRow
+        summary={summary}
         activeTab={activeTab}
         toggleOverview={toggleOverview}
         toggleLogs={toggleLogs}

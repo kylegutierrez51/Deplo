@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import styles from "./secrets.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/secrets/secrets.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import SecretRow from '@/components/secrets/SecretRow';
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -46,7 +46,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
     <>
       <Sidebar activeItem="secrets" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.page}`}>
 
         <Subheader
           title="Secrets"
@@ -57,7 +57,7 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
-                <SearchInput placeholder={"Filter by key or notes..."} />
+                <SearchInput placeholder={"Filter by key or notes..."} styles={styles} />
                 <QueryFilterListbox id={"environment"} name={"environment"} options={SECRET_FILTERS.environment} value={filters.environment} />
                 <QueryFilterListbox id={"updated"} name={"updated"} options={SECRET_FILTERS.updated} value={filters.updated} />
               </div>
@@ -65,13 +65,26 @@ export default async function Secrets({ searchParams }: { searchParams: SearchPa
 
             {secrets.total > 0 ? (
               <>
-                <DataTable columns={["Key", "Environment", "Last Updated"]}>
-                  {secrets.rows.map((secret) => (
-                    <SecretRow key={secret.id} secret={secret} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['secrets-table']}`} aria-label="Secrets">
+                    <thead>
+                      <tr>
+                        {['Key', 'Environment', 'Last updated'].map(column => (
+                          <th key={column} scope="col">{column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {secrets.rows.map((secret) => (
+                        <SecretRow key={secret.id} secret={secret} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={secrets.page} pageCount={secrets.pageCount} total={secrets.total} pageSize={secrets.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={secrets.page} pageCount={secrets.pageCount} total={secrets.total} pageSize={secrets.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState

@@ -74,3 +74,25 @@ describe('opening the audit entry', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 });
+
+
+it('opens the audit entry using the keyboard', async () => {
+  setup();
+  screen.getByRole('button', { name: 'Pipeline Created' }).focus();
+  await userEvent.keyboard('{Enter}');
+  expect(mockPush).toHaveBeenCalledTimes(1);
+  expect(mockPush).toHaveBeenCalledWith('/audits?id=aud-1');
+});
+
+it('keeps every audit field and the resource link', () => {
+  setup();
+  const cells = screen.getAllByRole('cell');
+  expect(cells).toHaveLength(5);
+  expect(cells[0]).toHaveTextContent('Pipeline Created');
+  expect(cells[0]).toHaveTextContent('Pipeline');
+  expect(cells[1]).toHaveTextContent('CI');
+  expect(cells[2]).toHaveTextContent('kyle');
+  expect(cells[3]).toHaveTextContent('1/1/26, 00:00:00');
+  expect(cells[3].querySelector('time')).toHaveAttribute('datetime', '2026-01-01T00:00:00.000Z');
+  expect(screen.getByRole('link', { name: 'Open resource' })).toHaveAttribute('href', '/pipelines?id=p1');
+});

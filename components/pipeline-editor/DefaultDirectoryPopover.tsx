@@ -60,7 +60,7 @@ export default function DefaultDirectoryPopover() {
 
       {open && (
         <div role="dialog" aria-label="Default directory" className={styles.popover}>
-          <label htmlFor="default-directory">DEFAULT DIRECTORY</label>
+          <label htmlFor="default-directory">Default directory</label>
           <input
             ref={inputRef}
             id="default-directory"

@@ -227,3 +227,18 @@ describe('the replay marker', () => {
     expect(eventCell()).toHaveTextContent(/^Push$/);
   });
 });
+
+
+it('opens delivery details using the keyboard', async () => {
+  setup();
+  screen.getByRole('button', { name: 'View delivery details' }).focus();
+  await userEvent.keyboard('{Enter}');
+  expect(mockPush).toHaveBeenCalledTimes(1);
+  expect(mockPush).toHaveBeenCalledWith('/webhooks/events?id=evt-1');
+});
+
+it('keeps the full received timestamp', () => {
+  setup();
+  expect(cell(6)).toHaveTextContent('1/1/26, 00:00:00');
+  expect(cell(6).querySelector('time')).toHaveAttribute('datetime', '2026-01-01T00:00:00.000Z');
+});

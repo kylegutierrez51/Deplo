@@ -6,7 +6,7 @@ import type { FormState, EnvType } from "@/lib/types.ts";
 import type { Environment } from "@/lib/data/environments";
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from "@/components/ui/modals/ConfirmationModal";
-import modalStyles from '@/components/ui/modals/modal.module.css';
+import modalStyles from '@/components/ui/modals/resource-modal.module.css';
 import secretStyles from './secret-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import { addSecret, updateSecret, deleteSecret } from '@/lib/actions/secrets';
@@ -125,7 +125,12 @@ export default function SecretModal({
     formAction(formData);
   };
 
-  const title = mode === 'view' ? 'Secret' : ((mode === 'create' ? 'Add Secret' : 'Edit Secret'));
+  const title = mode === 'view' ? 'Secret details' : (mode === 'create' ? 'New secret' : 'Edit secret');
+  const subtitle = mode === 'view'
+    ? 'Value, environment, and usage notes.'
+    : mode === 'create'
+      ? 'Store a secret for your pipeline stages to use.'
+      : 'Update this secret and its environment.';
 
   const footer = mode === 'view' ? (
     <>
@@ -146,32 +151,31 @@ export default function SecretModal({
 
   return (
     <>
-      <Modal action={submit} pending={pending} title={title} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={submit} pending={pending} title={title} subtitle={subtitle} classNames={styles} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
-            <div className={styles.item}>
+            <div className={`${styles.item} ${styles.identity}`}>
               <label>Key</label>
-              <span>{secretKey}</span>
+              <span className={styles.secretKey}>{secretKey}</span>
             </div>
 
             <div className={styles.item}>
-              <div className={styles.fieldLabelRow}>
-                <label htmlFor="secret-value">Value</label>
-              </div>
-              <div className={styles.secretInputWrapper}>
-                <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+              <label htmlFor="secret-value">Value</label>
+              <div className={styles.inputWithActions}>
+                <ion-icon name="key-outline" className={styles.leadingIcon}></ion-icon>
                 <input
+                  id="secret-value"
                   type={secretVisible ? 'text' : 'password'}
                   value={value}
                   readOnly
-                  className={styles.secretInput}
+                  className={`${styles.inputWithIcon} ${styles.inputTwoActions}`}
                 />
-                <div className={styles.secretActions}>
-                  <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
+                <div className={styles.inputActions}>
+                  <button type="button" className={styles.iconActionBtn} aria-label={secretVisible ? 'Hide secret value' : 'Show secret value'} onClick={() => setSecretVisible(v => !v)}>
                     <ion-icon name={secretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
                   </button>
-                  <span className={styles.secretDivider}></span>
-                  <button type="button" className={styles.iconActionBtn} onClick={handleCopy}>
+                  <span className={styles.actionDivider}></span>
+                  <button type="button" className={styles.iconActionBtn} aria-label={copied ? 'Copied secret value' : 'Copy secret value'} onClick={handleCopy}>
                     <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                   </button>
                 </div>
@@ -198,7 +202,7 @@ export default function SecretModal({
               </div>
             )}
 
-            <div className={styles['item-flex']}>
+            <div className={styles['created-updated-flex']}>
               <div className={styles.item}>
                 <label>Created By</label>
                 <span>{createdBy || 'Unknown User'}</span>
@@ -232,8 +236,9 @@ export default function SecretModal({
                 <input
                   type={secretVisible ? 'text' : 'password'}
                   name="value"
+                  id="value"
                   key="value"
-                  placeholder="Secret value - encrypted at rest with AES-256-GCM"
+                  placeholder="Secret value"
                   value={enteredValue}
                   required
                   minLength={MIN_MASKABLE_LENGTH}
@@ -241,10 +246,9 @@ export default function SecretModal({
                   onChange={(e) => setEnteredValue(e.target.value)}
                   onBlur={() => setEnteredValue(v => v.trim())}
                 ></input>
-                <button type="button" className={styles.iconActionBtn} onClick={() => setSecretVisible(v => !v)}>
+                <button type="button" className={styles.iconActionBtn} aria-label={secretVisible ? 'Hide secret value' : 'Show secret value'} onClick={() => setSecretVisible(v => !v)}>
                   <ion-icon
                     name={secretVisible ? 'eye-off-outline' : 'eye-outline'}
-                    className={styles.valueToggleIcon}
                   ></ion-icon>
                 </button>
               </div>
@@ -257,6 +261,7 @@ export default function SecretModal({
                 <input
                   type="text"
                   name="env_name"
+                  id="env_name"
                   placeholder="e.g. Production"
                   autoComplete="off" spellCheck={false}
                   value={query}

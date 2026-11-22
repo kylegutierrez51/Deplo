@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import styles from "./pipelines.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/pipelines/pipelines.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import PipelineRow from "@/components/pipelines/PipelineRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -49,7 +49,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
     <>
       <Sidebar activeItem="pipelines" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.page}`}>
         <Subheader
           title="Pipelines"
           subtitle={<><span id="subtitle-count">{totalPipelines}</span> pipelines across your repositories</>}>
@@ -60,7 +60,7 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
-                <SearchInput placeholder={"Search pipelines..."} />
+                <SearchInput placeholder={"Search pipelines..."} styles={styles} />
                 <QueryFilterListbox id={"status"} name={"status"} options={PIPELINE_FILTERS.status} value={filters.status} />
                 <QueryFilterListbox id={"updated"} name={"updated"} options={PIPELINE_FILTERS.updated} value={filters.updated} />
               </div>
@@ -68,13 +68,27 @@ export default async function Pipelines({ searchParams }: { searchParams: Search
 
             {pipelines.total > 0 ? (
               <>
-                <DataTable columns={["Pipeline", "Recent Status", "Repository", "Latest Run", ""]}>
-                  {pipelines.rows.map((pipeline) => (
-                    <PipelineRow key={pipeline.id} pipeline={pipeline} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['pipeline-table']}`} aria-label="Pipelines">
+                    <thead>
+                      <tr>
+                        <th scope="col">Pipeline</th>
+                        <th scope="col">Latest status</th>
+                        <th scope="col">Latest run</th>
+                        <th scope="col"><span className={styles['sr-only']}>Editor</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pipelines.rows.map((pipeline) => (
+                        <PipelineRow key={pipeline.id} pipeline={pipeline} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={pipelines.page} pageCount={pipelines.pageCount} total={pipelines.total} pageSize={pipelines.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={pipelines.page} pageCount={pipelines.pageCount} total={pipelines.total} pageSize={pipelines.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState

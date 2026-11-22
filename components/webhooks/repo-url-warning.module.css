@@ -4,10 +4,8 @@
   gap: var(--space-xs);
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
-  border: 1px solid var(--warning-border);
-  border-radius: var(--radius-md);
-  background: var(--warning-bg);
-  color: var(--warning-text);
+  border-left: 2px solid var(--warning-accent);
+  color: var(--subtitle-clr);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -16,4 +14,9 @@
   flex-shrink: 0;
   margin-top: 2px;
   font-size: 14px;
+  color: var(--warning-accent);
+}
+
+.warning span {
+  color: inherit;
 }

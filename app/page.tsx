@@ -3,7 +3,6 @@ import Link from "next/link";
 import LoginButton from "@/components/auth/LoginButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
-import StatCards from "@/components/ui/StatCards";
 import Pill from "@/components/ui/Pill";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { capitalize } from "@/lib/utils/string";
@@ -11,6 +10,7 @@ import { formatDate, getDuration } from "@/lib/utils/date";
 import loginStyles from "./page.module.css";
 import styles from "./dashboard.module.css";
 import AutoRefresh from "@/components/ui/AutoRefresh";
+import StatCards from "@/components/ui/StatCards";
 
 const REFRESH_INTERVAL_MS = 20_000;
 
@@ -35,7 +35,7 @@ export default async function Home() {
     <>
       <Sidebar activeItem="dashboard" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.dashboard}`}>
 
         <Subheader
           title="Dashboard"
@@ -46,14 +46,13 @@ export default async function Home() {
         </Subheader>
 
         <StatCards
-          cards={
-            [
-              { icon: "sync-outline", total: data.counts.running, label: "RUNNING" },
-              { icon: "hourglass-outline", total: data.counts.queued, label: "QUEUED", valueClassName: 'queued' },
-              { icon: "shield-outline", total: data.counts.awaitingApproval, label: "NEEDS APPROVAL", valueClassName: 'pending' },
-              { icon: "close-circle-outline", total: data.counts.failed7d, label: "FAILED", valueClassName: 'failed' },
-            ]
-          } />
+          ariaLabel="Run overview"
+          cards={[
+            { icon: "sync-outline", total: data.counts.running, label: "Running", scope: "Right now", tone: "running" },
+            { icon: "hourglass-outline", total: data.counts.queued, label: "Queued", scope: "Waiting to start", tone: "queued" },
+            { icon: "shield-outline", total: data.counts.awaitingApproval, label: "Needs approval", scope: "Waiting for a decision", tone: "approval" },
+            { icon: "close-circle-outline", total: data.counts.failed7d, label: "Failed", scope: "Last 7 days", tone: "failed" },
+          ]} />
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
@@ -61,26 +60,26 @@ export default async function Home() {
 
           <section className={styles.panel} aria-label="Recent runs">
             <header className={styles['panel-header']}>
-              <span className={styles['panel-title']}>RECENT RUNS</span>
+              <h2 className={styles['panel-title']}>Recent runs</h2>
               <Link href="/runs" className={styles['panel-link']}>View all</Link>
             </header>
             {data.recentRuns.length === 0 ? (
-              <p className={styles['empty-note']}>No runs yet. Trigger a pipeline to see activity here.</p>
+              <p className={styles['empty-note']}>No runs yet. <Link href="/pipelines">Choose a pipeline to run</Link>.</p>
             ) : (
               <ul className={styles['run-list']}>
                 {data.recentRuns.map((run) => (
                   <li key={run.id}>
                     <Link href={`/runs?id=${run.id}`} className={styles['run-row']}>
-                      <Pill variant={run.status} label={capitalize(run.status)} />
+                      <span className={styles['run-status']}><Pill variant={run.status} label={capitalize(run.status)} /></span>
                       <div className={styles['run-info']}>
                         <span className={styles['run-pipeline']}>{run.pipelineName ?? "Deleted pipeline"}</span>
                         <span className={styles['run-meta']}>
                           {run.branch ?? ""}{run.commitSha ? ` · ${run.commitSha.slice(0, 7)}` : ""}
                         </span>
                       </div>
-                      {run.environment && (
-                        <Pill variant={run.environment.type} label={capitalize(run.environment.type)} />
-                      )}
+                      <span className={styles['run-environment']}>
+                        {run.environment && <Pill variant={run.environment.type} label={capitalize(run.environment.type)} />}
+                      </span>
                       <div className={styles['run-timing']}>
                         <span className={styles['run-duration']}>
                           <ion-icon name="stopwatch-outline"></ion-icon>
@@ -101,7 +100,7 @@ export default async function Home() {
 
             <section className={styles.panel} aria-label="Last 7 days">
               <header className={styles['panel-header']}>
-                <span className={styles['panel-title']}>LAST 7 DAYS</span>
+                <h2 className={styles['panel-title']}>Last 7 days</h2>
               </header>
               {data.week.successRate === null ? (
                 <p className={styles['empty-note']}>No finished runs this week yet.</p>
@@ -132,11 +131,11 @@ export default async function Home() {
 
             <section className={styles.panel} aria-label="Needs approval">
               <header className={styles['panel-header']}>
-                <span className={styles['panel-title']}>NEEDS APPROVAL</span>
+                <h2 className={styles['panel-title']}>Needs approval</h2>
                 <Link href="/approvals" className={styles['panel-link']}>View all</Link>
               </header>
               {data.approvals.length === 0 ? (
-                <p className={styles['empty-note']}>Nothing is waiting on you.</p>
+                <p className={styles['empty-note']}><ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon> No approvals waiting.</p>
               ) : (
                 <ul className={styles['approval-list']}>
                   {data.approvals.map((approval) => (
@@ -161,11 +160,11 @@ export default async function Home() {
 
             <section className={styles.panel} aria-label="Pipelines">
               <header className={styles['panel-header']}>
-                <span className={styles['panel-title']}>PIPELINES</span>
+                <h2 className={styles['panel-title']}>Pipelines</h2>
                 <Link href="/pipelines" className={styles['panel-link']}>View all</Link>
               </header>
               {data.pipelines.length === 0 ? (
-                <p className={styles['empty-note']}>No pipelines yet. Create one to start deploying.</p>
+                <p className={styles['empty-note']}>No pipelines yet. <Link href="/pipelines?mode=create">Create your first pipeline</Link>.</p>
               ) : (
                 <ul className={styles['pipeline-list']}>
                   {data.pipelines.map((pipeline) => (

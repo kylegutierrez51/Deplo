@@ -58,8 +58,8 @@
 }
 
 .popover label {
-  font-family: var(--font-jetbrains-mono);
   font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .input {
@@ -81,4 +81,9 @@
   margin: 0;
   color: var(--subtitle-clr);
   font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .popover { position: fixed; top: calc(var(--size-topbar-height) + var(--space-xs)); left: var(--space-sm); right: var(--space-sm); width: auto; }
 }

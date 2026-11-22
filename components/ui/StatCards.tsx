@@ -1,27 +1,28 @@
-import styles from './stat-cards.module.css'
+import type { CSSProperties } from 'react';
+import styles from './stat-cards.module.css';
 
-interface StatCardsProps {
-  cards: {
-    icon: string;
-    total: string | number;
-    label: string;
-    valueClassName?: string;
-  }[],
-  responsive?: boolean
+interface StatCard {
+  icon: string;
+  total: string | number;
+  label: string;
+  scope: string;
+  tone: 'running' | 'queued' | 'approval' | 'failed' | 'pending' | 'processed' | 'ignored';
 }
 
-export default function StatCards({ cards, responsive=true }: StatCardsProps) {
+interface StatCardsProps {
+  cards: StatCard[];
+  ariaLabel: string;
+}
+
+export default function StatCards({ cards, ariaLabel }: StatCardsProps) {
   return (
-    <div className={`${styles['cards-row']}${responsive ? ` ${styles.responsive}` : ''}`}>
-      {cards.map((card, index) => (
-      <div className={styles.card} key={index}>
-        <ion-icon name={card.icon}></ion-icon>
-        <div className={styles['card-detail']}>
-          <span className={`${styles['card-total']} ${card.valueClassName ? ` ${styles[card.valueClassName]}` : ''}`}>{card.total}</span>
-          <span className={styles['card-name']}>{card.label}</span>
+    <dl className={styles['cards-row']} aria-label={ariaLabel} style={{ '--stat-columns': cards.length } as CSSProperties}>
+      {cards.map(stat => (
+        <div className={styles.stat} key={stat.label}>
+          <dt><ion-icon name={stat.icon} aria-hidden="true"></ion-icon>{stat.label}</dt>
+          <dd className={styles[stat.tone]}>{stat.total}<span className={styles['stat-scope']}>{stat.scope}</span></dd>
         </div>
-      </div>
       ))}
-    </div>
-  )
+    </dl>
+  );
 }

@@ -13,14 +13,15 @@ Runner Status Banner
   padding: var(--space-sm) var(--space-md);
   margin-bottom: var(--space-md);
 
-  color: var(--warning-text);
-  background: var(--warning-bg);
-  border: 1px solid var(--warning-border);
-  border-radius: var(--radius-md);
+  color: var(--subtitle-clr);
+  background: transparent;
+  border-left: 2px solid var(--warning-accent);
+  line-height: 1.5;
 }
 
 .banner ion-icon {
   font-size: 18px;
+  color: var(--warning-accent);
 
   /* Optical alignment with the title's cap height rather than its line box. */
   margin-top: 1px;
@@ -35,7 +36,8 @@ Runner Status Banner
 
 .title {
   font-size: var(--font-size-lg);
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--white-clr);
 }
 
 .detail {

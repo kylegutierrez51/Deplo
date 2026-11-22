@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Modal from '@/components/ui/modals/Modal';
-import modalStyles from '@/components/ui/modals/modal.module.css';
+import modalStyles from '@/components/ui/modals/resource-modal.module.css';
 import runHistoryStyles from './run-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import type { RunStatus, RunTrigger } from '@/lib/types';
@@ -49,13 +49,13 @@ export default function RunModal({
   const footer =
     <>
       <button className={`${styles.footerBtn} ${styles.cancelBtn}`} type="button" onClick={onClose}>Close</button>
-      <Link target="_blank" href={`/runs/${id}`} className={`${styles.footerBtn} ${styles.editBtn}`}>View Full Run</Link>
+      <Link target="_blank" href={`/runs/${id}`} className={`${styles.footerBtn} ${styles.createBtn}`}>View Full Run</Link>
     </>
 
   return (
-    <Modal title={"Run"} onClose={onClose} footer={footer} mode={mode}>
+    <Modal title="Run details" subtitle="Pipeline outcome, environment, and timing." classNames={styles} onClose={onClose} footer={footer} mode={mode}>
       <>
-        <div className={styles['item-flex']}>
+        <div className={styles.summaryRow}>
           <div className={styles.item}>
             <label>Pipeline</label>
             <div className={styles['pipeline-detail']}>
@@ -71,10 +71,10 @@ export default function RunModal({
           )}
         </div>
 
-        <div className={styles['item-flex']}>
+        <div className={styles.detailsRow}>
             <div className={styles.item}>
               <label>Environment</label>
-              <span>{environment ? <EnvironmentLabel environment={environment} /> : 'None'}</span>
+              <span className={styles.environmentValue}>{environment ? <EnvironmentLabel environment={environment} /> : 'None'}</span>
             </div>
           {trigger && (
             <div className={styles.item}>
@@ -84,14 +84,14 @@ export default function RunModal({
           )}
         </div>
 
-        <div className={styles['item-flex']}>
+        <div className={styles.metadataGrid}>
           <div className={styles.item}>
             <label>Created At</label>
             <span>{formatDate(createdAt)}</span>
           </div>
           <div className={styles.item}>
             <label>Duration</label>
-            <span className={styles.duration}>
+            <span className={styles.detailValue}>
               <ion-icon name="stopwatch-outline"></ion-icon>
               {duration}
             </span>

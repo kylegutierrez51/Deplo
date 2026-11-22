@@ -72,3 +72,25 @@ describe('opening the secret', () => {
     expect(mockPush).toHaveBeenCalledWith('/secrets?environment=production&id=sec-1');
   });
 });
+
+
+describe('row details and accessibility', () => {
+  it('keeps the existing details in all 3 cells', () => {
+    setup({ notes: 'Used by the release pipeline' });
+    const cells = screen.getAllByRole('cell');
+    expect(cells).toHaveLength(3);
+    expect(cells[0]).toHaveTextContent('API_KEY');
+    expect(cells[0]).toHaveTextContent('Used by the release pipeline');
+    expect(cells[1]).toHaveTextContent('Production');
+    expect(cells[2]).toHaveTextContent('1/1/26, 00:00:00');
+    expect(cells[2].querySelector('time')).toHaveAttribute('datetime', '2026-01-01T00:00:00.000Z');
+  });
+
+  it('opens the secret using the keyboard', async () => {
+    setup();
+    screen.getByRole('button', { name: 'API_KEY' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/secrets?id=sec-1');
+  });
+});

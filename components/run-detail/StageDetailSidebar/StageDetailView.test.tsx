@@ -43,11 +43,11 @@ const setup = (data: Partial<StageResultNode['data']> = {}, envPresent = true) =
 
 describe('configuration fields', () => {
   it.each([
-    ['STAGE NAME', 'build'],
-    ['LABEL', 'script'],
-    ['COMMAND', 'npm run build'],
-    ['TIMEOUT (S)', '900'],
-    ['RETRIES', '1'],
+    ['Stage name', 'build'],
+    ['Label', 'script'],
+    ['Command', 'npm run build'],
+    ['Timeout (s)', '900'],
+    ['Retries', '1'],
   ])('renders %s as %s', (label, value) => {
     setup();
 
@@ -91,7 +91,7 @@ describe('attempt', () => {
   it('renders the current attempt out of the total', () => {
     setup({ attempt: 2, maxAttempts: 3 });
 
-    expect(screen.getByLabelText('ATTEMPT')).toHaveTextContent('2 of 3');
+    expect(screen.getByLabelText('Attempt')).toHaveTextContent('2 of 3');
   });
 
   // maxRetries counts retries after the first try, so a stage with no retry
@@ -99,17 +99,17 @@ describe('attempt', () => {
   it('renders a stage with no retry budget as 1 of 1', () => {
     setup({ attempt: 1, maxAttempts: 1 });
 
-    expect(screen.getByLabelText('ATTEMPT')).toHaveTextContent('1 of 1');
+    expect(screen.getByLabelText('Attempt')).toHaveTextContent('1 of 1');
   });
 });
 
 describe('empty values', () => {
   it.each([
-    ['STAGE NAME', { name: undefined }],
-    ['LABEL', { label: undefined }],
-    ['COMMAND', { command: undefined }],
-    ['TIMEOUT (S)', { timeout: undefined }],
-    ['RETRIES', { retries: undefined }],
+    ['Stage name', { name: undefined }],
+    ['Label', { label: undefined }],
+    ['Command', { command: undefined }],
+    ['Timeout (s)', { timeout: undefined }],
+    ['Retries', { retries: undefined }],
   ] as const)('renders an em dash for an unset %s', (label, data) => {
     setup(data);
 
@@ -175,20 +175,20 @@ describe('stage type guards', () => {
   it('renders only the name and type for an approval stage', () => {
     setup({ type: 'approval' });
 
-    expect(screen.getByLabelText('STAGE NAME')).toBeInTheDocument();
+    expect(screen.getByLabelText('Stage name')).toBeInTheDocument();
     expect(screen.getByText('Approval')).toBeInTheDocument();
-    expect(screen.queryByText('COMMAND')).not.toBeInTheDocument();
-    expect(screen.queryByText('TIMEOUT (S)')).not.toBeInTheDocument();
-    expect(screen.queryByText('ATTEMPT')).not.toBeInTheDocument();
-    expect(screen.queryByText('SECRETS')).not.toBeInTheDocument();
+    expect(screen.queryByText('Command')).not.toBeInTheDocument();
+    expect(screen.queryByText('Timeout (s)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Attempt')).not.toBeInTheDocument();
+    expect(screen.queryByText('Secrets')).not.toBeInTheDocument();
   });
 
   // The editor forces a deploy stage's label to "Deploy" and hides the field.
   it('hides the label field for a deploy stage', () => {
     setup({ type: 'deploy' });
 
-    expect(screen.queryByText('LABEL')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('COMMAND')).toBeInTheDocument();
+    expect(screen.queryByText('Label')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Command')).toBeInTheDocument();
   });
 });
 
@@ -205,5 +205,15 @@ describe('read-only', () => {
     const { container } = setup({ secretKeys: ['API_KEY'] });
 
     expect(container.querySelectorAll('input, textarea, select, button')).toHaveLength(0);
+  });
+});
+
+
+describe('working directory', () => {
+  it('keeps the directory and command body visible in their matching editor fields', () => {
+    setup({ command: 'cd "/srv/app" && npm run build' });
+    expect(screen.getByLabelText('Directory')).toHaveTextContent('/srv/app');
+    expect(screen.getByLabelText('Command')).toHaveTextContent('npm run build');
+    expect(screen.getByLabelText('Command')).toHaveAttribute('title', 'cd "/srv/app" && npm run build');
   });
 });

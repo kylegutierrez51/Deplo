@@ -117,3 +117,44 @@ describe('the environment cell', () => {
     expect(screen.getByText('None')).toBeInTheDocument();
   });
 });
+
+
+describe('run details', () => {
+  it('keeps all five cells and their existing details', () => {
+    setup({
+      repoUrl: 'https://github.com/acme/api',
+      environment: { name: 'prod', type: 'production', deleted: false },
+      trigger: 'api',
+      startedAt: new Date('2026-01-01T00:00:00Z'),
+      finishedAt: new Date('2026-01-01T00:02:34Z'),
+    });
+    const cells = screen.getAllByRole('cell');
+    expect(cells).toHaveLength(5);
+    for (const detail of ['CI', '#7', 'Succeeded', 'acme/api']) expect(cells[0]).toHaveTextContent(detail);
+    expect(cells[1]).toHaveTextContent('prod');
+    expect(cells[1]).toHaveTextContent('Production');
+    expect(cells[2]).toHaveTextContent('API');
+    expect(cells[3]).toHaveTextContent('2m 34s');
+    expect(cells[4].querySelector('time')).toHaveAttribute('datetime', '2026-01-01T00:00:00.000Z');
+    expect(cells[4]).toHaveTextContent('1/1/26, 00:00:00');
+  });
+
+  it('opens details using the keyboard', async () => {
+    setup();
+    screen.getByRole('button', { name: 'CI' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/runs?id=run-1');
+  });
+
+  it('keeps the repository link independent of the run details', async () => {
+    setup({ repoUrl: 'https://github.com/acme/api' });
+    await userEvent.click(screen.getByRole('link', { name: 'acme/api' }));
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('keeps the ongoing duration state', () => {
+    setup({ startedAt: new Date('2026-01-01T00:00:00Z') });
+    expect(screen.getByText('Ongoing')).toBeInTheDocument();
+  });
+});

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import styles from './env.module.css';
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "@/app/environments/environments.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from "@/components/layout/subheader/AddButton";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import EnvironmentRow from '@/components/environments/EnvironmentRow';
 import Pagination from '@/components/ui/pagination/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
@@ -43,7 +43,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
     <>
       <Sidebar activeItem="environments" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.page}`}>
 
         <Subheader
           title="Environments"
@@ -55,7 +55,7 @@ export default async function Environments({ searchParams }: { searchParams: Sea
           <>
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
-                <SearchInput placeholder={"Search environments..."} />
+                <SearchInput placeholder={"Search environments..."} styles={styles} />
                 <QueryFilterListbox id={"environment"} name={"environment"} options={ENVIRONMENT_FILTERS.environment} value={filters.environment} />
                 <QueryFilterListbox id={"updated"} name={"updated"} options={ENVIRONMENT_FILTERS.updated} value={filters.updated} />
               </div>
@@ -63,13 +63,26 @@ export default async function Environments({ searchParams }: { searchParams: Sea
 
             {environments.total > 0 ? (
               <>
-                <DataTable columns={["Name", "Environment Type", "Secrets", "Last Updated"]}>
-                  {environments.rows.map((env) => (
-                    <EnvironmentRow key={env.id} env={env} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['environments-table']}`} aria-label="Environments">
+                    <thead>
+                      <tr>
+                        {['Name', 'Environment type', 'Secrets', 'Last updated'].map(column => (
+                          <th key={column} scope="col">{column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {environments.rows.map((env) => (
+                        <EnvironmentRow key={env.id} env={env} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={environments.page} pageCount={environments.pageCount} total={environments.total} pageSize={environments.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={environments.page} pageCount={environments.pageCount} total={environments.total} pageSize={environments.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState

@@ -72,3 +72,30 @@ describe('opening the environment', () => {
     expect(mockPush).toHaveBeenCalledWith('/environments?updated=7days&id=env-1');
   });
 });
+
+
+describe('row details and accessibility', () => {
+  it('keeps the existing details in all 4 cells', () => {
+    setup();
+    const cells = screen.getAllByRole('cell');
+    expect(cells).toHaveLength(4);
+    expect(cells[0]).toHaveTextContent('prod-us-east');
+    expect(cells[1]).toHaveTextContent('Production');
+    expect(cells[2]).toHaveTextContent('2');
+    expect(cells[3]).toHaveTextContent('1/1/26, 00:00:00');
+    expect(cells[3].querySelector('time')).toHaveAttribute('datetime', '2026-01-01T00:00:00.000Z');
+  });
+
+  it('opens the environment using the keyboard', async () => {
+    setup();
+    screen.getByRole('button', { name: 'prod-us-east' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/environments?id=env-1');
+  });
+});
+
+it('keeps a zero secret count visible', () => {
+  setup({ secrets: 0 });
+  expect(screen.getAllByRole('cell')[2]).toHaveTextContent('0');
+});

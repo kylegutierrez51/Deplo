@@ -1,93 +1,18 @@
-/*
-====================================================================================
-Run Detail
-====================================================================================
-*/
-
-/*
-===============================
-Section Select (Overview, Logs)
-===============================
-*/
-
-.tabs {
-  padding: 0 0 0 var(--space-lg);
-  border-bottom: 1px solid var(--gray-clr);
-
-  /* Anchor for .collapse-toggle. */
-  position: relative;
+/* Counts and navigation form one divider between the run card and canvas. */
+.tabs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-lg); border-bottom: 1px solid var(--color-border-mid); padding-block: 8px; flex-shrink: 0; }
+.summary { flex: 1 1 480px; min-width: 0; }
+.tabs-row { display: flex; align-items: center; gap: var(--space-lg); }
+.tab { display: flex; align-items: center; gap: 7px; min-height: 36px; font-size: var(--font-size-body); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 0; cursor: pointer; }
+.tab span, .tab ion-icon { color: var(--subtitle-clr); }
+.tab.active { border-bottom-color: var(--blue-clr); }
+.tab.active span, .tab.active ion-icon { color: var(--white-clr); font-weight: 600; }
+.collapse-toggle { display: grid; place-items: center; width: 32px; height: 32px; margin-left: auto; background: transparent; border: 1px solid var(--color-border-dark); border-radius: var(--radius-sm); cursor: pointer; }
+.collapse-toggle:hover { background: var(--gray-clr); }
+.collapse-toggle ion-icon { color: var(--subtitle-clr); font-size: 16px; transition: transform 200ms ease; }
+.collapse-toggle[aria-expanded='false'] ion-icon { transform: rotate(180deg); }
+.tabs button:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 2px; }
+@media (max-width: 750px) {
+  .summary { flex-basis: 100%; order: 3; padding-bottom: var(--space-xs); }
+  .tab { min-height: 44px; }
 }
-
-.tabs-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2xl);
-}
-
-.tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  font-size: 18px;
-  background: none;
-  border: none;
-  border-bottom: var(--border-width-md) solid transparent;
-  padding: 0 0 var(--space-sm) 0;
-  margin-bottom: -1px;
-  cursor: pointer;
-}
-
-.tab.active {
-  border-bottom-color: var(--blue-clr);
-  
-}
-
-.tab.active ion-icon,
-.tab.active span {
-  font-weight: bold;
-}
-
-
-/*
-===============================
-Run Header Collapse Toggle
-===============================
-*/
-
-.collapse-toggle {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: var(--space-xs);
-  color: var(--icon-clr);
-  cursor: pointer;
-}
-
-.collapse-toggle:hover {
-  color: var(--white-clr);
-}
-
-.collapse-toggle ion-icon {
-  font-size: var(--font-size-lg);
-  transition: transform 200ms ease;
-}
-
-/*
-  Keyed off aria-expanded rather than a class of its own, so the direction the chevron
-  points cannot drift away from the state it is reporting.
-*/
-.collapse-toggle[aria-expanded='false'] ion-icon {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .collapse-toggle ion-icon {
-    transition: none;
-  }
-}
+@media (prefers-reduced-motion: reduce) { .collapse-toggle ion-icon { transition: none; } }

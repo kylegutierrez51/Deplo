@@ -280,3 +280,14 @@ Pipeline Editor Header Media Queries
     gap: var(--space-sm);
   }
 }
+/* Keep all editor actions reachable on phones. */
+@media (max-width: 600px) {
+  .header-flex { margin-left: 0; padding-inline: var(--space-sm); gap: 6px; }
+  .editor-header .left-slot { flex: 0 0 auto; gap: 0; margin-right: 0; }
+  .left-slot > .divider { display: none; }
+  .editor-header .left-slot .pipeline-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .center-slot { flex: 1; min-width: 0; padding: 0; gap: 6px; }
+  .center-slot > div:first-child { flex: 1; width: auto; min-width: 0; }
+  .center-slot input { padding-inline: 8px; }
+  .editor-header .right-slot { flex: 0 0 auto; gap: 6px; margin-right: 0; }
+}

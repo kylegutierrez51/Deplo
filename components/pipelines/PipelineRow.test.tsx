@@ -6,8 +6,7 @@ import type { Pipeline } from '@/lib/data/pipelines';
 /*
  * `repoUrl` is nullable on the Pipeline model itself, so this row is the one
  * place the absence shows up as a pipeline's own property rather than as missing
- * data on a run. The row keeps a placeholder in the repository cell for the same
- * reason WebhookEventRow does — the cells are read against the table header.
+ * data on a run. The row explains that absence beneath the pipeline name.
  *
  * lib/data/pipelines is imported for its type only, but Jest still loads the
  * module and it pulls in the Prisma singleton, which opens a pg connection at
@@ -51,10 +50,10 @@ const setup = (over: Partial<Pipeline> = {}) =>
     <table><tbody><PipelineRow pipeline={pipeline(over)} /></tbody></table>,
   );
 
-/** Column order: pipeline, status, repository, latest run, editor link. */
+/** Column order: pipeline and repository, status, latest run, editor link. */
 const cell = (index: number) => screen.getAllByRole('cell')[index];
-const repository = () => cell(2);
-const latestRun = () => cell(3);
+const repository = () => cell(0);
+const latestRun = () => cell(2);
 
 /*
  * The cell links to the run rather than printing its id: a cuid is unreadable and
@@ -81,7 +80,7 @@ describe('latest run link', () => {
   it('says so when the pipeline has never run', () => {
     setup({ lastRun: null });
 
-    expect(latestRun()).toHaveTextContent('No Runs');
+    expect(latestRun()).toHaveTextContent('No runs yet');
     expect(screen.queryByRole('link', { name: /view the latest run/i })).not.toBeInTheDocument();
   });
 });
@@ -90,7 +89,7 @@ describe('repository present', () => {
   it('renders the repo name', () => {
     setup();
 
-    expect(repository()).toHaveTextContent(/^web-client$/);
+    expect(repository()).toHaveTextContent('web-client');
   });
 
   it.each([
@@ -99,28 +98,28 @@ describe('repository present', () => {
   ])('renders just the repo name for %s', repoUrl => {
     setup({ repoUrl });
 
-    expect(repository()).toHaveTextContent(/^web-client$/);
+    expect(repository()).toHaveTextContent('web-client');
   });
 });
 
 describe('no repository', () => {
-  it('renders an em dash in the repository cell', () => {
+  it('explains when no repository is connected', () => {
     setup({ repoUrl: null });
 
-    expect(repository()).toHaveTextContent('—');
+    expect(repository()).toHaveTextContent('No repository');
   });
 
   it('keeps the name, latest run number and status', () => {
     setup({ repoUrl: null });
 
     expect(screen.getByText('CI')).toBeInTheDocument();
-    expect(screen.getByText('Latest Run: #12')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view the latest run of CI/i })).toHaveTextContent('Run #12');
     expect(screen.getByText('Succeeded')).toBeInTheDocument();
   });
 
   /*
    * The editor is where a pipeline's stages are drawn, which has nothing to do
-   * with where its code lives — a repo-less pipeline is exactly the one someone
+   * with where its code lives â€” a repo-less pipeline is exactly the one someone
    * needs to open and configure by hand.
    */
   it('still links to the pipeline editor', () => {
@@ -130,18 +129,26 @@ describe('no repository', () => {
       .toHaveAttribute('href', '/pipelines/p1');
   });
 
-  it('renders all five cells so the columns stay aligned', () => {
+  it('renders all four cells so the columns stay aligned', () => {
     setup({ repoUrl: null });
 
-    expect(screen.getAllByRole('cell')).toHaveLength(5);
+    expect(screen.getAllByRole('cell')).toHaveLength(4);
   });
 });
 
 /*
  * The row opens the pipeline modal by pushing ?id=, and the list page keeps its filters in
- * the same query string — so the push has to add the id to what is there, not replace it.
+ * the same query string â€” so the push has to add the id to what is there, not replace it.
  */
 describe('opening the pipeline', () => {
+  it('opens the pipeline from its name using the keyboard', async () => {
+    setup();
+    screen.getByRole('button', { name: 'CI' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/pipelines?id=p1');
+  });
+
   it('pushes the pipeline id onto /pipelines', async () => {
     setup();
 

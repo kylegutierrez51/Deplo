@@ -1,0 +1,32 @@
+.row { cursor: pointer; }
+.row td { padding: 16px 20px; vertical-align: middle; }
+.row:hover, .row:focus-within { background: var(--gray-clr); }
+.pipeline-icon { width: 24px; height: 32px; display: grid; place-items: center; flex-shrink: 0; }
+.pipeline-icon ion-icon { color: var(--subtitle-clr); font-size: 19px; }
+.details { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.name { font: inherit; font-size: var(--font-size-lg); font-weight: 600; color: var(--white-clr); background: transparent; border: 0; cursor: pointer; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.name:hover { color: var(--blue-clr); }
+.repository { display: flex; align-items: center; gap: 6px; font-size: var(--font-size-sm); color: var(--table-span-clr); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repository ion-icon { font-size: 13px; color: var(--table-span-clr); flex-shrink: 0; }
+.run-link { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-jetbrains-mono), monospace; font-size: var(--font-size-sm); color: var(--blue-clr); white-space: nowrap; }
+.run-link ion-icon { font-size: 14px; color: var(--blue-clr); }
+.run-link:hover { text-decoration: underline; }
+.no-runs { font-size: var(--font-size-sm); color: var(--table-span-clr); }
+.actions { text-align: right; }
+.editor-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--light-gray-clr); border-radius: var(--radius-md); font-size: var(--font-size-sm); color: var(--subtitle-clr); white-space: nowrap; }
+.editor-link ion-icon { font-size: 14px; color: var(--subtitle-clr); }
+.editor-link:hover { background: var(--gray-clr); color: var(--white-clr); }
+.row a:focus-visible, .name:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 3px; border-radius: var(--radius-xs); }
+
+@container (max-width: 750px) {
+  .row td { padding-inline: var(--space-md); }
+  .pipeline-icon { display: none; }
+}
+
+@container (max-width: 750px) {
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: var(--space-lg); gap: var(--space-md); }
+  .row td { padding: 0; min-width: 0; }
+  .status { grid-column: 2; grid-row: 1; text-align: right; }
+  .latest-run { grid-column: 1; grid-row: 2; }
+  .actions { grid-column: 2; grid-row: 2; }
+}

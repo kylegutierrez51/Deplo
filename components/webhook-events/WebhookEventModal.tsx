@@ -3,8 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Modal from '@/components/ui/modals/Modal';
-import modalStyles from '@/components/ui/modals/modal.module.css';
-import webhookEventStyles from './webhook-event-modal.module.css';
+import styles from '@/components/ui/modals/resource-modal.module.css';
 import Pill from '@/components/ui/Pill';
 import type { PillVariant } from '@/components/ui/Pill';
 import { capitalize } from '@/lib/utils/string';
@@ -15,8 +14,6 @@ import { withParams } from '@/lib/utils/url';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
 import { useToast } from '@/components/ui/toast/ToastContext';
 import { replayWebhookEvent } from '@/lib/actions/webhook-events';
-
-const styles = { ...modalStyles, ...webhookEventStyles };
 
 interface WebhookEventModalProps {
   id: string;
@@ -100,9 +97,9 @@ export default function WebhookEventModal({
 
   return (
     <>
-      <Modal title={"Webhook Event"} onClose={onClose} footer={footer} mode={mode}>
+      <Modal title="Webhook event details" subtitle="Delivery outcome and the commit that triggered it." classNames={styles} onClose={onClose} footer={footer} mode={mode}>
         <>
-          <div className={styles['item-flex']}>
+          <div className={styles.detailsGrid}>
             {status && (
               <div className={styles.item}>
                 <label>Status</label>
@@ -119,10 +116,10 @@ export default function WebhookEventModal({
 
           <div className={styles.item}>
             <label>Reason</label>
-            <span className={styles['status-reason']} data-testid="status-reason">{statusReason ?? '—'}</span>
+            <span className={styles.dataNote} data-testid="status-reason">{statusReason ?? '—'}</span>
           </div>
 
-          <div className={styles['item-flex']}>
+          <div className={styles.detailsGrid}>
             <div className={styles.item}>
               <label>Repository</label>
               <span>{pipeline?.repoUrl ? <RepoLink repoUrl={pipeline.repoUrl} /> : '—'}</span>
@@ -135,21 +132,21 @@ export default function WebhookEventModal({
 
           <div className={styles.item}>
             <label>Commit</label>
-            <div className={styles['commit-detail']}>
+            <div className={styles.commitDetail}>
                 {commitSha ?
                   <>
-                    <span className={styles['commit-hash']} title={commitSha}>
+                    <span className={styles.commitHash} title={commitSha}>
                       <ion-icon name="git-commit-outline"></ion-icon>
                       {shortSha(commitSha)}
                     </span>
                   </>
                   : '—'
                 }
-              {commitMessage && <span className={styles['commit-message']} title={commitMessage}>{commitSummary(commitMessage)}</span>}
+              {commitMessage && <span className={styles.commitMessage} title={commitMessage}>{commitSummary(commitMessage)}</span>}
             </div>
           </div>
 
-          <div className={styles['item-flex']}>
+          <div className={styles.metadataGrid}>
             <div className={styles.item}>
               <label>Pipeline</label>
               <span>{pipeline?.name ?? 'Not Found'}</span>
@@ -158,14 +155,13 @@ export default function WebhookEventModal({
               <label>Received</label>
               <span>{formatDate(receivedAt)}</span>
             </div>
+            {source && (
+              <div className={styles.item}>
+                <label>Source</label>
+                <span>{source === 'replay' ? 'Replayed from Deplo' : 'GitHub'}</span>
+              </div>
+            )}
           </div>
-
-          {source && (
-            <div className={styles.item}>
-              <label>Source</label>
-              <span>{source === 'replay' ? 'Replayed from Deplo' : 'GitHub'}</span>
-            </div>
-          )}
         </>
       </Modal>
       {confirming && (

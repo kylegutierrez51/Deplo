@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import styles from "./stage-sidebar.module.css";
+import styles from "@/components/ui/stage-panel.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
@@ -113,97 +113,102 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
   return (
     <div className={styles['stage-sidebar-container']}>
       <div className={styles["stage-sidebar-nav"]}>
-        <div className={styles["stage-name"]}>
-          <label htmlFor="stage-name">STAGE NAME</label>
-          <input
-            id="stage-name"
-            name="stage-name"
-            spellCheck={false}
-            placeholder="e.g. build"
-            value={name}
-            onChange={e => {
-              setName(e.target.value);
-              updateNodeData(node.id, { name: e.target.value });
-            }} />
-        </div>
-        <div className={styles["stage-types"]}>
-          <label>STAGE TYPE</label>
-          <StageTypeGrid node={node} selectedType={type} setType={setType} label={label} />
-        </div>
+        <section className={styles.section} aria-label="Stage details">
+          <div className={styles["stage-name"]}>
+            <label htmlFor="stage-name">Stage name</label>
+            <input
+              id="stage-name"
+              name="stage-name"
+              spellCheck={false}
+              placeholder="e.g. build"
+              value={name}
+              onChange={e => {
+                setName(e.target.value);
+                updateNodeData(node.id, { name: e.target.value });
+              }} />
+          </div>
+          <div className={styles["stage-types"]}>
+            <span id="stage-type-label" className={styles['field-label']}>Stage type</span>
+            <StageTypeGrid node={node} selectedType={type} setType={setType} label={label} />
+          </div>
+          {type === 'custom' &&
+            <div className={styles.label}>
+              <label htmlFor="stage-label">Label</label>
+              <input
+                id="stage-label"
+                name="stage-label"
+                spellCheck={false}
+                placeholder="e.g. build, script"
+                value={label}
+                onChange={e => {
+                  setLabel(e.target.value);
+                  updateNodeData(node.id, { label: e.target.value });
+                }}
+                className={reservedLabelMatch ? styles['input-error'] : undefined}
+                aria-invalid={reservedLabelMatch ? true : undefined}
+              />
+              {reservedLabelMatch &&
+                <p className={styles['error-text']}>
+                  &ldquo;{label.trim()}&rdquo; is reserved for the {reservedLabelMatch === 'approval' ? 'Approval' : 'Deploy'} stage type.
+                </p>
+              }
+            </div>
+          }
+        </section>
         {type !== 'approval' &&
           <>
-            {type !== 'deploy' &&
-              <div className={styles.label}>
-                <label htmlFor="stage-label">LABEL</label>
-                <input
-                  id="stage-label"
-                  name="stage-label"
+            <section className={styles.section} aria-labelledby="execution-title">
+              <h3 id="execution-title" className={styles['section-title']}><ion-icon name="terminal-outline"></ion-icon>Execution</h3>
+              <div className={styles.command}>
+                <label htmlFor="command">Command</label>
+                <textarea
+                  id="command"
+                  name="command"
+                  placeholder="e.g. npm run build"
                   spellCheck={false}
-                  placeholder="e.g. build, script"
-                  value={label}
+                  value={commandBody}
+                  onFocus={() => setEditingSplit({ directory, body: commandBody })}
+                  onBlur={() => setEditingSplit(null)}
                   onChange={e => {
-                    setLabel(e.target.value);
-                    updateNodeData(node.id, { label: e.target.value });
-                  }}
-                  className={reservedLabelMatch ? styles['input-error'] : undefined}
-                  aria-invalid={reservedLabelMatch ? true : undefined}
-                />
-                {reservedLabelMatch &&
-                  <p className={styles['error-text']}>
-                    &ldquo;{label.trim()}&rdquo; is reserved for the {reservedLabelMatch === 'approval' ? 'Approval' : 'Deploy'} stage type.
-                  </p>
-                }
+                    setEditingSplit({ directory, body: e.target.value });
+                    handleCommandChange(directory, e.target.value);
+                  }}>
+                </textarea>
               </div>
-            }
-            <div className={styles.command}>
-              <label htmlFor="command">COMMAND</label>
-              <textarea
-                id="command"
-                name="command"
-                placeholder="e.g. npm run build"
-                spellCheck={false}
-                value={commandBody}
-                onFocus={() => setEditingSplit({ directory, body: commandBody })}
-                onBlur={() => setEditingSplit(null)}
-                onChange={e => {
-                  setEditingSplit({ directory, body: e.target.value });
-                  handleCommandChange(directory, e.target.value);
-                }}>
-              </textarea>
-            </div>
-            <div className={styles.directory}>
-              <label htmlFor="directory">DIRECTORY</label>
-              <input
-                id="directory"
-                name="directory"
-                placeholder={defaultDirectory.trim() ? `Default: ${defaultDirectory.trim()}` : 'Optional, e.g. /app/api'}
-                autoComplete="off"
-                spellCheck={false}
-                value={directory}
-                onChange={e => handleCommandChange(e.target.value.replaceAll('"', ''), commandBody)} />
-            </div>
-            <div className={styles["timeout-and-retries"]}>
-              <div className={styles.timeout}>
-                <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout" title="in Seconds (S)">TIMEOUT (S)</label></div>
+              <div className={styles.directory}>
+                <label htmlFor="directory">Directory</label>
                 <input
-                  id="timeout"
-                  name="timeout"
-                  title="in Seconds (S)"
-                  value={timeOptions.timeout}
-                  onChange={e => handleTimeOptionsChange(e)}
-                  onBlur={e => handleTimeOptionsBlur(e)} />
+                  id="directory"
+                  name="directory"
+                  placeholder={defaultDirectory.trim() ? `Default: ${defaultDirectory.trim()}` : 'Optional, e.g. /app/api'}
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={directory}
+                  onChange={e => handleCommandChange(e.target.value.replaceAll('"', ''), commandBody)} />
               </div>
-              <div className={styles.retries}>
-                <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries" title="1-10">RETRIES</label></div>
-                <input
-                  id="retries"
-                  name="retries"
-                  title="1-10"
-                  value={timeOptions.retries}
-                  onChange={e => handleTimeOptionsChange(e)}
-                  onBlur={e => handleTimeOptionsBlur(e)} />
+              <div className={styles["timeout-and-retries"]}>
+                <div className={styles.timeout}>
+                  <div><ion-icon name="time-outline"></ion-icon><label htmlFor="timeout" title="in Seconds (S)">Timeout (s)</label></div>
+                  <input
+                    id="timeout"
+                    name="timeout"
+                    title="in Seconds (S)"
+                    value={timeOptions.timeout}
+                    onChange={e => handleTimeOptionsChange(e)}
+                    onBlur={e => handleTimeOptionsBlur(e)} />
+                </div>
+                <div className={styles.retries}>
+                  <div><ion-icon name="refresh-outline"></ion-icon><label htmlFor="retries" title="1-10">Retries</label></div>
+                  <input
+                    id="retries"
+                    name="retries"
+                    title="1-10"
+                    value={timeOptions.retries}
+                    onChange={e => handleTimeOptionsChange(e)}
+                    onBlur={e => handleTimeOptionsBlur(e)} />
+                </div>
               </div>
-            </div>
+            </section>
             <EnvVarsSection vars={envVars} onAdd={handleEnvAdd} onChange={handleEnvChange} onDelete={handleEnvDelete} />
             <SecretsSection
               secrets={secretRows}

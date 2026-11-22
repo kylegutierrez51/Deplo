@@ -1,0 +1,30 @@
+.row { cursor: pointer; }
+.row td { padding: 16px 20px; vertical-align: middle; font-size: var(--font-size-body); }
+.row:hover, .row:focus-within { background: var(--gray-clr); }
+.pipeline-heading { display: flex; align-items: baseline; gap: var(--space-sm); }
+.name { font: inherit; font-size: var(--font-size-lg); font-weight: 600; color: var(--white-clr); background: transparent; border: 0; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.name:hover { color: var(--blue-clr); }
+.run-number { font-family: var(--font-jetbrains-mono), monospace; font-size: var(--font-size-sm); color: var(--table-span-clr); flex-shrink: 0; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 7px; font-size: var(--font-size-sm); }
+.meta a { overflow-wrap: anywhere; }
+.environment > span:last-child { flex-wrap: wrap; white-space: normal; overflow-wrap: anywhere; }
+.muted { color: var(--table-span-clr); }
+.field-label { display: none; }
+.duration-value { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.duration-value ion-icon { color: var(--icon-clr); font-size: 16px; }
+.created time { font-size: var(--font-size-sm); color: var(--subtitle-clr); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row a:focus-visible, .name:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 3px; border-radius: var(--radius-xs); }
+
+@container (max-width: 1050px) {
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-lg); padding: var(--space-lg); }
+  .row td { padding: 0; min-width: 0; }
+  .identity { grid-column: 1 / -1; }
+  .environment { grid-column: 1 / -1; }
+  .field-label { display: block; color: var(--table-span-clr); font-size: 12px; margin-bottom: 7px; }
+  .created time { white-space: normal; }
+}
+
+@container (max-width: 500px) {
+  .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .created { grid-column: 1 / -1; }
+}

@@ -1,0 +1,45 @@
+.row { cursor: pointer; }
+.row td { padding: 16px 20px; vertical-align: middle; font-size: var(--font-size-body); overflow-wrap: anywhere; }
+
+.row:hover, .row:focus-within,
+/* If you hover warning → highlight the main row directly before it */
+.row.has-warning:has(+ .warning-row:hover), 
+/* If you hover main row → highlight the warning directly after it */
+.row.has-warning:hover + .warning-row,
+/* Keyboard focus in main row → highlight its warning too */
+.row.has-warning:focus-within + .warning-row { background: var(--gray-clr); }
+
+.row.has-warning { border-bottom: 0; }
+.name { font: inherit; font-size: var(--font-size-lg); font-weight: 600; color: var(--white-clr); background: transparent; border: 0; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.name:hover { color: var(--blue-clr); }
+.name:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 3px; border-radius: var(--radius-xs); }
+.name.missing { color: var(--pill-failed-text); }
+.pills { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.environment-name { color: var(--white-clr); min-width: 0; }
+.branch { padding: 3px 8px; border: 1px solid var(--pill-running-border); border-radius: var(--radius-pill); background: var(--pill-running-bg); color: var(--blue-clr); font-family: var(--font-jetbrains-mono), monospace; font-size: 12px; max-width: 100%; overflow-wrap: anywhere; }
+.muted { color: var(--table-span-clr); font-size: var(--font-size-sm); }
+.delivery { text-align: right; }
+.delivery time { color: var(--subtitle-clr); font-size: var(--font-size-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.warning-row { cursor: pointer; }
+.warning-row td { padding: 0 20px 16px; overflow-wrap: anywhere; }
+.warning-row:hover { background: var(--gray-clr); }
+
+@container (max-width: 1200px) {
+  .row {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "identity identity identity" "status environment events" "delivery delivery delivery";
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+  }
+  .row td { padding: 0; min-width: 0; }
+  .identity { grid-area: identity; }
+  .status { grid-area: status; }
+  .environment { grid-area: environment; }
+  .events { grid-area: events; }
+  .delivery { grid-area: delivery; }
+  .row td[data-label]::before { content: attr(data-label); display: block; color: var(--table-span-clr); font-size: 12px; margin-bottom: 7px; }
+  .warning-row, .warning-row td { display: block; }
+  .delivery time { white-space: normal; }
+  .delivery { text-align: left; }
+}

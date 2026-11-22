@@ -7,7 +7,7 @@ import type { Pipeline } from '@/lib/data/pipelines';
 import type { Environment } from '@/lib/data/environments';
 import Modal from '@/components/ui/modals/Modal';
 import ConfirmationModal from '@/components/ui/modals/ConfirmationModal';
-import modalStyles from '@/components/ui/modals/modal.module.css';
+import modalStyles from '@/components/ui/modals/resource-modal.module.css';
 import webhookStyles from './webhook-modal.module.css';
 import Autocomplete from '@/components/ui/Autocomplete';
 import { addWebhook, updateWebhook, deleteWebhook, regenerateWebhookSecret } from '@/lib/actions/webhooks';
@@ -206,9 +206,12 @@ export default function WebhookModal({
     ? (pipelineName ? repoUrlWarning(pipelineName, pipelineRepoUrl) : null)
     : (selectedPipeline ? repoUrlWarning(selectedPipeline.name, selectedPipeline.repoUrl) : null);
 
-  const title = mode === 'view' ? 'Webhook' : (mode === 'create' ? 'Add Webhook' : 'Edit Webhook');
-  const subtitle = mode === 'edit' || mode === 'create' ? 'Register a GitHub webhook to trigger a pipeline automatically.' : undefined;
-  const icon = mode === 'edit' || mode === 'create' ? 'git-network-outline' : undefined;
+  const title = mode === 'view' ? 'Webhook details' : (mode === 'create' ? 'New webhook' : 'Edit webhook');
+  const subtitle = mode === 'view'
+    ? 'Connection details and pipeline triggers.'
+    : mode === 'create'
+      ? 'Connect GitHub events to a pipeline.'
+      : 'Update this webhook and its trigger settings.';
 
   const footer = mode === 'view' ? (
     <>
@@ -229,19 +232,19 @@ export default function WebhookModal({
 
   return (
     <>
-      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} subtitle={subtitle} icon={icon} onClose={onClose} footer={footer} mode={mode}>
+      <Modal action={mode === 'create' ? createFormAction : editFormAction} pending={pending} title={title} subtitle={subtitle} classNames={styles} onClose={onClose} footer={footer} mode={mode}>
         {mode === 'view' ? (
           <>
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label>Pipeline to trigger</label>
-              <div className={styles.iconValue}>
+              <div className={styles.detailValue}>
                 <ion-icon name="link-outline"></ion-icon>
-                <span>{pipelineName}</span>
+                <span className={styles.pipelineName}>{pipelineName}</span>
               </div>
               {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label>Environment</label>
               {environment ? (
                 <>
@@ -254,19 +257,19 @@ export default function WebhookModal({
                 </div>
                 </>
               ) : (
-                <span className={styles.emptyValue}>None — runs do not use secrets</span>
+                <span className={styles.mutedValue}>None. Runs do not use secrets</span>
               )}
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label>Status</label>
-              <span className={styles.iconValue}>
+              <span className={styles.detailValue}>
                 <ion-icon name={isActive ? 'radio-button-on-outline' : 'pause-circle-outline'}></ion-icon>
-                {isActive ? 'Active' : 'Inactive — deliveries are ignored'}
+                {isActive ? 'Active' : 'Inactive. Deliveries are ignored'}
               </span>
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.connectionFields}>
               {endpoint && <CopyField label="Deplo endpoint" value={endpoint} />}
               {publicUrl ? (
                 <CopyField label="Payload URL" value={webhookEndpoint(publicUrl, id)} />
@@ -295,36 +298,36 @@ export default function WebhookModal({
             </div>
 
             {filters.length > 0 && (
-              <div className={styles.fieldGroup}>
+              <div className={styles.item}>
                 <label>Branch filters</label>
-                <div className={styles.branchPills}>
-                  {filters.map((p, i) => <span key={i} className={styles.branchPill}>{p}</span>)}
+                <div className={styles.valuePills}>
+                  {filters.map((p, i) => <span key={i} className={styles.valuePill}>{p}</span>)}
                 </div>
               </div>
             )}
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label>Trigger events</label>
               {selectedEvents.length > 0 ? (
-                <div className={styles.branchPills}>
+                <div className={styles.valuePills}>
                   {EVENT_DEFS.filter(e => selectedEvents.includes(e.key))
                     .map(e => <Pill key={e.key} variant={e.key} label={e.label} />)}
                 </div>
               ) : (
-                <span className={styles.emptyValue}>None — this webhook won&apos;t trigger</span>
+                <span className={styles.mutedValue}>None. This webhook won&apos;t trigger</span>
               )}
             </div>
 
-            <div className={styles['item-flex']}>
-              <div className={styles.fieldGroup}>
+            <div className={styles['created-updated-flex']}>
+              <div className={styles.item}>
                 <label>Created By</label>
                 <span>{createdBy || 'Unknown User'}</span>
               </div>
-              <div className={styles.fieldGroup}>
+              <div className={styles.item}>
                 <label>Last Delivery</label>
                 <span>{lastDelivery ? formatDate(lastDelivery) : '—'}</span>
               </div>
-              <div className={styles.fieldGroup}>
+              <div className={styles.item}>
                 <label>Created At</label>
                 <span>{formatDate(createdAt)}</span>
               </div>
@@ -334,7 +337,7 @@ export default function WebhookModal({
           <>
             <input type="hidden" name="id" value={id ?? ''} />
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label htmlFor="pipeline-name">Pipeline to trigger</label>
               <Autocomplete
                 id="pipeline-name"
@@ -351,7 +354,7 @@ export default function WebhookModal({
               {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label htmlFor="environment-name">
                 Environment
                 <span className={styles.optionalBadge}>optional</span>
@@ -368,13 +371,15 @@ export default function WebhookModal({
               />
             </div>
 
-            <div className={styles.fieldGroup}>
-              <label>
+            <div className={styles.item}>
+              <label htmlFor="branch-filter">
                 Branch filters
                 <span className={styles.optionalBadge}>optional</span>
               </label>
               <input
                 type="text"
+                id="branch-filter"
+                aria-describedby="branch-filter-hint"
                 ref={branchInputRef}
                 placeholder="e.g. main, release/*, feature/* — press Enter to add"
                 spellCheck={false}
@@ -382,18 +387,18 @@ export default function WebhookModal({
                 value={enteredBranchFilter}
                 onChange={(e) => setEnteredBranchFilter(e.target.value)}
               />
-              <p className={styles.fieldHint}>
+              <p id="branch-filter-hint" className={styles.fieldHint}>
                 <ion-icon name="information-circle-outline"></ion-icon>
                 Glob pattern. Case sensitive. Leave empty to trigger on all branches.
               </p>
 
-              <div className={styles.branchPills}>
+              <div className={styles.valuePills}>
                 {filters.map((p, i) => (
-                  <span key={i} className={styles.branchPill}>
+                  <span key={i} className={styles.valuePill}>
                     {p}
                     <button
                       type="button"
-                      className={styles.branchPillRemove}
+                      className={styles.valuePillRemove}
                       onClick={() => removeBranchFilter(i)}
                       aria-label={`Remove branch filter ${p}`}
                     >
@@ -408,7 +413,7 @@ export default function WebhookModal({
             {publicUrl ? (
               <input type="hidden" name="relay_url" value={relayUrl ?? ''} />
             ) : (
-              <div className={styles.fieldGroup}>
+              <div className={styles.item}>
                 <label htmlFor="relay-url">
                   Relay URL
                   <span className={styles.optionalBadge}>optional</span>
@@ -428,7 +433,7 @@ export default function WebhookModal({
               </div>
             )}
 
-            <div className={styles.fieldGroup}>
+            <div className={styles.item}>
               <label>Trigger events</label>
               <div className={styles.eventCards}>
                 {EVENT_DEFS.map(({ key, label, desc }) => (
@@ -450,7 +455,7 @@ export default function WebhookModal({
               </div>
             </div>
 
-            <label className={styles.activeToggleBox}>
+            <label className={styles.toggleBox}>
               <input type="hidden" name="is_active" value={active ? 'true' : 'false'} />
               <input type="checkbox" role="switch" checked={active} onChange={() => setActive(v => !v)} className={styles.toggleInput} />
               <span className={`${styles.toggleSwitch} ${active ? styles.toggleSwitchOn : ''}`}></span>
@@ -464,38 +469,36 @@ export default function WebhookModal({
 
             {mode === 'create' ? (
               <>
-                <div className={styles.fieldGroup}>
-                  <div className={styles.fieldLabelRow}>
-                    <label htmlFor="webhook-secret">Webhook secret</label>
-                  </div>
+                <div className={styles.item}>
+                  <label htmlFor="webhook-secret">Webhook secret</label>
 
-                  <div className={styles.secretInputWrapper}>
-                    <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                  <div className={styles.inputWithActions}>
+                    <ion-icon name="key-outline" className={styles.leadingIcon}></ion-icon>
                     <input
                       type="text"
                       id="webhook-secret"
                       name="webhook_secret"
                       value={secret ?? ''}
                       readOnly
-                      className={`${styles.secretInput} ${styles.padded}`}
+                      className={styles.inputWithIcon}
                       required
                     />
-                    <div className={styles.secretActions}>
-                      <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
+                    <div className={styles.inputActions}>
+                      <button type="button" className={styles.iconActionBtn} aria-label={copied ? 'Copied webhook secret' : 'Copy webhook secret'} onClick={handleCopyRevealed}>
                         <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                       </button>
                     </div>
                   </div>
                   <p className={styles.fieldHint}>
                     <ion-icon name="information-circle-outline"></ion-icon>
-                    Used for HMAC-SHA256 signature validation. Copy this now — it won&apos;t be shown again.
+                    Verifies deliveries from GitHub. Copy this now, it won&apos;t be shown again.
                   </p>
                 </div>
               </>
 
             ) : (
               
-              <div className={styles.fieldGroup}>
+              <div className={styles.item}>
                 <label>Webhook secret</label>
                 <p className={styles.fieldHint}>
                   <ion-icon name="information-circle-outline"></ion-icon>
@@ -508,21 +511,22 @@ export default function WebhookModal({
 
                 {secret && (
                   <div className={styles.revealedSecretBanner}>
-                    <div className={styles.secretInputWrapper}>
-                      <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+                    <div className={styles.inputWithActions}>
+                      <ion-icon name="key-outline" className={styles.leadingIcon}></ion-icon>
                       <input
                         type="text"
                         value={secret}
+                        aria-label="Regenerated webhook secret"
                         readOnly
-                        className={`${styles.secretInput} ${styles.padded}`}
+                        className={styles.inputWithIcon}
                       />
-                      <div className={styles.secretActions}>
-                        <button type="button" className={styles.iconActionBtn} onClick={handleCopyRevealed}>
+                      <div className={styles.inputActions}>
+                        <button type="button" className={styles.iconActionBtn} aria-label={copied ? 'Copied webhook secret' : 'Copy webhook secret'} onClick={handleCopyRevealed}>
                           <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                         </button>
                       </div>
                     </div>
-                    <span className={styles.revealedSecretHint}>Copy this now — it won&apos;t be shown again.</span>
+                    <span className={styles.revealedSecretHint}>Copy this now, it won&apos;t be shown again.</span>
                   </div>
                 )}
               </div>

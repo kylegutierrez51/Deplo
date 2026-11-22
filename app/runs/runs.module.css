@@ -1,151 +1,20 @@
-/*
-=====================================================================================
-Filters
-=====================================================================================
-*/
+/* Run History: column widths and responsive layout. Shared chrome lives in resource-list. */
+.run-table th:first-child { width: auto; }
+.run-table th:nth-child(2) { width: 250px; }
+.run-table th:nth-child(3) { width: 120px; }
+.run-table th:nth-child(4) { width: 130px; }
+.run-table th:last-child { width: 190px; }
 
-.filters {
-  margin-bottom: var(--space-2xl);
+@container (max-width: 1050px) {
+  .run-table, .run-table tbody { display: block; }
+  .run-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 }
+/* RunLabel is also used in run dialogs and approval details. */
+.pipeline-detail { display: flex; align-items: center; gap: var(--space-sm); width: max-content; max-width: 100%; }
+.pipeline-detail .status-name { gap: var(--space-xs); flex: none; display: flex; }
 
-.filters-bar {
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.input-group {
-  position: relative;
-  width: 25%;
-}
-
-.input-group ion-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--icon-clr);
-  pointer-events: none; /* clicks go through the search icon */
-  font-size: 16px;
-}
-
-/* offset text so it doesn't overlap the search icon */
-.input-group input {
-  padding-left: 34px;
-}
-
-.select-group {
-  position: relative;
-}
-
-/* custom chevron arrow */
-.select-group::after {
-  content: '';
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--icon-clr);
-  pointer-events: none;
-}
-
-/*
-=====================================================================================
-Table
-=====================================================================================
-*/
-
-/* below 3 are needed to center the .filter class to the center of its row */
-table tbody td.filter {
-  /* these 2 styles (display, vertical-align) handle vertical centering (the cell stretches to match the tallest sibling cell in the row) */
-  display: table-cell;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-table tbody td.filter > div {
-  display: inline;
-}
-
-table tbody td.filter ion-icon {
-  /* The margin: 0 4px on ion-icon creates horizontal spacing on both sides of text and ion-icon. For plain HTML and CSS, it's not needed. */
-  vertical-align: middle;
-  margin: 0 4px;
-}
-
-.pipeline-detail {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  width: max-content; /* prevents lines from newlining */
-  max-width: 100%;
-}
-
-.pipeline-detail .status-name {
-  gap: var(--space-xs);
-  flex: none;
-  display: flex;
-}
-/*
-=====================================================================================
-Run History Media Queries
-=====================================================================================
-*/
-
-/*
-  Breakpoints:
-    1195px — reduce heavy horizontal padding
-    1017px — stack pagination vertically; enable table scroll
-     514px — phone optimizations
-*/
-
-
-/* 
-============================================================
-1195px — Small laptops
-  Halve the heavy horizontal page padding so the content area
-  has more room without leaving the sidebar empty.
-============================================================ 
-*/
-@media (max-width: 1195px) {
-
-  :global(.page-content) {
-    padding: 50px 60px 0;
-  }
-
-
-  /* When "Environment Type" wraps to two lines the row grows taller, but the flex
-     container on th.filter doesn't fill that height — so align-items: center has
-     nothing to center against and the content drifts to the top.
-     height: 1px on the tr is a CSS table trick that enables height: 100% on cells;
-     without it, percentage heights on table cells are treated as auto. */
-  :global(table thead tr) {
-    height: 1px;
-  }
-
-  table thead th.filter {
-    height: 100%;
-  }
-}
-
-/* 
-============================================================
-514px — Small phones
-============================================================ 
-*/
-@media (max-width: 514px) {
-
-  /* --- Page content --- */
-
-  /* Tighter horizontal padding on very narrow screens; preserve top clearance
-     for the hamburger toggle button (set at 874px) */
-  :global(.page-content) {
-    padding: 60px var(--space-md) 0;
-  }
+@container (max-width: 1050px) {
+  .run-filters > div > div:first-child { width: 100%; }
+  .run-pagination > div:first-child { flex-direction: column; align-items: stretch; }
+  .run-pagination nav > div { justify-content: center; flex-wrap: wrap; }
 }

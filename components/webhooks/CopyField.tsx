@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from 'react';
-import styles from './webhook-modal.module.css';
+import styles from '@/components/ui/modals/resource-modal.module.css';
 
 export default function CopyField({ label, value }: { label: string, value: string }) {
   const id = useId();
@@ -14,17 +14,17 @@ export default function CopyField({ label, value }: { label: string, value: stri
   };
 
   return (
-    <div className={`${styles.fieldGroup} ${styles.copyField}`}>
+    <div className={styles.item}>
       <label htmlFor={id}>{label}</label>
-      <div className={styles.secretInputWrapper}>
+      <div className={styles.inputWithActions}>
         <input
           id={id}
           type="text"
           value={value}
           readOnly
-          className={`${styles.secretInput} ${styles.padded} ${styles.copyFieldInput}`}
+          className={styles.copyInput}
         />
-        <div className={styles.secretActions}>
+        <div className={styles.inputActions}>
           <button type="button" className={styles.iconActionBtn} aria-label={`Copy ${label}`} onClick={handleCopy}>
             <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
           </button>

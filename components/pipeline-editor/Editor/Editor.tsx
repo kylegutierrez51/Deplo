@@ -10,7 +10,7 @@ import CustomEdge from '@/components/flow/CustomEdge';
 import CustomMarker from '@/components/flow/CustomMarker';
 import editorStyles from './editor.module.css';
 import headerButtonStyles from '@/components/pipeline-editor/header-buttons.module.css';
-import stageStyles from "@/components/pipeline-editor/StageSidebar/stage-sidebar.module.css";
+import stageStyles from "@/components/ui/stage-panel.module.css";
 import '@xyflow/react/dist/style.css';
 
 const styles = { ...editorStyles, ...headerButtonStyles, ...stageStyles };

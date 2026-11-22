@@ -1,0 +1,5 @@
+/* Uses shared styles in @components/ui/resource-list.module.css */
+.environments-table th:first-child { width: auto; }
+.environments-table th:nth-child(2) { width: 190px; }
+.environments-table th:nth-child(3) { width: 140px; }
+.environments-table th:last-child { width: 210px; }

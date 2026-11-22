@@ -41,7 +41,7 @@ export default function ApprovalActions({ id, runId, stageId, env }: ApprovalAct
       <div className={styles['btn-group']}>
         <Link href={`/runs/${runId}`} target="_blank" className={styles['view-run-btn']}>
           <ion-icon name="open-outline"></ion-icon>
-          View Run
+          View run
         </Link>
         <button className={styles['reject-btn']} onClick={() => setRejectModal(true)} disabled={isBusy} type="button">
           <ion-icon name="close-circle-outline"></ion-icon>
