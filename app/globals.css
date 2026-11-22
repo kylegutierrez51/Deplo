@@ -105,6 +105,7 @@ Page Content (layout when sidebar present -- excluding pipeline editor)
 
 
   /* Warning — a notice about the system rather than about the record on screen */
+  --warning-accent: #fbbf24;
   --warning-text: #fb923c;
   --warning-bg: #fb923c14;
   --warning-border: #fb923c4d;
