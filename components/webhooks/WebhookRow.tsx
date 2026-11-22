@@ -32,10 +32,10 @@ export default function WebhookRow({ webhook }: { webhook: Webhook }) {
             {webhook.pipelineName || 'Pipeline Not Found'}
           </button>
         </td>
-        <td data-label="Status">
+        <td className={styles.status} data-label="Status">
           <Pill variant={webhook.isActive ? 'processed' : 'ignored'} label={webhook.isActive ? 'Active' : 'Inactive'} />
         </td>
-        <td data-label="Events"><div className={styles.pills}>
+        <td className={styles.events} data-label="Events"><div className={styles.pills}>
           {webhook.events.length ? webhook.events.map(event => <Pill key={event} variant={event} label={EVENT_TYPE_LABELS[event]} />) : <span className={styles.muted}>None</span>}
         </div></td>
         <td className={styles.environment} data-label="Environment">
