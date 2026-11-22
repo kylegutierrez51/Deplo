@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import styles from "./webhook-events.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "./webhook-events.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import StatCards from "@/components/ui/StatCards";
+import OverviewStats from "@/components/ui/OverviewStats";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import WebhookEventRow from "@/components/webhook-events/WebhookEventRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -44,7 +44,7 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
     <>
       <Sidebar activeItem="webhook-events" />
 
-      <main className={`page-content ${styles['webhook-main']}`}>
+      <main className={`page-content ${styles.page} ${layoutStyles['webhook-main']}`}>
 
         <Subheader
           title="Webhook Events"
@@ -56,37 +56,48 @@ export default async function WebhookEvents({ searchParams }: { searchParams: Se
 
         {webhookEvents.total > 0 || filtered ? (
           <>
-            <StatCards
-              cards={
-                [
-                  { icon: "time-outline", total: counts.pending, label: "PENDING", valueClassName: 'pending' },
-                  { icon: "checkmark-circle-outline", total: counts.processed, label: "PROCESSED", valueClassName: 'processed' },
-                  { icon: "remove-circle-outline", total: counts.ignored, label: "IGNORED", valueClassName: 'ignored' },
-                  { icon: "close-circle-outline", total: counts.failed, label: "FAILED", valueClassName: 'failed' },
-                ]
-              } />
+            <OverviewStats
+              ariaLabel="Delivery overview"
+              cards={[
+                { icon: "time-outline", total: counts.pending, label: "Pending", scope: "All deliveries", tone: "pending" },
+                { icon: "checkmark-circle-outline", total: counts.processed, label: "Processed", scope: "All deliveries", tone: "processed" },
+                { icon: "remove-circle-outline", total: counts.ignored, label: "Ignored", scope: "All deliveries", tone: "ignored" },
+                { icon: "close-circle-outline", total: counts.failed, label: "Failed", scope: "All deliveries", tone: "failed" },
+              ]} />
 
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput
                   placeholder={"Search repo, branch, commit, pipeline, delivery ID..."}
                   styles={styles} />
-                <QueryFilterListbox id={"status"} name={"status"} styles={styles} options={WEBHOOK_EVENT_FILTERS.status} value={filters.status} />
-                <QueryFilterListbox id={"event-type"} name={"event-type"} styles={styles} options={WEBHOOK_EVENT_FILTERS['event-type']} value={filters['event-type']} />
-                <QueryFilterListbox id={"received"} name={"received"} styles={styles} options={WEBHOOK_EVENT_FILTERS.received} value={filters.received} />
+                <QueryFilterListbox id={"status"} name={"status"} options={WEBHOOK_EVENT_FILTERS.status} value={filters.status} />
+                <QueryFilterListbox id={"event-type"} name={"event-type"} options={WEBHOOK_EVENT_FILTERS['event-type']} value={filters['event-type']} />
+                <QueryFilterListbox id={"received"} name={"received"} options={WEBHOOK_EVENT_FILTERS.received} value={filters.received} />
               </div>
             </div>
 
             {webhookEvents.total > 0 ? (
               <>
-                <DataTable
-                  columns={["Status", "Event", "Repository", "Branch", "Commit", "Pipeline", "Received"]}>
-                  {webhookEvents.rows.map((event) => (
-                    <WebhookEventRow key={event.id} event={event} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['event-table']}`} aria-label="Webhook events">
+                    <thead>
+                      <tr>
+                        {["Status","Event","Repository","Branch","Commit","Pipeline","Received"].map(column => (
+                          <th key={column} scope="col">{column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {webhookEvents.rows.map((event) => (
+                        <WebhookEventRow key={event.id} event={event} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={webhookEvents.page} pageCount={webhookEvents.pageCount} total={webhookEvents.total} pageSize={webhookEvents.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={webhookEvents.page} pageCount={webhookEvents.pageCount} total={webhookEvents.total} pageSize={webhookEvents.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState

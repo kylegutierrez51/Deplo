@@ -331,54 +331,6 @@ Pipelines — status dot + name + status/last-run meta
   letter-spacing: -1px;
 }
 
-.cards-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: var(--space-xl);
-  border-block: 1px solid var(--light-gray-clr);
-}
-
-.stat {
-  padding: var(--space-lg) var(--space-xl);
-  border-right: 1px solid var(--color-border-dark);
-}
-
-.stat:first-child { padding-left: 0; }
-.stat:last-child { border-right: 0; }
-
-.stat dt {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  font-size: var(--font-size-body);
-  font-weight: 500;
-  color: var(--subtitle-clr);
-}
-
-.stat dt ion-icon { color: var(--table-span-clr); }
-
-.stat dd {
-  margin-block: var(--space-xs);
-  font-size: 32px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -1px;
-}
-
-.running { color: var(--blue-clr); }
-.queued { color: var(--pill-queued-text); }
-.approval { color: var(--pill-awaiting-approval-text); }
-.failed { color: var(--pill-failed-text); }
-
-.stat-scope {
-  display: block;
-  margin-top: var(--space-xs);
-  font-weight: 300;
-  letter-spacing: normal;
-  font-size: 12px;
-  color: var(--table-span-clr);
-}
-
 .run-info { gap: 4px; }
 .run-status, .run-environment { min-width: 0; }
 .run-timing { font-variant-numeric: tabular-nums; }
@@ -402,11 +354,6 @@ Pipelines — status dot + name + status/last-run meta
 }
 
 @container (max-width: 700px) {
-  .cards-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stat { padding: var(--space-md); }
-  .stat:nth-child(2) { border-right: 0; }
-  .stat:nth-child(n + 3) { border-top: 1px solid var(--color-border-dark); }
-  .stat:nth-child(3) { padding-left: 0; }
   .side-column { display: flex; }
   .run-row { grid-template-columns: 112px minmax(0, 1fr); gap: var(--space-gap-md); }
   .run-status { grid-column: 1; grid-row: 1; }

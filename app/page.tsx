@@ -10,6 +10,7 @@ import { formatDate, getDuration } from "@/lib/utils/date";
 import loginStyles from "./page.module.css";
 import styles from "./dashboard.module.css";
 import AutoRefresh from "@/components/ui/AutoRefresh";
+import OverviewStats from "@/components/ui/OverviewStats";
 
 const REFRESH_INTERVAL_MS = 20_000;
 
@@ -44,19 +45,14 @@ export default async function Home() {
           badge={data.counts.running > 0 ? { count: data.counts.running, label: 'Running' } : undefined}>
         </Subheader>
 
-        <dl className={styles['cards-row']} aria-label="Run overview">
-          {[
+        <OverviewStats
+          ariaLabel="Run overview"
+          cards={[
             { icon: "sync-outline", total: data.counts.running, label: "Running", scope: "Right now", tone: "running" },
             { icon: "hourglass-outline", total: data.counts.queued, label: "Queued", scope: "Waiting to start", tone: "queued" },
             { icon: "shield-outline", total: data.counts.awaitingApproval, label: "Needs approval", scope: "Waiting for a decision", tone: "approval" },
             { icon: "close-circle-outline", total: data.counts.failed7d, label: "Failed", scope: "Last 7 days", tone: "failed" },
-          ].map((stat) => (
-            <div className={styles.stat} key={stat.label}>
-              <dt><ion-icon name={stat.icon} aria-hidden="true"></ion-icon>{stat.label}</dt>
-              <dd className={styles[stat.tone]}>{stat.total}<span className={styles['stat-scope']}>{stat.scope}</span></dd>
-            </div>
-          ))}
-        </dl>
+          ]} />
 
         <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
