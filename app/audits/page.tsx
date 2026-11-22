@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import styles from "./audit.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "./audit.module.css";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import Subheader from "@/components/layout/subheader/Subheader";
 import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import AuditRow from "@/components/audits/AuditRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -43,7 +43,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
     <>
       <Sidebar activeItem="audit" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.page}`}>
 
         <Subheader
           title="Audit Log"
@@ -58,7 +58,7 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput
-                  placeholder={"Search events, users, resources..."} />
+                  placeholder={"Search events, users, resources..."} styles={styles} />
                 <QueryFilterListbox id={"resource"} name={"resource"} options={AUDIT_FILTERS.resource} value={filters.resource} />
                 <QueryFilterListbox id={"range"} name={"range"} options={AUDIT_FILTERS.range} value={filters.range} />
                 <QueryFilterListbox id={"recency"} name={"recency"} options={AUDIT_FILTERS.recency} value={filters.recency} />
@@ -67,14 +67,26 @@ export default async function AuditLog({ searchParams }: { searchParams: SearchP
 
             {audits.total > 0 ? (
               <>
-                <DataTable
-                  columns={["Action", "Resource", "Actor", "Time", ""]}>
-                  {audits.rows.map((audit) => (
-                    <AuditRow key={audit.id} audit={audit} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['audit-table']}`} aria-label="Audit log">
+                    <thead>
+                      <tr>
+                        {["Action","Resource","Actor","Time","Open resource"].map(column => (
+                          <th key={column} scope="col">{column === 'Open resource' ? <span className={styles['sr-only']}>{column}</span> : column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {audits.rows.map((audit) => (
+                        <AuditRow key={audit.id} audit={audit} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={audits.page} pageCount={audits.pageCount} total={audits.total} pageSize={audits.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={audits.page} pageCount={audits.pageCount} total={audits.total} pageSize={audits.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState

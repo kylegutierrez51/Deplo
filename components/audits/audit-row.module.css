@@ -1,0 +1,26 @@
+.row { cursor: pointer; }
+.row td { padding: 16px 20px; vertical-align: middle; font-size: var(--font-size-body); }
+.row:hover, .row:focus-within { background: var(--gray-clr); }
+.name { font: inherit; font-size: var(--font-size-lg); font-weight: 600; color: var(--white-clr); background: transparent; border: 0; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.name:hover { color: var(--blue-clr); }
+.resource-type { margin-top: 7px; }
+.resource, .actor { overflow-wrap: anywhere; }
+.resource { line-height: 1.8; }
+.resource > div { width: auto; max-width: 100%; flex-wrap: wrap; }
+.resource > div > div { min-width: 0; flex-wrap: wrap; }
+.time time { font-size: var(--font-size-sm); color: var(--subtitle-clr); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row-action { text-align: right; }
+.resource-link { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--light-gray-clr); border-radius: var(--radius-md); font-size: var(--font-size-sm); color: var(--subtitle-clr); white-space: nowrap; }
+.resource-link ion-icon { font-size: 14px; color: var(--subtitle-clr); }
+.resource-link:hover { background: var(--gray-clr); color: var(--white-clr); }
+.row a:focus-visible, .name:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 3px; border-radius: var(--radius-xs); }
+.field-label { display: none; }
+
+@container (max-width: 1000px) {
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-lg); padding: var(--space-lg); }
+  .row td { padding: 0; min-width: 0; }
+  .action, .resource { grid-column: 1 / -1; }
+  .row-action { grid-column: 1 / -1; text-align: left; }
+  .field-label { display: block; color: var(--table-span-clr); font-size: 12px; margin-bottom: 7px; }
+  .time time { white-space: normal; }
+}
