@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import styles from "./pipeline-editor.module.css";
 import PipelineEditorHeader from "@/components/pipeline-editor/PipelineEditorHeader";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
@@ -9,6 +10,8 @@ import { getSecrets } from "@/lib/data/secrets";
 import { getPipelineById, getPipelineDefinition } from "@/lib/data/pipelines";
 import { notFound } from "next/navigation";
 import { resolveInitialEnvironment } from "@/lib/pipeline/environment-param";
+
+export const metadata: Metadata = { title: "Editor" };
 
 interface EditorProps {
   params: Promise<{ id: string }>;
