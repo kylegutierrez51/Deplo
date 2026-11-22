@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import styles from "./webhooks.module.css";
+import styles from "@/components/ui/resource-list.module.css";
+import layoutStyles from "./webhooks.module.css";
 import Subheader from "@/components/layout/subheader/Subheader";
 import AddButton from '@/components/layout/subheader/AddButton';
 import SubheaderLink from '@/components/layout/subheader/SubheaderLink';
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import WebhookCardShell from "@/components/webhooks/WebhookCardShell";
-import WebhookCard from "@/components/webhooks/WebhookCard";
+import WebhookRow from "@/components/webhooks/WebhookRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import WebhookModalController from '@/components/webhooks/WebhookModalController';
@@ -22,7 +22,6 @@ import { parsePage } from '@/lib/utils/pagination';
 import { readPublicUrl } from '@/lib/webhooks/endpoint';
 
 const REFRESH_INTERVAL_MS = 15_000;
-const PAGE_SIZE = 4;
 
 let warnedPublicUrl = false;
 
@@ -47,7 +46,7 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
   const filters = parseFilters(params, WEBHOOK_FILTERS);
   const filtered = hasActiveFilters(filters, WEBHOOK_FILTERS);
 
-  const webhooks = await getWebhooksPage(filters, parsePage(params.page), PAGE_SIZE);
+  const webhooks = await getWebhooksPage(filters, parsePage(params.page));
   const pipelines = await getPipelines();
   const environments = await getEnvironments();
 
@@ -66,59 +65,67 @@ export default async function Webhooks({ searchParams }: { searchParams: SearchP
     <>
       <Sidebar activeItem="webhooks" />
 
-      <main className="page-content">
-        <div className="page-layout">
+      <main className={`page-content ${styles.page}`}>
 
+        <div className={layoutStyles.header}>
           <Subheader
             title="GitHub Webhooks"
             subtitle="Register webhooks to automatically trigger pipelines on push or pull request events.">
             <SubheaderLink href="/webhooks/events" icon="pulse-outline" text="View Events" />
             <AddButton text={"Add Webhook"} url={"webhooks"} />
           </Subheader>
-
-          <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
-
-          {webhooks.total > 0 || filtered ? (
-            <>
-              <div className={styles.filters}>
-                <div className={styles['filters-bar']}>
-                  <SearchInput placeholder={"Search webhooks..."} />
-                  <QueryFilterListbox id={"active"} name={"active"} options={WEBHOOK_FILTERS.active} value={filters.active} />
-                  <QueryFilterListbox id={"recency"} name={"recency"} options={WEBHOOK_FILTERS.recency} value={filters.recency} />
-                </div>
-              </div>
-
-              {webhooks.total > 0 ? (
-                <>
-                  <div className={styles['webhook-layout']}>
-                    {webhooks.rows.map((webhook) => (
-                      <WebhookCardShell key={webhook.id} id={webhook.id}>
-                        <WebhookCard
-                          webhook={webhook} />
-                      </WebhookCardShell>
-                    ))}
-                  </div>
-
-                  <Pagination page={webhooks.page} pageCount={webhooks.pageCount} total={webhooks.total} pageSize={webhooks.pageSize} />
-                </>
-              ) : (
-                <EmptyState
-                  icon="funnel-outline"
-                  heading="No matching webhooks"
-                  description="No webhooks match these filters."
-                  action={{ label: "Clear filters", href: "/webhooks" }}
-                />
-              )}
-            </>
-          ) : (
-            <EmptyState
-              icon="flash-outline"
-              heading="No webhooks yet"
-              description="Register a webhook to trigger a pipeline on every push or pull request."
-              action={{ label: "Add Webhook", href: "/webhooks?mode=create", icon: "add-outline" }}
-            />
-          )}
         </div>
+
+        <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
+
+        {webhooks.total > 0 || filtered ? (
+          <>
+            <div className={styles.filters}>
+              <div className={styles['filters-bar']}>
+                <SearchInput placeholder={"Search webhooks..."} styles={styles} />
+                <QueryFilterListbox id={"active"} name={"active"} options={WEBHOOK_FILTERS.active} value={filters.active} />
+                <QueryFilterListbox id={"recency"} name={"recency"} options={WEBHOOK_FILTERS.recency} value={filters.recency} />
+              </div>
+            </div>
+
+            {webhooks.total > 0 ? (
+              <>
+                <div className={styles['list-panel']}>
+                  <table className={`${styles.table} ${layoutStyles['webhook-table']}`} aria-label="Webhooks">
+                    <thead>
+                      <tr>
+                        {['Pipeline', 'Status', 'Events', 'Environment', 'Last delivery'].map(column => (
+                          <th key={column} scope="col">{column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {webhooks.rows.map(webhook => <WebhookRow key={webhook.id} webhook={webhook} />)}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={styles.pagination}>
+                  <Pagination page={webhooks.page} pageCount={webhooks.pageCount} total={webhooks.total} pageSize={webhooks.pageSize} />
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon="funnel-outline"
+                heading="No matching webhooks"
+                description="No webhooks match these filters."
+                action={{ label: "Clear filters", href: "/webhooks" }}
+              />
+            )}
+          </>
+        ) : (
+          <EmptyState
+            icon="flash-outline"
+            heading="No webhooks yet"
+            description="Register a webhook to trigger a pipeline on every push or pull request."
+            action={{ label: "Add Webhook", href: "/webhooks?mode=create", icon: "add-outline" }}
+          />
+        )}
       </main>
 
       {modal && (
