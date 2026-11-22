@@ -161,20 +161,20 @@ export default function SecretModal({
 
             <div className={styles.item}>
               <label htmlFor="secret-value">Value</label>
-              <div className={styles.secretInputWrapper}>
-                <ion-icon name="key-outline" className={styles.inputIconLeft}></ion-icon>
+              <div className={styles.inputWithActions}>
+                <ion-icon name="key-outline" className={styles.leadingIcon}></ion-icon>
                 <input
                   id="secret-value"
                   type={secretVisible ? 'text' : 'password'}
                   value={value}
                   readOnly
-                  className={styles.secretInput}
+                  className={`${styles.inputWithIcon} ${styles.inputTwoActions}`}
                 />
-                <div className={styles.secretActions}>
+                <div className={styles.inputActions}>
                   <button type="button" className={styles.iconActionBtn} aria-label={secretVisible ? 'Hide secret value' : 'Show secret value'} onClick={() => setSecretVisible(v => !v)}>
                     <ion-icon name={secretVisible ? 'eye-off-outline' : 'eye-outline'}></ion-icon>
                   </button>
-                  <span className={styles.secretDivider}></span>
+                  <span className={styles.actionDivider}></span>
                   <button type="button" className={styles.iconActionBtn} aria-label={copied ? 'Copied secret value' : 'Copy secret value'} onClick={handleCopy}>
                     <ion-icon name={copied ? 'checkmark-outline' : 'copy-outline'}></ion-icon>
                   </button>

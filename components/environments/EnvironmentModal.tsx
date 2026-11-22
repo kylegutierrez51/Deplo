@@ -206,7 +206,7 @@ export default function EnvironmentModal({
             </div>
 
             <div
-              className={styles.approvalToggleBox}
+              className={styles.toggleBox}
               role="switch"
               tabIndex={0}
               aria-checked={approvalEnabled}
