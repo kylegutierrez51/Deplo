@@ -25,18 +25,18 @@ interface ApprovalCardProps {
 export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumber, stageName, environment, commitSha, commitMessage, createdBy, branch, waitingTime, stagesComplete }: ApprovalCardProps) {
 
   return (
-    <div className={styles['approval-card']} data-approval-card>
+    <article className={styles['approval-card']} data-approval-card aria-label={`${pipelineName}${runNumber ? ` run #${runNumber}` : ''}: ${stageName}`}>
 
       <div className={styles['approval-card-row']}>
         <div className={styles['approvals-detail']}>
           <div className={styles['top-row']}>
-            <span>{pipelineName}</span>
+            <h2 className={styles['pipeline-name']}>{pipelineName}</h2>
             {runNumber && <span className={styles['run-num']}>#{runNumber}</span>}
             {environment ? (
               <>
                 <span className={styles.divider} aria-hidden="true" />
                 <div className={styles['environment']}>
-                  <span className={styles['env-name']}>{truncateText(environment.name)}</span>
+                  <span className={styles['env-name']} title={environment.name}>{truncateText(environment.name)}</span>
                   <Pill variant={environment.type} label={capitalize(environment.type)} />
                 </div>
               </>
@@ -46,7 +46,7 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumb
           </div>
 
           <div className={styles['feature-info']}>
-            <p className={styles['stage-name']}>{stageName}</p>
+            <p className={styles['stage-name']}><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>{stageName}</p>
             {commitSha &&
               <div className={styles['feature-id']}>
                 <ion-icon name="git-commit-outline"></ion-icon>
@@ -65,6 +65,6 @@ export default function ApprovalCard({ id, stageId, runId, pipelineName, runNumb
 
         <ApprovalActions id={id} runId={runId} stageId={stageId} env={environment} />
       </div>
-    </div>
+    </article>
   )
 }

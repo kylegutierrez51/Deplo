@@ -1,4 +1,4 @@
-/* Shared page layout: Pipelines, Runs, Audits, Webhooks, Webhook Events, Secrets and Environments. */
+/* Shared page layout: Pipelines, Runs, Audits, Webhooks, Webhook Events, Secrets, Environments and Approvals. */
 .page:global(.page-content) {
   container-type: inline-size;
   padding-inline: clamp(24px, 4vw, 80px);
