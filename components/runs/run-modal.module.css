@@ -1,59 +1,6 @@
-.item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+.pipeline-detail { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pipeline { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.3; overflow-wrap: anywhere; }
+.run-number { color: var(--subtitle-clr); font-family: var(--font-jetbrains-mono), monospace; font-size: 16px; white-space: nowrap; }
+.repo { color: var(--subtitle-clr); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
 
-.item label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: rgb(160, 160, 160);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.item-flex {
-  display: flex;
-  align-items: center;
-  gap: 50px;
-}
-
-/*
-==========================
-Pipeline Detail
-==========================
-*/
-
-.pipeline-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pipeline-detail .run-number {
-  color: var(--subtitle-clr);
-}
-
-.repo {
-  color: var(--subtitle-clr);
-  font-size: var(--font-size-sm);
-}
-
-/*
-==========================
-Duration
-==========================
-*/
-
-.duration {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.duration ion-icon {
-  font-size: var(--font-size-lg);
-  color: var(--icon-clr);
-}
+.environmentValue > span { flex-wrap: wrap; white-space: normal; max-width: 100%; }

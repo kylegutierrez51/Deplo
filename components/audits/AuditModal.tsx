@@ -4,13 +4,10 @@ import { formatDate } from '@/lib/utils/date';
 import type { AuditAction, AuditMeta, ResourceType } from '@/lib/types';
 import Link from 'next/link';
 import Modal from '@/components/ui/modals/Modal';
-import modalStyles from '@/components/ui/modals/modal.module.css';
-import auditStyles from './audit-modal.module.css';
+import styles from '@/components/ui/modals/resource-modal.module.css';
 import ResourceTypePill from './ResourceTypePill';
 import AuditResourceLabel from './AuditResourceLabel';
 import { resourceHref } from './resourcePath';
-
-const styles = { ...modalStyles, ...auditStyles };
 
 interface AuditModalProps {
   mode?: 'view' | 'edit' | 'create';
@@ -45,10 +42,10 @@ export default function AuditModal({
     </>
 
   return (
-    <Modal title={"Log"} onClose={onClose} footer={footer} mode={mode}>
+    <Modal title="Audit log entry" subtitle="Action, resource, and actor details." classNames={styles} onClose={onClose} footer={footer} mode={mode}>
       <>
-        <div className={styles['item-flex']}>
-          <div className={styles.item}>
+        <div className={styles.detailsGrid}>
+          <div className={`${styles.item} ${styles.identity}`}>
             <label>Action</label>
             <span>{action}</span>
           </div>
@@ -61,21 +58,16 @@ export default function AuditModal({
 
         <div className={styles.item}>
           <label>Resource</label>
-          <span><AuditResourceLabel resourceLabel={resourceLabel} resourceMeta={resourceMeta} /></span>
+          <div className={styles.detailValue}><AuditResourceLabel resourceLabel={resourceLabel} resourceMeta={resourceMeta} /></div>
+          {resourceId && (
+            <Link href={resourceHref(resourceType, resourceId)} className={styles.detailLink} target="_blank">
+              View resource
+              <ion-icon name="open-outline"></ion-icon>
+            </Link>
+          )}
         </div>
 
-        {resourceId &&
-          <div className={styles.item}>
-            <label>View Resource</label>
-            <span>
-              <Link href={resourceHref(resourceType, resourceId)} className={styles['resource-link']} target="_blank">
-                <ion-icon name="open-outline"></ion-icon>
-              </Link>
-            </span>
-          </div>
-        }
-
-        <div className={styles['footer-flex']}>
+        <div className={styles.metadataGrid}>
           <div className={styles.item}>
             <label>Actor</label>
             <span>{user ?? actor ?? 'Unknown User'}</span>
