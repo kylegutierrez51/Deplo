@@ -1,4 +1,4 @@
-import styles from './stage-sidebar.module.css';
+import styles from '@/components/ui/stage-panel.module.css';
 import StageConfigForm from './StageConfigForm';
 import type { CustomNode } from '@/lib/types';
 

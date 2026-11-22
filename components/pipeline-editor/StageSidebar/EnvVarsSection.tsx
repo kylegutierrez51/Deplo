@@ -1,6 +1,6 @@
 "use client"
 
-import styles from './stage-sidebar.module.css'
+import styles from '@/components/ui/stage-panel.module.css'
 import EnvVarRow from './EnvVarRow'
 
 interface EnvVarsSectionProps {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import styles from "./stage-sidebar.module.css";
+import styles from "@/components/ui/stage-panel.module.css";
 import StageTypeGrid from "./StageTypeGrid";
 import EnvVarsSection from "./EnvVarsSection";
 import SecretsSection from "./SecretsSection";
