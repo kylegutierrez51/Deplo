@@ -1,6 +1,10 @@
-import styles from './stage-detail-sidebar.module.css';
+import detailStyles from './stage-detail-sidebar.module.css';
+import panelStyles from '@/components/ui/stage-panel.module.css';
 import StageDetailView from './StageDetailView';
 import type { StageResultNode } from '@/lib/data/run-detail';
+
+
+const styles = { ...panelStyles, ...detailStyles };
 
 interface StageDetailSidebarProps {
   node: StageResultNode | undefined;
@@ -15,7 +19,11 @@ export default function StageDetailSidebar({ node, envPresent, onClose }: StageD
     <>
       <div className={styles['stage-sidebar-header']}>
         <div className={styles['stage-title']}>
-          <div className={styles.title}>Stage Details</div>
+          <span className={styles['icon-border']}><ion-icon name="options-outline"></ion-icon></span>
+          <div>
+            <h2 className={styles.title}>Stage details</h2>
+            <p className={styles['stage-caption']}>{node.data.name || 'New stage'}</p>
+          </div>
         </div>
         <button type="button" className={styles['exit-btn']} onClick={onClose} aria-label="Close">
           <ion-icon name="close-outline"></ion-icon>

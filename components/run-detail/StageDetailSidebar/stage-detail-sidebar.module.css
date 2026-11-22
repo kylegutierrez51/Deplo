@@ -1,7 +1,7 @@
 /* Read-only values share the editor panel's layout and tokens. */
-.detail-sidebar:global(aside) { top: 0; }
+aside.detail-sidebar { top: 0; }
 .value { min-height: var(--size-control-height); padding: var(--space-sm); border: 1px solid var(--color-border-mid); border-radius: var(--radius-md); background: var(--dark-clr-2); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
-.command-value { min-height: 100px; font-family: var(--font-jetbrains-mono), monospace; line-height: 1.6; white-space: pre-wrap; }
+.command-value { min-height: 50px; font-family: var(--font-jetbrains-mono), monospace; line-height: 1.6; white-space: pre-wrap; }
 .directory-value { font-family: var(--font-jetbrains-mono), monospace; }
 .readonly-type { cursor: default; }
 .readonly-type:hover { background: var(--dark-clr-2); }
@@ -15,7 +15,10 @@
 .selected-secret { border-color: var(--pill-running-border); background: var(--blue-btn-clr); cursor: default; }
 .selected-secret:hover { background: var(--blue-btn-clr); }
 .empty { color: var(--table-span-clr); font-size: var(--font-size-sm); line-height: 1.6; }
-.approval-link { display: inline-flex; align-items: center; gap: 6px; padding: var(--space-sm); border: 1px solid var(--pill-awaiting-approval-border); border-radius: var(--radius-md); color: var(--pill-awaiting-approval-text); background: var(--pill-awaiting-approval-bg); font-size: var(--font-size-sm); }
+.approval-link-container { margin-top: var(--space-xl); flex: 1; display: flex; justify-content: center; align-items: center; }
+.approval-link { padding: 20px 0; flex: 1; text-align: center; background: var(--dark-clr-2); color: var(--pill-awaiting-approval-text); border-radius: 10px; font-weight: bold; }
 .approval-link:focus-visible { outline: 2px solid var(--blue-clr); outline-offset: 2px; }
+
+
 
 .graph-viewport { width: 100%; height: 100%; min-height: 0; }
