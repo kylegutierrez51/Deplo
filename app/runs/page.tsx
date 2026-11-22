@@ -5,7 +5,6 @@ import RefreshButton from "@/components/layout/subheader/RefreshButton";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import QueryFilterListbox from "@/components/ui/filters/QueryFilterListbox";
 import SearchInput from "@/components/ui/filters/SearchInput";
-import DataTable from "@/components/ui/DataTable";
 import RunRow from "@/components/runs/RunRow";
 import Pagination from "@/components/ui/pagination/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -46,7 +45,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
     <>
       <Sidebar activeItem="run-history" />
 
-      <main className="page-content">
+      <main className={`page-content ${styles.page}`}>
 
         <Subheader
           title="Run History"
@@ -62,7 +61,7 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
             <div className={styles.filters}>
               <div className={styles['filters-bar']}>
                 <SearchInput
-                  placeholder={"Search pipelines, commits..."} />
+                  placeholder={"Search pipelines, commits..."} styles={styles} />
                 <QueryFilterListbox id={"status"} name={"status"} options={RUN_FILTERS.status} value={filters.status} />
                 <QueryFilterListbox id={"trigger"} name={"trigger"} options={RUN_FILTERS.trigger} value={filters.trigger} />
                 <QueryFilterListbox id={"environment"} name={"environment"} options={RUN_FILTERS.environment} value={filters.environment} />
@@ -72,14 +71,26 @@ export default async function RunHistory({ searchParams }: { searchParams: Searc
 
             {runs.total > 0 ? (
               <>
-                <DataTable
-                  columns={["Pipeline", "Environment", "Trigger", "Duration", "Created At"]}>
-                  {runs.rows.map((run) => (
-                    <RunRow key={run.id} run={run} />
-                  ))}
-                </DataTable>
+                <div className={styles['list-panel']}>
+                  <table className={styles['run-table']} aria-label="Run history">
+                    <thead>
+                      <tr>
+                        {['Pipeline', 'Environment', 'Trigger', 'Duration', 'Created at'].map(column => (
+                          <th key={column} scope="col">{column}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {runs.rows.map((run) => (
+                        <RunRow key={run.id} run={run} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <Pagination page={runs.page} pageCount={runs.pageCount} total={runs.total} pageSize={runs.pageSize} />
+                <div className={styles.pagination}>
+                  <Pagination page={runs.page} pageCount={runs.pageCount} total={runs.total} pageSize={runs.pageSize} />
+                </div>
               </>
             ) : (
               <EmptyState
