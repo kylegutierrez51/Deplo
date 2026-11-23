@@ -770,6 +770,16 @@ describe('deletePipeline', () => {
 });
 
 describe('updatePipeline', () => {
+  it.each([null, '', 'file'])('rejects an invalid update id (%j) before accessing the database', async id => {
+    const fd = form();
+    fd.delete('id');
+    if (id === 'file') fd.set('id', new File(['p1'], 'id.txt'));
+    else if (id !== null) fd.set('id', id);
+
+    expect((await updatePipeline(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   const form = (over: Record<string, string> = {}) => {
     const fd = new FormData();
     fd.set('id', 'p1');

@@ -8,7 +8,7 @@ import { auth } from '@/auth';
 import { Prisma } from '@/generated/prisma/client';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
-import { secretSchema } from '../validation';
+import { secretSchema, updateSecretSchema } from '../validation';
 
 
 
@@ -102,9 +102,8 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-
-  const result = secretSchema.safeParse({
+  const result = updateSecretSchema.safeParse({
+    id: formData.get('id'),
     key: formData.get('key'),
     notes: formData.get('notes'),
     value: formData.get('value'),
@@ -118,7 +117,7 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
     };
   }
 
-  const { key, notes, value, environmentId } = result.data;
+  const { id, key, notes, value, environmentId } = result.data;
 
   const { encryptedValue, iv, authTag } = encryptSecret(value);
 

@@ -16,6 +16,10 @@ export const environmentSchema = z.object({
     .transform(value => value === 'true'),
 });
 
+export const updateEnvironmentSchema = environmentSchema.extend({
+  id: z.string().min(1, 'Select an environment to update.'),
+});
+
 export type EnvironmentInput = z.infer<typeof environmentSchema>;
 
 
@@ -40,6 +44,10 @@ export const pipelineSchema = z.object({
   defaultEnvironmentId: z.string().nullable()
 });
 
+export const updatePipelineSchema = pipelineSchema.extend({
+  id: z.string().min(1, 'Select a pipeline to update.'),
+});
+
 export type PipelineInput = z.infer<typeof pipelineSchema>;
 
 
@@ -58,6 +66,10 @@ export const secretSchema = z.object({
     .min(MIN_MASKABLE_LENGTH, `A secret value must be at least ${MIN_MASKABLE_LENGTH} characters, so it can be masked in run logs.`),
   environmentId: z.string()
     .min(1, 'Select an environment to scope the secret to.')
+});
+
+export const updateSecretSchema = secretSchema.extend({
+  id: z.string().min(1, 'Select a secret to update.'),
 });
 
 export type SecretInput = z.infer<typeof secretSchema>;

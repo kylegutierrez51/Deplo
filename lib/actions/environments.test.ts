@@ -145,6 +145,15 @@ describe('addEnvironment', () => {
 });
 
 describe('updateEnvironment', () => {
+  it.each([null, '', 'file'])('rejects an invalid update id (%j) before accessing the database', async id => {
+    const fd = form({ name: 'production' });
+    if (id === 'file') fd.set('id', new File(['env-1'], 'id.txt'));
+    else if (id !== null) fd.set('id', id);
+
+    expect((await updateEnvironment(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   it('updates by id and revalidates', async () => {
     const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'Renamed' }));
 

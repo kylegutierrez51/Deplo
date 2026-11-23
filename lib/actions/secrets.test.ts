@@ -132,6 +132,15 @@ describe('addSecret outcomes', () => {
 });
 
 describe('updateSecret', () => {
+  it.each([null, '', 'file'])('rejects an invalid update id (%j) before accessing the database', async id => {
+    const fd = form();
+    if (id === 'file') fd.set('id', new File(['secret-1'], 'id.txt'));
+    else if (id !== null) fd.set('id', id);
+
+    expect((await updateSecret(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   it('re-encrypts on every edit rather than reusing the stored ciphertext', async () => {
     await updateSecret(idle, form({ id: 'sec-1', value: 'rotated' }));
     const { encryptedValue, iv, authTag } = writtenData(prismaMock.secret.update);

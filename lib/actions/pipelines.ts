@@ -11,7 +11,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
-import { pipelineSchema } from '../validation';
+import { pipelineSchema, updatePipelineSchema } from '../validation';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -104,9 +104,8 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-
-  const result = pipelineSchema.safeParse({
+  const result = updatePipelineSchema.safeParse({
+    id: formData.get('id'),
     name: formData.get('name'),
     description: formData.get('description'),
     repoUrl: formData.get('repo_url'),
@@ -120,7 +119,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
     };
   }
 
-  const { name, description, repoUrl, defaultEnvironmentId } = result.data;
+  const { id, name, description, repoUrl, defaultEnvironmentId } = result.data;
 
   try {
     await prisma.$transaction(async (tx) => {

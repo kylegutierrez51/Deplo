@@ -7,7 +7,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { EnvironmentType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { addAudit } from './audits';
-import { environmentSchema } from '../validation';
+import { environmentSchema, updateEnvironmentSchema } from '../validation';
 
 const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
   production: 'PRODUCTION',
@@ -101,9 +101,8 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-
-  const result = environmentSchema.safeParse({
+  const result = updateEnvironmentSchema.safeParse({
+    id: formData.get('id'),
     name: formData.get('name'),
     type: formData.get('type'),
     requireApproval: formData.get('requireApproval')
@@ -116,7 +115,7 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
     };
   }
 
-  const { name, type, requireApproval } = result.data;
+  const { id, name, type, requireApproval } = result.data;
 
   if (!type) {
     return {
