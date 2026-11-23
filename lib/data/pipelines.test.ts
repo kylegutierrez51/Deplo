@@ -1,4 +1,4 @@
-import { getPipelines, getPipelineById, getPipelineDefinition } from '@/lib/data/pipelines';
+import { getPipelines, getPipelineById, getPipelineDefinition, getLatestDefinition } from '@/lib/data/pipelines';
 import { parseFilters } from '@/lib/filters/parse';
 import { PIPELINE_FILTERS } from '@/lib/filters/options';
 import { toDefinition } from '@/lib/pipeline/definition';
@@ -8,6 +8,17 @@ import type { CustomNode } from '@/lib/types';
 jest.mock('@/lib/prisma');
 
 beforeEach(resetPrismaMock);
+
+it('preserves malformed stored execution values for run-readiness validation', async () => {
+  const stored = {
+    id: 'def-1',
+    graphJson: { nodes: [{ id: 'a', position: { x: 0, y: 0 }, data: { type: 'custom', name: 'build' } }], edges: [] },
+    configJson: { a: { command: 'npm test', timeout: '30', retries: 11 } },
+  };
+  prismaMock.pipelineDefinition.findFirst.mockResolvedValue(stored as never);
+
+  expect(await getLatestDefinition('p1')).toEqual(stored);
+});
 
 const run = (status: string, finishedAt: Date | null = new Date('2026-01-02T00:00:00Z')) => ({
   id: 'r1', status, finishedAt,

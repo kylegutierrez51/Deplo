@@ -1,4 +1,5 @@
-import { createPipelineRun, enqueueOrDiscardRun } from '@/lib/actions/run-trigger';
+import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
+import { graph, configFor } from '@/test/helpers/graph';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import { prismaMock, resetPrismaMock, runTransactionsInline } from '@/test/mocks/prisma';
 
@@ -16,6 +17,21 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => { });
   enqueue.mockResolvedValue(undefined);
   prismaMock.pipelineRun.delete.mockResolvedValue({} as never);
+});
+
+describe('stored pipeline execution settings', () => {
+  it.each([
+    ['timeout', 0], ['timeout', 43201], ['timeout', 1.5], ['timeout', '30'],
+    ['retries', -1], ['retries', 11], ['retries', 0.5], ['retries', '2'],
+  ])('rejects invalid stored %s=%s before a trigger can run', async (field, value) => {
+    const graphJson = graph('build');
+    const configJson = configFor(graphJson.nodes, { build: { [field]: value } });
+
+    const result = await verifyPipelineRunReady({ graphJson, configJson }, null);
+
+    expect(result.status).toBe('error');
+    expect(result.message.toLowerCase()).toContain(field === 'timeout' ? 'timeout' : 'retries');
+  });
 });
 
 describe('enqueueOrDiscardRun', () => {

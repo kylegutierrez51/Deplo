@@ -64,6 +64,60 @@ beforeEach(() => {
 afterEach(() => { jest.restoreAllMocks(); });
 
 describe('savePipelineDefinition versioning', () => {
+  it.each([
+    ['timeout', 0], ['timeout', -1], ['timeout', 43201], ['timeout', 1.5],
+    ['timeout', NaN], ['timeout', Infinity], ['timeout', '30'],
+    ['retries', -1], ['retries', 11], ['retries', 0.5], ['retries', '2'],
+  ])('rejects invalid editor execution settings (%s=%s) before saving', async (field, value) => {
+    const result = await savePipelineDefinition('p1', [node('a', { [field]: value })], []);
+
+    expect(result.status).toBe('error');
+    expect(result.message.toLowerCase()).toContain(field === 'timeout' ? 'timeout' : 'retries');
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['validate', 'run'] as const)(
+    'rejects invalid execution settings on editor %s', async (mode) => {
+      const nodes = [node('a', { timeout: 43201, retries: 11 })];
+      const definition = toDefinition(nodes, []);
+      prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', ...definition } as never);
+
+      const result = mode === 'validate'
+        ? await validatePipeline(null, nodes, [])
+        : await addPipelineRun('p1', null, nodes, []);
+
+      expect(result.status).toBe('error');
+      expect(result.message.toLowerCase()).toContain('timeout');
+      expect(result.message.toLowerCase()).toContain('retries');
+      expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+      expect(enqueue).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([[1, 0], [43200, 10], [undefined, undefined]])(
+    'saves valid execution settings (%s seconds, %s retries)', async (timeout, retries) => {
+      prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+      prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+      const result = await savePipelineDefinition('p1', [node('a', { timeout, retries })], []);
+
+      expect(result.status).toBe('success');
+      expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          configJson: { a: { command: 'npm test', timeout: timeout ?? null, retries: retries ?? null, env_vars: [], secrets: {} } },
+        }),
+      }));
+    },
+  );
+
+  it('still saves unfinished editor drafts', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+    expect((await savePipelineDefinition('p1', [node('a', { name: '', command: '' })], [])).status).toBe('success');
+  });
+
   it('starts a pipeline that has no definitions at version 0', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
