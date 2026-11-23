@@ -146,8 +146,7 @@ describe('addWebhook', () => {
   });
 });
 
-// validateAndMapEvents is module-private, and a "use server" file cannot export a
-// non-action helper, so it is exercised through the two actions that call it.
+// Exercise event validation and mapping through the actions that persist the result.
 describe('event validation', () => {
   it('rejects the submission without writing when an event is not a known member', async () => {
     const fd = form();
@@ -178,11 +177,96 @@ describe('event validation', () => {
     const fd = form();
     fd.append('events', 'pull-request');
 
+    fd.set('id', 'wh-1');
     await updateWebhook(idle, fd);
 
     expect(writtenData(prismaMock.webhook.update)).toMatchObject({
       events: ['PUSH', 'PULL_REQUEST'],
     });
+  });
+});
+
+describe.each([
+  ['create', addWebhook],
+  ['update', updateWebhook],
+] as const)('webhook schema on %s', (mode, action) => {
+  it.each(['main', ' main '])('rejects duplicate branch filters (%s) before writing', async duplicate => {
+    const fd = form({ id: 'wh-1' });
+    fd.append('branch_filters', duplicate);
+
+    const result = await action(idle, fd);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/duplicate/i);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('preserves distinct, case-sensitive glob filters and trims their whitespace', async () => {
+    const fd = form({ id: 'wh-1' });
+    fd.append('branch_filters', 'Main');
+    fd.append('branch_filters', ' release/* ');
+
+    expect((await action(idle, fd)).status).toBe('success');
+    const write = mode === 'create' ? prismaMock.webhook.create : prismaMock.webhook.update;
+    expect(writtenData(write)).toMatchObject({ branchFilters: ['main', 'Main', 'release/*'] });
+  });
+
+  it('allows no branch filters to mean all branches', async () => {
+    const fd = form({ id: 'wh-1' });
+    fd.delete('branch_filters');
+
+    expect((await action(idle, fd)).status).toBe('success');
+    const write = mode === 'create' ? prismaMock.webhook.create : prismaMock.webhook.update;
+    expect(writtenData(write)).toMatchObject({ branchFilters: [] });
+  });
+
+  it.each(['', '   '])('rejects a blank branch filter (%j)', async filter => {
+    const fd = form({ id: 'wh-1' });
+    fd.append('branch_filters', filter);
+
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed active flags instead of silently enabling the webhook', async () => {
+    expect((await action(idle, form({ id: 'wh-1', is_active: 'yes' }))).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects file uploads in text fields', async () => {
+    const fd = form({ id: 'wh-1' });
+    fd.append('branch_filters', new File(['main'], 'filter.txt'));
+
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe('signing secret validation', () => {
+  it.each([null, '', '   '])('rejects a missing or blank secret (%j) on create', async secret => {
+    const fd = form();
+    if (secret === null) fd.delete('webhook_secret');
+    else fd.set('webhook_secret', secret);
+
+    expect((await addWebhook(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('preserves the exact signing secret, including surrounding whitespace', async () => {
+    await addWebhook(idle, form({ webhook_secret: '  signing-secret  ' }));
+    const data = writtenData(prismaMock.webhook.create);
+    expect(decryptSecret({
+      encryptedValue: data.encryptedValue as string,
+      iv: data.iv as string,
+      authTag: data.authTag as string,
+    })).toBe('  signing-secret  ');
+  });
+
+  it('does not require a secret to edit metadata', async () => {
+    const fd = form({ id: 'wh-1' });
+    fd.delete('webhook_secret');
+    expect((await updateWebhook(idle, fd)).status).toBe('success');
+    expect(writtenData(prismaMock.webhook.update)).not.toHaveProperty('encryptedValue');
   });
 });
 

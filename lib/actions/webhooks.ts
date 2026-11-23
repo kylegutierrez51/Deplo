@@ -8,7 +8,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { EventType as PrismaEventType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { addAudit } from './audits';
-import { isSmeeChannelUrl, RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
+import { createWebhookSchema, updateWebhookSchema } from '@/lib/validation';
 
 const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
   push: 'PUSH',
@@ -17,37 +17,17 @@ const EVENT_TYPE_MAP: Record<EventType, PrismaEventType> = {
   unrecognized: 'UNRECOGNIZED'
 };
 
-function validateAndMapEvents(formData: FormData): PrismaEventType[] | null {
-  const events = formData.getAll('events') as string[];
-
-  const validatedEvents: PrismaEventType[] = []
-  for (const e of events) {
-    if (!['push', 'pull-request'].includes(e)) return null;
-    validatedEvents.push(EVENT_TYPE_MAP[e as EventType])
-  }
-  return validatedEvents;
+function readWebhookFormData(formData: FormData) {
+  return {
+    pipelineId: formData.get('pipeline_id'),
+    environmentId: formData.get('environment_id'),
+    environmentName: formData.get('environment_name'),
+    branchFilters: formData.getAll('branch_filters'),
+    events: formData.getAll('events'),
+    isActive: formData.get('is_active'),
+    relayUrl: formData.get('relay_url'),
+  };
 }
-
-
-// The environment is optional, so an empty id means "none". Text that resolved to no
-// environment is refused instead, or a typo would silently save the webhook without one.
-function readEnvironmentId(formData: FormData): { environmentId: string | null } | null {
-  const environmentId = (formData.get('environment_id') as string | null) || null;
-  const typed = (formData.get('environment_name') as string | null)?.trim();
-  if (!environmentId && typed) return null;
-  return { environmentId };
-}
-
-// Optional: blank means "no relay". Anything else must be a smee channel.
-function readRelayUrl(formData: FormData): { relayUrl: string | null } | null {
-  const relayUrl = (formData.get('relay_url') as string | null)?.trim() || null;
-  if (relayUrl && !isSmeeChannelUrl(relayUrl)) return null;
-  return { relayUrl };
-}
-
-// The modal always sends 'true' or 'false'; a missing field falls back to active, matching
-// the column default, so a new webhook is never created switched off by accident.
-const readIsActive = (formData: FormData) => formData.get('is_active') !== 'false';
 
 const fkMessage =(environmentId: string | null) =>
   environmentId ? 'Selected pipeline or environment no longer exists.' : 'Selected pipeline no longer exists.';
@@ -67,41 +47,26 @@ export async function addWebhook(prevState: FormState, formData: FormData): Prom
 
   const userId = user.id;
 
-  const pipelineId = formData.get('pipeline_id') as string;
-  const branchFilters = formData.getAll('branch_filters') as string[];
-  const secret = formData.get('webhook_secret') as string;
-  const events = validateAndMapEvents(formData);
-  const environment = readEnvironmentId(formData);
-  const isActive = readIsActive(formData);
-
-  if (!pipelineId) return {
-    status: 'error',
-    message: 'Select a pipeline from the list.'
-  }
-
-  if (!environment) return {
-    status: 'error',
-    message: 'Select an environment from the list, or leave it empty.'
-  }
-
-  const { environmentId } = environment;
-
-  const relay = readRelayUrl(formData);
-  if (!relay) return { status: 'error', message: RELAY_URL_ERROR };
-
-  if (!events) {
+  const result = createWebhookSchema.safeParse({
+    ...readWebhookFormData(formData),
+    secret: formData.get('webhook_secret'),
+  });
+  if (!result.success) {
     return {
       status: 'error',
-      message: 'Error adding trigger event data. Please try again.'
-    }
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
   }
 
+  const { pipelineId, environmentId, branchFilters, secret, isActive, relayUrl } = result.data;
+  const events = result.data.events.map(event => EVENT_TYPE_MAP[event]);
+  
   const { encryptedValue, iv, authTag } = encryptSecret(secret);
 
   try {
     await prisma.$transaction(async (tx) => {
       const webhook = await tx.webhook.create({
-        data: { pipelineId, environmentId, isActive, branchFilters, events, encryptedValue, iv, authTag, createdById, relayUrl: relay.relayUrl },
+        data: { pipelineId, environmentId, isActive, branchFilters, events, encryptedValue, iv, authTag, createdById, relayUrl },
         select: { id: true, pipeline: { select: { name: true } } }
       });
 
@@ -149,34 +114,19 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-  const pipelineId = formData.get('pipeline_id') as string;
-  const branchFilters = formData.getAll('branch_filters') as string[];
-  const events = validateAndMapEvents(formData);
-  const isActive = readIsActive(formData);
-
-  if (!events) {
+  const result = updateWebhookSchema.safeParse({
+    ...readWebhookFormData(formData),
+    id: formData.get('id'),
+  });
+  if (!result.success) {
     return {
       status: 'error',
-      message: 'Error adding trigger event data. Please try again.'
-    }
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
   }
 
-  if (!pipelineId) return {
-    status: 'error',
-    message: 'Select a pipeline from the list.'
-  }
-
-  const environment = readEnvironmentId(formData);
-  if (!environment) return {
-    status: 'error',
-    message: 'Select an environment from the list, or leave it empty.'
-  }
-
-  const { environmentId } = environment;
-
-  const relay = readRelayUrl(formData);
-  if (!relay) return { status: 'error', message: RELAY_URL_ERROR };
+  const { id, pipelineId, environmentId, branchFilters, isActive, relayUrl } = result.data;
+  const events = result.data.events.map(event => EVENT_TYPE_MAP[event]);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -189,7 +139,7 @@ export async function updateWebhook(prevState: FormState, formData: FormData): P
 
       const webhook = await tx.webhook.update({
         where: { id },
-        data: { pipelineId, environmentId, isActive, branchFilters, events, relayUrl: relay.relayUrl },
+        data: { pipelineId, environmentId, isActive, branchFilters, events, relayUrl },
         select: { pipeline: { select: { name: true } } }
       });
       
