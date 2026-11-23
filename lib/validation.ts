@@ -4,6 +4,16 @@ import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 import { isSmeeChannelUrl, RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
 import { MAX_STAGE_TIMEOUT_S, MAX_STAGE_RETRIES } from '@/lib/pipeline/defaults';
 
+
+// shared between SecretModal key and Pipeline Editor Environment Key
+const environmentVariableKeySchema = z.string()
+  .trim()
+  .regex(
+    /^[A-Za-z_][A-Za-z0-9_]*$/,
+    'Start with a letter or underscore; use only letters, numbers, and underscores.',
+  );
+
+
 // EnvironmentModal
 export const environmentSchema = z.object({
   name: z.string()
@@ -55,8 +65,7 @@ export type PipelineInput = z.infer<typeof pipelineSchema>;
 
 // SecretModal
 export const secretSchema = z.object({
-  key: z.string()
-    .trim()
+  key: environmentVariableKeySchema
     .min(1, 'Key is required.')
     .max(50, 'Key must be 50 characters or fewer.'),
   notes: z.string()
@@ -131,7 +140,10 @@ const stageTimeoutSchema = z.number({ error: timeoutError })
   .int(timeoutError).min(1, timeoutError).max(MAX_STAGE_TIMEOUT_S, timeoutError);
 const stageRetriesSchema = z.number({ error: retriesError })
   .int(retriesError).min(0, retriesError).max(MAX_STAGE_RETRIES, retriesError);
-const stageEnvVarsSchema = z.array(z.record(z.string(), z.string()));
+const stageEnvVarsSchema = z.array(z.object({
+  key: environmentVariableKeySchema,
+  value: z.string(),
+}));
 const stageSecretsSchema = z.record(z.string(), z.array(z.string()));
 
 const pipelineGraphSchema = z.object({
@@ -155,9 +167,12 @@ const pipelineGraphSchema = z.object({
     source: z.string().min(1),
     target: z.string().min(1),
   })),
+}).refine(graph => new Set(graph.nodes.map(node => node.id)).size === graph.nodes.length, {
+  message: 'Duplicate stage IDs are not allowed.',
+  path: ['nodes'],
 });
 
-export const pipelineEditorSchema = pipelineGraphSchema.extend({
+export const pipelineEditorSchema = pipelineGraphSchema.safeExtend({
   defaultDirectory: z.string().nullish(),
 });
 
