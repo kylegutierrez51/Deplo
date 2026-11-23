@@ -11,7 +11,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
-import { pipelineSchema, updatePipelineSchema } from '../validation';
+import { pipelineSchema, updatePipelineSchema, pipelineEditorSchema } from '../validation';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -241,8 +241,14 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
 
   const userId = user.id;
 
-  const { graphJson, configJson } = toDefinition(nodes, edges);
-  const defaultDirectory = normalizeDefaultDirectory(rawDefaultDirectory);
+  const result = pipelineEditorSchema.safeParse({ nodes, edges, defaultDirectory: rawDefaultDirectory });
+  if (!result.success) return {
+    status: 'error',
+    message: result.error.issues.map(issue => issue.message).join('\n'),
+  };
+
+  const { graphJson, configJson } = toDefinition(result.data.nodes, result.data.edges);
+  const defaultDirectory = normalizeDefaultDirectory(result.data.defaultDirectory);
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
     try {
@@ -365,6 +371,12 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
   const userId = user.id;
 
+  const result = pipelineEditorSchema.safeParse({ nodes, edges, defaultDirectory });
+  if (!result.success) return {
+    status: 'error',
+    message: result.error.issues.map(issue => issue.message).join('\n'),
+  };
+
   try {
     const latest = await prisma.pipelineDefinition.findFirst({
       where: { pipelineId },
@@ -377,7 +389,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
       message: 'Save your current pipeline'
     }
 
-    const { graphJson, configJson } = toDefinition(nodes, edges);
+    const { graphJson, configJson } = toDefinition(result.data.nodes, result.data.edges);
 
     // A run pins itself to a stored definition, so the editor has to match one.
     if (!definitionsEqual({ graphJson, configJson, defaultDirectory }, latest)) {
@@ -438,8 +450,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
 
 
 
-// Runs addPipelineRun's readiness checks without starting a run. It validates the graph as it
-// sits in the editor, saved or not, since the point is to check edits before committing them.
+// used for the "Validate Pipeline" button in the pipeline editor
 export async function validatePipeline(environmentId: string | null, nodes: CustomNode[], edges: Edge[]): Promise<FormState> {
   const session = await auth();
 
@@ -448,8 +459,14 @@ export async function validatePipeline(environmentId: string | null, nodes: Cust
     message: 'Sign in to validate a pipeline.'
   }
 
+  const result = pipelineEditorSchema.safeParse({ nodes, edges });
+  if (!result.success) return {
+    status: 'error',
+    message: result.error.issues.map(issue => issue.message).join('\n'),
+  };
+
   try {
-    const isReadyState = await verifyPipelineRunReady(toDefinition(nodes, edges), environmentId);
+    const isReadyState = await verifyPipelineRunReady(toDefinition(result.data.nodes, result.data.edges), environmentId);
 
     if (isReadyState.status === 'error') return isReadyState;
 

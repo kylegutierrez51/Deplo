@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isCloneableRepoUrl, REPO_URL_ERROR } from './pipeline/repo-url';
 import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 import { isSmeeChannelUrl, RELAY_URL_ERROR } from '@/lib/webhooks/relay-url';
+import { MAX_STAGE_TIMEOUT_S, MAX_STAGE_RETRIES } from '@/lib/pipeline/defaults';
 
 // EnvironmentModal
 export const environmentSchema = z.object({
@@ -121,3 +122,55 @@ export const updateWebhookSchema = webhookSchema.safeExtend({
 });
 
 export type WebhookInput = z.infer<typeof webhookSchema>;
+
+
+// Pipeline editor: validate the submitted graph before serializing it.
+const timeoutError = `Timeout must be a whole number from 1 to ${MAX_STAGE_TIMEOUT_S} seconds.`;
+const retriesError = `Retries must be a whole number from 0 to ${MAX_STAGE_RETRIES}.`;
+const stageTimeoutSchema = z.number({ error: timeoutError })
+  .int(timeoutError).min(1, timeoutError).max(MAX_STAGE_TIMEOUT_S, timeoutError);
+const stageRetriesSchema = z.number({ error: retriesError })
+  .int(retriesError).min(0, retriesError).max(MAX_STAGE_RETRIES, retriesError);
+const stageEnvVarsSchema = z.array(z.record(z.string(), z.string()));
+const stageSecretsSchema = z.record(z.string(), z.array(z.string()));
+
+const pipelineGraphSchema = z.object({
+  nodes: z.array(z.object({
+    id: z.string().min(1),
+    position: z.object({ x: z.number(), y: z.number() }),
+    data: z.object({
+      type: z.enum(['custom', 'deploy', 'approval']).default('custom'),
+      // Drafts can have unnamed stages and missing commands; readiness checks handle those.
+      name: z.string().optional(),
+      label: z.string().optional(),
+      command: z.string().nullish().transform(value => value ?? undefined),
+      timeout: stageTimeoutSchema.nullish().transform(value => value ?? undefined),
+      retries: stageRetriesSchema.nullish().transform(value => value ?? undefined),
+      env_vars: stageEnvVarsSchema.optional(),
+      secrets: stageSecretsSchema.optional(),
+    }),
+  })),
+  edges: z.array(z.object({
+    id: z.string().min(1),
+    source: z.string().min(1),
+    target: z.string().min(1),
+  })),
+});
+
+export const pipelineEditorSchema = pipelineGraphSchema.extend({
+  defaultDirectory: z.string().nullish(),
+});
+
+
+export const pipelineDefinitionSchema = z.object({
+  graphJson: pipelineGraphSchema,
+  configJson: z.record(z.string(), z.object({
+    command: z.string().nullable().default(null),
+    timeout: stageTimeoutSchema.nullable().default(null),
+    retries: stageRetriesSchema.nullable().default(null),
+    env_vars: stageEnvVarsSchema.default([]),
+    secrets: stageSecretsSchema.default({}),
+  })),
+});
+
+export type PipelineEditorInput = z.infer<typeof pipelineEditorSchema>;

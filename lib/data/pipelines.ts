@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import type { Pipeline as PrismaPipeline, RunStatus as PrismaRunStatus } from "@/generated/prisma/client";
-import { fromDefinition, toDefinition } from '@/lib/pipeline/definition';
-import type { ConfigJson, EnvType, GraphJson, PipelineStatus } from '@/lib/types';
+import { fromDefinition } from '@/lib/pipeline/definition';
+import type { EnvType, GraphJson, PipelineStatus } from '@/lib/types';
 import { ALL, PIPELINE_FILTERS, type PipelineFilters } from '@/lib/filters/options';
 import { dateRangeCutoff, invert, parseFilters } from '@/lib/filters/parse';
 import { DEFAULT_PAGE_SIZE, pageWindow, type Page } from '@/lib/utils/pagination';
@@ -142,7 +142,7 @@ export async function getPipelineDefinition(pipelineId: string): Promise<GraphJs
 
 
 // The newest saved definition with its id, which a run pins itself to. Null when the pipeline was never saved.
-export async function getLatestDefinition(pipelineId: string): Promise<{ id: string, graphJson: GraphJson, configJson: ConfigJson } | null> {
+export async function getLatestDefinition(pipelineId: string): Promise<{ id: string, graphJson: unknown, configJson: unknown } | null> {
   const definition = await prisma.pipelineDefinition.findFirst({
     where: { pipelineId },
     orderBy: { version: 'desc' },
@@ -151,6 +151,6 @@ export async function getLatestDefinition(pipelineId: string): Promise<{ id: str
 
   if (!definition) return null;
 
-  const { nodes, edges } = fromDefinition(definition.graphJson, definition.configJson);
-  return { id: definition.id, ...toDefinition(nodes, edges) };
+  // Preserve raw values so readiness validation can reject malformed settings before normalization.
+  return definition;
 }

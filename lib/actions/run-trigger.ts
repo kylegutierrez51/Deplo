@@ -2,11 +2,12 @@ import prisma from '@/lib/prisma';
 import { enqueuePipelineRun } from '@/lib/queue/runs';
 import type { RunTrigger as PrismaRunTrigger } from '@/generated/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import type { ConfigJson, FormState, GraphJson, RunTrigger } from '../types';
+import type { FormState, RunTrigger } from '../types';
 import { getEnvironmentById } from '@/lib/data/environments';
 import { validatePipelineGraph } from '@/lib/pipeline/validation';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
+import { pipelineDefinitionSchema } from '@/lib/validation';
 
 const RUN_NUMBER_ATTEMPTS = 3;
 
@@ -167,8 +168,14 @@ export async function createPipelineRun(data: {
 
 
 // The checks every trigger passes before a run row is written
-export async function verifyPipelineRunReady(definition: { graphJson: GraphJson, configJson: ConfigJson }, environmentId: string | null): Promise<FormState> {
-  const { graphJson, configJson } = definition;
+export async function verifyPipelineRunReady(definition: { graphJson: unknown, configJson: unknown }, environmentId: string | null): Promise<FormState> {
+  const result = pipelineDefinitionSchema.safeParse(definition);
+  if (!result.success) return {
+    status: 'error',
+    message: result.error.issues.map(issue => issue.message).join('\n'),
+  };
+
+  const { graphJson, configJson } = result.data;
 
   if (!graphJson.nodes.length) return {
     status: 'error',

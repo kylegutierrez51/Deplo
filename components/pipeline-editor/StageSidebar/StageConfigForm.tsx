@@ -8,7 +8,7 @@ import SecretsSection from "./SecretsSection";
 import type { CustomNode, StageType } from "@/lib/types";
 import { usePipelineGraph } from "@/components/pipeline-editor/PipelineGraphProvider";
 import { matchReservedLabel } from '@/lib/utils/string';
-import { DEFAULT_STAGE_TIMEOUT_S } from "@/lib/pipeline/defaults";
+import { DEFAULT_STAGE_TIMEOUT_S, MAX_STAGE_TIMEOUT_S, MAX_STAGE_RETRIES } from "@/lib/pipeline/defaults";
 import { joinDirectory, splitDirectory } from "@/lib/pipeline/directory";
 
 export default function StageConfigForm({ node }: { node: CustomNode }) {
@@ -60,13 +60,13 @@ export default function StageConfigForm({ node }: { node: CustomNode }) {
       return;
     }
 
-    if (name === 'retries' && Number(value) > 10) {
-      setTimeOptions(prev => ({ ...prev, retries: '10' }));
-      updateNodeData(node.id, { retries: 10 });
+    if (name === 'retries' && Number(value) > MAX_STAGE_RETRIES) {
+      setTimeOptions(prev => ({ ...prev, retries: String(MAX_STAGE_RETRIES) }));
+      updateNodeData(node.id, { retries: MAX_STAGE_RETRIES });
     }
-    else if (name === 'timeout' && Number(value) > 43200) {
-      setTimeOptions(prev => ({ ...prev, timeout: '43200' }));
-      updateNodeData(node.id, { timeout: 43200 });
+    else if (name === 'timeout' && Number(value) > MAX_STAGE_TIMEOUT_S) {
+      setTimeOptions(prev => ({ ...prev, timeout: String(MAX_STAGE_TIMEOUT_S) }));
+      updateNodeData(node.id, { timeout: MAX_STAGE_TIMEOUT_S });
     }
     else {
       setTimeOptions(prev => ({ ...prev, [name]: value }));

@@ -7,7 +7,6 @@ import { Prisma, type RunStatus as PrismaRunStatus } from '@/generated/prisma/cl
 import { AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { createPipelineRun, enqueueOrDiscardRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
-import { fromDefinition, toDefinition } from '@/lib/pipeline/definition';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
 
@@ -56,8 +55,7 @@ export async function retryRun(id: string): Promise<FormState & { runId?: string
 
     // If the Environment turns on 'requireApproval', then this blocks users from re-running pipelines
     // that don't have an approval upstream for deploy stages
-    const { nodes, edges } = fromDefinition(run.definition.graphJson, run.definition.configJson);
-    const isReadyState = await verifyPipelineRunReady(toDefinition(nodes, edges), run.environmentId);
+    const isReadyState = await verifyPipelineRunReady(run.definition, run.environmentId);
 
     if (isReadyState.status === 'error') return isReadyState;
 
