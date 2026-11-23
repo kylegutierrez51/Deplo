@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event';
 import SecretModal from '@/components/secrets/SecretModal';
 import { addSecret, deleteSecret, updateSecret } from '@/lib/actions/secrets';
 import type { FormState } from '@/lib/types';
+import { prismaMock, resetPrismaMock, runTransactionsInline } from '@/test/mocks/prisma';
+import { setSession } from '@/test/mocks/auth';
+
+jest.mock('@/lib/prisma');
+jest.mock('@/auth');
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
 
 /*
  * The representative useActionState modal — EnvironmentModal, PipelineModal and
@@ -391,5 +397,56 @@ describe.each([
     expect(screen.getByLabelText('Key')).toHaveValue('NEW_KEY');
     expect(valueInput).toHaveValue('a-brand-new-value');
     expect(screen.getByLabelText(/notes/i)).toHaveValue('typed before the failure');
+  });
+});
+
+describe.each(['create', 'edit'] as const)('Zod validation through the %s secret form', mode => {
+  beforeEach(() => {
+    resetPrismaMock();
+    setSession();
+    runTransactionsInline();
+    const actions = jest.requireActual<typeof import('@/lib/actions/secrets')>('@/lib/actions/secrets');
+    add.mockReset().mockImplementation(actions.addSecret);
+    update.mockReset().mockImplementation(actions.updateSecret);
+    prismaMock.secret.create.mockResolvedValue({ id: 'sec-1', environment: { type: 'PRODUCTION' } } as never);
+    prismaMock.secret.findUniqueOrThrow.mockResolvedValue({ key: 'API_KEY', environment: { type: 'PRODUCTION' } } as never);
+  });
+
+  afterEach(() => {
+    add.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+    update.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+  });
+
+  it.each([
+    { label: /^key$/i, value: '   ', message: /required/i },
+    { label: /^key$/i, value: 'K'.repeat(51), message: /50/ },
+    { label: /notes/i, value: 'n'.repeat(1001), message: /1000/ },
+    { label: /^value$/i, value: 'abc', message: /at least 4/i },
+    { label: /^environment$/i, value: 'no-such-environment', message: /select an environment/i },
+  ])('reports $message and preserves the other fields', async ({ label, value, message }) => {
+    const { onError, onSave, onCreate } = setup({ mode });
+    const input = screen.getByLabelText(label);
+    fireEvent.change(input, { target: { value } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringMatching(message)));
+    expect(input).toHaveValue(value);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onCreate).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('accepts a corrected key after a Zod error', async () => {
+    const { onError, onCreate, onSave } = setup({ mode });
+    fireEvent.change(screen.getByLabelText('Key'), { target: { value: 'K'.repeat(51) } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: mode === 'create' ? 'Create' : /save changes/i })).toBeEnabled());
+
+    fireEvent.change(screen.getByLabelText('Key'), { target: { value: 'K'.repeat(50) } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(mode === 'create' ? onCreate : onSave).toHaveBeenCalledWith(mode === 'create' ? 'Secret added' : 'Secret updated'));
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });

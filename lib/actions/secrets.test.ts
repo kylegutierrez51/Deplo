@@ -199,6 +199,39 @@ describe('updateSecret', () => {
   });
 });
 
+describe.each([['create', addSecret], ['update', updateSecret]] as const)('secret Zod validation on %s', (mode, action) => {
+  it.each([
+    ['key', '', /required/i], ['key', '   ', /required/i], ['key', 'a'.repeat(51), /50/],
+    ['notes', 'a'.repeat(1001), /1000/], ['value', '   ', /at least/i],
+    ['value', '  abc  ', /at least/i], ['env_id', '', /environment/i],
+  ])('rejects invalid %s before writing (%s)', async (field, value, message) => {
+    const result = await action(idle, form({ id: 'sec-1', [field]: value }));
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(message);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+  });
+
+  it.each(['key', 'notes', 'value', 'env_id'])('rejects a missing or file-valued %s', async field => {
+    const fd = form({ id: 'sec-1' });
+    fd.delete(field);
+    expect((await action(idle, fd)).status).toBe('error');
+    fd.set(field, new File(['invalid'], 'input.txt'));
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('persists trimmed boundary values and encrypts the parsed secret', async () => {
+    const result = await action(idle, form({
+      id: 'sec-1', key: `  ${'K'.repeat(50)}  `, notes: `  ${'n'.repeat(1000)}  `, value: '  abcd  ',
+    }));
+    expect(result.status).toBe('success');
+    const data = writtenData(mode === 'create' ? prismaMock.secret.create : prismaMock.secret.update);
+    expect(data).toMatchObject({ key: 'K'.repeat(50), notes: 'n'.repeat(1000), environmentId: 'env-1' });
+    expect(decryptSecret({ encryptedValue: data.encryptedValue as string, iv: data.iv as string, authTag: data.authTag as string })).toBe('abcd');
+  });
+});
+
 describe('deleteSecret', () => {
   // The confirmation names the key, so the delete has to read it off the deleted
   // row rather than echo the id it was handed. The plaintext value never appears.

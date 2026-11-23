@@ -796,6 +796,63 @@ describe('addPipeline', () => {
   });
 });
 
+describe.each([['create', addPipeline], ['update', updatePipeline]] as const)('pipeline modal Zod validation on %s', (_mode, action) => {
+  const idle = { status: 'idle' as const, message: '' };
+  const form = () => {
+    const fd = new FormData();
+    Object.entries({ id: 'p1', name: 'CI', description: 'Build the API', repo_url: 'https://github.com/o/r' })
+      .forEach(([key, value]) => fd.set(key, value));
+    return fd;
+  };
+
+  it.each([
+    ['name', '   ', /required/i],
+    ['name', 'a'.repeat(51), /50/],
+    ['description', 'a'.repeat(1001), /1000/],
+    ['repo_url', 'https://user:password@github.com/o/r', /repo url/i],
+    ['repo_url', 'file:///tmp/repo', /repo url/i],
+  ])('rejects invalid %s before writing (%s)', async (field, value, message) => {
+    const fd = form();
+    fd.set(field, value);
+
+    const result = await action(idle, fd);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(message);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+  });
+
+  it.each(['name', 'description', 'repo_url', 'defaultEnvironmentId'])('rejects a file submitted as %s', async field => {
+    const fd = form();
+    fd.set(field, new File(['invalid'], 'input.txt'));
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['name', 'description'])('rejects a missing %s', async field => {
+    const fd = form();
+    fd.delete(field);
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '   ', 'git@github.com:o/r.git'])('accepts optional or SSH repository values (%j) and trimmed length boundaries', async repoUrl => {
+    prismaMock.pipeline.create.mockResolvedValue({ id: 'p1' } as never);
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+    const fd = form();
+    fd.set('name', `  ${'a'.repeat(50)}  `);
+    fd.set('description', `  ${'b'.repeat(1000)}  `);
+    fd.set('repo_url', repoUrl);
+
+    expect((await action(idle, fd)).status).toBe('success');
+    const write = _mode === 'create' ? prismaMock.pipeline.create : prismaMock.pipeline.update;
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ name: 'a'.repeat(50), description: 'b'.repeat(1000), repoUrl: repoUrl.trim() || null }),
+    }));
+  });
+});
+
 describe('deletePipeline', () => {
   it('revalidates the list on success', async () => {
     prismaMock.pipeline.delete.mockResolvedValue({ id: 'p1' } as never);

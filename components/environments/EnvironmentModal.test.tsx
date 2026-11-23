@@ -2,6 +2,12 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import EnvironmentModal from '@/components/environments/EnvironmentModal';
 import { addEnvironment, deleteEnvironment, updateEnvironment } from '@/lib/actions/environments';
+import { prismaMock, resetPrismaMock, runTransactionsInline } from '@/test/mocks/prisma';
+import { setSession } from '@/test/mocks/auth';
+
+jest.mock('@/lib/prisma');
+jest.mock('@/auth');
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
 
 /*
  * The server actions are mocked because what is under test is the modal's own
@@ -128,5 +134,52 @@ describe.each([
     await waitFor(() => expect(screen.getByRole('button', { name: submitLabel })).toBeEnabled());
 
     expect(screen.getByLabelText('Name')).toHaveValue('qa-integration');
+  });
+});
+
+describe.each(['create', 'edit'] as const)('Zod validation through the %s environment form', mode => {
+  beforeEach(() => {
+    resetPrismaMock();
+    setSession();
+    runTransactionsInline();
+    const actions = jest.requireActual<typeof import('@/lib/actions/environments')>('@/lib/actions/environments');
+    add.mockReset().mockImplementation(actions.addEnvironment);
+    update.mockReset().mockImplementation(actions.updateEnvironment);
+    prismaMock.environment.create.mockResolvedValue({ id: 'env-1', name: 'qa-1', type: 'PRODUCTION' } as never);
+    prismaMock.environment.findUniqueOrThrow.mockResolvedValue({ name: 'production', type: 'PRODUCTION' } as never);
+  });
+
+  afterEach(() => {
+    add.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+    update.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+  });
+
+  it.each([
+    ['   ', /required/i], ['Production', /lowercase/i], ['qa_test', /hyphens/i],
+    ['qa test', /hyphens/i], ['a'.repeat(51), /50/],
+  ])('reports a Zod error for %s without discarding the name', async (name, message) => {
+    const { onError, onSave, onCreate } = setup({ mode });
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: name } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringMatching(message)));
+    expect(screen.getByLabelText('Name')).toHaveValue(name);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onCreate).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('accepts a corrected lowercase name after a Zod error', async () => {
+    const { onError, onCreate, onSave } = setup({ mode });
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'QA_1' } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: mode === 'create' ? 'Create' : /save changes/i })).toBeEnabled());
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'qa-1' } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(mode === 'create' ? onCreate : onSave).toHaveBeenCalledWith(mode === 'create' ? 'Environment added' : 'Environment updated'));
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });

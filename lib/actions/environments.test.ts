@@ -14,7 +14,7 @@ const idle = { status: 'idle' as const, message: '' };
 
 const form = (over: Record<string, string> = {}) => {
   const fd = new FormData();
-  fd.set('name', 'Production');
+  fd.set('name', 'production');
   fd.set('type', 'production');
   fd.set('requireApproval', 'true');
   Object.entries(over).forEach(([k, v]) => fd.set(k, v));
@@ -29,8 +29,8 @@ beforeEach(() => {
   // Every action reads something back inside its transaction (the row it just created, or
   // the prior row for a diff label); an unstubbed read resolves undefined and crashes the
   // destructure before a single case-specific mock matters.
-  prismaMock.environment.create.mockResolvedValue({ id: 'env-new', name: 'Production', type: 'PRODUCTION' } as never);
-  prismaMock.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never);
+  prismaMock.environment.create.mockResolvedValue({ id: 'env-new', name: 'production', type: 'PRODUCTION' } as never);
+  prismaMock.environment.findUniqueOrThrow.mockResolvedValue({ name: 'production', type: 'PRODUCTION' } as never);
   jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
@@ -66,14 +66,10 @@ describe('addEnvironment', () => {
     expect(prismaMock.environment.create).not.toHaveBeenCalled();
   });
 
-  // requireApproval arrives as a string and is compared to 'true', so anything
-  // else — including 'on', which is what an unconfigured checkbox would send —
-  // reads as false.
+  // The schema accepts only the two explicit values sent by the modal.
   it.each([
     ['true', true],
     ['false', false],
-    ['on', false],
-    ['', false],
   ])('reads requireApproval=%s as %s', async (raw, expected) => {
     await addEnvironment(idle, form({ requireApproval: raw }));
 
@@ -130,17 +126,15 @@ describe('addEnvironment', () => {
 
     const result = await addEnvironment(idle, fd);
 
-    expect(result).toEqual({ status: 'error', message: 'Error adding environment. Please choose a valid type.' });
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/invalid/i);
     expect(prismaMock.environment.create).not.toHaveBeenCalled();
     expect(revalidate).not.toHaveBeenCalled();
   });
 
-  it('accepts a type the form already sent in uppercase', async () => {
-    await addEnvironment(idle, form({ type: 'PREVIEW' }));
-
-    expect(prismaMock.environment.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ type: 'PREVIEW' }),
-    }));
+  it('rejects an uppercase type outside the schema enum', async () => {
+    expect((await addEnvironment(idle, form({ type: 'PREVIEW' }))).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 });
 
@@ -155,11 +149,11 @@ describe('updateEnvironment', () => {
   });
 
   it('updates by id and revalidates', async () => {
-    const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'Renamed' }));
+    const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'renamed' }));
 
     expect(prismaMock.environment.update).toHaveBeenCalledWith({
       where: { id: 'env-1' },
-      data: { name: 'Renamed', type: 'PRODUCTION', requireApproval: true },
+      data: { name: 'renamed', type: 'PRODUCTION', requireApproval: true },
     });
     expect(result).toEqual({ status: 'success', message: 'Environment updated' });
     expect(revalidate).toHaveBeenCalledWith('/environments');
@@ -187,7 +181,7 @@ describe('updateEnvironment', () => {
   it('reports a rename onto a name already in use', async () => {
     prismaMock.environment.update.mockRejectedValue(prismaError('P2002') as never);
 
-    const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'Taken' }));
+    const result = await updateEnvironment(idle, form({ id: 'env-1', name: 'taken' }));
 
     expect(result).toEqual({ status: 'error', message: 'Environment name already used. Try a new one.' });
   });
@@ -215,9 +209,45 @@ describe('updateEnvironment', () => {
 
     const result = await updateEnvironment(idle, fd);
 
-    expect(result).toEqual({ status: 'error', message: 'Error updating environment. Please choose a valid type.' });
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/invalid/i);
     expect(prismaMock.environment.update).not.toHaveBeenCalled();
     expect(revalidate).not.toHaveBeenCalled();
+  });
+});
+
+describe.each([['create', addEnvironment], ['update', updateEnvironment]] as const)('environment Zod validation on %s', (mode, action) => {
+  it.each([
+    ['name', '', /required/i], ['name', '   ', /required/i],
+    ['name', 'Production', /lowercase/i], ['name', 'qa_test', /hyphens/i],
+    ['name', 'qa test', /hyphens/i], ['name', 'a'.repeat(51), /50/],
+    ['type', 'unknown', /invalid/i], ['requireApproval', 'on', /invalid/i],
+    ['requireApproval', '', /invalid/i],
+  ])('rejects invalid %s before writing (%s)', async (field, value, message) => {
+    const fd = form({ id: 'env-1', name: 'production', [field]: value });
+    const result = await action(idle, fd);
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(message);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+  });
+
+  it.each(['name', 'type', 'requireApproval'])('rejects a missing or file-valued %s', async field => {
+    const fd = form({ id: 'env-1', name: 'production' });
+    fd.delete(field);
+    expect((await action(idle, fd)).status).toBe('error');
+    fd.set(field, new File(['invalid'], 'input.txt'));
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['production', 'staging', 'development', 'preview', 'custom'])('accepts %s with a trimmed 50-character name and false approval', async type => {
+    const result = await action(idle, form({ id: 'env-1', name: `  ${'a'.repeat(50)}  `, type, requireApproval: 'false' }));
+    expect(result.status).toBe('success');
+    const write = mode === 'create' ? prismaMock.environment.create : prismaMock.environment.update;
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ name: 'a'.repeat(50), type: type.toUpperCase(), requireApproval: false }),
+    }));
   });
 });
 
@@ -225,7 +255,7 @@ describe('deleteEnvironment', () => {
   // The confirmation names the environment, so the delete has to read the name
   // off the deleted row rather than echo the id it was handed.
   it('deletes and revalidates', async () => {
-    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1', name: 'Production', type: 'PRODUCTION' } as never);
+    prismaMock.environment.delete.mockResolvedValue({ id: 'env-1', name: 'production', type: 'PRODUCTION' } as never);
 
     const result = await deleteEnvironment('env-1');
 
@@ -268,32 +298,32 @@ describe('audit trail', () => {
   const cases = [
     {
       name: 'addEnvironment',
-      arrange: () => tx.environment.create.mockResolvedValue({ id: 'env-new', name: 'Production', type: 'PRODUCTION' } as never),
+      arrange: () => tx.environment.create.mockResolvedValue({ id: 'env-new', name: 'production', type: 'PRODUCTION' } as never),
       act: () => addEnvironment(idle, form()),
       written: () => tx.environment.create,
       audit: {
-        action: 'ENVIRONMENT_CREATED', resourceType: 'ENVIRONMENT', resourceId: 'env-new', resourceLabel: 'Production (PRODUCTION)',
-        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+        action: 'ENVIRONMENT_CREATED', resourceType: 'ENVIRONMENT', resourceId: 'env-new', resourceLabel: 'production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'production', type: 'production' },
       },
     },
     {
       name: 'updateEnvironment',
-      arrange: () => tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
-      act: () => updateEnvironment(idle, form({ id: 'env-1', name: 'Prod', type: 'staging' })),
+      arrange: () => tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'production', type: 'PRODUCTION' } as never),
+      act: () => updateEnvironment(idle, form({ id: 'env-1', name: 'prod', type: 'staging' })),
       written: () => tx.environment.update,
       audit: {
-        action: 'ENVIRONMENT_UPDATED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production → Prod (PRODUCTION → STAGING)',
-        resourceMeta: { kind: 'environment', name: 'Prod', type: 'staging', prevName: 'Production', prevType: 'production' },
+        action: 'ENVIRONMENT_UPDATED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'production → prod (production → staging)',
+        resourceMeta: { kind: 'environment', name: 'prod', type: 'staging', prevName: 'production', prevType: 'production' },
       },
     },
     {
       name: 'deleteEnvironment',
-      arrange: () => tx.environment.delete.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never),
+      arrange: () => tx.environment.delete.mockResolvedValue({ name: 'production', type: 'PRODUCTION' } as never),
       act: () => deleteEnvironment('env-1'),
       written: () => tx.environment.delete,
       audit: {
-        action: 'ENVIRONMENT_DELETED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'Production (PRODUCTION)',
-        resourceMeta: { kind: 'environment', name: 'Production', type: 'production' },
+        action: 'ENVIRONMENT_DELETED', resourceType: 'ENVIRONMENT', resourceId: 'env-1', resourceLabel: 'production (PRODUCTION)',
+        resourceMeta: { kind: 'environment', name: 'production', type: 'production' },
       },
     },
   ];
@@ -330,15 +360,15 @@ describe('audit trail', () => {
   // Renaming without changing type (or vice versa) should not manufacture a false diff
   // arrow on the half that did not change.
   it('labels only the field that actually changed', async () => {
-    tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'Production', type: 'PRODUCTION' } as never);
+    tx.environment.findUniqueOrThrow.mockResolvedValue({ name: 'production', type: 'PRODUCTION' } as never);
 
-    await updateEnvironment(idle, form({ id: 'env-1', name: 'Production', type: 'staging' }));
+    await updateEnvironment(idle, form({ id: 'env-1', name: 'production', type: 'staging' }));
 
     const { data } = tx.auditLog.create.mock.calls[0][0];
 
     expect(data).toMatchObject({
-      resourceLabel: 'Production (PRODUCTION → STAGING)',
+      resourceLabel: 'production (production → staging)',
     });
-    expect(data.resourceMeta).toEqual({ kind: 'environment', name: 'Production', type: 'staging', prevType: 'production' });
+    expect(data.resourceMeta).toEqual({ kind: 'environment', name: 'production', type: 'staging', prevType: 'production' });
   });
 });
