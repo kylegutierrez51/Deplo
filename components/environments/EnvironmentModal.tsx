@@ -181,7 +181,7 @@ export default function EnvironmentModal({
                 name="name" id="name"
                 aria-describedby="environment-name-hint"
                 placeholder="e.g. staging, qa-integration" 
-                required spellCheck={false}
+                spellCheck={false}
                 value={enteredName} 
                 onChange={(e) => setEnteredName(e.target.value)} />
               <p id="environment-name-hint" className={styles.fieldHint}>Lowercase letters, numbers, and hyphens only. Used to scope secrets and pipeline targets.</p>
