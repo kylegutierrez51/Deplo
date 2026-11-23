@@ -12,6 +12,7 @@ import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
 import { isCloneableRepoUrl, REPO_URL_ERROR } from '@/lib/pipeline/repo-url';
+import { pipelineSchema } from '../validation';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -30,13 +31,21 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
 
   const userId = user.id;
 
-  const repoUrl = ((formData.get('repo_url') as string | null) ?? '').trim() || null;
-  if (repoUrl !== null && !isCloneableRepoUrl(repoUrl)) return { status: 'error', message: REPO_URL_ERROR };
+  const result = pipelineSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    repoUrl: formData.get('repo_url'),
+    defaultEnvironmentId: formData.get('defaultEnvironmentId')
+  });
 
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string;
-  // The picker submits '' for "None".
-  const defaultEnvironmentId = (formData.get('default_environment_id') as string | null) || null;
+  if (!result.success) {
+    return {
+      status: 'error',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
+  }
+
+  const { name, description, repoUrl, defaultEnvironmentId } = result.data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -96,13 +105,23 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
 
   const userId = user.id;
 
-  const repoUrl = ((formData.get('repo_url') as string | null) ?? '').trim() || null;
-  if (repoUrl !== null && !isCloneableRepoUrl(repoUrl)) return { status: 'error', message: REPO_URL_ERROR };
-
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string;
-  const defaultEnvironmentId = (formData.get('default_environment_id') as string | null) || null;
+
+  const result = pipelineSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    repoUrl: formData.get('repo_url'),
+    defaultEnvironmentId: formData.get('defaultEnvironmentId')
+  });
+
+  if (!result.success) {
+    return {
+      status: 'error',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
+  }
+
+  const { name, description, repoUrl, defaultEnvironmentId } = result.data;
 
   try {
     await prisma.$transaction(async (tx) => {
