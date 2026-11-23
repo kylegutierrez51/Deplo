@@ -11,7 +11,6 @@ import { Prisma } from '@/generated/prisma/client';
 import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '@/lib/actions/run-trigger';
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
-import { isCloneableRepoUrl, REPO_URL_ERROR } from '@/lib/pipeline/repo-url';
 import { pipelineSchema } from '../validation';
 
 // Concurrent saves can compute the same next version and collide on the
