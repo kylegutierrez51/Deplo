@@ -181,15 +181,20 @@ describe('environment name uniqueness', () => {
   };
 
   it('rejects a second environment with the same name', async () => {
-    await addEnvironment(idle, envForm('Production'));
-    const second = await addEnvironment(idle, envForm('Production'));
+    const first = await addEnvironment(idle, envForm('production'));
+    expect(first.status).toBe('success');
 
-    expect(second.status).toBe('error');
+    const second = await addEnvironment(idle, envForm('production'));
+
+    expect(second).toEqual({
+      status: 'error', message: 'Environment name already used. Try a new one.',
+    });
     expect(await prisma.environment.count()).toBe(1);
   });
 
   it('writes the upcased enum value to the column', async () => {
-    await addEnvironment(idle, envForm('Staging'));
+    const result = await addEnvironment(idle, envForm('staging'));
+    expect(result.status).toBe('success');
 
     expect((await prisma.environment.findFirst())?.type).toBe('STAGING');
   });
