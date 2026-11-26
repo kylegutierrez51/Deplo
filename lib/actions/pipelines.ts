@@ -35,7 +35,7 @@ export async function addPipeline(prevState: FormState, formData: FormData): Pro
     name: formData.get('name'),
     description: formData.get('description'),
     repoUrl: formData.get('repo_url'),
-    defaultEnvironmentId: formData.get('defaultEnvironmentId')
+    defaultEnvironmentId: formData.get('default_environment_id')
   });
 
   if (!result.success) {
@@ -110,7 +110,7 @@ export async function updatePipeline(prevState: FormState, formData: FormData): 
     name: formData.get('name'),
     description: formData.get('description'),
     repoUrl: formData.get('repo_url'),
-    defaultEnvironmentId: formData.get('defaultEnvironmentId')
+    defaultEnvironmentId: formData.get('default_environment_id')
   });
 
   if (!result.success) {

@@ -910,7 +910,7 @@ describe.each([['create', addPipeline], ['update', updatePipeline]] as const)('p
     expect(revalidate).not.toHaveBeenCalled();
   });
 
-  it.each(['name', 'description', 'repo_url', 'defaultEnvironmentId'])('rejects a file submitted as %s', async field => {
+  it.each(['name', 'description', 'repo_url', 'default_environment_id'])('rejects a file submitted as %s', async field => {
     const fd = form();
     fd.set(field, new File(['invalid'], 'input.txt'));
     expect((await action(idle, fd)).status).toBe('error');
