@@ -52,7 +52,9 @@ export const pipelineSchema = z.object({
       value => value === null || isCloneableRepoUrl(value),
       REPO_URL_ERROR,
     ),
-  defaultEnvironmentId: z.string().nullable()
+  defaultEnvironmentId: z.string()
+    .nullable()
+    .transform(value => value === '' ? null : value),
 });
 
 export const updatePipelineSchema = pipelineSchema.extend({

@@ -31,6 +31,7 @@ const pointer = async (pipelineId: string) =>
 const statusFilter = (status: string) => parseFilters({ status }, PIPELINE_FILTERS);
 
 beforeEach(() => enqueue.mockReset());
+afterEach(() => jest.restoreAllMocks());
 
 describe('the lastRun pointer', () => {
   it('starts null and follows each new run', async () => {
@@ -57,24 +58,34 @@ describe('the lastRun pointer', () => {
   });
 
   it('falls back to the previous run when the newest is discarded', async () => {
+    const logError = jest.spyOn(console, 'error').mockImplementation(() => {});
     const { user, pipeline, definition } = await setup();
     const first = await makeRun(pipeline.id, definition.id, user.id);
     const second = await makeRun(pipeline.id, definition.id, user.id);
 
     enqueue.mockRejectedValue(new Error('ECONNREFUSED'));
-    await enqueueOrDiscardRun(second.id);
+    expect(await enqueueOrDiscardRun(second.id)).toBe(false);
 
     expect(await pointer(pipeline.id)).toBe(first.id);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(
+      `run ${second.id} was created but could not be enqueued:`, 'ECONNREFUSED',
+    );
   });
 
   it('goes back to idle when the only run is discarded', async () => {
+    const logError = jest.spyOn(console, 'error').mockImplementation(() => {});
     const { user, pipeline, definition } = await setup();
     const only = await makeRun(pipeline.id, definition.id, user.id);
 
     enqueue.mockRejectedValue(new Error('ECONNREFUSED'));
-    await enqueueOrDiscardRun(only.id);
+    expect(await enqueueOrDiscardRun(only.id)).toBe(false);
 
     expect(await pointer(pipeline.id)).toBeNull();
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(
+      `run ${only.id} was created but could not be enqueued:`, 'ECONNREFUSED',
+    );
   });
 });
 
