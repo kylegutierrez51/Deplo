@@ -1,16 +1,12 @@
 import type { Edge } from '@xyflow/react';
 import type { ConfigJson, CustomNode, GraphJson, StageConfig, StageType } from '@/lib/types';
+import { isRecord } from '@/lib/pipeline/validation-errors';
 
 const NODE_TYPE = 'standardStage';
 const EDGE_TYPE = 'customEdge';
 const EDGE_MARKER = 'marker';
 
 const STAGE_TYPES: StageType[] = ['custom', 'deploy', 'approval'];
-
-// if this returns true, then the type of the value is a Record<string, unknown>
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 /**
  * Sorts each environment's secret ids.

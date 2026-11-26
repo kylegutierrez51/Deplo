@@ -8,6 +8,7 @@ import { validatePipelineGraph } from '@/lib/pipeline/validation';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
 import { pipelineDefinitionSchema } from '@/lib/validation';
+import { formatPipelineValidationErrors } from '@/lib/pipeline/validation-errors';
 
 const RUN_NUMBER_ATTEMPTS = 3;
 
@@ -172,7 +173,7 @@ export async function verifyPipelineRunReady(definition: { graphJson: unknown, c
   const result = pipelineDefinitionSchema.safeParse(definition);
   if (!result.success) return {
     status: 'error',
-    message: result.error.issues.map(issue => issue.message).join('\n'),
+    message: formatPipelineValidationErrors(result.error.issues, definition.graphJson),
   };
 
   const { graphJson, configJson } = result.data;

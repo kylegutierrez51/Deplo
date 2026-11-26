@@ -12,6 +12,7 @@ import { enqueueOrDiscardRun, createPipelineRun, verifyPipelineRunReady } from '
 import { isQueueReachable } from '../queue/health';
 import { addAudit } from './audits';
 import { pipelineSchema, updatePipelineSchema, pipelineEditorSchema } from '../validation';
+import { formatPipelineValidationErrors } from '@/lib/pipeline/validation-errors';
 
 // Concurrent saves can compute the same next version and collide on the
 // [pipelineId, version] unique constraint; the loser re-reads and tries again.
@@ -244,7 +245,7 @@ export async function savePipelineDefinition(pipelineId: string, nodes: CustomNo
   const result = pipelineEditorSchema.safeParse({ nodes, edges, defaultDirectory: rawDefaultDirectory });
   if (!result.success) return {
     status: 'error',
-    message: result.error.issues.map(issue => issue.message).join('\n'),
+    message: formatPipelineValidationErrors(result.error.issues, { nodes }),
   };
 
   const { graphJson, configJson } = toDefinition(result.data.nodes, result.data.edges);
@@ -374,7 +375,7 @@ export async function addPipelineRun(pipelineId: string, environmentId: string |
   const result = pipelineEditorSchema.safeParse({ nodes, edges, defaultDirectory });
   if (!result.success) return {
     status: 'error',
-    message: result.error.issues.map(issue => issue.message).join('\n'),
+    message: formatPipelineValidationErrors(result.error.issues, { nodes }),
   };
 
   try {
@@ -462,7 +463,7 @@ export async function validatePipeline(environmentId: string | null, nodes: Cust
   const result = pipelineEditorSchema.safeParse({ nodes, edges });
   if (!result.success) return {
     status: 'error',
-    message: result.error.issues.map(issue => issue.message).join('\n'),
+    message: formatPipelineValidationErrors(result.error.issues, { nodes }),
   };
 
   try {

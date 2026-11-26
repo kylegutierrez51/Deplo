@@ -63,7 +63,94 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
+describe.each(['save', 'validate', 'run'] as const)('editor structure validation on %s', mode => {
+  const submit = (nodes: CustomNode[]) => mode === 'save'
+    ? savePipelineDefinition('p1', nodes, [])
+    : mode === 'validate'
+      ? validatePipeline(null, nodes, [])
+      : addPipelineRun('p1', null, nodes, []);
+
+  it('identifies the stage and environment-variable row with an invalid key', async () => {
+    const nodes = [node('first'), node('deploy', {
+      name: 'Deploy API',
+      env_vars: [{ key: 'VALID', value: '' }, { key: 'API-KEY', value: 'private-value-must-not-appear' }],
+    })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('Stage "Deploy API", environment variable 2 key:');
+    expect(result.message).toContain('Start with a letter or underscore');
+    expect(result.message).not.toContain('private-value-must-not-appear');
+  });
+
+  it('identifies the stage for timeout and retry errors', async () => {
+    const result = await submit([node('build', { name: 'Build API', timeout: 0, retries: 11 })]);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Stage "Build API".*Timeout/);
+    expect(result.message).toMatch(/Stage "Build API".*Retries/);
+    expect(result.message.split('\n')).toHaveLength(2);
+  });
+
+  it('uses a stage number when the stage has no name', async () => {
+    const result = await submit([node('first'), node('second', { name: '', timeout: 0 })]);
+    expect(result.message).toMatch(/Stage 2.*Timeout/);
+  });
+
+  it('can report a malformed stage without crashing while reading its name', async () => {
+    const nodes = [node('build', { name: 42 as unknown as string, timeout: 0 })];
+    const result = await submit(nodes);
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Stage 1.*Timeout/);
+  });
+
+  it.each([
+    {}, { key: 'API_KEY' }, { value: 'value' },
+    { key: '', value: 'value' }, { key: 'API-KEY', value: 'value' },
+    { key: '1KEY', value: 'value' }, { key: 'API KEY', value: 'value' },
+    { key: ' API_ KEY ', value: 'value' },
+    { key: 'API_KEY', value: 42 }, { key: 'API_KEY', value: null },
+  ])('rejects malformed environment-variable rows (%j) before reading or writing', async row => {
+    const nodes = [node('a', { env_vars: [row] as unknown as Record<string, string>[] })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate stage IDs before one configuration can overwrite another', async () => {
+    const nodes = [node('same-id', { command: 'echo first' }), node('same-id', { command: 'echo second' })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/duplicate|unique/i);
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+});
+
 describe('savePipelineDefinition versioning', () => {
+  it('preserves valid environment-variable rows including empty and whitespace values', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+    const env_vars = [
+      { key: 'API_KEY', value: '' },
+      { key: '_app2', value: '  keep this value\n' },
+    ];
+
+    const result = await savePipelineDefinition('p1', [node('a', { env_vars }), node('b')], []);
+
+    expect(result.status).toBe('success');
+    const stored = prismaMock.pipelineDefinition.create.mock.calls[0][0].data.configJson;
+    expect(stored).toMatchObject({ a: { env_vars }, b: { env_vars: [] } });
+  });
+
   it.each([
     ['timeout', 0], ['timeout', -1], ['timeout', 43201], ['timeout', 1.5],
     ['timeout', NaN], ['timeout', Infinity], ['timeout', '30'],

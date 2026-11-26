@@ -20,6 +20,72 @@ beforeEach(() => {
 });
 
 describe('stored pipeline execution settings', () => {
+  it('maps stored configuration errors back to the stage name and variable row', async () => {
+    const graphJson = graph('build deploy');
+    graphJson.nodes[1].data.name = 'Deploy API';
+    const configJson = configFor(graphJson.nodes, { deploy: {
+      env_vars: [{ key: 'VALID', value: '' }, { key: 'API-KEY', value: 'private-value-must-not-appear' }],
+    } });
+
+    const result = await verifyPipelineRunReady({ graphJson, configJson }, null);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('Stage "Deploy API", environment variable 2 key:');
+    expect(result.message).not.toContain('private-value-must-not-appear');
+  });
+
+  it('names the stored stage with an invalid timeout or retries', async () => {
+    const graphJson = graph('build');
+    graphJson.nodes[0].data.name = 'Build API';
+    const configJson = configFor(graphJson.nodes, { build: { timeout: 0, retries: 11 } });
+    const result = await verifyPipelineRunReady({ graphJson, configJson }, null);
+    expect(result.message).toMatch(/Stage "Build API".*Timeout/);
+    expect(result.message).toMatch(/Stage "Build API".*Retries/);
+  });
+
+  it('uses the stage number for malformed stored graph data', async () => {
+    const graphJson = graph('build');
+    graphJson.nodes[0].data.timeout = 0;
+    graphJson.nodes[0].data.name = '';
+    const result = await verifyPipelineRunReady({ graphJson, configJson: configFor(graphJson.nodes) }, null);
+    expect(result.message).toMatch(/Stage 1.*Timeout/);
+  });
+
+  it('handles configuration errors whose stage is missing from the graph', async () => {
+    const graphJson = graph('build');
+    const configJson = configFor(graphJson.nodes);
+    configJson.missing = { ...configJson.build, retries: 11 };
+    const result = await verifyPipelineRunReady({ graphJson, configJson }, null);
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Stage configuration.*Retries/);
+  });
+
+  it.each([
+    {}, { key: 'API_KEY' }, { key: '1KEY', value: 'value' },
+    { key: 'API_KEY', value: 42 },
+  ])('rejects malformed stored environment-variable rows (%j)', async row => {
+    const graphJson = graph('build');
+    const configJson = configFor(graphJson.nodes);
+    const definition = { graphJson, configJson: { ...configJson, build: { ...configJson.build, env_vars: [row] } } };
+
+    const result = await verifyPipelineRunReady(definition, null);
+
+    expect(result.status).toBe('error');
+  });
+
+  it('rejects duplicate IDs in stored graphs before starting a run', async () => {
+    const graphJson = graph('build build');
+    const result = await verifyPipelineRunReady({ graphJson, configJson: configFor(graphJson.nodes) }, null);
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/duplicate|unique/i);
+  });
+
+  it('accepts empty environment-variable values and distinct stage IDs', async () => {
+    const graphJson = graph('build deploy');
+    const configJson = configFor(graphJson.nodes, { build: { env_vars: [{ key: 'EMPTY', value: '' }] } });
+    expect((await verifyPipelineRunReady({ graphJson, configJson }, null)).status).toBe('success');
+  });
+
   it.each([
     ['timeout', 0], ['timeout', 43201], ['timeout', 1.5], ['timeout', '30'],
     ['retries', -1], ['retries', 11], ['retries', 0.5], ['retries', '2'],
