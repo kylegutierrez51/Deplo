@@ -85,6 +85,21 @@ const inserted = () => prismaMock.pipelineRun.create.mock.calls[0][0];
 
 const retry = () => retryRun('run-1');
 
+it.each([['timeout', '30'], ['retries', 11]])(
+  'rejects invalid stored %s on retry without discarding the invalid value', async (field, value) => {
+    const definition = storedDefinition();
+    Object.assign(definition.configJson.a, { [field]: value });
+    existingRun('FAILED', { definition });
+
+    const result = await retry();
+
+    expect(result.status).toBe('error');
+    expect(result.message.toLowerCase()).toContain(field);
+    expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  },
+);
+
 beforeEach(() => {
   resetPrismaMock();
   revalidate.mockClear();

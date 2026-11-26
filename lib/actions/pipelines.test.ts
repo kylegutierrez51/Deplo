@@ -63,7 +63,148 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
+describe.each(['save', 'validate', 'run'] as const)('editor structure validation on %s', mode => {
+  const submit = (nodes: CustomNode[]) => mode === 'save'
+    ? savePipelineDefinition('p1', nodes, [])
+    : mode === 'validate'
+      ? validatePipeline(null, nodes, [])
+      : addPipelineRun('p1', null, nodes, []);
+
+  it('identifies the stage and environment-variable row with an invalid key', async () => {
+    const nodes = [node('first'), node('deploy', {
+      name: 'Deploy API',
+      env_vars: [{ key: 'VALID', value: '' }, { key: 'API-KEY', value: 'private-value-must-not-appear' }],
+    })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('Stage "Deploy API", environment variable 2 key:');
+    expect(result.message).toContain('Start with a letter or underscore');
+    expect(result.message).not.toContain('private-value-must-not-appear');
+  });
+
+  it('identifies the stage for timeout and retry errors', async () => {
+    const result = await submit([node('build', { name: 'Build API', timeout: 0, retries: 11 })]);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Stage "Build API".*Timeout/);
+    expect(result.message).toMatch(/Stage "Build API".*Retries/);
+    expect(result.message.split('\n')).toHaveLength(2);
+  });
+
+  it('uses a stage number when the stage has no name', async () => {
+    const result = await submit([node('first'), node('second', { name: '', timeout: 0 })]);
+    expect(result.message).toMatch(/Stage 2.*Timeout/);
+  });
+
+  it('can report a malformed stage without crashing while reading its name', async () => {
+    const nodes = [node('build', { name: 42 as unknown as string, timeout: 0 })];
+    const result = await submit(nodes);
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/Stage 1.*Timeout/);
+  });
+
+  it.each([
+    {}, { key: 'API_KEY' }, { value: 'value' },
+    { key: '', value: 'value' }, { key: 'API-KEY', value: 'value' },
+    { key: '1KEY', value: 'value' }, { key: 'API KEY', value: 'value' },
+    { key: ' API_ KEY ', value: 'value' },
+    { key: 'API_KEY', value: 42 }, { key: 'API_KEY', value: null },
+  ])('rejects malformed environment-variable rows (%j) before reading or writing', async row => {
+    const nodes = [node('a', { env_vars: [row] as unknown as Record<string, string>[] })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate stage IDs before one configuration can overwrite another', async () => {
+    const nodes = [node('same-id', { command: 'echo first' }), node('same-id', { command: 'echo second' })];
+
+    const result = await submit(nodes);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(/duplicate|unique/i);
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+});
+
 describe('savePipelineDefinition versioning', () => {
+  it('preserves valid environment-variable rows including empty and whitespace values', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+    const env_vars = [
+      { key: 'API_KEY', value: '' },
+      { key: '_app2', value: '  keep this value\n' },
+    ];
+
+    const result = await savePipelineDefinition('p1', [node('a', { env_vars }), node('b')], []);
+
+    expect(result.status).toBe('success');
+    const stored = prismaMock.pipelineDefinition.create.mock.calls[0][0].data.configJson;
+    expect(stored).toMatchObject({ a: { env_vars }, b: { env_vars: [] } });
+  });
+
+  it.each([
+    ['timeout', 0], ['timeout', -1], ['timeout', 43201], ['timeout', 1.5],
+    ['timeout', NaN], ['timeout', Infinity], ['timeout', '30'],
+    ['retries', -1], ['retries', 11], ['retries', 0.5], ['retries', '2'],
+  ])('rejects invalid editor execution settings (%s=%s) before saving', async (field, value) => {
+    const result = await savePipelineDefinition('p1', [node('a', { [field]: value })], []);
+
+    expect(result.status).toBe('error');
+    expect(result.message.toLowerCase()).toContain(field === 'timeout' ? 'timeout' : 'retries');
+    expect(prismaMock.pipelineDefinition.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['validate', 'run'] as const)(
+    'rejects invalid execution settings on editor %s', async (mode) => {
+      const nodes = [node('a', { timeout: 43201, retries: 11 })];
+      const definition = toDefinition(nodes, []);
+      prismaMock.pipelineDefinition.findFirst.mockResolvedValue({ id: 'def-1', ...definition } as never);
+
+      const result = mode === 'validate'
+        ? await validatePipeline(null, nodes, [])
+        : await addPipelineRun('p1', null, nodes, []);
+
+      expect(result.status).toBe('error');
+      expect(result.message.toLowerCase()).toContain('timeout');
+      expect(result.message.toLowerCase()).toContain('retries');
+      expect(prismaMock.pipelineRun.create).not.toHaveBeenCalled();
+      expect(enqueue).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([[1, 0], [43200, 10], [undefined, undefined]])(
+    'saves valid execution settings (%s seconds, %s retries)', async (timeout, retries) => {
+      prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+      prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+      const result = await savePipelineDefinition('p1', [node('a', { timeout, retries })], []);
+
+      expect(result.status).toBe('success');
+      expect(prismaMock.pipelineDefinition.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          configJson: { a: { command: 'npm test', timeout: timeout ?? null, retries: retries ?? null, env_vars: [], secrets: {} } },
+        }),
+      }));
+    },
+  );
+
+  it('still saves unfinished editor drafts', async () => {
+    prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
+    prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
+
+    expect((await savePipelineDefinition('p1', [node('a', { name: '', command: '' })], [])).status).toBe('success');
+  });
+
   it('starts a pipeline that has no definitions at version 0', async () => {
     prismaMock.pipelineDefinition.findFirst.mockResolvedValue(null as never);
     prismaMock.pipelineDefinition.create.mockResolvedValue({ id: 'def-1', pipeline: { name: 'pipe-1' } } as never);
@@ -742,6 +883,63 @@ describe('addPipeline', () => {
   });
 });
 
+describe.each([['create', addPipeline], ['update', updatePipeline]] as const)('pipeline modal Zod validation on %s', (_mode, action) => {
+  const idle = { status: 'idle' as const, message: '' };
+  const form = () => {
+    const fd = new FormData();
+    Object.entries({ id: 'p1', name: 'CI', description: 'Build the API', repo_url: 'https://github.com/o/r' })
+      .forEach(([key, value]) => fd.set(key, value));
+    return fd;
+  };
+
+  it.each([
+    ['name', '   ', /required/i],
+    ['name', 'a'.repeat(51), /50/],
+    ['description', 'a'.repeat(1001), /1000/],
+    ['repo_url', 'https://user:password@github.com/o/r', /repo url/i],
+    ['repo_url', 'file:///tmp/repo', /repo url/i],
+  ])('rejects invalid %s before writing (%s)', async (field, value, message) => {
+    const fd = form();
+    fd.set(field, value);
+
+    const result = await action(idle, fd);
+
+    expect(result.status).toBe('error');
+    expect(result.message).toMatch(message);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(revalidate).not.toHaveBeenCalled();
+  });
+
+  it.each(['name', 'description', 'repo_url', 'default_environment_id'])('rejects a file submitted as %s', async field => {
+    const fd = form();
+    fd.set(field, new File(['invalid'], 'input.txt'));
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['name', 'description'])('rejects a missing %s', async field => {
+    const fd = form();
+    fd.delete(field);
+    expect((await action(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '   ', 'git@github.com:o/r.git'])('accepts optional or SSH repository values (%j) and trimmed length boundaries', async repoUrl => {
+    prismaMock.pipeline.create.mockResolvedValue({ id: 'p1' } as never);
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+    const fd = form();
+    fd.set('name', `  ${'a'.repeat(50)}  `);
+    fd.set('description', `  ${'b'.repeat(1000)}  `);
+    fd.set('repo_url', repoUrl);
+
+    expect((await action(idle, fd)).status).toBe('success');
+    const write = _mode === 'create' ? prismaMock.pipeline.create : prismaMock.pipeline.update;
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ name: 'a'.repeat(50), description: 'b'.repeat(1000), repoUrl: repoUrl.trim() || null }),
+    }));
+  });
+});
+
 describe('deletePipeline', () => {
   it('revalidates the list on success', async () => {
     prismaMock.pipeline.delete.mockResolvedValue({ id: 'p1' } as never);
@@ -770,6 +968,16 @@ describe('deletePipeline', () => {
 });
 
 describe('updatePipeline', () => {
+  it.each([null, '', 'file'])('rejects an invalid update id (%j) before accessing the database', async id => {
+    const fd = form();
+    fd.delete('id');
+    if (id === 'file') fd.set('id', new File(['p1'], 'id.txt'));
+    else if (id !== null) fd.set('id', id);
+
+    expect((await updatePipeline(idle, fd)).status).toBe('error');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   const form = (over: Record<string, string> = {}) => {
     const fd = new FormData();
     fd.set('id', 'p1');

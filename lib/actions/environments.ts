@@ -7,6 +7,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { EnvironmentType, AuditAction, ResourceType } from '@/generated/prisma';
 import { auth } from '@/auth';
 import { addAudit } from './audits';
+import { environmentSchema, updateEnvironmentSchema } from '../validation';
 
 const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
   production: 'PRODUCTION',
@@ -17,13 +18,6 @@ const ENV_TYPE_MAP: Record<EnvType, EnvironmentType> = {
 };
 
 
-function readEnvType(formData: FormData): EnvironmentType | undefined {
-  const raw = formData.get('type');
-  if (typeof raw !== 'string') return undefined;
-
-  const key = raw.toLowerCase();
-  return Object.hasOwn(ENV_TYPE_MAP, key) ? ENV_TYPE_MAP[key as EnvType] : undefined;
-}
 
 export async function addEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
@@ -37,21 +31,26 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
 
   const userId = user.id;
 
-  const name = formData.get('name') as string;
-  const type = readEnvType(formData);
-  const requireApproval = formData.get('requireApproval') === 'true';
+  const result = environmentSchema.safeParse({
+    name: formData.get('name'),
+    type: formData.get('type'),
+    requireApproval: formData.get('requireApproval')
+  });
 
-  if (!type) {
+  if (!result.success) {
     return {
       status: 'error',
-      message: 'Error adding environment. Please choose a valid type.',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
     };
   }
+
+  const { name, type, requireApproval } = result.data;
+
 
   try {
     await prisma.$transaction(async (tx) => {
       const env = await tx.environment.create({
-        data: { name, type, requireApproval, createdById },
+        data: { name, type: ENV_TYPE_MAP[type], requireApproval, createdById },
         select: { id: true, name: true, type: true }
       });
 
@@ -62,7 +61,7 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
         resourceType: ResourceType.ENVIRONMENT,
         resourceId: env.id,
         resourceLabel: env.name + " (" + env.type + ")",
-        resourceMeta: { kind: 'environment', name: env.name, type: env.type.toLowerCase() as EnvType }
+        resourceMeta: { kind: 'environment', name: env.name, type }
       }, tx);
     });
 
@@ -89,6 +88,8 @@ export async function addEnvironment(prevState: FormState, formData: FormData): 
   }
 }
 
+
+
 export async function updateEnvironment(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
   const user = session?.user;
@@ -100,11 +101,21 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const type = readEnvType(formData);
-  const requireApproval = formData.get('requireApproval') === 'true';
+  const result = updateEnvironmentSchema.safeParse({
+    id: formData.get('id'),
+    name: formData.get('name'),
+    type: formData.get('type'),
+    requireApproval: formData.get('requireApproval')
+  });
 
+  if (!result.success) {
+    return {
+      status: 'error',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
+  }
+
+  const { id, name, type, requireApproval } = result.data;
 
   if (!type) {
     return {
@@ -122,11 +133,11 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
       
       await tx.environment.update({
         where: { id },
-        data: { name, type, requireApproval },
+        data: { name, type: ENV_TYPE_MAP[type], requireApproval },
       });
 
       const auditedName = prevName === name ? name : `${prevName} → ${name}`
-      const auditedType = prevType === type ? type : `${prevType} → ${type}`
+      const auditedType = prevType === ENV_TYPE_MAP[type] ? type : `${prevType.toLowerCase()} → ${type}`
 
       await addAudit({
         userId,
@@ -138,14 +149,12 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
         resourceMeta: {
           kind: 'environment',
           name,
-          type: type.toLowerCase() as EnvType,
+          type,
           ...(prevName !== name && { prevName }),
-          ...(prevType !== type && { prevType: prevType.toLowerCase() as EnvType }),
+          ...(prevType !== ENV_TYPE_MAP[type] && { prevType: prevType.toLowerCase() as EnvType }),
         }
       }, tx);
     });
-
-
 
     revalidatePath('/environments');
 
@@ -175,6 +184,8 @@ export async function updateEnvironment(prevState: FormState, formData: FormData
     };
   }
 }
+
+
 
 export async function deleteEnvironment(id: string): Promise<FormState> {
   const session = await auth();

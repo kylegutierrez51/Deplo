@@ -226,7 +226,7 @@ export default function SecretModal({
                 name="key" id="key" 
                 placeholder="e.g. DATABASE_URL" 
                 value={enteredKey} 
-                required spellCheck={false}
+                spellCheck={false}
                 onChange={(e) => setEnteredKey(e.target.value)} />
             </div>
 
@@ -240,8 +240,6 @@ export default function SecretModal({
                   key="value"
                   placeholder="Secret value"
                   value={enteredValue}
-                  required
-                  minLength={MIN_MASKABLE_LENGTH}
                   spellCheck={false}
                   onChange={(e) => setEnteredValue(e.target.value)}
                   onBlur={() => setEnteredValue(v => v.trim())}
@@ -272,7 +270,6 @@ export default function SecretModal({
                   }}
                   onFocus={() => setOpenMatches(true)}
                   onBlur={() => setTimeout(() => setOpenMatches(false), 100)}
-                  required
                 />
                 {openMatches && query && (
                   <ul className={styles.autocompleteList}>

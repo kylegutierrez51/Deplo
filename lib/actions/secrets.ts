@@ -1,7 +1,6 @@
 "use server"
 
 import { encryptSecret } from '@/lib/utils/crypto';
-import { MIN_MASKABLE_LENGTH } from '@/lib/secret-mask';
 import { EnvType, FormState } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
@@ -9,14 +8,9 @@ import { auth } from '@/auth';
 import { Prisma } from '@/generated/prisma/client';
 import { addAudit } from './audits';
 import { AuditAction, ResourceType } from '@/generated/prisma';
+import { secretSchema, updateSecretSchema } from '../validation';
 
-const tooShortToMask = (value: string | null): FormState | null =>
-  (value ?? '').trim().length < MIN_MASKABLE_LENGTH
-    ? {
-      status: 'error',
-      message: `A secret value must be at least ${MIN_MASKABLE_LENGTH} characters, so it can be masked in run logs.`,
-    }
-    : null;
+
 
 export async function addSecret(prevState: FormState, formData: FormData): Promise<FormState> {
   const session = await auth();
@@ -30,13 +24,21 @@ export async function addSecret(prevState: FormState, formData: FormData): Promi
 
   const userId = user.id;
 
-  const key = formData.get('key') as string;
-  const value = formData.get('value') as string;
-  const environmentId = formData.get('env_id') as string;
-  const notes = formData.get('notes') as string;
+  const result = secretSchema.safeParse({
+    key: formData.get('key'),
+    notes: formData.get('notes'),
+    value: formData.get('value'),
+    environmentId: formData.get('env_id')
+  });
 
-  const tooShort = tooShortToMask(value);
-  if (tooShort) return tooShort;
+  if (!result.success) {
+    return {
+      status: 'error',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
+  }
+
+  const { key, notes, value, environmentId } = result.data;
 
   const { encryptedValue, iv, authTag } = encryptSecret(value);
 
@@ -100,14 +102,22 @@ export async function updateSecret(prevState: FormState, formData: FormData): Pr
 
   const userId = user.id;
 
-  const id = formData.get('id') as string;
-  const key = formData.get('key') as string;
-  const value = formData.get('value') as string;
-  const environmentId = formData.get('env_id') as string;
-  const notes = formData.get('notes') as string;
+  const result = updateSecretSchema.safeParse({
+    id: formData.get('id'),
+    key: formData.get('key'),
+    notes: formData.get('notes'),
+    value: formData.get('value'),
+    environmentId: formData.get('env_id')
+  });
 
-  const tooShort = tooShortToMask(value);
-  if (tooShort) return tooShort;
+  if (!result.success) {
+    return {
+      status: 'error',
+      message: result.error.issues.map(issue => issue.message).join('\n'),
+    };
+  }
+
+  const { id, key, notes, value, environmentId } = result.data;
 
   const { encryptedValue, iv, authTag } = encryptSecret(value);
 

@@ -58,6 +58,17 @@ beforeEach(() => {
   regenerate.mockReset();
 });
 
+describe('adding branch filters', () => {
+  it('does not submit duplicate chips when the same trimmed filter is added twice', async () => {
+    const user = userEvent.setup();
+    setup({ branchFilters: ['main'] });
+
+    await user.type(screen.getByPlaceholderText(/press Enter to add/), ' main {Enter}');
+
+    expect(submittedFilters()).toEqual(['main']);
+  });
+});
+
 describe('removing a branch filter', () => {
   it('drops only the clicked filter and keeps the rest in order', async () => {
     const user = userEvent.setup();

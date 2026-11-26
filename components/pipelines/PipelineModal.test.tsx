@@ -2,12 +2,20 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import PipelineModal from '@/components/pipelines/PipelineModal';
 import { addPipeline, deletePipeline, updatePipeline } from '@/lib/actions/pipelines';
+import { prismaMock, resetPrismaMock, runTransactionsInline } from '@/test/mocks/prisma';
+import { setSession } from '@/test/mocks/auth';
+
+jest.mock('@/lib/prisma');
+jest.mock('@/auth');
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
+jest.mock('@/lib/queue/runs', () => ({ enqueuePipelineRun: jest.fn() }));
+jest.mock('@/lib/queue/health', () => ({ isQueueReachable: jest.fn() }));
 
 /*
  * The modal is where a pipeline's optional repository is both shown and set, so
  * it carries the two halves of that change: the view drops the Repo URL block
  * when there is nothing to show, and the form no longer marks the field
- * `required`. The second is the load-bearing one — leaving `required` on would
+ * `required`. Leaving `required` on would
  * make a repo-less pipeline unsaveable through the UI no matter what the schema
  * permits, and nothing in the data layer would report it.
  *
@@ -306,6 +314,57 @@ describe('the default environment', () => {
     fireEvent.submit(document.getElementById('modal-form')!);
 
     await waitFor(() => expect(submitted()('edit')).toBe(''));
+  });
+});
+
+describe.each(['create', 'edit'] as const)('Zod validation through the %s pipeline form', mode => {
+  beforeEach(() => {
+    resetPrismaMock();
+    setSession();
+    runTransactionsInline();
+    const actions = jest.requireActual<typeof import('@/lib/actions/pipelines')>('@/lib/actions/pipelines');
+    add.mockReset().mockImplementation(actions.addPipeline);
+    update.mockReset().mockImplementation(actions.updatePipeline);
+    prismaMock.pipeline.create.mockResolvedValue({ id: 'p1' } as never);
+    prismaMock.pipeline.findUniqueOrThrow.mockResolvedValue({ name: 'CI' } as never);
+  });
+
+  afterEach(() => {
+    add.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+    update.mockReset().mockResolvedValue({ status: 'idle', message: '' });
+  });
+
+  it.each([
+    { label: /^name$/i, value: '   ', message: /required/i },
+    { label: /^name$/i, value: 'a'.repeat(51), message: /50/ },
+    { label: /description/i, value: 'a'.repeat(1001), message: /1000/ },
+    { label: /repo url/i, value: 'https://user:password@github.com/o/r', message: /repo url/i },
+  ])('reports $message and preserves the invalid input', async ({ label, value, message }) => {
+    const { onError, onSave, onCreate } = setup({ mode });
+    const input = screen.getByLabelText(label);
+    fireEvent.change(input, { target: { value } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringMatching(message)));
+    expect(input).toHaveValue(value);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onCreate).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('accepts a corrected name after a Zod error', async () => {
+    const { onError, onCreate, onSave } = setup({ mode });
+    const name = screen.getByLabelText(/^name$/i);
+    fireEvent.change(name, { target: { value: 'a'.repeat(51) } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button', { name: mode === 'create' ? 'Create' : /save changes/i })).toBeEnabled());
+
+    fireEvent.change(name, { target: { value: 'a'.repeat(50) } });
+    fireEvent.submit(document.getElementById('modal-form')!);
+
+    await waitFor(() => expect(mode === 'create' ? onCreate : onSave).toHaveBeenCalledWith(mode === 'create' ? 'Pipeline added' : 'Pipeline updated'));
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });
 

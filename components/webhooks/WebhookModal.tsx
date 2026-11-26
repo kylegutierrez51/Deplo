@@ -165,7 +165,7 @@ export default function WebhookModal({
     e.preventDefault();
     const value = branchInputRef.current?.value.trim();
     if (!value) return;
-    setBranchFilters(prev => [...prev, value]);
+    setBranchFilters(prev => prev.includes(value) ? prev : [...prev, value]);
     setEnteredBranchFilter('');
     if (branchInputRef.current) branchInputRef.current.value = '';
   };
@@ -348,7 +348,6 @@ export default function WebhookModal({
                 options={pipelines?.map(p => ({ id: p.id, name: p.name, detail: p.repoUrl })) ?? []}
                 initialId={pipelineId}
                 initialName={pipelineName}
-                required
                 onSelect={setSelectedPipelineId}
               />
               {pipelineWarning && <RepoUrlWarning message={pipelineWarning} />}
@@ -481,7 +480,6 @@ export default function WebhookModal({
                       value={secret ?? ''}
                       readOnly
                       className={styles.inputWithIcon}
-                      required
                     />
                     <div className={styles.inputActions}>
                       <button type="button" className={styles.iconActionBtn} aria-label={copied ? 'Copied webhook secret' : 'Copy webhook secret'} onClick={handleCopyRevealed}>
